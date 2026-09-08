@@ -1,0 +1,68 @@
+{
+  "app": {
+    "name": "مركز قيادة وودي",
+    "shortName": "WCC"
+  },
+  "nav": {
+    "manager": "الإدارة",
+    "workspace": "عملي",
+    "customers": "العملاء",
+    "pipeline": "خط المبيعات",
+    "bookings": "الحجوزات",
+    "tasks": "المهام",
+    "logout": "تسجيل الخروج"
+  },
+  "auth": {
+    "title": "تسجيل الدخول",
+    "subtitle": "للعمليات الداخلية فقط",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "submit": "متابعة",
+    "error": "بيانات الدخول غير صحيحة"
+  },
+  "manager": {
+    "title": "لوحة المدير",
+    "subtitle": "الاستثناءات أولاً — المؤشرات عند ربط الواجهة الخلفية"
+  },
+  "workspace": {
+    "title": "عمل اليوم",
+    "subtitle": "قائمة الانتظار وخط الأنابيب — اليوم الثالث"
+  },
+  "customers": {
+    "title": "العملاء",
+    "subtitle": "بحث وفتح ملف العميل 360",
+    "searchPlaceholder": "ابحث بالاسم أو الهاتف",
+    "create": "عميل جديد",
+    "empty": "لا يوجد عملاء بعد",
+    "emptyHint": "جرّب مسح عوامل التصفية أو أنشئ عميلاً جديداً.",
+    "identity": "الهوية",
+    "leads": "العملاء المحتملون",
+    "bookings": "الحجوزات",
+    "quickCreate": "إنشاء سريع",
+    "filterAll": "الكل",
+    "filterEmail": "البريد",
+    "filterWithEmail": "لديه بريد",
+    "filterMissingEmail": "بدون بريد",
+    "filterName": "الاسم",
+    "filterHasAr": "اسم عربي موجود",
+    "filterEnOnly": "إنجليزي فقط",
+    "createdToastTitle": "تم إنشاء العميل",
+    "createdToastBody": "السجل جاهز في ملف العميل 360."
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "empty": "لا توجد إشعارات جديدة",
+    "markAllRead": "تعيين الكل كمقروء",
+    "dismiss": "إخفاء"
+  },
+  "common": {
+    "loading": "جارٍ التحميل…",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "language": "اللغة",
+    "clearSearch": "مسح البحث",
+    "resetFilters": "إعادة تعيين",
+    "filter": "تصفية",
+    "search": "بحث"
+  }
+}

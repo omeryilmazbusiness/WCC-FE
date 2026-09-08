@@ -1,0 +1,68 @@
+{
+  "app": {
+    "name": "WODI Command Center",
+    "shortName": "WCC"
+  },
+  "nav": {
+    "manager": "Manager",
+    "workspace": "My Work",
+    "customers": "Customers",
+    "pipeline": "Pipeline",
+    "bookings": "Bookings",
+    "tasks": "Tasks",
+    "logout": "Sign out"
+  },
+  "auth": {
+    "title": "Sign in",
+    "subtitle": "Internal operations only",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Continue",
+    "error": "Invalid credentials"
+  },
+  "manager": {
+    "title": "Manager dashboard",
+    "subtitle": "Exceptions first — KPIs load when API is connected"
+  },
+  "workspace": {
+    "title": "My work today",
+    "subtitle": "Queue and pipeline placeholders for Day 3"
+  },
+  "customers": {
+    "title": "Customers",
+    "subtitle": "Search and open Customer 360",
+    "searchPlaceholder": "Search by name or phone",
+    "create": "New customer",
+    "empty": "No customers yet",
+    "emptyHint": "Try clearing filters or create a new customer.",
+    "identity": "Identity",
+    "leads": "Leads",
+    "bookings": "Bookings",
+    "quickCreate": "Quick create",
+    "filterAll": "All",
+    "filterEmail": "Email",
+    "filterWithEmail": "Has email",
+    "filterMissingEmail": "Missing email",
+    "filterName": "Name",
+    "filterHasAr": "Has Arabic name",
+    "filterEnOnly": "English only",
+    "createdToastTitle": "Customer created",
+    "createdToastBody": "The record is ready in Customer 360."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "You're all caught up",
+    "markAllRead": "Mark all read",
+    "dismiss": "Dismiss"
+  },
+  "common": {
+    "loading": "Loading…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "language": "Language",
+    "clearSearch": "Clear search",
+    "resetFilters": "Reset",
+    "filter": "Filter",
+    "search": "Search"
+  }
+}
