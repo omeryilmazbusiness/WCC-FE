@@ -18,6 +18,16 @@ export { IconButton } from "./icon-button";
 export { Input } from "./input";
 export { Label } from "./label";
 export { Badge } from "./badge";
+export { StageBadge, LEAD_STAGE_TONES, type StageBadgeTone } from "./stage-badge";
+export { CapacityBadge } from "./capacity-badge";
+export { SegmentedControl } from "./segmented-control";
+export {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "./select";
 export {
   Card,
   CardHeader,

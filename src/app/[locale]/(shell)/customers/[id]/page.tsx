@@ -1,22 +1,13 @@
 import { setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { MemoryCustomerRepository } from "@/entities/customer";
+import { MemoryLeadRepository } from "@/entities/lead";
 import type { Booking } from "@/entities/booking";
-import type { Lead } from "@/entities/lead";
 import { Customer360View } from "@/widgets/customer-360";
 
 type Props = { params: Promise<{ locale: string; id: string }> };
 
-const demoLeads: Lead[] = [
-  {
-    id: "lead-1",
-    fullName: "Ahmed Al-Rashid",
-    phone: "+966500000001",
-    stage: "qualified",
-    ownerId: "sales",
-  },
-];
-
+/** Bookings still F6 stub — single source until bookings domain lands */
 const demoBookings: Booking[] = [
   {
     id: "bk-demo",
@@ -32,18 +23,22 @@ export default async function CustomerDetailPage({ params }: Props) {
   const { locale, id } = await params;
   setRequestLocale(locale);
 
-  const repo = new MemoryCustomerRepository();
+  const customers = new MemoryCustomerRepository();
+  const leads = new MemoryLeadRepository();
+
   let customer;
   try {
-    customer = await repo.getById(id);
+    customer = await customers.getById(id);
   } catch {
     notFound();
   }
 
+  const customerLeads = await leads.listByCustomerId(customer.id);
+
   return (
     <Customer360View
       customer={customer}
-      leads={demoLeads}
+      leads={customerLeads}
       bookings={demoBookings}
     />
   );

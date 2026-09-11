@@ -7,6 +7,9 @@ export const routes = {
   workspace: "/workspace",
   customers: "/customers",
   customer: (id: string) => `/customers/${id}`,
+  pipeline: "/pipeline",
+  packages: "/packages",
+  package: (id: string) => `/packages/${id}`,
 } as const;
 
 export type AppRole = "gm" | "manager" | "employee";

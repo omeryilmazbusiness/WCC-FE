@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Building2, LayoutDashboard, Users, Briefcase } from "lucide-react";
+import { Building2, LayoutDashboard, Users, Briefcase, Kanban, Package } from "lucide-react";
 import type { SessionUser } from "@/shared/api/session";
 import { routes } from "@/shared/config/routes";
 import { Link, usePathname } from "@/shared/i18n/navigation";
@@ -25,7 +25,9 @@ export function AppShell({ user, children }: Props) {
     manager
       ? { href: routes.manager, label: t("manager"), icon: LayoutDashboard }
       : { href: routes.workspace, label: t("workspace"), icon: Briefcase },
+    { href: routes.pipeline, label: t("pipeline"), icon: Kanban },
     { href: routes.customers, label: t("customers"), icon: Users },
+    { href: routes.packages, label: t("packages"), icon: Package },
   ];
 
   return (
