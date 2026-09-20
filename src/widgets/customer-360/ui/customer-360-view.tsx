@@ -5,6 +5,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import type { Booking } from "@/entities/booking";
 import type { Customer } from "@/entities/customer";
 import type { Lead } from "@/entities/lead";
+import { ConfirmBookingTasksButton } from "@/features/confirm-booking-tasks";
 import { Badge } from "@/shared/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { DataTable } from "@/shared/ui/data-table";
@@ -44,6 +45,17 @@ export function Customer360View({ customer, leads, bookings }: Props) {
       header: "Balance",
       cell: ({ row }) =>
         `${row.original.balanceAmt} ${row.original.currency}`,
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => (
+        <ConfirmBookingTasksButton
+          bookingId={row.original.id}
+          label={`Booking ${row.original.id}`}
+          customerId={customer.id}
+        />
+      ),
     },
   ];
 

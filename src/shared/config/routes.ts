@@ -10,11 +10,26 @@ export const routes = {
   pipeline: "/pipeline",
   packages: "/packages",
   package: (id: string) => `/packages/${id}`,
+  tasks: "/tasks",
+  adminUsers: "/admin/users",
+  adminRoles: "/admin/roles",
+  adminAudit: "/admin/audit",
 } as const;
 
-export type AppRole = "gm" | "manager" | "employee";
+export type AppRole =
+  | "gm"
+  | "manager"
+  | "employee"
+  | "finance"
+  | "operations"
+  | "admin";
 
 export function homeForRole(role: AppRole): string {
-  if (role === "employee") return routes.workspace;
+  if (role === "employee" || role === "operations") return routes.workspace;
+  if (role === "admin") return routes.adminUsers;
   return routes.manager;
+}
+
+export function canAccessAdmin(role: AppRole): boolean {
+  return role === "gm" || role === "admin";
 }

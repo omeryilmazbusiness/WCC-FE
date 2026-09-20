@@ -41,6 +41,17 @@ export default function middleware(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  if (
+    session &&
+    pathWithoutLocale.startsWith("/admin") &&
+    session.user.role !== "gm" &&
+    session.user.role !== "admin"
+  ) {
+    const url = req.nextUrl.clone();
+    url.pathname = `/${locale}${homeForRole(session.user.role)}`;
+    return NextResponse.redirect(url);
+  }
+
   return intlMiddleware(req);
 }
 

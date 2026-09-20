@@ -12,6 +12,7 @@ import {
 } from "@/entities/lead";
 import { CreateLeadDialog } from "@/features/create-lead";
 import { LostReasonDialog } from "@/features/change-lead-stage";
+import { getMemoryTaskRepository } from "@/entities/task";
 import {
   ListScreen,
   SearchFilterBar,
@@ -120,6 +121,13 @@ export function CrmPipelineBoard({ repository, initialLeads }: Props) {
             repository={repository}
             onCreated={(lead) => {
               upsert(lead);
+              void getMemoryTaskRepository().ensureFollowUpForLead({
+                leadId: lead.id,
+                leadName: lead.fullName,
+                assigneeId: lead.ownerId,
+                assigneeName: lead.ownerName,
+                customerId: lead.customerId,
+              });
               push({
                 title: t("createdToastTitle"),
                 description: t("createdToastBody"),

@@ -1,2 +1,2 @@
 export type { User } from "./model";
-export { isManagerRole } from "./model";
+export { isManagerRole, isAdminRole } from "./model";

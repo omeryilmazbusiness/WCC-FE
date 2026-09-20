@@ -40,3 +40,11 @@ export const LEAD_STAGE_TONES: Record<string, StageBadgeTone> = {
   won: "emerald",
   lost: "zinc",
 };
+
+/** Map task statuses → badge tone (FSD-safe) */
+export const TASK_STATUS_TONES: Record<string, StageBadgeTone> = {
+  open: "sky",
+  in_progress: "amber",
+  done: "emerald",
+  cancelled: "zinc",
+};

@@ -25,6 +25,7 @@ export class FetchHttpClient implements HttpClient {
   constructor(
     private readonly baseUrl: string,
     private readonly getToken: TokenProvider = () => null,
+    private readonly onUnauthorized?: () => void,
   ) {}
 
   async request<T>(
@@ -43,6 +44,9 @@ export class FetchHttpClient implements HttpClient {
     const payload = await res.json().catch(() => ({}));
 
     if (!res.ok) {
+      if (res.status === 401) {
+        this.onUnauthorized?.();
+      }
       const err = payload?.error;
       throw new ApiError(
         err?.message ?? res.statusText,

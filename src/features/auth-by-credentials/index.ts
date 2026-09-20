@@ -1,2 +1,6 @@
 export { LoginForm } from "./ui/login-form";
-export { clearSession, persistSession } from "./model/session-store";
+export {
+  clearSession,
+  persistSession,
+  isSessionExpired,
+} from "./model/session-store";

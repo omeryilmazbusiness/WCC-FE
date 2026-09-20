@@ -11,6 +11,9 @@
     "packages": "Packages",
     "bookings": "Bookings",
     "tasks": "Tasks",
+    "users": "Users",
+    "roles": "Roles",
+    "audit": "Audit",
     "logout": "Sign out"
   },
   "auth": {
@@ -19,19 +22,142 @@
     "email": "Email",
     "password": "Password",
     "submit": "Continue",
-    "error": "Invalid credentials"
+    "error": "Invalid credentials",
+    "sessionEnd": "End session",
+    "sessionExpired": "Your session expired — please sign in again"
+  },
+  "admin": {
+    "branch": "Branch",
+    "usersTitle": "Users",
+    "usersSubtitle": "Create and manage staff accounts, roles, and branch assignment",
+    "usersEmpty": "No users found",
+    "rolesTitle": "Role permissions",
+    "rolesSubtitle": "Read-only matrix of role → capability (API-enforced)",
+    "rolesEmpty": "No permissions loaded",
+    "auditTitle": "Audit log",
+    "auditSubtitle": "Who changed what — filter by actor, entity, and time",
+    "auditEmpty": "No audit events yet",
+    "name": "Full name",
+    "email": "Email",
+    "role": "Role",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "createUser": "Create user",
+    "searchUsers": "Search users…",
+    "allRoles": "All roles",
+    "created": "User created",
+    "updated": "User updated",
+    "createError": "Could not create user",
+    "loadError": "Could not load data",
+    "permission": "Permission",
+    "when": "When",
+    "action": "Action",
+    "entity": "Entity",
+    "entityId": "Entity ID",
+    "actor": "Actor",
+    "entityFilter": "Search action / entity / actor…",
+    "actorFilter": "Actor ID",
+    "allEntities": "All entities"
   },
   "manager": {
     "title": "Manager dashboard",
-    "subtitle": "Exceptions first — KPIs load when API is connected"
+    "subtitle": "Exceptions first — team pace and quick actions",
+    "kpi": {
+      "leadsOpen": "Leads open",
+      "tasksOverdue": "Overdue tasks",
+      "bookingsUnpaid": "Unpaid",
+      "missingDocs": "Missing docs"
+    },
+    "quick": {
+      "lead": "New lead",
+      "tasks": "Tasks",
+      "customers": "Customers"
+    },
+    "teamTitle": "Team performance",
+    "teamBody": "Leads handled, open work, and overdue items by owner",
+    "teamEmpty": "No team activity yet",
+    "team": {
+      "name": "Employee",
+      "leads": "Leads",
+      "openTasks": "Open tasks",
+      "overdue": "Overdue",
+      "wins": "Wins"
+    }
   },
   "workspace": {
     "title": "My work today",
-    "subtitle": "Jump into pipeline — task queue arrives in F8",
+    "subtitle": "One queue for tasks, pipeline, and your target pace",
     "tasksTitle": "My Work Today",
-    "tasksBody": "Task queue placeholder (F8)",
+    "tasksBody": "Due today or overdue — complete or reschedule without leaving this screen.",
+    "openTasks": "All tasks",
+    "queueEmpty": "Nothing due right now",
+    "queueEmptyHint": "New follow-ups appear when leads are created.",
     "pipelineTitle": "My Pipeline",
-    "pipelineBody": "Open the CRM board — drag stages, assign owners, capture lost reasons."
+    "pipelineBody": "Your open opportunities — open the full board to drag stages.",
+    "pipelineEmpty": "No open leads assigned to you",
+    "openPipeline": "Open pipeline board",
+    "targetTitle": "My target",
+    "targetBody": "Placeholder until the full revenue engine lands — same card language as Manager KPIs.",
+    "targetActual": "Actual",
+    "targetExpected": "Expected to date",
+    "targetStatus": {
+      "ahead": "Ahead",
+      "on_track": "On track",
+      "behind": "Behind",
+      "placeholder": "Preview"
+    }
+  },
+  "tasks": {
+    "title": "Tasks",
+    "subtitle": "Kanban and table — complete, reschedule, open related records",
+    "kanban": "Kanban",
+    "table": "Table",
+    "viewMode": "Tasks view",
+    "searchPlaceholder": "Search by title, related, assignee…",
+    "filterAll": "All statuses",
+    "filterStatus": "Status",
+    "empty": "No tasks match",
+    "emptyHint": "Clear filters or create work from a lead or booking.",
+    "emptyColumn": "Drop tasks here",
+    "complete": "Complete",
+    "reschedule": "Reschedule",
+    "rescheduleTitle": "Reschedule task",
+    "dueAt": "Due at",
+    "due": "Due",
+    "overdue": "Overdue",
+    "completedTitle": "Task completed",
+    "rescheduledTitle": "Task rescheduled",
+    "actionError": "Could not update task",
+    "invalidMoveTitle": "Invalid status jump",
+    "invalidMoveBody": "That transition is not allowed.",
+    "movedTitle": "Status updated",
+    "movedBody": "Moved to {status}",
+    "confirmBooking": "Confirm → tasks",
+    "bookingSeededTitle": "Ops tasks ready",
+    "bookingSeededBody": "Document and payment tasks were created for this booking.",
+    "statuses": {
+      "open": "Open",
+      "in_progress": "In progress",
+      "done": "Done",
+      "cancelled": "Cancelled"
+    },
+    "kinds": {
+      "followup": "Follow-up",
+      "document": "Document",
+      "payment": "Payment",
+      "custom": "Custom"
+    },
+    "fields": {
+      "title": "Title",
+      "status": "Status",
+      "kind": "Kind",
+      "assignee": "Assignee",
+      "dueAt": "Due",
+      "actions": "Actions"
+    }
   },
   "customers": {
     "title": "Customers",
@@ -160,6 +286,8 @@
     "clearSearch": "Clear search",
     "resetFilters": "Reset",
     "filter": "Filter",
-    "search": "Search"
+    "search": "Search",
+    "actions": "Actions",
+    "retry": "Retry"
   }
 }

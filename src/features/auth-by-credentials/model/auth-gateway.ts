@@ -58,6 +58,27 @@ export class DemoAuthGateway implements AuthGateway {
         role: "employee",
         branchId: "11111111-1111-1111-1111-111111111111",
       },
+      "admin@wodi.local": {
+        id: "22222222-2222-2222-2222-222222222204",
+        email: "admin@wodi.local",
+        fullName: "System Admin",
+        role: "admin",
+        branchId: "11111111-1111-1111-1111-111111111111",
+      },
+      "finance@wodi.local": {
+        id: "22222222-2222-2222-2222-222222222205",
+        email: "finance@wodi.local",
+        fullName: "Finance User",
+        role: "finance",
+        branchId: "11111111-1111-1111-1111-111111111111",
+      },
+      "ops@wodi.local": {
+        id: "22222222-2222-2222-2222-222222222206",
+        email: "ops@wodi.local",
+        fullName: "Operations User",
+        role: "operations",
+        branchId: "11111111-1111-1111-1111-111111111111",
+      },
     };
     const user = users[normalized];
     if (!user || password !== "ChangeMe123!") {

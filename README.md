@@ -33,7 +33,27 @@ pnpm dev
 pnpm build
 pnpm lint
 pnpm typecheck
+pnpm test:e2e
 ```
+
+## Epic 0 foundation
+
+| Task | Status |
+|------|--------|
+| T-007 App shell + routing + desktop-first | Done |
+| T-008 Design system (forms/tables/drawer/badges/empty/error) | Done |
+| T-009 i18n RTL/LTR + date/number/currency formatters | Done |
+| T-010 Auth session + protected routes + API client | Done |
+
+## Epic 1 identity & admin
+
+| Task | Status |
+|------|--------|
+| T-018 Login / session expiry UX | Done |
+| T-019 Admin Users list/create/edit | Done |
+| T-020 Role permission matrix UI | Done |
+| T-021 Branch/team selector + scoped navigation | Done |
+| T-022 Audit log viewer | Done |
 
 ## Demo login
 

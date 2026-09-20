@@ -18,8 +18,15 @@ export { IconButton } from "./icon-button";
 export { Input } from "./input";
 export { Label } from "./label";
 export { Badge } from "./badge";
-export { StageBadge, LEAD_STAGE_TONES, type StageBadgeTone } from "./stage-badge";
+export {
+  StageBadge,
+  LEAD_STAGE_TONES,
+  TASK_STATUS_TONES,
+  type StageBadgeTone,
+} from "./stage-badge";
 export { CapacityBadge } from "./capacity-badge";
+export { MetricCard, type MetricAccent } from "./metric-card";
+export { SurfacePanel, type SurfaceAccent } from "./surface-panel";
 export { SegmentedControl } from "./segmented-control";
 export {
   Select,
@@ -73,6 +80,18 @@ export {
 } from "./filter-bar";
 export { PageHeader } from "./page-header";
 export { EmptyState } from "./empty-state";
+export { ErrorState } from "./error-state";
+export {
+  Drawer,
+  DrawerTrigger,
+  DrawerClose,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerBody,
+  DrawerFooter,
+} from "./drawer";
 export { Screen } from "./screen";
 export { ListScreen } from "./list-screen";
 export {

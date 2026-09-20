@@ -11,6 +11,9 @@
     "packages": "الباقات",
     "bookings": "الحجوزات",
     "tasks": "المهام",
+    "users": "المستخدمون",
+    "roles": "الأدوار",
+    "audit": "التدقيق",
     "logout": "تسجيل الخروج"
   },
   "auth": {
@@ -19,19 +22,142 @@
     "email": "البريد الإلكتروني",
     "password": "كلمة المرور",
     "submit": "متابعة",
-    "error": "بيانات الدخول غير صحيحة"
+    "error": "بيانات الدخول غير صحيحة",
+    "sessionEnd": "إنهاء الجلسة",
+    "sessionExpired": "انتهت الجلسة — يرجى تسجيل الدخول مجددًا"
+  },
+  "admin": {
+    "branch": "الفرع",
+    "usersTitle": "المستخدمون",
+    "usersSubtitle": "إنشاء وإدارة حسابات الموظفين والأدوار والفروع",
+    "usersEmpty": "لا يوجد مستخدمون",
+    "rolesTitle": "صلاحيات الأدوار",
+    "rolesSubtitle": "مصفوفة الدور → الصلاحية (مطبقة على مستوى الـ API)",
+    "rolesEmpty": "لا توجد صلاحيات",
+    "auditTitle": "سجل التدقيق",
+    "auditSubtitle": "من غيّر ماذا — تصفية حسب الفاعل والكيان والوقت",
+    "auditEmpty": "لا أحداث تدقيق بعد",
+    "name": "الاسم الكامل",
+    "email": "البريد",
+    "role": "الدور",
+    "status": "الحالة",
+    "active": "نشط",
+    "inactive": "معطل",
+    "activate": "تفعيل",
+    "deactivate": "تعطيل",
+    "createUser": "إنشاء مستخدم",
+    "searchUsers": "بحث في المستخدمين…",
+    "allRoles": "كل الأدوار",
+    "created": "تم إنشاء المستخدم",
+    "updated": "تم تحديث المستخدم",
+    "createError": "تعذر إنشاء المستخدم",
+    "loadError": "تعذر تحميل البيانات",
+    "permission": "الصلاحية",
+    "when": "الوقت",
+    "action": "الإجراء",
+    "entity": "الكيان",
+    "entityId": "معرّف الكيان",
+    "actor": "الفاعل",
+    "entityFilter": "بحث في الإجراء / الكيان / الفاعل…",
+    "actorFilter": "معرّف الفاعل",
+    "allEntities": "كل الكيانات"
   },
   "manager": {
     "title": "لوحة المدير",
-    "subtitle": "الاستثناءات أولاً — المؤشرات عند ربط الواجهة الخلفية"
+    "subtitle": "الاستثناءات أولاً — أداء الفريق والإجراءات السريعة",
+    "kpi": {
+      "leadsOpen": "عملاء محتملون مفتوحون",
+      "tasksOverdue": "مهام متأخرة",
+      "bookingsUnpaid": "غير مدفوع",
+      "missingDocs": "مستندات ناقصة"
+    },
+    "quick": {
+      "lead": "عميل محتمل جديد",
+      "tasks": "المهام",
+      "customers": "العملاء"
+    },
+    "teamTitle": "أداء الفريق",
+    "teamBody": "العملاء المحتملون والمهام المفتوحة والمتأخرة حسب المالك",
+    "teamEmpty": "لا يوجد نشاط للفريق بعد",
+    "team": {
+      "name": "الموظف",
+      "leads": "العملاء المحتملون",
+      "openTasks": "مهام مفتوحة",
+      "overdue": "متأخر",
+      "wins": "صفقات"
+    }
   },
   "workspace": {
     "title": "عمل اليوم",
-    "subtitle": "انتقل إلى خط المبيعات — قائمة المهام في F8",
+    "subtitle": "قائمة واحدة للمهام وخط المبيعات وهدفك",
     "tasksTitle": "عمل اليوم",
-    "tasksBody": "قائمة المهام — قيد التطوير (F8)",
+    "tasksBody": "المستحق اليوم أو المتأخر — أكمل أو أعد الجدولة من هنا.",
+    "openTasks": "كل المهام",
+    "queueEmpty": "لا يوجد مستحق الآن",
+    "queueEmptyHint": "تظهر المتابعات عند إنشاء عملاء محتملين.",
     "pipelineTitle": "خط مبيعاتي",
-    "pipelineBody": "افتح لوحة CRM — اسحب المراحل وعيّن المالك وسجّل سبب الخسارة."
+    "pipelineBody": "فرصك المفتوحة — افتح اللوحة الكاملة لسحب المراحل.",
+    "pipelineEmpty": "لا يوجد عملاء محتملون معيّنون لك",
+    "openPipeline": "افتح لوحة المبيعات",
+    "targetTitle": "هدفي",
+    "targetBody": "معاينة حتى اكتمال محرك الإيرادات — نفس لغة بطاقات المدير.",
+    "targetActual": "الفعلي",
+    "targetExpected": "المتوقع حتى اليوم",
+    "targetStatus": {
+      "ahead": "متقدم",
+      "on_track": "على المسار",
+      "behind": "متأخر",
+      "placeholder": "معاينة"
+    }
+  },
+  "tasks": {
+    "title": "المهام",
+    "subtitle": "كانبان وجدول — أكمل وأعد الجدولة وافتح السجل المرتبط",
+    "kanban": "كانبان",
+    "table": "جدول",
+    "viewMode": "عرض المهام",
+    "searchPlaceholder": "ابحث بالعنوان أو المرتبط أو المكلّف…",
+    "filterAll": "كل الحالات",
+    "filterStatus": "الحالة",
+    "empty": "لا توجد مهام مطابقة",
+    "emptyHint": "امسح عوامل التصفية أو أنشئ عملاً من عميل محتمل أو حجز.",
+    "emptyColumn": "أسقط المهام هنا",
+    "complete": "إكمال",
+    "reschedule": "إعادة جدولة",
+    "rescheduleTitle": "إعادة جدولة المهمة",
+    "dueAt": "الاستحقاق",
+    "due": "الاستحقاق",
+    "overdue": "متأخر",
+    "completedTitle": "اكتملت المهمة",
+    "rescheduledTitle": "أُعيدت جدولة المهمة",
+    "actionError": "تعذر تحديث المهمة",
+    "invalidMoveTitle": "انتقال غير صالح",
+    "invalidMoveBody": "هذا الانتقال غير مسموح.",
+    "movedTitle": "تم تحديث الحالة",
+    "movedBody": "نُقلت إلى {status}",
+    "confirmBooking": "تأكيد ← مهام",
+    "bookingSeededTitle": "مهام التشغيل جاهزة",
+    "bookingSeededBody": "تم إنشاء مهام المستندات والدفع لهذا الحجز.",
+    "statuses": {
+      "open": "مفتوحة",
+      "in_progress": "قيد التنفيذ",
+      "done": "منجزة",
+      "cancelled": "ملغاة"
+    },
+    "kinds": {
+      "followup": "متابعة",
+      "document": "مستند",
+      "payment": "دفع",
+      "custom": "مخصص"
+    },
+    "fields": {
+      "title": "العنوان",
+      "status": "الحالة",
+      "kind": "النوع",
+      "assignee": "المكلّف",
+      "dueAt": "الاستحقاق",
+      "actions": "إجراءات"
+    }
   },
   "customers": {
     "title": "العملاء",
@@ -160,6 +286,8 @@
     "clearSearch": "مسح البحث",
     "resetFilters": "إعادة تعيين",
     "filter": "تصفية",
-    "search": "بحث"
+    "search": "بحث",
+    "actions": "إجراءات",
+    "retry": "إعادة المحاولة"
   }
 }
