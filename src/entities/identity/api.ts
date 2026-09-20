@@ -64,6 +64,44 @@ const DEMO_BRANCH: Branch = {
   is_active: true,
 };
 
+function pickString(raw: Record<string, unknown>, ...keys: string[]): string {
+  for (const k of keys) {
+    const v = raw[k];
+    if (typeof v === "string" && v) return v;
+  }
+  return "";
+}
+
+function mapBranch(raw: unknown): Branch | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  const id = pickString(r, "id", "ID");
+  if (!id) return null;
+  return {
+    id,
+    code: pickString(r, "code", "Code") || "—",
+    name_en: pickString(r, "name_en", "NameEN") || id,
+    name_ar: pickString(r, "name_ar", "NameAR"),
+    is_active: Boolean(r.is_active ?? r.IsActive ?? true),
+  };
+}
+
+function mapTeam(raw: unknown): Team | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  const id = pickString(r, "id", "ID");
+  const branchId = pickString(r, "branch_id", "BranchID");
+  if (!id || !branchId) return null;
+  return {
+    id,
+    branch_id: branchId,
+    code: pickString(r, "code", "Code") || "—",
+    name_en: pickString(r, "name_en", "NameEN") || id,
+    name_ar: pickString(r, "name_ar", "NameAR"),
+    is_active: Boolean(r.is_active ?? r.IsActive ?? true),
+  };
+}
+
 const DEMO_USERS: ApiUser[] = [
   {
     id: "22222222-2222-2222-2222-222222222201",
@@ -111,7 +149,12 @@ async function withDemoFallback<T>(fn: () => Promise<T>, demo: () => T): Promise
 
 export async function listBranches(): Promise<Branch[]> {
   return withDemoFallback(
-    () => http().request<Branch[]>("/branches"),
+    async () => {
+      const raw = await http().request<unknown[]>("/branches");
+      return (Array.isArray(raw) ? raw : [])
+        .map(mapBranch)
+        .filter((b): b is Branch => b !== null);
+    },
     () => [DEMO_BRANCH],
   );
 }
@@ -119,7 +162,12 @@ export async function listBranches(): Promise<Branch[]> {
 export async function listTeams(branchId?: string): Promise<Team[]> {
   const q = branchId ? `?branch_id=${branchId}` : "";
   return withDemoFallback(
-    () => http().request<Team[]>(`/teams${q}`),
+    async () => {
+      const raw = await http().request<unknown[]>(`/teams${q}`);
+      return (Array.isArray(raw) ? raw : [])
+        .map(mapTeam)
+        .filter((t): t is Team => t !== null);
+    },
     () => [
       {
         id: "33333333-3333-3333-3333-333333333301",
@@ -217,10 +265,10 @@ export async function fetchPermissionMatrix(): Promise<{
     () => ({
       roles: ["gm", "manager", "employee", "finance", "operations", "admin"],
       permissions: {
-        gm: ["users.read", "users.write", "roles.read", "audit.read", "dashboard.read"],
+        gm: ["users.read", "users.write", "roles.read", "audit.read", "dashboard.read", "leads.read", "leads.write"],
         admin: ["users.read", "users.write", "roles.read", "audit.read", "ops.read"],
-        manager: ["users.read", "roles.read", "audit.read", "dashboard.read", "bookings.write"],
-        employee: ["customers.write", "leads.write", "bookings.write", "tasks.write"],
+        manager: ["users.read", "roles.read", "audit.read", "dashboard.read", "leads.read", "leads.write", "bookings.write"],
+        employee: ["customers.write", "leads.read", "leads.write", "bookings.write", "tasks.write"],
         finance: ["payments.read", "payments.write", "audit.read"],
         operations: ["documents.write", "bookings.write", "packages.write"],
       },

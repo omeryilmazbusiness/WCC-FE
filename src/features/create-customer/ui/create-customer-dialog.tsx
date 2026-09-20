@@ -6,30 +6,31 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import type { Customer, CustomerRepository } from "@/entities/customer";
-import { Button } from "@/shared/ui/button";
 import {
+  Button,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/shared/ui/dialog";
-import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/shared/ui/form";
-import { Input } from "@/shared/ui/input";
+  Input,
+  useToast,
+} from "@/shared/ui";
 
 const schema = z.object({
   fullName: z.string().min(2),
   fullNameAr: z.string().optional(),
   phone: z.string().min(6),
   email: z.string().email().optional().or(z.literal("")),
+  nationality: z.string().optional(),
+  passportNo: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -42,22 +43,45 @@ type Props = {
 export function CreateCustomerDialog({ repository, onCreated }: Props) {
   const t = useTranslations("customers");
   const tc = useTranslations("common");
+  const { push } = useToast();
   const [open, setOpen] = useState(false);
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { fullName: "", fullNameAr: "", phone: "", email: "" },
+    defaultValues: {
+      fullName: "",
+      fullNameAr: "",
+      phone: "",
+      email: "",
+      nationality: "",
+      passportNo: "",
+    },
   });
 
   async function onSubmit(values: FormValues) {
-    const customer = await repository.create({
-      fullName: values.fullName,
-      fullNameAr: values.fullNameAr,
-      phone: values.phone,
-      email: values.email || undefined,
-    });
-    onCreated?.(customer);
-    setOpen(false);
-    form.reset();
+    try {
+      const result = await repository.create({
+        fullName: values.fullName,
+        fullNameAr: values.fullNameAr,
+        phone: values.phone,
+        email: values.email || undefined,
+        nationality: values.nationality,
+        passportNo: values.passportNo,
+      });
+      if (result.duplicateWarn && result.duplicates?.length) {
+        push({
+          title: t("duplicateWarnTitle"),
+          description: t("duplicateWarnBody", {
+            count: result.duplicates.length,
+          }),
+          tone: "info",
+        });
+      }
+      onCreated?.(result.customer);
+      setOpen(false);
+      form.reset();
+    } catch {
+      push({ title: t("createError"), tone: "error" });
+    }
   }
 
   return (
@@ -77,7 +101,7 @@ export function CreateCustomerDialog({ repository, onCreated }: Props) {
               name="fullName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name (EN)</FormLabel>
+                  <FormLabel>{t("nameEn")}</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -90,7 +114,7 @@ export function CreateCustomerDialog({ repository, onCreated }: Props) {
               name="fullNameAr"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name (AR)</FormLabel>
+                  <FormLabel>{t("nameAr")}</FormLabel>
                   <FormControl>
                     <Input dir="rtl" {...field} />
                   </FormControl>
@@ -103,7 +127,7 @@ export function CreateCustomerDialog({ repository, onCreated }: Props) {
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone</FormLabel>
+                  <FormLabel>{t("phone")}</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -116,9 +140,35 @@ export function CreateCustomerDialog({ repository, onCreated }: Props) {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t("email")}</FormLabel>
                   <FormControl>
                     <Input type="email" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="nationality"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("nationality")}</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="passportNo"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("passport")}</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

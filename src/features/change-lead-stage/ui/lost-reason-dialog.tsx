@@ -1,11 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
-import type { Lead, LeadRepository } from "@/entities/lead";
+import {
+  LOST_REASON_CODES,
+  type Lead,
+  type LeadRepository,
+} from "@/entities/lead";
 import {
   Button,
   Dialog,
@@ -20,10 +24,16 @@ import {
   FormLabel,
   FormMessage,
   Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/shared/ui";
 
 const schema = z.object({
-  reason: z.string().min(2),
+  code: z.string().min(1),
+  note: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -48,8 +58,12 @@ export function LostReasonDialog({
   const [error, setError] = useState<string | null>(null);
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { reason: "" },
+    defaultValues: { code: "price", note: "" },
   });
+
+  useEffect(() => {
+    if (open) form.reset({ code: "price", note: "" });
+  }, [open, form]);
 
   async function onSubmit(values: FormValues) {
     if (!lead) return;
@@ -57,7 +71,8 @@ export function LostReasonDialog({
     try {
       const updated = await repository.changeStage(lead.id, {
         stage: "lost",
-        lostReason: values.reason,
+        lostReasonCode: values.code,
+        lostReason: values.note,
       });
       onDone(updated);
       onOpenChange(false);
@@ -80,12 +95,36 @@ export function LostReasonDialog({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="reason"
+              name="code"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t("lostReason")}</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {LOST_REASON_CODES.map((code) => (
+                        <SelectItem key={code} value={code}>
+                          {t(`lostReasons.${code}`)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="note"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("lostNote")}</FormLabel>
                   <FormControl>
-                    <Input {...field} autoFocus />
+                    <Input {...field} placeholder={t("lostNoteHint")} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

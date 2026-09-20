@@ -9,6 +9,7 @@ import {
 } from "@/entities/lead";
 import { AssignLeadDialog } from "@/features/assign-lead";
 import { LeadStageMenu } from "@/features/change-lead-stage";
+import { ConvertLeadDialog } from "@/features/convert-lead";
 import { LEAD_STAGE_TONES, StageBadge } from "@/shared/ui";
 import { cn } from "@/shared/lib/cn";
 
@@ -18,6 +19,7 @@ type Props = {
   repository: LeadRepository;
   onChanged: (lead: Lead) => void;
   onDropLead: (leadId: string, stage: LeadStage) => void;
+  onOpenLead: (lead: Lead) => void;
 };
 
 export function PipelineColumn({
@@ -26,6 +28,7 @@ export function PipelineColumn({
   repository,
   onChanged,
   onDropLead,
+  onOpenLead,
 }: Props) {
   const t = useTranslations("pipeline");
 
@@ -60,19 +63,31 @@ export function PipelineColumn({
             className={cn(
               "rounded-2xl border border-zinc-200/80 bg-white p-3.5 shadow-[0_8px_24px_-18px_rgba(24,24,27,0.45)] transition-all duration-300",
               "cursor-grab active:cursor-grabbing hover:-translate-y-0.5",
+              lead.noFollowUp && "border-amber-300/80",
             )}
           >
-            <p className="text-sm font-semibold text-zinc-950">{lead.fullName}</p>
-            <p className="mt-1 text-xs font-medium text-zinc-500">{lead.phone}</p>
-            <p className="mt-2 truncate text-xs text-zinc-400">
-              {lead.ownerName}
-              {lead.source ? ` · ${lead.source}` : ""}
-            </p>
-            {lead.stage === "lost" && lead.lostReason ? (
-              <p className="mt-2 line-clamp-2 text-xs text-zinc-500">
-                {lead.lostReason}
+            <button
+              type="button"
+              className="w-full text-start"
+              onClick={() => onOpenLead(lead)}
+            >
+              <p className="text-sm font-semibold text-zinc-950">{lead.fullName}</p>
+              <p className="mt-1 text-xs font-medium text-zinc-500">{lead.phone}</p>
+              <p className="mt-2 truncate text-xs text-zinc-400">
+                {lead.ownerName}
+                {lead.source ? ` · ${lead.source}` : ""}
               </p>
-            ) : null}
+              {lead.noFollowUp ? (
+                <p className="mt-2 text-xs font-semibold text-amber-700">
+                  {t("noFollowUpYes")}
+                </p>
+              ) : null}
+              {lead.stage === "lost" && lead.lostReason ? (
+                <p className="mt-2 line-clamp-2 text-xs text-zinc-500">
+                  {lead.lostReason}
+                </p>
+              ) : null}
+            </button>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <LeadStageMenu
                 lead={lead}
@@ -83,6 +98,11 @@ export function PipelineColumn({
                 lead={lead}
                 repository={repository}
                 onAssigned={onChanged}
+              />
+              <ConvertLeadDialog
+                lead={lead}
+                repository={repository}
+                onConverted={(updated) => onChanged(updated)}
               />
             </div>
           </article>

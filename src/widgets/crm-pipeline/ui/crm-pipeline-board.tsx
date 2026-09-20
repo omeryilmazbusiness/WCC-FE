@@ -12,12 +12,13 @@ import {
 } from "@/entities/lead";
 import { CreateLeadDialog } from "@/features/create-lead";
 import { LostReasonDialog } from "@/features/change-lead-stage";
+import { BulkAssignLeadsDialog } from "@/features/bulk-assign-leads";
+import { LeadDetailDrawer } from "@/features/lead-detail";
 import { getMemoryTaskRepository } from "@/entities/task";
 import {
   ListScreen,
   SearchFilterBar,
   SegmentedControl,
-  EmptyState,
   useToast,
 } from "@/shared/ui";
 import { PipelineColumn } from "./pipeline-column";
@@ -38,6 +39,9 @@ export function CrmPipelineBoard({ repository, initialLeads }: Props) {
   const [view, setView] = useState<ViewMode>("kanban");
   const [query, setQuery] = useState("");
   const [ownerFilter, setOwnerFilter] = useState("all");
+  const [noFollowOnly, setNoFollowOnly] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [detail, setDetail] = useState<Lead | null>(null);
   const [pendingLost, setPendingLost] = useState<{
     lead: Lead;
     stage: LeadStage;
@@ -48,12 +52,14 @@ export function CrmPipelineBoard({ repository, initialLeads }: Props) {
       const rest = prev.filter((l) => l.id !== lead.id);
       return [lead, ...rest];
     });
+    setDetail((cur) => (cur?.id === lead.id ? lead : cur));
   }
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return leads.filter((l) => {
       if (ownerFilter !== "all" && l.ownerId !== ownerFilter) return false;
+      if (noFollowOnly && !l.noFollowUp) return false;
       if (!q) return true;
       return (
         l.fullName.toLowerCase().includes(q) ||
@@ -62,13 +68,13 @@ export function CrmPipelineBoard({ repository, initialLeads }: Props) {
         l.ownerName.toLowerCase().includes(q)
       );
     });
-  }, [leads, query, ownerFilter]);
+  }, [leads, query, ownerFilter, noFollowOnly]);
 
   const byStage = useMemo(() => groupLeadsByStage(filtered), [filtered]);
 
   const owners = useMemo(() => {
     const map = new Map<string, string>();
-    for (const l of leads) map.set(l.ownerId, l.ownerName);
+    for (const l of leads) map.set(l.ownerId, l.ownerName || l.ownerId);
     return [...map.entries()];
   }, [leads]);
 
@@ -100,7 +106,8 @@ export function CrmPipelineBoard({ repository, initialLeads }: Props) {
     }
   }
 
-  const isFiltered = query.length > 0 || ownerFilter !== "all";
+  const isFiltered =
+    query.length > 0 || ownerFilter !== "all" || noFollowOnly;
 
   return (
     <ListScreen
@@ -116,6 +123,14 @@ export function CrmPipelineBoard({ repository, initialLeads }: Props) {
               { value: "kanban", label: t("kanban") },
               { value: "table", label: t("table") },
             ]}
+          />
+          <BulkAssignLeadsDialog
+            selectedIds={selected}
+            repository={repository}
+            onAssigned={(updated) => {
+              for (const l of updated) upsert(l);
+              setSelected([]);
+            }}
           />
           <CreateLeadDialog
             repository={repository}
@@ -149,6 +164,7 @@ export function CrmPipelineBoard({ repository, initialLeads }: Props) {
           onReset={() => {
             setQuery("");
             setOwnerFilter("all");
+            setNoFollowOnly(false);
           }}
           sections={[
             {
@@ -165,32 +181,46 @@ export function CrmPipelineBoard({ repository, initialLeads }: Props) {
                 })),
               ],
             },
+            {
+              id: "nofollow",
+              label: t("noFollowUp"),
+              value: noFollowOnly ? "yes" : "all",
+              onChange: (v: string) => setNoFollowOnly(v === "yes"),
+              options: [
+                { value: "all", label: t("filterAll"), count: leads.length },
+                {
+                  value: "yes",
+                  label: t("noFollowUpYes"),
+                  count: leads.filter((l) => l.noFollowUp).length,
+                },
+              ],
+            },
           ]}
         />
       }
     >
       {view === "kanban" ? (
-        filtered.length === 0 ? (
-          <EmptyState title={t("empty")} description={t("emptyHint")} />
-        ) : (
-          <div className="flex gap-3 overflow-x-auto pb-2">
-            {PIPELINE_COLUMNS.map((stage) => (
-              <PipelineColumn
-                key={stage}
-                stage={stage}
-                leads={byStage[stage]}
-                repository={repository}
-                onChanged={upsert}
-                onDropLead={(id, s) => void handleDrop(id, s)}
-              />
-            ))}
-          </div>
-        )
+        <div className="flex gap-3 overflow-x-auto pb-2">
+          {PIPELINE_COLUMNS.map((stage) => (
+            <PipelineColumn
+              key={stage}
+              stage={stage}
+              leads={byStage[stage]}
+              repository={repository}
+              onChanged={upsert}
+              onDropLead={(id, s) => void handleDrop(id, s)}
+              onOpenLead={setDetail}
+            />
+          ))}
+        </div>
       ) : (
         <PipelineTable
           leads={filtered}
           repository={repository}
           onChanged={upsert}
+          selectedIds={selected}
+          onSelectionChange={setSelected}
+          onOpenLead={setDetail}
         />
       )}
 
@@ -210,6 +240,16 @@ export function CrmPipelineBoard({ repository, initialLeads }: Props) {
             tone: "success",
           });
         }}
+      />
+
+      <LeadDetailDrawer
+        lead={detail}
+        open={Boolean(detail)}
+        onOpenChange={(open) => {
+          if (!open) setDetail(null);
+        }}
+        repository={repository}
+        onChanged={upsert}
       />
     </ListScreen>
   );

@@ -1,0 +1,1 @@
+export { LinkCompanionDialog } from "./ui/link-companion-dialog";

@@ -12,7 +12,7 @@ import {
   type Task,
   type TaskRepository,
 } from "@/entities/task";
-import { MemoryLeadRepository, type Lead } from "@/entities/lead";
+import { createLeadRepository, type Lead } from "@/entities/lead";
 import { useSessionUser } from "@/shared/api/session-context";
 import { routes } from "@/shared/config/routes";
 import { Link } from "@/shared/i18n/navigation";
@@ -44,7 +44,7 @@ export function EmployeeHomeBoard({
 
   useEffect(() => {
     void taskRepository.listToday(user.id).then(setTasks);
-    void new MemoryLeadRepository().list().then((all) =>
+    void createLeadRepository().list().then((all) =>
       setLeads(all.filter((l) => l.ownerId === user.id)),
     );
     void getMemoryDashboardRepository()

@@ -55,6 +55,30 @@ pnpm test:e2e
 | T-021 Branch/team selector + scoped navigation | Done |
 | T-022 Audit log viewer | Done |
 
+## Epic 2 Customer 360
+
+| Task | Status |
+|------|--------|
+| T-030 Customers list search + create (duplicate warn) | Done |
+| T-031 Customer 360 tabs (identity/family/history/docs/payments/tasks/notes/activity) | Done |
+| T-032 Edit customer PII | Done |
+| T-033 Merge + companions UX | Done |
+
+API-backed via `createCustomerRepository()` with memory demo fallback.
+
+## Epic 3 CRM / Lead Pipeline
+
+| Task | Status |
+|------|--------|
+| T-041 Pipeline Kanban view | Done |
+| T-042 Pipeline table + filters | Done |
+| T-043 Lead card + detail drawer | Done |
+| T-044 Stage drag/change + history | Done |
+| T-045 Assign / bulk assign | Done |
+| T-046 Convert to booking + mark lost | Done |
+
+API-backed via `createLeadRepository()` with memory demo fallback.
+
 ## Demo login
 
 Works offline via demo auth fallback (or against `wodi-crm-be`):
@@ -72,8 +96,8 @@ Works offline via demo auth fallback (or against `wodi-crm-be`):
 | F1 App shell + auth gate + AR/EN | Done |
 | F2 Tokens + Form/Table/Dialog kit | Done |
 | F3 Login + role routing | Done |
-| F4 Customer 360 MVP | Done (memory; leads from pipeline store) |
-| F5 CRM Pipeline (Kanban + table) | Done (memory demo) |
+| F4 Customer 360 MVP | Done (API + memory fallback; merge/companions/timeline) |
+| F5 CRM Pipeline (Kanban + table) | Done (API + memory fallback; assign/convert/history) |
 | F6 Bookings | Deferred — Customer 360 tab stub only |
 | F7 Packages / Departures | Done (memory demo) |
 | F8 Task queue | Placeholder on workspace |

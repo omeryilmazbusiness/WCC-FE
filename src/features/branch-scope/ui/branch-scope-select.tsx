@@ -60,11 +60,13 @@ export function BranchScopeSelect() {
           <SelectValue placeholder={t("branch")} />
         </SelectTrigger>
         <SelectContent>
-          {branches.map((b) => (
-            <SelectItem key={b.id} value={b.id}>
-              {b.code} — {b.name_en}
-            </SelectItem>
-          ))}
+          {branches
+            .filter((b) => Boolean(b.id))
+            .map((b) => (
+              <SelectItem key={b.id} value={b.id}>
+                {b.code} — {b.name_en}
+              </SelectItem>
+            ))}
         </SelectContent>
       </Select>
     </div>

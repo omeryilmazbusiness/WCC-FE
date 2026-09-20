@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { LEAD_OWNERS, type Lead, type LeadRepository } from "@/entities/lead";
+import type { Lead, LeadOwner, LeadRepository } from "@/entities/lead";
 import {
   Button,
   Dialog,
@@ -28,11 +28,18 @@ export function AssignLeadDialog({ lead, repository, onAssigned }: Props) {
   const t = useTranslations("pipeline");
   const tc = useTranslations("common");
   const [open, setOpen] = useState(false);
+  const [owners, setOwners] = useState<LeadOwner[]>([]);
   const [ownerId, setOwnerId] = useState(lead.ownerId);
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => {
+    if (!open) return;
+    void repository.listOwners().then(setOwners);
+    setOwnerId(lead.ownerId);
+  }, [open, repository, lead.ownerId]);
+
   async function save() {
-    const owner = LEAD_OWNERS.find((o) => o.id === ownerId);
+    const owner = owners.find((o) => o.id === ownerId);
     if (!owner) return;
     setBusy(true);
     try {
@@ -45,13 +52,7 @@ export function AssignLeadDialog({ lead, repository, onAssigned }: Props) {
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        setOpen(v);
-        if (v) setOwnerId(lead.ownerId);
-      }}
-    >
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button type="button" variant="outline" size="sm">
           {t("assign")}
@@ -70,7 +71,7 @@ export function AssignLeadDialog({ lead, repository, onAssigned }: Props) {
               <SelectValue placeholder={t("selectOwner")} />
             </SelectTrigger>
             <SelectContent>
-              {LEAD_OWNERS.map((o) => (
+              {owners.map((o) => (
                 <SelectItem key={o.id} value={o.id}>
                   {o.name}
                 </SelectItem>
@@ -78,10 +79,10 @@ export function AssignLeadDialog({ lead, repository, onAssigned }: Props) {
             </SelectContent>
           </Select>
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
               {tc("cancel")}
             </Button>
-            <Button type="button" onClick={() => void save()} disabled={busy}>
+            <Button type="button" disabled={busy} onClick={() => void save()}>
               {tc("save")}
             </Button>
           </div>

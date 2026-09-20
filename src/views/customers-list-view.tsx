@@ -4,13 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
-  MemoryCustomerRepository,
+  createCustomerRepository,
   type Customer,
 } from "@/entities/customer";
 import { CreateCustomerDialog } from "@/features/create-customer";
 import { Link } from "@/shared/i18n/navigation";
 import { routes } from "@/shared/config/routes";
 import {
+  Badge,
   DataTable,
   EmptyState,
   ListScreen,
@@ -18,7 +19,7 @@ import {
   useToast,
 } from "@/shared/ui";
 
-const repo = new MemoryCustomerRepository();
+const repo = createCustomerRepository();
 
 type EmailFilter = "all" | "with-email" | "missing-email";
 type NameFilter = "all" | "has-ar" | "en-only";
@@ -46,6 +47,7 @@ export function CustomersListView() {
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
+      if (r.isActive === false) return false;
       if (emailFilter === "with-email" && !r.email?.trim()) return false;
       if (emailFilter === "missing-email" && r.email?.trim()) return false;
       if (nameFilter === "has-ar" && !r.fullNameAr?.trim()) return false;
@@ -56,12 +58,12 @@ export function CustomersListView() {
 
   const counts = useMemo(
     () => ({
-      emailAll: rows.length,
-      withEmail: rows.filter((r) => Boolean(r.email?.trim())).length,
-      missingEmail: rows.filter((r) => !r.email?.trim()).length,
-      nameAll: rows.length,
-      hasAr: rows.filter((r) => Boolean(r.fullNameAr?.trim())).length,
-      enOnly: rows.filter((r) => !r.fullNameAr?.trim()).length,
+      emailAll: rows.filter((r) => r.isActive !== false).length,
+      withEmail: rows.filter((r) => r.isActive !== false && Boolean(r.email?.trim())).length,
+      missingEmail: rows.filter((r) => r.isActive !== false && !r.email?.trim()).length,
+      nameAll: rows.filter((r) => r.isActive !== false).length,
+      hasAr: rows.filter((r) => r.isActive !== false && Boolean(r.fullNameAr?.trim())).length,
+      enOnly: rows.filter((r) => r.isActive !== false && !r.fullNameAr?.trim()).length,
     }),
     [rows],
   );
@@ -69,7 +71,7 @@ export function CustomersListView() {
   const columns: ColumnDef<Customer>[] = [
     {
       accessorKey: "fullName",
-      header: "Name",
+      header: t("name"),
       cell: ({ row }) => (
         <Link
           href={routes.customer(row.original.id)}
@@ -79,9 +81,28 @@ export function CustomersListView() {
         </Link>
       ),
     },
-    { accessorKey: "fullNameAr", header: "AR" },
-    { accessorKey: "phone", header: "Phone" },
-    { accessorKey: "email", header: "Email" },
+    { accessorKey: "fullNameAr", header: t("nameAr") },
+    { accessorKey: "phone", header: t("phone") },
+    {
+      accessorKey: "email",
+      header: t("email"),
+      cell: ({ row }) => row.original.email || "—",
+    },
+    {
+      accessorKey: "nationality",
+      header: t("nationality"),
+      cell: ({ row }) => row.original.nationality || "—",
+    },
+    {
+      id: "passport",
+      header: t("passport"),
+      cell: ({ row }) =>
+        row.original.passportNo ? (
+          <Badge>{row.original.passportNo}</Badge>
+        ) : (
+          "—"
+        ),
+    },
   ];
 
   const isFiltered =
