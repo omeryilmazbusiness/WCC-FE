@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Briefcase, GitBranch, Target } from "lucide-react";
 import {
-  getMemoryDashboardRepository,
+  createDashboardRepository,
   type TargetSnapshot,
 } from "@/entities/dashboard";
 import {
@@ -27,6 +27,8 @@ import {
 } from "@/shared/ui";
 import { TaskQueueList } from "@/widgets/tasks-board";
 
+const dashRepo = createDashboardRepository();
+
 type Props = {
   taskRepository?: TaskRepository;
 };
@@ -41,15 +43,17 @@ export function EmployeeHomeBoard({
   const [tasks, setTasks] = useState<Task[] | null>(null);
   const [leads, setLeads] = useState<Lead[] | null>(null);
   const [target, setTarget] = useState<TargetSnapshot | null>(null);
+  const [workOrder, setWorkOrder] = useState<string[]>([]);
 
   useEffect(() => {
     void taskRepository.listToday(user.id).then(setTasks);
     void createLeadRepository().list().then((all) =>
       setLeads(all.filter((l) => l.ownerId === user.id)),
     );
-    void getMemoryDashboardRepository()
-      .getTargetPlaceholder()
-      .then(setTarget);
+    void dashRepo.getTarget("personal").then(setTarget);
+    void dashRepo.getMyWork(30).then((items) => {
+      setWorkOrder(items.filter((i) => i.source === "task").map((i) => i.id));
+    });
   }, [taskRepository, user.id]);
 
   function upsert(task: Task) {
@@ -60,6 +64,17 @@ export function EmployeeHomeBoard({
       return [task, ...rest];
     });
   }
+
+  const orderedTasks = useMemo(() => {
+    if (!tasks) return [];
+    if (workOrder.length === 0) return tasks;
+    const rank = new Map(workOrder.map((id, i) => [id, i]));
+    return [...tasks].sort((a, b) => {
+      const ra = rank.get(a.id) ?? 999;
+      const rb = rank.get(b.id) ?? 999;
+      return ra - rb;
+    });
+  }, [tasks, workOrder]);
 
   const pipelinePreview = useMemo(() => {
     if (!leads) return [];
@@ -76,9 +91,10 @@ export function EmployeeHomeBoard({
     );
   }
 
-  const progressPct = Math.round(
-    (target.actualAmount / target.targetAmount) * 100,
-  );
+  const progressPct =
+    target.targetAmount > 0
+      ? Math.round((target.actualAmount / target.targetAmount) * 100)
+      : 0;
 
   return (
     <Screen data-testid="employee-home">
@@ -101,7 +117,7 @@ export function EmployeeHomeBoard({
           data-testid="my-work-today"
         >
           <TaskQueueList
-            tasks={tasks}
+            tasks={orderedTasks}
             repository={taskRepository}
             onChanged={upsert}
             emptyTitle={t("queueEmpty")}
@@ -115,22 +131,22 @@ export function EmployeeHomeBoard({
             description={t("targetBody")}
             icon={Target}
             accent="emerald"
-            data-testid="target-placeholder"
+            data-testid="my-target"
           >
             <div className="grid grid-cols-2 gap-3">
               <MetricCard
                 label={t("targetActual")}
-                value={`${(target.actualAmount / 1000).toFixed(0)}k`}
+                value={`${(target.actualAmount / 100).toLocaleString()}`}
                 icon={Target}
                 accent="emerald"
-                hint={`${progressPct}%`}
+                hint={`${progressPct}% · ${t(`targetStatus.${target.status}`)}`}
               />
               <MetricCard
                 label={t("targetExpected")}
-                value={`${(target.expectedToDate / 1000).toFixed(0)}k`}
+                value={`${(target.expectedToDate / 100).toLocaleString()}`}
                 icon={Target}
                 accent="sky"
-                hint={t(`targetStatus.${target.status}`)}
+                hint={target.currency}
               />
             </div>
           </SurfacePanel>

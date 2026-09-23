@@ -116,6 +116,21 @@ API-backed via `createBookingRepository()` with memory demo fallback.
 
 API-backed via `createTaskRepository()` with memory demo fallback.
 
+## Epic 7 Manager + Employee Workspaces
+
+| Task | Status |
+|------|--------|
+| T-084 Manager KPIs + period filter | Done |
+| T-085 KPI drill-downs to pipeline/tasks/bookings | Done |
+| T-086 Team performance table | Done |
+| T-087 Attention / exception feed | Done |
+| T-088 Period scope (7/30/90) | Done |
+| T-089 Employee My Work Today | Done |
+| T-090 Target progress (personal / branch) | Done |
+| T-091–T-096 Quick actions + role homes | Done |
+
+API-backed via `createDashboardRepository()` with memory demo fallback.
+
 ## Demo login
 
 Works offline via demo auth fallback (or against `wodi-crm-be`):
@@ -138,6 +153,7 @@ Works offline via demo auth fallback (or against `wodi-crm-be`):
 | F6 Bookings | Done (API + memory fallback; workspace, readiness, 360/convert/packages links) |
 | F7 Packages / Departures | Done (API + memory fallback; tiers/capacity/close sales) |
 | F8 Task queue | Done (API + memory fallback; mine/team, overdue, bulk assign) |
+| F9 Manager / Employee dashboards | Done (API + memory fallback; KPIs, attention, targets, my-work) |
 
 ## New screen rule
 

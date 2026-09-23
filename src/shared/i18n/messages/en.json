@@ -65,6 +65,19 @@
   "manager": {
     "title": "Manager dashboard",
     "subtitle": "Exceptions first — team pace and quick actions",
+    "period": "Period",
+    "period7": "Last 7 days",
+    "period30": "Last 30 days",
+    "period90": "Last 90 days",
+    "targetHeroBody": "Branch pace at {pct}% of season target",
+    "targetActual": "Collected",
+    "targetGoal": "Target",
+    "targetStatus": {
+      "ahead": "Ahead",
+      "on_track": "On track",
+      "behind": "Behind",
+      "placeholder": "No target set"
+    },
     "kpi": {
       "leadsOpen": "Leads open",
       "tasksOverdue": "Overdue tasks",
@@ -73,8 +86,20 @@
     },
     "quick": {
       "lead": "New lead",
+      "booking": "New booking",
       "tasks": "Tasks",
+      "package": "Packages",
       "customers": "Customers"
+    },
+    "attentionTitle": "Needs attention",
+    "attentionBody": "Overdue, unpaid, capacity, and escalations — act from here",
+    "attentionEmpty": "No exceptions right now",
+    "attentionKinds": {
+      "overdue_task": "Overdue task",
+      "unpaid_booking": "Unpaid booking",
+      "missing_doc": "Missing document",
+      "capacity": "Capacity risk",
+      "escalated_task": "Escalated"
     },
     "teamTitle": "Team performance",
     "teamBody": "Leads handled, open work, and overdue items by owner",
@@ -91,7 +116,7 @@
     "title": "My work today",
     "subtitle": "One queue for tasks, pipeline, and your target pace",
     "tasksTitle": "My Work Today",
-    "tasksBody": "Due today or overdue — complete or reschedule without leaving this screen.",
+    "tasksBody": "Prioritized queue — overdue and escalated first. Complete or reschedule here.",
     "openTasks": "All tasks",
     "queueEmpty": "Nothing due right now",
     "queueEmptyHint": "New follow-ups appear when leads are created.",
@@ -100,14 +125,14 @@
     "pipelineEmpty": "No open leads assigned to you",
     "openPipeline": "Open pipeline board",
     "targetTitle": "My target",
-    "targetBody": "Placeholder until the full revenue engine lands — same card language as Manager KPIs.",
+    "targetBody": "Personal pace vs season target — same language as the manager board.",
     "targetActual": "Actual",
     "targetExpected": "Expected to date",
     "targetStatus": {
       "ahead": "Ahead",
       "on_track": "On track",
       "behind": "Behind",
-      "placeholder": "Preview"
+      "placeholder": "No target set"
     }
   },
   "tasks": {
