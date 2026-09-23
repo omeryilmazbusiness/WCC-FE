@@ -1,6 +1,7 @@
-import { NextIntlClientProvider, hasLocale } from "next-intl";
+import { hasLocale } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
+import { IntlClientProvider } from "@/shared/i18n/intl-client-provider";
 import { isRtl, routing } from "@/shared/i18n/routing";
 
 type Props = {
@@ -21,10 +22,10 @@ export default async function LocaleLayout({ children, params }: Props) {
   const dir = isRtl(locale) ? "rtl" : "ltr";
 
   return (
-    <NextIntlClientProvider messages={messages}>
+    <IntlClientProvider locale={locale} messages={messages}>
       <div lang={locale} dir={dir} className="min-h-screen">
         {children}
       </div>
-    </NextIntlClientProvider>
+    </IntlClientProvider>
   );
 }

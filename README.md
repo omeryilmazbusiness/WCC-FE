@@ -161,6 +161,19 @@ API-backed via `createConversationRepository()` with memory demo fallback.
 
 API-backed via `createPaymentRepository()` with memory demo fallback. Booking detail → **Finance** tab; nav → `/finance` queues + CSV export.
 
+## Epic 10 Revenue Target & Performance Engine
+
+| Task | Status |
+|------|--------|
+| T-138 Target configuration panel | Done |
+| T-139 Progress hero + forecast + required pace | Done |
+| T-140 Seasonality editor | Done |
+| T-141 Contribution table + ranking | Done |
+| T-142 Cumulative actual vs expected chart | Done |
+| T-143 Drill-down to source records | Done |
+
+API-backed via `createRevenueTargetRepository()`; screen `/targets`.
+
 ## Demo login
 
 Works offline via demo auth fallback (or against `wodi-crm-be`):

@@ -12,6 +12,7 @@ import {
   ListTodo,
   MessageSquare,
   Wallet,
+  Target,
   Shield,
   KeyRound,
   ScrollText,
@@ -54,6 +55,9 @@ export function AppShell({ user, children }: Props) {
     { href: routes.bookings, label: t("bookings"), icon: CalendarCheck2 },
     ...(finance && user.role !== "finance"
       ? [{ href: routes.finance, label: t("finance"), icon: Wallet }]
+      : []),
+    ...(manager
+      ? [{ href: routes.targets, label: t("targets"), icon: Target }]
       : []),
     ...(admin
       ? [

@@ -12,6 +12,7 @@
     "packages": "Packages",
     "bookings": "Bookings",
     "finance": "Finance",
+    "targets": "Targets",
     "tasks": "Tasks",
     "users": "Users",
     "roles": "Roles",
@@ -765,5 +766,61 @@
     "addSchedule": "Add promise",
     "cancel": "Cancel",
     "requestRefund": "Request refund"
+  },
+  "targets": {
+    "title": "Revenue targets",
+    "subtitle": "Season goal vs actual collections — pace, forecast, and who is driving the number",
+    "listTitle": "Targets",
+    "createTitle": "New target",
+    "create": "New target",
+    "created": "Target created",
+    "recompute": "Refresh",
+    "recomputed": "Progress refreshed",
+    "loadError": "Could not load targets",
+    "saveError": "Could not save",
+    "empty": "No target selected",
+    "emptyHint": "Create a branch season target to begin.",
+    "ofTarget": "of {target}",
+    "progress": "Progress",
+    "share": "share",
+    "analystNote": "Actual = verified collections in the period. Expected = where you should be by today under the chosen curve. Forecast projects the current pace to period end; required pace is the daily amount still needed to hit the goal. Variance and status tell you if the branch is ahead, on track, or behind.",
+    "tabs": {
+      "overview": "Overview",
+      "seasonality": "Seasonality",
+      "ranking": "Ranking",
+      "chart": "Pace chart",
+      "sources": "Sources"
+    },
+    "status": {
+      "ahead": "Ahead",
+      "on_track": "On track",
+      "behind": "Behind",
+      "placeholder": "No target"
+    },
+    "cards": {
+      "expected": "Expected to date",
+      "forecast": "Forecast",
+      "requiredPace": "Required pace",
+      "perDay": "per remaining day",
+      "variance": "Variance",
+      "pace": "Pace vs expected",
+      "curve": "Curve"
+    },
+    "fields": {
+      "label": "Label",
+      "amount": "Target amount",
+      "periodStart": "Period start",
+      "periodEnd": "Period end"
+    },
+    "seasonalityHint": "Enter 12 monthly weights (percent). They are normalized to 100%.",
+    "weightsCsv": "Monthly weights (CSV)",
+    "saveWeights": "Save seasonality",
+    "weightsSaved": "Seasonality saved",
+    "weightsInvalid": "Invalid weight list",
+    "rankingEmpty": "No contribution ranks yet",
+    "chartEmpty": "No series points",
+    "chartLegend": "Dark = cumulative actual · Green = expected",
+    "sourcesEmpty": "No contributing records",
+    "openBooking": "Open"
   }
 }
