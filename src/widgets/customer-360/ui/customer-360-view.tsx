@@ -298,6 +298,12 @@ export function Customer360View({ customerId }: Props) {
             title={t("conversationsEmpty")}
             description={t("conversationsHint")}
           />
+          <Link
+            href={routes.inbox}
+            className="mt-3 inline-block text-xs font-semibold text-sky-700 hover:underline"
+          >
+            {t("openInbox")}
+          </Link>
         </TabsContent>
 
         <TabsContent value="docs" className="mt-4">

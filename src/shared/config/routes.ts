@@ -13,6 +13,7 @@ export const routes = {
   bookings: "/bookings",
   booking: (id: string) => `/bookings/${id}`,
   tasks: "/tasks",
+  inbox: "/inbox",
   adminUsers: "/admin/users",
   adminRoles: "/admin/roles",
   adminAudit: "/admin/audit",

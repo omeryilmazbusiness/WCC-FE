@@ -131,6 +131,23 @@ API-backed via `createTaskRepository()` with memory demo fallback.
 
 API-backed via `createDashboardRepository()` with memory demo fallback.
 
+## Epic 8 Unified Inbox + Integrations + SLA
+
+| Task | Status |
+|------|--------|
+| T-109 3-pane Unified Inbox | Done |
+| T-110 Composer (reply / internal note) | Done |
+| T-111 Assign + create/match actions | Done |
+| T-112 Create lead/task/booking from thread | Done |
+| T-113 Unanswered age + SLA filters | Done |
+| T-114 Channel health strip | Done |
+| T-115 Mark spam / duplicate / resolved | Done |
+| Channel Connect (WA / IG / FB / Gmail BYO credentials) | Done |
+
+API-backed via `createConversationRepository()` with memory demo fallback.
+
+**Connect:** each channel opens a credential dialog (Meta access token + IDs, or Gmail OAuth client/refresh). Tokens POST to `/integrations/accounts/{provider}/connect` and are stored per branch. After save, copy the webhook URL + verify token into Meta Developer.
+
 ## Demo login
 
 Works offline via demo auth fallback (or against `wodi-crm-be`):
@@ -154,6 +171,7 @@ Works offline via demo auth fallback (or against `wodi-crm-be`):
 | F7 Packages / Departures | Done (API + memory fallback; tiers/capacity/close sales) |
 | F8 Task queue | Done (API + memory fallback; mine/team, overdue, bulk assign) |
 | F9 Manager / Employee dashboards | Done (API + memory fallback; KPIs, attention, targets, my-work) |
+| F10 Unified Inbox | Done (API + memory fallback; 3-pane, SLA filters, channel health) |
 
 ## New screen rule
 

@@ -10,6 +10,7 @@ import {
   Package,
   CalendarCheck2,
   ListTodo,
+  MessageSquare,
   Shield,
   KeyRound,
   ScrollText,
@@ -41,6 +42,7 @@ export function AppShell({ user, children }: Props) {
       ? { href: routes.manager, label: t("manager"), icon: LayoutDashboard }
       : { href: routes.workspace, label: t("workspace"), icon: Briefcase },
     { href: routes.pipeline, label: t("pipeline"), icon: Kanban },
+    { href: routes.inbox, label: t("inbox"), icon: MessageSquare },
     { href: routes.tasks, label: t("tasks"), icon: ListTodo },
     { href: routes.customers, label: t("customers"), icon: Users },
     { href: routes.packages, label: t("packages"), icon: Package },

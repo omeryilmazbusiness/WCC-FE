@@ -16,6 +16,7 @@
 export { Button, buttonVariants, type ButtonProps } from "./button";
 export { IconButton } from "./icon-button";
 export { Input } from "./input";
+export { Textarea } from "./textarea";
 export { Label } from "./label";
 export { Badge } from "./badge";
 export {
