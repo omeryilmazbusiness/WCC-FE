@@ -1,9 +1,9 @@
 "use client";
 
-import { MemoryTourPackageRepository } from "@/entities/tourpackage";
+import { createTourPackageRepository } from "@/entities/tourpackage";
 import { PackagesListBoard } from "@/widgets/packages-board";
 
-const repo = new MemoryTourPackageRepository();
+const repo = createTourPackageRepository();
 
 export function PackagesListView() {
   return <PackagesListBoard repository={repo} />;

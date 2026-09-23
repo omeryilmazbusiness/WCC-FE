@@ -35,7 +35,7 @@ export function PackagesListBoard({ repository }: Props) {
   const [loaded, setLoaded] = useState(false);
 
   async function refresh() {
-    setRows(await repository.listPackages());
+    setRows(await repository.listPackages(false));
     setLoaded(true);
   }
 

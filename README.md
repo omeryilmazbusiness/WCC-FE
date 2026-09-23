@@ -79,6 +79,18 @@ API-backed via `createCustomerRepository()` with memory demo fallback.
 
 API-backed via `createLeadRepository()` with memory demo fallback.
 
+## Epic 4 Packages / Departures / Capacity
+
+| Task | Status |
+|------|--------|
+| T-054 Package list/create/edit/clone | Done |
+| T-055 Departure create/manage + capacity UI | Done |
+| T-056 Pricing tiers editor | Done |
+| T-057 Departure readiness summary | Done |
+| T-058 Close sales / mark full | Done |
+
+API-backed via `createTourPackageRepository()` with memory demo fallback.
+
 ## Demo login
 
 Works offline via demo auth fallback (or against `wodi-crm-be`):
@@ -99,7 +111,7 @@ Works offline via demo auth fallback (or against `wodi-crm-be`):
 | F4 Customer 360 MVP | Done (API + memory fallback; merge/companions/timeline) |
 | F5 CRM Pipeline (Kanban + table) | Done (API + memory fallback; assign/convert/history) |
 | F6 Bookings | Deferred — Customer 360 tab stub only |
-| F7 Packages / Departures | Done (memory demo) |
+| F7 Packages / Departures | Done (API + memory fallback; tiers/capacity/close sales) |
 | F8 Task queue | Placeholder on workspace |
 
 ## New screen rule

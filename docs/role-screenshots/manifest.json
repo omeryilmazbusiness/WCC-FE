@@ -1,0 +1,282 @@
+{
+  "capturedAt": "2026-09-20T19:38:06.234Z",
+  "loginShot": "00-login.png",
+  "roles": [
+    {
+      "role": "gm",
+      "label": "General Manager (gm)",
+      "screens": [
+        {
+          "key": "home",
+          "title": "Manager Dashboard",
+          "file": "gm-home.png"
+        },
+        {
+          "key": "pipeline",
+          "title": "CRM Pipeline",
+          "file": "gm-pipeline.png"
+        },
+        {
+          "key": "tasks",
+          "title": "Tasks",
+          "file": "gm-tasks.png"
+        },
+        {
+          "key": "customers",
+          "title": "Customers",
+          "file": "gm-customers.png"
+        },
+        {
+          "key": "customer-360",
+          "title": "Customer 360",
+          "file": "gm-customer-360.png"
+        },
+        {
+          "key": "packages",
+          "title": "Packages",
+          "file": "gm-packages.png"
+        },
+        {
+          "key": "package-detail",
+          "title": "Package Detail / Departures",
+          "file": "gm-package-detail.png"
+        },
+        {
+          "key": "admin-users",
+          "title": "Admin — Users",
+          "file": "gm-admin-users.png"
+        },
+        {
+          "key": "admin-roles",
+          "title": "Admin — Roles",
+          "file": "gm-admin-roles.png"
+        },
+        {
+          "key": "admin-audit",
+          "title": "Admin — Audit",
+          "file": "gm-admin-audit.png"
+        }
+      ]
+    },
+    {
+      "role": "manager",
+      "label": "Branch Manager (manager)",
+      "screens": [
+        {
+          "key": "home",
+          "title": "Manager Dashboard",
+          "file": "manager-home.png"
+        },
+        {
+          "key": "pipeline",
+          "title": "CRM Pipeline",
+          "file": "manager-pipeline.png"
+        },
+        {
+          "key": "tasks",
+          "title": "Tasks",
+          "file": "manager-tasks.png"
+        },
+        {
+          "key": "customers",
+          "title": "Customers",
+          "file": "manager-customers.png"
+        },
+        {
+          "key": "customer-360",
+          "title": "Customer 360",
+          "file": "manager-customer-360.png"
+        },
+        {
+          "key": "packages",
+          "title": "Packages",
+          "file": "manager-packages.png"
+        },
+        {
+          "key": "package-detail",
+          "title": "Package Detail / Departures",
+          "file": "manager-package-detail.png"
+        }
+      ]
+    },
+    {
+      "role": "employee",
+      "label": "Sales Employee (employee)",
+      "screens": [
+        {
+          "key": "home",
+          "title": "My Work / Workspace",
+          "file": "employee-home.png"
+        },
+        {
+          "key": "pipeline",
+          "title": "CRM Pipeline",
+          "file": "employee-pipeline.png"
+        },
+        {
+          "key": "tasks",
+          "title": "Tasks",
+          "file": "employee-tasks.png"
+        },
+        {
+          "key": "customers",
+          "title": "Customers",
+          "file": "employee-customers.png"
+        },
+        {
+          "key": "customer-360",
+          "title": "Customer 360",
+          "file": "employee-customer-360.png"
+        },
+        {
+          "key": "packages",
+          "title": "Packages",
+          "file": "employee-packages.png"
+        },
+        {
+          "key": "package-detail",
+          "title": "Package Detail / Departures",
+          "file": "employee-package-detail.png"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "label": "System Admin (admin)",
+      "screens": [
+        {
+          "key": "home",
+          "title": "Admin — Users (home)",
+          "file": "admin-home.png"
+        },
+        {
+          "key": "pipeline",
+          "title": "CRM Pipeline",
+          "file": "admin-pipeline.png"
+        },
+        {
+          "key": "tasks",
+          "title": "Tasks",
+          "file": "admin-tasks.png"
+        },
+        {
+          "key": "customers",
+          "title": "Customers",
+          "file": "admin-customers.png"
+        },
+        {
+          "key": "customer-360",
+          "title": "Customer 360",
+          "file": "admin-customer-360.png"
+        },
+        {
+          "key": "packages",
+          "title": "Packages",
+          "file": "admin-packages.png"
+        },
+        {
+          "key": "package-detail",
+          "title": "Package Detail / Departures",
+          "file": "admin-package-detail.png"
+        },
+        {
+          "key": "admin-users",
+          "title": "Admin — Users",
+          "file": "admin-admin-users.png"
+        },
+        {
+          "key": "admin-roles",
+          "title": "Admin — Roles",
+          "file": "admin-admin-roles.png"
+        },
+        {
+          "key": "admin-audit",
+          "title": "Admin — Audit",
+          "file": "admin-admin-audit.png"
+        }
+      ]
+    },
+    {
+      "role": "finance",
+      "label": "Finance (finance)",
+      "screens": [
+        {
+          "key": "home",
+          "title": "Manager Dashboard (landing)",
+          "file": "finance-home.png"
+        },
+        {
+          "key": "pipeline",
+          "title": "CRM Pipeline",
+          "file": "finance-pipeline.png"
+        },
+        {
+          "key": "tasks",
+          "title": "Tasks",
+          "file": "finance-tasks.png"
+        },
+        {
+          "key": "customers",
+          "title": "Customers",
+          "file": "finance-customers.png"
+        },
+        {
+          "key": "customer-360",
+          "title": "Customer 360",
+          "file": "finance-customer-360.png"
+        },
+        {
+          "key": "packages",
+          "title": "Packages",
+          "file": "finance-packages.png"
+        },
+        {
+          "key": "package-detail",
+          "title": "Package Detail / Departures",
+          "file": "finance-package-detail.png"
+        }
+      ]
+    },
+    {
+      "role": "operations",
+      "label": "Operations (operations)",
+      "screens": [
+        {
+          "key": "home",
+          "title": "Workspace (landing)",
+          "file": "operations-home.png"
+        },
+        {
+          "key": "pipeline",
+          "title": "CRM Pipeline",
+          "file": "operations-pipeline.png"
+        },
+        {
+          "key": "tasks",
+          "title": "Tasks",
+          "file": "operations-tasks.png"
+        },
+        {
+          "key": "customers",
+          "title": "Customers",
+          "file": "operations-customers.png"
+        },
+        {
+          "key": "customer-360",
+          "title": "Customer 360",
+          "file": "operations-customer-360.png"
+        },
+        {
+          "key": "packages",
+          "title": "Packages",
+          "file": "operations-packages.png"
+        },
+        {
+          "key": "package-detail",
+          "title": "Package Detail / Departures",
+          "file": "operations-package-detail.png"
+        }
+      ]
+    }
+  ]
+}

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { Lead, LeadRepository } from "@/entities/lead";
-import { MemoryTourPackageRepository } from "@/entities/tourpackage";
+import { createTourPackageRepository } from "@/entities/tourpackage";
 import {
   Button,
   Dialog,
@@ -36,7 +36,7 @@ export function ConvertLeadDialog({ lead, repository, onConverted }: Props) {
   const [pax, setPax] = useState("2");
   const [amount, setAmount] = useState("0");
   const [busy, setBusy] = useState(false);
-  const pkgRepo = useMemo(() => new MemoryTourPackageRepository(), []);
+  const pkgRepo = useMemo(() => createTourPackageRepository(), []);
   const [deps, setDeps] = useState<{ id: string; label: string }[]>([]);
 
   useEffect(() => {

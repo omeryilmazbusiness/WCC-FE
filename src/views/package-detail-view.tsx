@@ -1,9 +1,9 @@
 "use client";
 
-import { MemoryTourPackageRepository } from "@/entities/tourpackage";
+import { createTourPackageRepository } from "@/entities/tourpackage";
 import { PackageDetailBoard } from "@/widgets/packages-board";
 
-const repo = new MemoryTourPackageRepository();
+const repo = createTourPackageRepository();
 
 type Props = { packageId: string };
 

@@ -8,6 +8,8 @@ import type {
   TourPackageRepository,
 } from "@/entities/tourpackage";
 import { CreateDepartureDialog } from "@/features/create-departure";
+import { PricingTiersDialog } from "@/features/pricing-tiers";
+import { ClonePackageDialog } from "@/features/clone-package";
 import { routes } from "@/shared/config/routes";
 import { Link } from "@/shared/i18n/navigation";
 import {
@@ -48,6 +50,13 @@ export function PackageDetailBoard({ packageId, repository }: Props) {
     void refresh();
   }, [packageId, repository]);
 
+  function upsertDeparture(d: Departure) {
+    setDeps((prev) => {
+      const rest = prev.filter((x) => x.id !== d.id);
+      return [...rest, d].sort((a, b) => a.departDate.localeCompare(b.departDate));
+    });
+  }
+
   if (error) {
     return <EmptyState title={t("notFound")} />;
   }
@@ -76,18 +85,28 @@ export function PackageDetailBoard({ packageId, repository }: Props) {
             : `${pkg.code}${pkg.description ? ` · ${pkg.description}` : ""}`
         }
         actions={
-          <CreateDepartureDialog
-            packageId={pkg.id}
-            repository={repository}
-            onCreated={async () => {
-              await refresh();
-              push({
-                title: t("departureCreatedTitle"),
-                description: t("departureCreatedBody"),
-                tone: "success",
-              });
-            }}
-          />
+          <div className="flex flex-wrap gap-2">
+            <PricingTiersDialog packageId={pkg.id} repository={repository} />
+            <ClonePackageDialog
+              source={pkg}
+              repository={repository}
+              onCloned={() => {
+                push({ title: t("packageClonedTitle"), tone: "success" });
+              }}
+            />
+            <CreateDepartureDialog
+              packageId={pkg.id}
+              repository={repository}
+              onCreated={async () => {
+                await refresh();
+                push({
+                  title: t("departureCreatedTitle"),
+                  description: t("departureCreatedBody"),
+                  tone: "success",
+                });
+              }}
+            />
+          </div>
         }
       />
 
@@ -110,14 +129,7 @@ export function PackageDetailBoard({ packageId, repository }: Props) {
               key={d.id}
               departure={d}
               repository={repository}
-              onCloned={async () => {
-                await refresh();
-                push({
-                  title: t("departureClonedTitle"),
-                  description: t("departureClonedBody"),
-                  tone: "success",
-                });
-              }}
+              onChanged={upsertDeparture}
             />
           ))
         )}
