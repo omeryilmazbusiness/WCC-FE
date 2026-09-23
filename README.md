@@ -174,6 +174,17 @@ API-backed via `createPaymentRepository()` with memory demo fallback. Booking de
 
 API-backed via `createRevenueTargetRepository()`; screen `/targets`.
 
+## Epic 11 Excel Import/Export
+
+| Task | Status |
+|------|--------|
+| T-152 Import wizard upload → map → validate → confirm | Done |
+| T-153 Mapping templates + header auto-suggest (approve) | Done |
+| T-154 Import history + error download | Done |
+| T-155 Export builder UI | Done |
+
+API-backed via `createImportExportRepository()`; screen `/import-export`.
+
 ## Demo login
 
 Works offline via demo auth fallback (or against `wodi-crm-be`):

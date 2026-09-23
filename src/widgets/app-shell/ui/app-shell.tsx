@@ -13,6 +13,7 @@ import {
   MessageSquare,
   Wallet,
   Target,
+  FileSpreadsheet,
   Shield,
   KeyRound,
   ScrollText,
@@ -57,7 +58,23 @@ export function AppShell({ user, children }: Props) {
       ? [{ href: routes.finance, label: t("finance"), icon: Wallet }]
       : []),
     ...(manager
-      ? [{ href: routes.targets, label: t("targets"), icon: Target }]
+      ? [
+          { href: routes.targets, label: t("targets"), icon: Target },
+          {
+            href: routes.importExport,
+            label: t("importExport"),
+            icon: FileSpreadsheet,
+          },
+        ]
+      : []),
+    ...(user.role === "finance"
+      ? [
+          {
+            href: routes.importExport,
+            label: t("importExport"),
+            icon: FileSpreadsheet,
+          },
+        ]
       : []),
     ...(admin
       ? [

@@ -14,6 +14,7 @@ export const routes = {
   booking: (id: string) => `/bookings/${id}`,
   finance: "/finance",
   targets: "/targets",
+  importExport: "/import-export",
   tasks: "/tasks",
   inbox: "/inbox",
   adminUsers: "/admin/users",
