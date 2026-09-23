@@ -13,6 +13,7 @@ import {
   type BookingRepository,
 } from "@/entities/booking";
 import { ConfirmBookingTasksButton } from "@/features/confirm-booking-tasks";
+import { BookingFinancePanel } from "@/widgets/booking-finance-panel";
 import { formatDateTime } from "@/shared/lib/format";
 import { Link } from "@/shared/i18n/navigation";
 import { routes } from "@/shared/config/routes";
@@ -284,6 +285,7 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex h-auto flex-wrap gap-1">
           <TabsTrigger value="overview">{t("tabs.overview")}</TabsTrigger>
+          <TabsTrigger value="finance">{t("tabs.finance")}</TabsTrigger>
           <TabsTrigger value="participants">{t("tabs.participants")}</TabsTrigger>
           <TabsTrigger value="lines">{t("tabs.lines")}</TabsTrigger>
           <TabsTrigger value="checklist">{t("tabs.checklist")}</TabsTrigger>
@@ -307,6 +309,14 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
             />
             <Field label={t("fields.notes")} value={booking.notes || "—"} className="col-span-full" />
           </dl>
+        </TabsContent>
+
+        <TabsContent value="finance" className="mt-4">
+          <BookingFinancePanel
+            bookingId={booking.id}
+            currency={booking.currency}
+            onChanged={() => void refresh()}
+          />
         </TabsContent>
 
         <TabsContent value="participants" className="mt-4 space-y-4">

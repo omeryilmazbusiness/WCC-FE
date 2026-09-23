@@ -12,6 +12,7 @@ export const routes = {
   package: (id: string) => `/packages/${id}`,
   bookings: "/bookings",
   booking: (id: string) => `/bookings/${id}`,
+  finance: "/finance",
   tasks: "/tasks",
   inbox: "/inbox",
   adminUsers: "/admin/users",
@@ -30,6 +31,7 @@ export type AppRole =
 export function homeForRole(role: AppRole): string {
   if (role === "employee" || role === "operations") return routes.workspace;
   if (role === "admin") return routes.adminUsers;
+  if (role === "finance") return routes.finance;
   return routes.manager;
 }
 

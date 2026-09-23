@@ -11,6 +11,7 @@
     "inbox": "الوارد",
     "packages": "الباقات",
     "bookings": "الحجوزات",
+    "finance": "المالية",
     "tasks": "المهام",
     "users": "المستخدمون",
     "roles": "الأدوار",
@@ -670,6 +671,7 @@
     },
     "tabs": {
       "overview": "نظرة عامة",
+      "finance": "المالية",
       "participants": "الركاب",
       "lines": "البنود",
       "checklist": "قائمة التحقق"
@@ -719,5 +721,49 @@
     "search": "بحث",
     "actions": "إجراءات",
     "retry": "إعادة المحاولة"
+  },
+  "finance": {
+    "queuesTitle": "طوابير المالية",
+    "queuesSubtitle": "الوعود المتأخرة والمدفوعات غير المؤكدة والمبالغ المستردة والرصيد الدائن",
+    "export": "تصدير CSV",
+    "exportError": "تعذر التصدير",
+    "loadError": "تعذر تحميل بيانات المالية",
+    "actionError": "تعذر إكمال الإجراء",
+    "saved": "تم الحفظ",
+    "loading": "جارٍ التحميل…",
+    "queueEmpty": "الطابور فارغ",
+    "queueEmptyHint": "لا يوجد شيء في هذا الطابور.",
+    "openBooking": "افتح الحجز",
+    "queues": {
+      "overdue": "متأخر",
+      "unverified": "غير مؤكد",
+      "refunds": "استرداد",
+      "credit": "رصيد دائن"
+    },
+    "metrics": {
+      "booked": "محجوز",
+      "collected": "محصّل",
+      "recognized": "معترف",
+      "margin": "الهامش",
+      "balance": "المتبقي",
+      "credit": "دائن"
+    },
+    "recordTitle": "تسجيل دفعة",
+    "ledgerTitle": "دفتر الأستاذ",
+    "ledgerEmpty": "لا توجد قيود بعد",
+    "scheduleTitle": "جدول الدفع",
+    "refundTitle": "استرداد",
+    "refundHint": "الاسترداد يحتاج موافقة المالية قبل التأثير على المحصّل.",
+    "amount": "المبلغ",
+    "method": "الطريقة",
+    "dueAt": "الاستحقاق",
+    "record": "تسجيل",
+    "verify": "تأكيد",
+    "reverse": "عكس",
+    "approve": "موافقة",
+    "reject": "رفض",
+    "addSchedule": "إضافة وعد",
+    "cancel": "إلغاء",
+    "requestRefund": "طلب استرداد"
   }
 }

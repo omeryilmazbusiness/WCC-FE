@@ -11,6 +11,7 @@
     "inbox": "Inbox",
     "packages": "Packages",
     "bookings": "Bookings",
+    "finance": "Finance",
     "tasks": "Tasks",
     "users": "Users",
     "roles": "Roles",
@@ -670,6 +671,7 @@
     },
     "tabs": {
       "overview": "Overview",
+      "finance": "Finance",
       "participants": "Participants",
       "lines": "Line items",
       "checklist": "Checklist"
@@ -719,5 +721,49 @@
     "search": "Search",
     "actions": "Actions",
     "retry": "Retry"
+  },
+  "finance": {
+    "queuesTitle": "Finance queues",
+    "queuesSubtitle": "Overdue promises, unverified payments, refunds, and credits",
+    "export": "Export CSV",
+    "exportError": "Could not export",
+    "loadError": "Could not load finance data",
+    "actionError": "Could not complete action",
+    "saved": "Saved",
+    "loading": "Loading…",
+    "queueEmpty": "Queue is empty",
+    "queueEmptyHint": "Nothing waiting in this queue.",
+    "openBooking": "Open booking",
+    "queues": {
+      "overdue": "Overdue",
+      "unverified": "Unverified",
+      "refunds": "Refunds",
+      "credit": "Credit"
+    },
+    "metrics": {
+      "booked": "Booked",
+      "collected": "Collected",
+      "recognized": "Recognized",
+      "margin": "Margin",
+      "balance": "Balance",
+      "credit": "Credit"
+    },
+    "recordTitle": "Record payment",
+    "ledgerTitle": "Ledger",
+    "ledgerEmpty": "No ledger entries yet",
+    "scheduleTitle": "Payment schedule",
+    "refundTitle": "Refund",
+    "refundHint": "Refunds need finance approval before they affect collected.",
+    "amount": "Amount",
+    "method": "Method",
+    "dueAt": "Due at",
+    "record": "Record",
+    "verify": "Verify",
+    "reverse": "Reverse",
+    "approve": "Approve",
+    "reject": "Reject",
+    "addSchedule": "Add promise",
+    "cancel": "Cancel",
+    "requestRefund": "Request refund"
   }
 }

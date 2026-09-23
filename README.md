@@ -148,6 +148,19 @@ API-backed via `createConversationRepository()` with memory demo fallback.
 
 **Connect:** each channel opens a credential dialog (Meta access token + IDs, or Gmail OAuth client/refresh). Tokens POST to `/integrations/accounts/{provider}/connect` and are stored per branch. After save, copy the webhook URL + verify token into Meta Developer.
 
+## Epic 9 Finance, Payments & Revenue Metrics
+
+| Task | Status |
+|------|--------|
+| T-124 Booking financial panel | Done |
+| T-125 Payment record/verify UI | Done |
+| T-126 Schedule/promise UI | Done |
+| T-127 Refund/adjustment approval flow | Done |
+| T-128 Finance queues screens | Done |
+| T-129 Finance export | Done |
+
+API-backed via `createPaymentRepository()` with memory demo fallback. Booking detail → **Finance** tab; nav → `/finance` queues + CSV export.
+
 ## Demo login
 
 Works offline via demo auth fallback (or against `wodi-crm-be`):

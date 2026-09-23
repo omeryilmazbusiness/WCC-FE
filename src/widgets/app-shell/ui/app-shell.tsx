@@ -11,6 +11,7 @@ import {
   CalendarCheck2,
   ListTodo,
   MessageSquare,
+  Wallet,
   Shield,
   KeyRound,
   ScrollText,
@@ -36,17 +37,24 @@ export function AppShell({ user, children }: Props) {
   const pathname = usePathname();
   const manager = isManagerRole(user.role);
   const admin = canAccessAdmin(user.role);
+  const finance =
+    user.role === "finance" || user.role === "gm" || user.role === "manager";
 
   const items = [
     manager
       ? { href: routes.manager, label: t("manager"), icon: LayoutDashboard }
-      : { href: routes.workspace, label: t("workspace"), icon: Briefcase },
+      : user.role === "finance"
+        ? { href: routes.finance, label: t("finance"), icon: Wallet }
+        : { href: routes.workspace, label: t("workspace"), icon: Briefcase },
     { href: routes.pipeline, label: t("pipeline"), icon: Kanban },
     { href: routes.inbox, label: t("inbox"), icon: MessageSquare },
     { href: routes.tasks, label: t("tasks"), icon: ListTodo },
     { href: routes.customers, label: t("customers"), icon: Users },
     { href: routes.packages, label: t("packages"), icon: Package },
     { href: routes.bookings, label: t("bookings"), icon: CalendarCheck2 },
+    ...(finance && user.role !== "finance"
+      ? [{ href: routes.finance, label: t("finance"), icon: Wallet }]
+      : []),
     ...(admin
       ? [
           { href: routes.adminUsers, label: t("users"), icon: Shield },
