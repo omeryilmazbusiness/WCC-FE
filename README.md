@@ -91,6 +91,19 @@ API-backed via `createLeadRepository()` with memory demo fallback.
 
 API-backed via `createTourPackageRepository()` with memory demo fallback.
 
+## Epic 5 Booking Workspace
+
+| Task | Status |
+|------|--------|
+| T-067 Bookings list + status filter | Done |
+| T-068 Booking detail workspace | Done |
+| T-069 Participants + line items editor | Done |
+| T-070 Checklist + readiness panel | Done |
+| T-071 Confirm with capacity/readiness gates | Done |
+| T-072 Customer 360 / convert / departure links | Done |
+
+API-backed via `createBookingRepository()` with memory demo fallback.
+
 ## Demo login
 
 Works offline via demo auth fallback (or against `wodi-crm-be`):
@@ -110,7 +123,7 @@ Works offline via demo auth fallback (or against `wodi-crm-be`):
 | F3 Login + role routing | Done |
 | F4 Customer 360 MVP | Done (API + memory fallback; merge/companions/timeline) |
 | F5 CRM Pipeline (Kanban + table) | Done (API + memory fallback; assign/convert/history) |
-| F6 Bookings | Deferred — Customer 360 tab stub only |
+| F6 Bookings | Done (API + memory fallback; workspace, readiness, 360/convert/packages links) |
 | F7 Packages / Departures | Done (API + memory fallback; tiers/capacity/close sales) |
 | F8 Task queue | Placeholder on workspace |
 

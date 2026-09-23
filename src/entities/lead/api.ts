@@ -451,11 +451,19 @@ export class MemoryLeadRepository implements LeadRepository {
         throw new Error("Lead must reach proposal before conversion");
       }
     }
-    const bookingId = crypto.randomUUID();
-    lead.convertedBookingId = bookingId;
+    const { MemoryBookingRepository } = await import("@/entities/booking/api");
+    const bookingRepo = new MemoryBookingRepository();
+    const booking = await bookingRepo.create({
+      customerId: lead.customerId!,
+      departureId: input.departureId,
+      leadId: lead.id,
+      paxCount: input.paxCount ?? 1,
+      totalAmount: input.totalAmount ?? 0,
+      currency: input.currency ?? "USD",
+    });
+    lead.convertedBookingId = booking.id;
     lead.updatedAt = nowIso();
-    void input;
-    return { lead, bookingId };
+    return { lead, bookingId: booking.id };
   }
 
   async setNoFollowUp(id: string, noFollowUp: boolean): Promise<Lead> {

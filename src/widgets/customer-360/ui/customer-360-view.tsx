@@ -9,6 +9,7 @@ import {
   type Customer,
   type TimelineItem,
 } from "@/entities/customer";
+import { createBookingRepository, type Booking } from "@/entities/booking";
 import { EditCustomerDialog } from "@/features/edit-customer";
 import { MergeCustomerDialog } from "@/features/merge-customer";
 import { LinkCompanionDialog } from "@/features/link-companion";
@@ -31,31 +32,36 @@ import {
 } from "@/shared/ui";
 
 const repo = createCustomerRepository();
+const bookingRepo = createBookingRepository();
 
 type Props = { customerId: string };
 
 export function Customer360View({ customerId }: Props) {
   const t = useTranslations("customers");
   const tc = useTranslations("common");
+  const tb = useTranslations("bookings");
   const locale = useLocale();
   const { push } = useToast();
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [companions, setCompanions] = useState<CompanionLink[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState("identity");
 
   const refresh = useCallback(async () => {
     try {
       setError(null);
-      const [c, tl, comps] = await Promise.all([
+      const [c, tl, comps, bks] = await Promise.all([
         repo.getById(customerId),
         repo.timeline(customerId),
         repo.listCompanions(customerId),
+        bookingRepo.list({ customerId }),
       ]);
       setCustomer(c);
       setTimeline(tl);
       setCompanions(comps);
+      setBookings(bks);
     } catch {
       setError(t("loadError"));
     }
@@ -119,7 +125,21 @@ export function Customer360View({ customerId }: Props) {
         header: t("kind"),
         cell: ({ row }) => <Badge>{row.original.kind}</Badge>,
       },
-      { accessorKey: "title", header: t("titleLabel") },
+      {
+        accessorKey: "title",
+        header: t("titleLabel"),
+        cell: ({ row }) =>
+          row.original.kind === "booking" ? (
+            <Link
+              href={routes.booking(row.original.id)}
+              className="font-semibold underline-offset-4 hover:underline"
+            >
+              {row.original.title}
+            </Link>
+          ) : (
+            row.original.title
+          ),
+      },
       {
         accessorKey: "status",
         header: t("status"),
@@ -127,6 +147,36 @@ export function Customer360View({ customerId }: Props) {
       },
     ],
     [t, locale],
+  );
+
+  const bookingColumns = useMemo<ColumnDef<Booking>[]>(
+    () => [
+      {
+        accessorKey: "id",
+        header: tb("fields.id"),
+        cell: ({ row }) => (
+          <Link
+            href={routes.booking(row.original.id)}
+            className="font-semibold underline-offset-4 hover:underline"
+          >
+            {row.original.id.slice(0, 8)}
+          </Link>
+        ),
+      },
+      {
+        accessorKey: "status",
+        header: tb("fields.status"),
+        cell: ({ row }) => <Badge>{tb(`status.${row.original.status}`)}</Badge>,
+      },
+      { accessorKey: "paxCount", header: tb("fields.pax") },
+      {
+        id: "balance",
+        header: tb("fields.balance"),
+        cell: ({ row }) =>
+          `${(row.original.balanceAmt / 100).toFixed(0)} ${row.original.currency}`,
+      },
+    ],
+    [tb],
   );
 
   if (error) {
@@ -183,6 +233,7 @@ export function Customer360View({ customerId }: Props) {
         <TabsList className="flex h-auto flex-wrap gap-1">
           <TabsTrigger value="identity">{t("identity")}</TabsTrigger>
           <TabsTrigger value="family">{t("family")}</TabsTrigger>
+          <TabsTrigger value="bookings">{t("bookings")}</TabsTrigger>
           <TabsTrigger value="history">{t("history")}</TabsTrigger>
           <TabsTrigger value="conversations">{t("conversations")}</TabsTrigger>
           <TabsTrigger value="docs">{t("docs")}</TabsTrigger>
@@ -223,6 +274,14 @@ export function Customer360View({ customerId }: Props) {
             <EmptyState title={t("familyEmpty")} description={t("familyEmptyHint")} />
           ) : (
             <DataTable columns={companionColumns} data={companions} />
+          )}
+        </TabsContent>
+
+        <TabsContent value="bookings" className="mt-4">
+          {bookings.length === 0 ? (
+            <EmptyState title={t("bookingsEmpty")} description={t("bookingsEmptyHint")} />
+          ) : (
+            <DataTable columns={bookingColumns} data={bookings} />
           )}
         </TabsContent>
 

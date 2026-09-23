@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import type { Lead, LeadRepository } from "@/entities/lead";
+import type { BookingRepository } from "@/entities/booking";
+import { createCustomerRepository } from "@/entities/customer";
 import { createTourPackageRepository } from "@/entities/tourpackage";
 import { useRouter } from "@/shared/i18n/navigation";
 import { routes } from "@/shared/config/routes";
@@ -24,71 +25,67 @@ import {
 } from "@/shared/ui";
 
 type Props = {
-  lead: Lead;
-  repository: LeadRepository;
-  onConverted: (lead: Lead, bookingId: string) => void;
+  repository: BookingRepository;
+  defaultCustomerId?: string;
+  defaultDepartureId?: string;
+  onCreated?: (bookingId: string) => void;
 };
 
-export function ConvertLeadDialog({ lead, repository, onConverted }: Props) {
-  const t = useTranslations("pipeline");
+export function CreateBookingDialog({
+  repository,
+  defaultCustomerId,
+  defaultDepartureId,
+  onCreated,
+}: Props) {
+  const t = useTranslations("bookings");
   const tc = useTranslations("common");
   const { push } = useToast();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [departureId, setDepartureId] = useState("");
+  const [customerId, setCustomerId] = useState(defaultCustomerId ?? "");
+  const [departureId, setDepartureId] = useState(defaultDepartureId ?? "");
   const [pax, setPax] = useState("2");
-  const [amount, setAmount] = useState("0");
   const [busy, setBusy] = useState(false);
+  const custRepo = useMemo(() => createCustomerRepository(), []);
   const pkgRepo = useMemo(() => createTourPackageRepository(), []);
+  const [customers, setCustomers] = useState<{ id: string; label: string }[]>([]);
   const [deps, setDeps] = useState<{ id: string; label: string }[]>([]);
 
   useEffect(() => {
     if (!open) return;
     void (async () => {
+      const list = await custRepo.search("");
+      setCustomers(list.slice(0, 40).map((c) => ({ id: c.id, label: c.fullName })));
+      if (!customerId && list[0]) setCustomerId(list[0].id);
       const packages = await pkgRepo.listPackages();
       const rows: { id: string; label: string }[] = [];
       for (const p of packages) {
-        const list = await pkgRepo.listDepartures(p.id);
-        for (const d of list) {
-          rows.push({
-            id: d.id,
-            label: `${p.code} · ${d.code} · ${d.departDate}`,
-          });
+        const dlist = await pkgRepo.listDepartures(p.id);
+        for (const d of dlist) {
+          rows.push({ id: d.id, label: `${p.code} · ${d.code} · ${d.departDate}` });
         }
       }
       setDeps(rows);
-      if (rows[0]) setDepartureId(rows[0].id);
+      if (!departureId && rows[0]) setDepartureId(rows[0].id);
     })();
-  }, [open, pkgRepo]);
+  }, [open, custRepo, pkgRepo, customerId, departureId]);
 
-  if (lead.convertedBookingId) return null;
-  if (lead.stage === "lost") return null;
-
-  async function confirm() {
-    if (!departureId) return;
-    if (!lead.customerId) {
-      push({ title: t("convertNeedsCustomer"), tone: "error" });
-      return;
-    }
+  async function submit() {
+    if (!customerId || !departureId) return;
     setBusy(true);
     try {
-      const res = await repository.convert(lead.id, {
+      const b = await repository.create({
+        customerId,
         departureId,
         paxCount: Number(pax) || 1,
-        totalAmount: Math.round(Number(amount) || 0),
-        currency: "USD",
       });
-      onConverted(res.lead, res.bookingId);
-      push({
-        title: t("convertedTitle"),
-        description: t("convertedBody"),
-        tone: "success",
-      });
+      push({ title: t("createdTitle"), tone: "success" });
       setOpen(false);
-      router.push(routes.booking(res.bookingId));
+      onCreated?.(b.id);
+      router.push(routes.booking(b.id));
     } catch (e) {
       push({
-        title: t("convertError"),
+        title: t("saveError"),
         description: e instanceof Error ? e.message : undefined,
         tone: "error",
       });
@@ -100,18 +97,31 @@ export function ConvertLeadDialog({ lead, repository, onConverted }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button type="button" size="sm">
-          {t("convert")}
-        </Button>
+        <Button type="button">{t("create")}</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("convertTitle")}</DialogTitle>
-          <DialogDescription>
-            {t("convertHint", { name: lead.fullName })}
-          </DialogDescription>
+          <DialogTitle>{t("createTitle")}</DialogTitle>
+          <DialogDescription>{t("createHint")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
+          <div>
+            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              {t("fields.customer")}
+            </p>
+            <Select value={customerId} onValueChange={setCustomerId}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {customers.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div>
             <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-500">
               {t("fields.departure")}
@@ -135,18 +145,12 @@ export function ConvertLeadDialog({ lead, repository, onConverted }: Props) {
             </p>
             <Input value={pax} onChange={(e) => setPax(e.target.value)} />
           </div>
-          <div>
-            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-              {t("fields.amount")}
-            </p>
-            <Input value={amount} onChange={(e) => setAmount(e.target.value)} />
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               {tc("cancel")}
             </Button>
-            <Button type="button" disabled={busy} onClick={() => void confirm()}>
-              {t("convert")}
+            <Button type="button" disabled={busy} onClick={() => void submit()}>
+              {t("create")}
             </Button>
           </div>
         </div>

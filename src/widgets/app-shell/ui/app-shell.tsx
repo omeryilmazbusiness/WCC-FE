@@ -8,6 +8,7 @@ import {
   Briefcase,
   Kanban,
   Package,
+  CalendarCheck2,
   ListTodo,
   Shield,
   KeyRound,
@@ -43,6 +44,7 @@ export function AppShell({ user, children }: Props) {
     { href: routes.tasks, label: t("tasks"), icon: ListTodo },
     { href: routes.customers, label: t("customers"), icon: Users },
     { href: routes.packages, label: t("packages"), icon: Package },
+    { href: routes.bookings, label: t("bookings"), icon: CalendarCheck2 },
     ...(admin
       ? [
           { href: routes.adminUsers, label: t("users"), icon: Shield },

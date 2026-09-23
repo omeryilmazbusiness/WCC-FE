@@ -9,6 +9,8 @@ import type {
 } from "@/entities/tourpackage";
 import { departureRemaining } from "@/entities/tourpackage";
 import { CloneDepartureDialog } from "@/features/clone-departure";
+import { Link } from "@/shared/i18n/navigation";
+import { routes } from "@/shared/config/routes";
 import { Badge, Button, CapacityBadge, Card, CardContent, useToast } from "@/shared/ui";
 
 type Props = {
@@ -104,6 +106,11 @@ export function DepartureCard({ departure, repository, onChanged }: Props) {
             ) : null}
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button asChild type="button" size="sm" variant="outline">
+              <Link href={`${routes.bookings}?departureId=${departure.id}`}>
+                {t("viewBookings")}
+              </Link>
+            </Button>
             <CloneDepartureDialog
               source={departure}
               repository={repository}

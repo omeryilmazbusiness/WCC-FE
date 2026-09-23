@@ -10,6 +10,8 @@ export const routes = {
   pipeline: "/pipeline",
   packages: "/packages",
   package: (id: string) => `/packages/${id}`,
+  bookings: "/bookings",
+  booking: (id: string) => `/bookings/${id}`,
   tasks: "/tasks",
   adminUsers: "/admin/users",
   adminRoles: "/admin/roles",
