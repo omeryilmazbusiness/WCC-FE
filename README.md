@@ -104,6 +104,18 @@ API-backed via `createTourPackageRepository()` with memory demo fallback.
 
 API-backed via `createBookingRepository()` with memory demo fallback.
 
+## Epic 6 Tasks & Workflow
+
+| Task | Status |
+|------|--------|
+| T-079 My Tasks list + Kanban | Done |
+| T-080 Manager team tasks view | Done |
+| T-081 Task create/complete/reschedule/reassign | Done |
+| T-082 Overdue/escalated badges + deep-link | Done |
+| T-083 Bulk assignment UI | Done |
+
+API-backed via `createTaskRepository()` with memory demo fallback.
+
 ## Demo login
 
 Works offline via demo auth fallback (or against `wodi-crm-be`):
@@ -125,7 +137,7 @@ Works offline via demo auth fallback (or against `wodi-crm-be`):
 | F5 CRM Pipeline (Kanban + table) | Done (API + memory fallback; assign/convert/history) |
 | F6 Bookings | Done (API + memory fallback; workspace, readiness, 360/convert/packages links) |
 | F7 Packages / Departures | Done (API + memory fallback; tiers/capacity/close sales) |
-| F8 Task queue | Placeholder on workspace |
+| F8 Task queue | Done (API + memory fallback; mine/team, overdue, bulk assign) |
 
 ## New screen rule
 

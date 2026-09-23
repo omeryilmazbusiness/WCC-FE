@@ -8,7 +8,7 @@ import {
   type TargetSnapshot,
 } from "@/entities/dashboard";
 import {
-  getMemoryTaskRepository,
+  createTaskRepository,
   type Task,
   type TaskRepository,
 } from "@/entities/task";
@@ -32,7 +32,7 @@ type Props = {
 };
 
 export function EmployeeHomeBoard({
-  taskRepository = getMemoryTaskRepository(),
+  taskRepository = createTaskRepository(),
 }: Props) {
   const t = useTranslations("workspace");
   const tp = useTranslations("pipeline");

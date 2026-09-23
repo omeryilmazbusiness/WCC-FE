@@ -1,4 +1,10 @@
-export type { Task, TaskStatus, TaskKind, TaskCreateInput } from "./model";
+export type {
+  Task,
+  TaskStatus,
+  TaskKind,
+  TaskPriority,
+  TaskCreateInput,
+} from "./model";
 export {
   TASK_STATUSES,
   TASK_BOARD_COLUMNS,
@@ -10,5 +16,7 @@ export {
 export {
   type TaskRepository,
   MemoryTaskRepository,
+  ApiTaskRepository,
   getMemoryTaskRepository,
+  createTaskRepository,
 } from "./api";

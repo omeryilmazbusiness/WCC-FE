@@ -3,7 +3,7 @@ import type {
   TargetSnapshot,
   TeamMemberStat,
 } from "./model";
-import { getMemoryTaskRepository, isTaskOverdue } from "@/entities/task";
+import { createTaskRepository, isTaskOverdue } from "@/entities/task";
 import { createLeadRepository } from "@/entities/lead";
 
 export interface DashboardRepository {
@@ -23,7 +23,7 @@ export class MemoryDashboardRepository implements DashboardRepository {
   async getKPIs(from?: Date, to?: Date): Promise<DashboardKPI> {
     const period = from && to ? { from, to } : defaultPeriod();
     const leads = await createLeadRepository().list();
-    const tasks = await getMemoryTaskRepository().list();
+    const tasks = await createTaskRepository().list();
 
     const leadsOpen = leads.filter(
       (l) =>
@@ -70,7 +70,7 @@ export class MemoryDashboardRepository implements DashboardRepository {
 
   async getTeamStats(): Promise<TeamMemberStat[]> {
     const leads = await createLeadRepository().list();
-    const tasks = await getMemoryTaskRepository().list();
+    const tasks = await createTaskRepository().list();
     const byOwner = new Map<string, TeamMemberStat>();
 
     for (const l of leads) {

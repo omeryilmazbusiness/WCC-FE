@@ -15,12 +15,16 @@ export const TASK_BOARD_COLUMNS: TaskStatus[] = [
   "done",
 ];
 
+export type TaskPriority = "low" | "normal" | "high" | "urgent";
+
 export type Task = {
   id: string;
   branchId: string;
   title: string;
   kind: TaskKind;
   status: TaskStatus;
+  priority: TaskPriority;
+  outcome: string;
   assigneeId: string;
   assigneeName: string;
   relatedType: string;
@@ -28,6 +32,7 @@ export type Task = {
   relatedLabel: string;
   customerId?: string | null;
   dueAt: string | null;
+  escalatedAt: string | null;
   createdAt: string;
   updatedAt: string;
   completedAt: string | null;

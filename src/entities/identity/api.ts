@@ -265,12 +265,12 @@ export async function fetchPermissionMatrix(): Promise<{
     () => ({
       roles: ["gm", "manager", "employee", "finance", "operations", "admin"],
       permissions: {
-        gm: ["users.read", "users.write", "roles.read", "audit.read", "dashboard.read", "leads.read", "leads.write", "bookings.read", "bookings.write"],
+        gm: ["users.read", "users.write", "roles.read", "audit.read", "dashboard.read", "leads.read", "leads.write", "bookings.read", "bookings.write", "tasks.read", "tasks.write"],
         admin: ["users.read", "users.write", "roles.read", "audit.read", "ops.read"],
-        manager: ["users.read", "roles.read", "audit.read", "dashboard.read", "leads.read", "leads.write", "bookings.read", "bookings.write"],
-        employee: ["customers.write", "leads.read", "leads.write", "bookings.read", "bookings.write", "tasks.write"],
-        finance: ["payments.read", "payments.write", "bookings.read", "bookings.write", "audit.read"],
-        operations: ["documents.write", "bookings.read", "bookings.write", "packages.write"],
+        manager: ["users.read", "roles.read", "audit.read", "dashboard.read", "leads.read", "leads.write", "bookings.read", "bookings.write", "tasks.read", "tasks.write"],
+        employee: ["customers.write", "leads.read", "leads.write", "bookings.read", "bookings.write", "tasks.read", "tasks.write"],
+        finance: ["payments.read", "payments.write", "bookings.read", "bookings.write", "audit.read", "tasks.read"],
+        operations: ["documents.write", "bookings.read", "bookings.write", "packages.write", "tasks.read", "tasks.write"],
       },
     }),
   );

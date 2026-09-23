@@ -10,6 +10,7 @@ import {
   type TaskRepository,
   type TaskStatus,
 } from "@/entities/task";
+import { BulkAssignTasksDialog } from "@/features/bulk-assign-tasks";
 import {
   EmptyState,
   ListScreen,
@@ -25,11 +26,16 @@ type ViewMode = "kanban" | "table";
 type Props = {
   repository: TaskRepository;
   initialTasks: Task[];
-  /** When set, board scopes to this assignee (employee mine view). */
   assigneeId?: string;
+  managerMode?: boolean;
 };
 
-export function TasksBoard({ repository, initialTasks, assigneeId }: Props) {
+export function TasksBoard({
+  repository,
+  initialTasks,
+  assigneeId,
+  managerMode,
+}: Props) {
   const t = useTranslations("tasks");
   const tc = useTranslations("common");
   const { push } = useToast();
@@ -37,6 +43,7 @@ export function TasksBoard({ repository, initialTasks, assigneeId }: Props) {
   const [view, setView] = useState<ViewMode>("kanban");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selected, setSelected] = useState<string[]>([]);
 
   function upsert(task: Task) {
     setTasks((prev) => {
@@ -91,18 +98,30 @@ export function TasksBoard({ repository, initialTasks, assigneeId }: Props) {
 
   return (
     <ListScreen
-      title={t("title")}
-      description={t("subtitle")}
+      title={managerMode ? t("teamTitle") : t("title")}
+      description={managerMode ? t("teamSubtitle") : t("subtitle")}
       actions={
-        <SegmentedControl
-          aria-label={t("viewMode")}
-          value={view}
-          onChange={setView}
-          options={[
-            { value: "kanban", label: t("kanban") },
-            { value: "table", label: t("table") },
-          ]}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          {managerMode ? (
+            <BulkAssignTasksDialog
+              repository={repository}
+              taskIds={selected}
+              onAssigned={(updated) => {
+                for (const u of updated) upsert(u);
+                setSelected([]);
+              }}
+            />
+          ) : null}
+          <SegmentedControl
+            aria-label={t("viewMode")}
+            value={view}
+            onChange={setView}
+            options={[
+              { value: "kanban", label: t("kanban") },
+              { value: "table", label: t("table") },
+            ]}
+          />
+        </div>
       }
       toolbar={
         <SearchFilterBar
@@ -142,15 +161,15 @@ export function TasksBoard({ repository, initialTasks, assigneeId }: Props) {
       }
     >
       {scoped.length === 0 ? (
-        <EmptyState
-          title={t("empty")}
-          description={isFiltered ? t("emptyHint") : t("emptyHint")}
-        />
+        <EmptyState title={t("empty")} description={t("emptyHint")} />
       ) : view === "table" ? (
         <TaskTable
           tasks={scoped}
           repository={repository}
           onChanged={upsert}
+          selectable={managerMode}
+          selectedIds={selected}
+          onSelectionChange={setSelected}
         />
       ) : (
         <div className="flex gap-3 overflow-x-auto pb-2">

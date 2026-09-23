@@ -2,24 +2,34 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { getMemoryTaskRepository, type Task } from "@/entities/task";
+import { createTaskRepository, type Task } from "@/entities/task";
 import { useSessionUser } from "@/shared/api/session-context";
 import { EmptyState, Screen } from "@/shared/ui";
 import { isManagerRole } from "@/entities/user";
 import { TasksBoard } from "@/widgets/tasks-board";
+
+const repo = createTaskRepository();
 
 export function TasksView() {
   const t = useTranslations("tasks");
   const tc = useTranslations("common");
   const user = useSessionUser();
   const [tasks, setTasks] = useState<Task[] | null>(null);
-  const repo = getMemoryTaskRepository();
 
   useEffect(() => {
-    void (isManagerRole(user.role) ? repo.list() : repo.listMine(user.id)).then(
-      setTasks,
-    );
-  }, [repo, user.id, user.role]);
+    void (async () => {
+      if (isManagerRole(user.role)) {
+        try {
+          await repo.escalateOverdue();
+        } catch {
+          /* optional */
+        }
+        setTasks(await repo.list());
+      } else {
+        setTasks(await repo.listMine(user.id));
+      }
+    })();
+  }, [user.id, user.role]);
 
   if (!tasks) {
     return (
@@ -42,6 +52,7 @@ export function TasksView() {
       repository={repo}
       initialTasks={tasks}
       assigneeId={isManagerRole(user.role) ? undefined : user.id}
+      managerMode={isManagerRole(user.role)}
     />
   );
 }

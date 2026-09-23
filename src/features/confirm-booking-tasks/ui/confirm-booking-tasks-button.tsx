@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { PlaneTakeoff } from "lucide-react";
-import { getMemoryTaskRepository } from "@/entities/task";
-import { useSessionUser } from "@/shared/api/session-context";
+import { createTaskRepository } from "@/entities/task";
 import { Button, useToast } from "@/shared/ui";
 
 type Props = {
@@ -14,7 +13,7 @@ type Props = {
   onDone?: () => void;
 };
 
-/** Demo confirm → seeds document + payment tasks (lead→booking→task E2E). */
+/** Refresh booking-related ops tasks after confirm (BE seeder owns creation). */
 export function ConfirmBookingTasksButton({
   bookingId,
   label,
@@ -23,20 +22,23 @@ export function ConfirmBookingTasksButton({
 }: Props) {
   const t = useTranslations("tasks");
   const { push } = useToast();
-  const user = useSessionUser();
   const [busy, setBusy] = useState(false);
 
   async function onClick() {
     setBusy(true);
     try {
-      await getMemoryTaskRepository().ensureBookingOpsTasks({
+      const tasks = await createTaskRepository().ensureBookingOpsTasks({
         bookingId,
         label,
-        assigneeId: user.id,
-        assigneeName: user.fullName,
+        assigneeId: "",
+        assigneeName: "",
         customerId,
       });
-      push({ title: t("bookingSeededTitle"), description: t("bookingSeededBody"), tone: "success" });
+      push({
+        title: t("bookingSeededTitle"),
+        description: t("bookingSeededBody", { count: tasks.length }),
+        tone: "success",
+      });
       onDone?.();
     } catch {
       push({ title: t("actionError"), tone: "error" });

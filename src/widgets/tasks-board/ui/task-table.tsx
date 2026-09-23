@@ -17,13 +17,46 @@ type Props = {
   tasks: Task[];
   repository: TaskRepository;
   onChanged: (task: Task) => void;
+  selectable?: boolean;
+  selectedIds?: string[];
+  onSelectionChange?: (ids: string[]) => void;
 };
 
-export function TaskTable({ tasks, repository, onChanged }: Props) {
+export function TaskTable({
+  tasks,
+  repository,
+  onChanged,
+  selectable,
+  selectedIds = [],
+  onSelectionChange,
+}: Props) {
   const t = useTranslations("tasks");
 
-  const columns = useMemo<ColumnDef<Task>[]>(
-    () => [
+  const columns = useMemo<ColumnDef<Task>[]>(() => {
+    const cols: ColumnDef<Task>[] = [];
+    if (selectable) {
+      cols.push({
+        id: "select",
+        header: "",
+        cell: ({ row }) => (
+          <input
+            type="checkbox"
+            className="h-4 w-4 rounded border-zinc-300"
+            checked={selectedIds.includes(row.original.id)}
+            onChange={(e) => {
+              if (!onSelectionChange) return;
+              if (e.target.checked) {
+                onSelectionChange([...selectedIds, row.original.id]);
+              } else {
+                onSelectionChange(selectedIds.filter((id) => id !== row.original.id));
+              }
+            }}
+            aria-label={t("selectTask")}
+          />
+        ),
+      });
+    }
+    cols.push(
       {
         accessorKey: "title",
         header: t("fields.title"),
@@ -54,6 +87,9 @@ export function TaskTable({ tasks, repository, onChanged }: Props) {
             />
             {isTaskOverdue(row.original) ? (
               <StageBadge tone="amber" label={t("overdue")} />
+            ) : null}
+            {row.original.escalatedAt ? (
+              <StageBadge tone="violet" label={t("escalated")} />
             ) : null}
           </div>
         ),
@@ -86,15 +122,9 @@ export function TaskTable({ tasks, repository, onChanged }: Props) {
           />
         ),
       },
-    ],
-    [t, repository, onChanged],
-  );
+    );
+    return cols;
+  }, [t, repository, onChanged, selectable, selectedIds, onSelectionChange]);
 
-  return (
-    <DataTable
-      columns={columns}
-      data={tasks}
-      emptyMessage={t("empty")}
-    />
-  );
+  return <DataTable columns={columns} data={tasks} emptyMessage={t("empty")} />;
 }

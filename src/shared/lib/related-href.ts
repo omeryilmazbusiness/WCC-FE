@@ -12,11 +12,9 @@ export function hrefForRelated(ref: RelatedRef): string {
     case "customer":
       return routes.customer(ref.relatedId);
     case "booking":
-      return ref.customerId
-        ? routes.customer(ref.customerId)
-        : routes.customers;
+      return routes.booking(ref.relatedId);
     case "lead":
-      return routes.pipeline;
+      return ref.customerId ? routes.customer(ref.customerId) : routes.pipeline;
     case "departure":
     case "package":
       return routes.packages;

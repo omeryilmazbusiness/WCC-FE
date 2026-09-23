@@ -14,7 +14,7 @@ import { CreateLeadDialog } from "@/features/create-lead";
 import { LostReasonDialog } from "@/features/change-lead-stage";
 import { BulkAssignLeadsDialog } from "@/features/bulk-assign-leads";
 import { LeadDetailDrawer } from "@/features/lead-detail";
-import { getMemoryTaskRepository } from "@/entities/task";
+import { createTaskRepository } from "@/entities/task";
 import {
   ListScreen,
   SearchFilterBar,
@@ -136,7 +136,7 @@ export function CrmPipelineBoard({ repository, initialLeads }: Props) {
             repository={repository}
             onCreated={(lead) => {
               upsert(lead);
-              void getMemoryTaskRepository().ensureFollowUpForLead({
+              void createTaskRepository().ensureFollowUpForLead({
                 leadId: lead.id,
                 leadName: lead.fullName,
                 assigneeId: lead.ownerId,
