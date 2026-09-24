@@ -40,6 +40,7 @@ export interface BookingRepository {
   confirm(id: string): Promise<Booking>;
   changeStatus(id: string, status: BookingStatus): Promise<Booking>;
   readiness(id: string): Promise<BookingReadiness>;
+  overrideReadiness(id: string, reason: string): Promise<void>;
   listParticipants(id: string): Promise<BookingParticipant[]>;
   addParticipant(id: string, input: ParticipantInput): Promise<BookingParticipant>;
   updateParticipant(
@@ -130,6 +131,7 @@ function mapChecklist(raw: Raw): BookingChecklistItem {
 }
 
 function mapReadiness(raw: Raw): BookingReadiness {
+  const missingDocsRaw = raw.missing_docs ?? raw.missingDocs ?? [];
   return {
     booking_id: String(raw.booking_id ?? raw.bookingId ?? ""),
     can_confirm: Boolean(raw.can_confirm ?? raw.canConfirm ?? false),
@@ -146,6 +148,10 @@ function mapReadiness(raw: Raw): BookingReadiness {
       | number
       | null,
     risk_alerts: (raw.risk_alerts ?? raw.riskAlerts ?? []) as string[],
+    overrideActive: Boolean(raw.override_active ?? raw.overrideActive ?? false),
+    missingDocs: Array.isArray(missingDocsRaw)
+      ? (missingDocsRaw as unknown[]).map(String)
+      : [],
   };
 }
 
@@ -221,6 +227,13 @@ export class ApiBookingRepository implements BookingRepository {
 
   async readiness(id: string): Promise<BookingReadiness> {
     return mapReadiness(await this.http.request<Raw>(`/bookings/${id}/readiness`));
+  }
+
+  async overrideReadiness(id: string, reason: string): Promise<void> {
+    await this.http.request(`/bookings/${id}/readiness-override`, {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    });
   }
 
   async listParticipants(id: string): Promise<BookingParticipant[]> {
@@ -328,6 +341,7 @@ const store: Booking[] = [];
 const parts: Record<string, BookingParticipant[]> = {};
 const lines: Record<string, BookingLineItem[]> = {};
 const checks: Record<string, BookingChecklistItem[]> = {};
+const readinessOverrides: Record<string, string> = {};
 
 function seedChecklist(bookingId: string): BookingChecklistItem[] {
   const defs = [
@@ -500,9 +514,15 @@ export class MemoryBookingRepository implements BookingRepository {
     const done = req.filter((c) => c.completed).length;
     const incomplete = req.length - done;
     const blocking: string[] = [];
+    const overrideActive = Boolean(readinessOverrides[id]);
+    const missingDocs = incomplete > 0
+      ? req.filter((c) => !c.completed).map((c) => c.code)
+      : [];
     if (b.status !== "draft") blocking.push("booking is not in draft status");
     if (p.length < b.paxCount) blocking.push("participants incomplete for pax_count");
-    if (incomplete > 0) blocking.push("required checklist items incomplete");
+    if (incomplete > 0 && !overrideActive) {
+      blocking.push("required checklist items incomplete");
+    }
     const missing = p.filter((x) => !x.passportNo).length;
     const warnings: string[] = [];
     const risks: string[] = [];
@@ -511,6 +531,7 @@ export class MemoryBookingRepository implements BookingRepository {
       risks.push("missing passports");
     }
     if (b.balanceAmt > 0) warnings.push("outstanding balance remaining");
+    if (overrideActive) warnings.push("readiness override active");
     return {
       booking_id: id,
       can_confirm: blocking.length === 0,
@@ -525,7 +546,15 @@ export class MemoryBookingRepository implements BookingRepository {
       balance_amt: b.balanceAmt,
       days_to_departure: 30,
       risk_alerts: risks,
+      overrideActive,
+      missingDocs,
     };
+  }
+
+  async overrideReadiness(id: string, reason: string): Promise<void> {
+    await this.getById(id);
+    if (!reason.trim()) throw new Error("reason is required");
+    readinessOverrides[id] = reason.trim();
   }
 
   async listParticipants(id: string): Promise<BookingParticipant[]> {
@@ -660,6 +689,10 @@ export function createBookingRepository(): BookingRepository {
     confirm: wrap(api.confirm.bind(api), memory.confirm.bind(memory)),
     changeStatus: wrap(api.changeStatus.bind(api), memory.changeStatus.bind(memory)),
     readiness: wrap(api.readiness.bind(api), memory.readiness.bind(memory)),
+    overrideReadiness: wrap(
+      api.overrideReadiness.bind(api),
+      memory.overrideReadiness.bind(memory),
+    ),
     listParticipants: wrap(
       api.listParticipants.bind(api),
       memory.listParticipants.bind(memory),

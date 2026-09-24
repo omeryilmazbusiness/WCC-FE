@@ -15,6 +15,8 @@ export const routes = {
   finance: "/finance",
   targets: "/targets",
   importExport: "/import-export",
+  suppliers: "/suppliers",
+  missingDocs: "/missing-docs",
   tasks: "/tasks",
   inbox: "/inbox",
   adminUsers: "/admin/users",

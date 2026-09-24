@@ -185,6 +185,23 @@ API-backed via `createRevenueTargetRepository()`; screen `/targets`.
 
 API-backed via `createImportExportRepository()`; screen `/import-export`.
 
+## Epic 12 Documents, Visa & Suppliers
+
+| Task | Status |
+|------|--------|
+| T-166 Documents checklist by participant | Done |
+| T-167 Upload / classify / review / reject UX | Done |
+| T-168 Visa timeline UI | Done |
+| T-169 Departure missing-docs bulk view / export | Done |
+| T-170 Supplier directory + detail | Done |
+| T-171 Link supplier + confirmation tracking | Done |
+| T-172 Booking readiness panel (missing docs + override) | Done |
+
+API-backed via `createDocumentRepository()` / `createVisaRepository()` / `createSupplierRepository()` with memory fallback.
+
+- Booking detail → **Documents** / **Visa** tabs; readiness shows missing docs + override dialog
+- Nav (manager/ops) → `/suppliers`, `/missing-docs`
+
 ## Demo login
 
 Works offline via demo auth fallback (or against `wodi-crm-be`):

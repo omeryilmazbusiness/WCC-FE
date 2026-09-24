@@ -77,6 +77,8 @@ export type BookingReadiness = {
   balance_amt: number;
   days_to_departure?: number | null;
   risk_alerts: string[];
+  overrideActive: boolean;
+  missingDocs: string[];
 };
 
 export type BookingCreateInput = {

@@ -14,6 +14,8 @@ import {
   Wallet,
   Target,
   FileSpreadsheet,
+  FileWarning,
+  Truck,
   Shield,
   KeyRound,
   ScrollText,
@@ -41,6 +43,7 @@ export function AppShell({ user, children }: Props) {
   const admin = canAccessAdmin(user.role);
   const finance =
     user.role === "finance" || user.role === "gm" || user.role === "manager";
+  const opsNav = manager || user.role === "operations";
 
   const items = [
     manager
@@ -64,6 +67,16 @@ export function AppShell({ user, children }: Props) {
             href: routes.importExport,
             label: t("importExport"),
             icon: FileSpreadsheet,
+          },
+        ]
+      : []),
+    ...(opsNav
+      ? [
+          { href: routes.suppliers, label: t("suppliers"), icon: Truck },
+          {
+            href: routes.missingDocs,
+            label: t("missingDocs"),
+            icon: FileWarning,
           },
         ]
       : []),

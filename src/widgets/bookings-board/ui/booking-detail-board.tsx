@@ -14,12 +14,18 @@ import {
 } from "@/entities/booking";
 import { ConfirmBookingTasksButton } from "@/features/confirm-booking-tasks";
 import { BookingFinancePanel } from "@/widgets/booking-finance-panel";
+import { BookingOpsPanel } from "@/widgets/booking-ops-panel";
 import { formatDateTime } from "@/shared/lib/format";
 import { Link } from "@/shared/i18n/navigation";
 import { routes } from "@/shared/config/routes";
 import {
   Badge,
   Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
   EmptyState,
   ErrorState,
   Input,
@@ -68,6 +74,8 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
   const [ready, setReady] = useState<BookingReadiness | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState("overview");
+  const [overrideOpen, setOverrideOpen] = useState(false);
+  const [overrideReason, setOverrideReason] = useState("");
 
   const [paxName, setPaxName] = useState("");
   const [paxPassport, setPaxPassport] = useState("");
@@ -189,6 +197,23 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
     }
   }
 
+  async function submitOverride() {
+    if (!overrideReason.trim()) return;
+    try {
+      await repo.overrideReadiness(bookingId, overrideReason.trim());
+      setOverrideOpen(false);
+      setOverrideReason("");
+      push({ title: t("overrideReady"), tone: "success" });
+      await refresh();
+    } catch (e) {
+      push({
+        title: t("saveError"),
+        description: e instanceof Error ? e.message : undefined,
+        tone: "error",
+      });
+    }
+  }
+
   if (error) {
     return (
       <Screen>
@@ -254,10 +279,47 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
 
       {ready ? (
         <div className="mb-6 rounded-[24px] border border-zinc-200/80 bg-white p-5">
-          <p className="text-sm font-semibold text-zinc-950">{t("readiness")}</p>
-          <p className="mt-1 text-sm text-zinc-600">
-            {ready.can_confirm ? t("readyToConfirm") : t("notReady")}
-          </p>
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <p className="text-sm font-semibold text-zinc-950">{t("readiness")}</p>
+              <p className="mt-1 text-sm text-zinc-600">
+                {ready.can_confirm ? t("readyToConfirm") : t("notReady")}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {ready.overrideActive ? (
+                <Badge className="bg-amber-50 text-amber-900">
+                  {t("overrideActive")}
+                </Badge>
+              ) : null}
+              {draft && !ready.overrideActive ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setOverrideOpen(true)}
+                >
+                  {t("overrideReady")}
+                </Button>
+              ) : null}
+            </div>
+          </div>
+          {ready.missingDocs.length > 0 ? (
+            <div className="mt-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                {t("missingDocs")}
+              </p>
+              <ul className="mt-1.5 flex flex-wrap gap-1.5">
+                {ready.missingDocs.map((d) => (
+                  <li
+                    key={d}
+                    className="rounded-md bg-amber-50 px-2 py-0.5 text-[12px] font-medium text-amber-900"
+                  >
+                    {d}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           {ready.blocking.length > 0 ? (
             <ul className="mt-3 list-disc space-y-1 ps-5 text-sm text-rose-700">
               {ready.blocking.map((b) => (
@@ -282,10 +344,37 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
         </div>
       ) : null}
 
+      <Dialog open={overrideOpen} onOpenChange={setOverrideOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("overrideReady")}</DialogTitle>
+            <DialogDescription>{t("overrideReasonHint")}</DialogDescription>
+          </DialogHeader>
+          <Input
+            placeholder={t("overrideReason")}
+            value={overrideReason}
+            onChange={(e) => setOverrideReason(e.target.value)}
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setOverrideOpen(false)}>
+              {tc("cancel")}
+            </Button>
+            <Button
+              disabled={!overrideReason.trim()}
+              onClick={() => void submitOverride()}
+            >
+              {t("overrideReady")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex h-auto flex-wrap gap-1">
           <TabsTrigger value="overview">{t("tabs.overview")}</TabsTrigger>
           <TabsTrigger value="finance">{t("tabs.finance")}</TabsTrigger>
+          <TabsTrigger value="documents">{t("tabs.documents")}</TabsTrigger>
+          <TabsTrigger value="visa">{t("tabs.visa")}</TabsTrigger>
           <TabsTrigger value="participants">{t("tabs.participants")}</TabsTrigger>
           <TabsTrigger value="lines">{t("tabs.lines")}</TabsTrigger>
           <TabsTrigger value="checklist">{t("tabs.checklist")}</TabsTrigger>
@@ -315,6 +404,24 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
           <BookingFinancePanel
             bookingId={booking.id}
             currency={booking.currency}
+            onChanged={() => void refresh()}
+          />
+        </TabsContent>
+
+        <TabsContent value="documents" className="mt-4">
+          <BookingOpsPanel
+            bookingId={booking.id}
+            participants={participants}
+            section="documents"
+            onChanged={() => void refresh()}
+          />
+        </TabsContent>
+
+        <TabsContent value="visa" className="mt-4">
+          <BookingOpsPanel
+            bookingId={booking.id}
+            participants={participants}
+            section="visa"
             onChanged={() => void refresh()}
           />
         </TabsContent>
