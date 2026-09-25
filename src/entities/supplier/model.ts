@@ -40,3 +40,45 @@ export const LINK_TYPES: SupplierLinkType[] = [
   "departure",
   "service",
 ];
+
+export type SupplierInvoiceStatus =
+  | "draft"
+  | "received"
+  | "approved"
+  | "paid"
+  | "cancelled";
+
+export type SupplierInvoiceLine = {
+  id: string;
+  description: string;
+  quantity: number;
+  unitCost: number;
+  linkId: string | null;
+  lineTotal: number;
+};
+
+export type SupplierInvoice = {
+  id: string;
+  supplierId: string;
+  branchId: string;
+  invoiceNumber: string;
+  status: SupplierInvoiceStatus;
+  currency: string;
+  issueDate: string;
+  dueDate: string;
+  notes: string;
+  subtotal: number;
+  taxTotal: number;
+  total: number;
+  lines: SupplierInvoiceLine[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export const INVOICE_STATUSES: SupplierInvoiceStatus[] = [
+  "draft",
+  "received",
+  "approved",
+  "paid",
+  "cancelled",
+];

@@ -18,6 +18,7 @@ export const routes = {
   reports: "/reports",
   aiSetup: "/setup/ai",
   suppliers: "/suppliers",
+  integrations: "/integrations",
   missingDocs: "/missing-docs",
   tasks: "/tasks",
   inbox: "/inbox",

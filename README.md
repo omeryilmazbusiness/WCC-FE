@@ -202,6 +202,19 @@ API-backed via `createDocumentRepository()` / `createVisaRepository()` / `create
 - Booking detail → **Documents** / **Visa** tabs; readiness shows missing docs + override dialog
 - Nav (manager/ops) → `/suppliers`, `/missing-docs`
 
+## Epic 16 P2 Advanced Extensions
+
+| Task | Status |
+|------|--------|
+| T-205 Connected file sync status UI | Done |
+| T-206 Advanced supplier invoice / cost screens | Done |
+| T-207 Future integration placeholders | Done |
+
+- Import/Export → **Sync** tab (`FileSyncPanel`) — OneDrive/SharePoint connections, conflict policy, runs
+- Suppliers → **Invoices / Costs** tab — draft→paid invoice lifecycle (minor units)
+- Nav → `/integrations` — accounting / GDS / payment gateway stubs (enable + probe)
+- Entities: `filesync`, `extint`; supplier API extended for invoices; memory fallbacks included
+
 ## Demo login
 
 Works offline via demo auth fallback (or against `wodi-crm-be`):

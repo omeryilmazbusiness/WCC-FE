@@ -11,6 +11,7 @@ import {
   type SupplierLinkType,
   type SupplierRepository,
 } from "@/entities/supplier";
+import { SupplierInvoicesPanel } from "@/features/supplier-invoices";
 import { cn } from "@/shared/lib/cn";
 import {
   Badge,
@@ -27,6 +28,7 @@ import {
 } from "@/shared/ui";
 
 type Props = { repository?: SupplierRepository };
+type DetailTab = "links" | "invoices";
 
 export function SuppliersBoard({ repository }: Props) {
   const repo = useMemo(
@@ -38,6 +40,7 @@ export function SuppliersBoard({ repository }: Props) {
 
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
+  const [detailTab, setDetailTab] = useState<DetailTab>("links");
   const [links, setLinks] = useState<SupplierLink[]>([]);
   const [unconfirmed, setUnconfirmed] = useState<SupplierLink[]>([]);
   const [oversold, setOversold] = useState<SupplierLink[]>([]);
@@ -196,138 +199,183 @@ export function SuppliersBoard({ repository }: Props) {
               <p className="text-sm text-zinc-500">{t("selectSupplier")}</p>
             ) : (
               <>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-zinc-950">
-                    {t("linksTitle")}
-                  </p>
-                  <span className="text-[11px] text-zinc-400">
-                    {links.length} {t("links")}
-                  </span>
+                <div className="grid grid-cols-2 gap-1 rounded-xl bg-zinc-50 p-1">
+                  {(
+                    [
+                      { id: "links" as const, label: t("linksTitle") },
+                      {
+                        id: "invoices" as const,
+                        label: t("invoicesTab"),
+                      },
+                    ] as const
+                  ).map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setDetailTab(tab.id)}
+                      className={cn(
+                        "rounded-lg py-2 text-[13px] font-semibold transition",
+                        detailTab === tab.id
+                          ? "bg-white text-zinc-950 shadow-sm"
+                          : "text-zinc-500 hover:text-zinc-800",
+                      )}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
                 </div>
 
-                {links.length === 0 ? (
-                  <p className="text-sm text-zinc-500">{t("linksEmpty")}</p>
-                ) : (
-                  <ul className="divide-y divide-zinc-100 rounded-xl border border-zinc-100">
-                    {links.map((l) => (
-                      <li
-                        key={l.id}
-                        className="flex flex-wrap items-center gap-2 px-3 py-2.5 text-sm"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-zinc-900">
-                            {t(`linkType.${l.linkType}` as "linkType.package")} ·{" "}
-                            <span className="font-mono text-[12px] text-zinc-500">
-                              {l.linkId.slice(0, 8)}…
-                            </span>
-                          </p>
-                          <p className="text-[11px] text-zinc-400">
-                            {t("allotment")}: {l.sold}/{l.allotment || "∞"} ·{" "}
-                            {(l.unitCost / 100).toFixed(0)} {l.currency}
-                          </p>
-                        </div>
-                        <Badge
-                          className={
-                            l.confirmationStatus === "confirmed"
-                              ? "bg-emerald-50 text-emerald-800"
-                              : "bg-amber-50 text-amber-900"
-                          }
-                        >
-                          {t(
-                            `confirmStatus.${l.confirmationStatus}` as "confirmStatus.pending",
-                          )}
-                        </Badge>
-                        {l.oversold ? (
-                          <Badge className="bg-rose-50 text-rose-800">
-                            {t("oversold")}
-                          </Badge>
-                        ) : null}
-                        {l.confirmationStatus === "pending" ? (
-                          <Button
-                            size="sm"
-                            disabled={busy}
-                            onClick={() =>
-                              void run(() =>
-                                repo.confirmLink(l.id, confirmRef),
-                              )
-                            }
+                {detailTab === "links" ? (
+                  <>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-zinc-950">
+                        {t("linksTitle")}
+                      </p>
+                      <span className="text-[11px] text-zinc-400">
+                        {links.length} {t("links")}
+                      </span>
+                    </div>
+
+                    {links.length === 0 ? (
+                      <p className="text-sm text-zinc-500">{t("linksEmpty")}</p>
+                    ) : (
+                      <ul className="divide-y divide-zinc-100 rounded-xl border border-zinc-100">
+                        {links.map((l) => (
+                          <li
+                            key={l.id}
+                            className="flex flex-wrap items-center gap-2 px-3 py-2.5 text-sm"
                           >
-                            {t("confirmLink")}
-                          </Button>
-                        ) : null}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={busy}
-                          onClick={() =>
-                            void run(() => repo.deleteLink(selectedId, l.id))
-                          }
-                        >
-                          {t("remove")}
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-zinc-900">
+                                {t(
+                                  `linkType.${l.linkType}` as "linkType.package",
+                                )}{" "}
+                                ·{" "}
+                                <span className="font-mono text-[12px] text-zinc-500">
+                                  {l.linkId.slice(0, 8)}…
+                                </span>
+                              </p>
+                              <p className="text-[11px] text-zinc-400">
+                                {t("allotment")}: {l.sold}/
+                                {l.allotment || "∞"} ·{" "}
+                                {(l.unitCost / 100).toFixed(0)} {l.currency}
+                              </p>
+                            </div>
+                            <Badge
+                              className={
+                                l.confirmationStatus === "confirmed"
+                                  ? "bg-emerald-50 text-emerald-800"
+                                  : "bg-amber-50 text-amber-900"
+                              }
+                            >
+                              {t(
+                                `confirmStatus.${l.confirmationStatus}` as "confirmStatus.pending",
+                              )}
+                            </Badge>
+                            {l.oversold ? (
+                              <Badge className="bg-rose-50 text-rose-800">
+                                {t("oversold")}
+                              </Badge>
+                            ) : null}
+                            {l.confirmationStatus === "pending" ? (
+                              <Button
+                                size="sm"
+                                disabled={busy}
+                                onClick={() =>
+                                  void run(() =>
+                                    repo.confirmLink(l.id, confirmRef),
+                                  )
+                                }
+                              >
+                                {t("confirmLink")}
+                              </Button>
+                            ) : null}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={busy}
+                              onClick={() =>
+                                void run(() =>
+                                  repo.deleteLink(selectedId, l.id),
+                                )
+                              }
+                            >
+                              {t("remove")}
+                            </Button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
 
-                <div className="flex flex-wrap items-end gap-2 rounded-xl border border-dashed border-zinc-200 p-3">
-                  <Select
-                    value={linkType}
-                    onValueChange={(v) => setLinkType(v as SupplierLinkType)}
-                  >
-                    <SelectTrigger className="h-8 w-[120px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {LINK_TYPES.map((lt) => (
-                        <SelectItem key={lt} value={lt}>
-                          {t(`linkType.${lt}` as "linkType.package")}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    className="h-8 min-w-[200px] flex-1 font-mono text-[12px]"
-                    placeholder={t("linkIdPh")}
-                    value={linkId}
-                    onChange={(e) => setLinkId(e.target.value)}
+                    <div className="flex flex-wrap items-end gap-2 rounded-xl border border-dashed border-zinc-200 p-3">
+                      <Select
+                        value={linkType}
+                        onValueChange={(v) =>
+                          setLinkType(v as SupplierLinkType)
+                        }
+                      >
+                        <SelectTrigger className="h-8 w-[120px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {LINK_TYPES.map((lt) => (
+                            <SelectItem key={lt} value={lt}>
+                              {t(`linkType.${lt}` as "linkType.package")}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        className="h-8 min-w-[200px] flex-1 font-mono text-[12px]"
+                        placeholder={t("linkIdPh")}
+                        value={linkId}
+                        onChange={(e) => setLinkId(e.target.value)}
+                      />
+                      <Input
+                        className="h-8 w-[80px]"
+                        placeholder={t("allotment")}
+                        value={allotment}
+                        onChange={(e) => setAllotment(e.target.value)}
+                      />
+                      <Input
+                        className="h-8 w-[90px]"
+                        placeholder={t("unitCost")}
+                        value={unitCost}
+                        onChange={(e) => setUnitCost(e.target.value)}
+                      />
+                      <Input
+                        className="h-8 w-[120px]"
+                        placeholder={t("confirmRefPh")}
+                        value={confirmRef}
+                        onChange={(e) => setConfirmRef(e.target.value)}
+                      />
+                      <Button
+                        size="sm"
+                        disabled={busy || !linkId.trim()}
+                        onClick={() =>
+                          void run(async () => {
+                            await repo.addLink(selectedId, {
+                              linkType,
+                              linkId: linkId.trim(),
+                              allotment: Number(allotment) || 0,
+                              unitCost: Math.round(
+                                (Number(unitCost) || 0) * 100,
+                              ),
+                            });
+                            setLinkId("");
+                          })
+                        }
+                      >
+                        {t("addLink")}
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <SupplierInvoicesPanel
+                    supplierId={selectedId}
+                    repository={repo}
                   />
-                  <Input
-                    className="h-8 w-[80px]"
-                    placeholder={t("allotment")}
-                    value={allotment}
-                    onChange={(e) => setAllotment(e.target.value)}
-                  />
-                  <Input
-                    className="h-8 w-[90px]"
-                    placeholder={t("unitCost")}
-                    value={unitCost}
-                    onChange={(e) => setUnitCost(e.target.value)}
-                  />
-                  <Input
-                    className="h-8 w-[120px]"
-                    placeholder={t("confirmRefPh")}
-                    value={confirmRef}
-                    onChange={(e) => setConfirmRef(e.target.value)}
-                  />
-                  <Button
-                    size="sm"
-                    disabled={busy || !linkId.trim()}
-                    onClick={() =>
-                      void run(async () => {
-                        await repo.addLink(selectedId, {
-                          linkType,
-                          linkId: linkId.trim(),
-                          allotment: Number(allotment) || 0,
-                          unitCost: Math.round((Number(unitCost) || 0) * 100),
-                        });
-                        setLinkId("");
-                      })
-                    }
-                  >
-                    {t("addLink")}
-                  </Button>
-                </div>
+                )}
               </>
             )}
           </div>

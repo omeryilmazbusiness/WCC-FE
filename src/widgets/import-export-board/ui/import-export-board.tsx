@@ -8,6 +8,7 @@ import {
   CalendarRange,
   Check,
   CircleAlert,
+  Cloud,
   Download,
   FileSpreadsheet,
   History,
@@ -26,6 +27,7 @@ import {
   type ImportJob,
   type ImportMode,
 } from "@/entities/importexport";
+import { FileSyncPanel } from "@/features/file-sync";
 import {
   Button,
   EmptyState,
@@ -39,7 +41,7 @@ import {
 } from "@/shared/ui";
 import { cn } from "@/shared/lib/cn";
 
-type Tab = "bring" | "history" | "export";
+type Tab = "bring" | "history" | "export" | "sync";
 type Step = 1 | 2 | 3;
 
 function downloadBlob(blob: Blob, filename: string) {
@@ -246,6 +248,7 @@ export function ImportExportBoard() {
     { id: "bring", icon: Upload, label: t("tabBring") },
     { id: "history", icon: History, label: t("tabHistory") },
     { id: "export", icon: Download, label: t("tabExport") },
+    { id: "sync", icon: Cloud, label: t("tabSync") },
   ];
 
   return (
@@ -257,7 +260,7 @@ export function ImportExportBoard() {
             {t("title")}
           </h1>
           <p className="text-[13px] text-zinc-500">
-            {`${t("tabBring")} · ${t("tabHistory")} · ${t("tabExport")}`}
+            {`${t("tabBring")} · ${t("tabHistory")} · ${t("tabExport")} · ${t("tabSync")}`}
           </p>
         </div>
         {tab === "bring" ? (
@@ -284,7 +287,7 @@ export function ImportExportBoard() {
       {/* One card — everything inside */}
       <div className="overflow-hidden rounded-2xl bg-white shadow-[0_8px_28px_-14px_rgba(15,23,42,0.22)]">
         {/* Symmetric tab bar */}
-        <div className="grid grid-cols-3 gap-1 bg-zinc-50 p-1.5">
+        <div className="grid grid-cols-2 gap-1 bg-zinc-50 p-1.5 sm:grid-cols-4">
           {tabs.map(({ id, icon: Icon, label }) => {
             const on = tab === id;
             return (
@@ -299,7 +302,9 @@ export function ImportExportBoard() {
                       ? "bg-sky-600 text-white shadow-sm"
                       : id === "export"
                         ? "bg-emerald-600 text-white shadow-sm"
-                        : "bg-zinc-900 text-white shadow-sm"
+                        : id === "sync"
+                          ? "bg-violet-600 text-white shadow-sm"
+                          : "bg-zinc-900 text-white shadow-sm"
                     : "text-zinc-500 hover:bg-white hover:text-zinc-800",
                 )}
               >
@@ -652,6 +657,9 @@ export function ImportExportBoard() {
               </Button>
             </div>
           ) : null}
+
+          {/* ——— FILE SYNC ——— */}
+          {tab === "sync" ? <FileSyncPanel /> : null}
         </div>
       </div>
     </Screen>

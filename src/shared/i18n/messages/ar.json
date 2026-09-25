@@ -17,6 +17,7 @@
     "reports": "التقارير",
     "aiSetup": "إعداد الذكاء الاصطناعي",
     "suppliers": "الموردون",
+    "integrations": "التكاملات",
     "missingDocs": "مستندات ناقصة",
     "tasks": "المهام",
     "users": "المستخدمون",
@@ -997,6 +998,8 @@
     "tabHistoryHint": "الاستيرادات والأخطاء السابقة",
     "tabExport": "تصدير",
     "tabExportHint": "تنزيل كـ CSV",
+    "tabSync": "مزامنة",
+    "tabSyncHint": "OneDrive / SharePoint",
     "stepFile": "1 · الملف",
     "stepMatch": "2 · المطابقة",
     "stepRun": "3 · التشغيل",
@@ -1088,6 +1091,7 @@
     "nameEn": "الاسم (EN)",
     "selectSupplier": "اختر مورداً",
     "linksTitle": "الروابط",
+    "invoicesTab": "الفواتير / التكاليف",
     "links": "روابط",
     "linksEmpty": "لا توجد روابط بعد",
     "addLink": "إضافة رابط",
@@ -1142,6 +1146,126 @@
       "pending": "قيد الانتظار",
       "confirmed": "مؤكد",
       "cancelled": "ملغى"
+    }
+  },
+  "fileSync": {
+    "title": "مزامنة الملفات",
+    "subtitle": "اربط مجلدات OneDrive أو SharePoint لمواءمة بيانات نظام إدارة العملاء",
+    "refresh": "تحديث",
+    "newConnection": "اتصال جديد",
+    "connections": "الاتصالات",
+    "empty": "لا توجد اتصالات مزامنة بعد",
+    "displayName": "الاسم المعروض",
+    "remotePath": "المسار البعيد",
+    "entityType": "نوع الكيان",
+    "sourceOfTruth": "مصدر الحقيقة",
+    "conflictPolicy": "سياسة التعارض",
+    "create": "إنشاء اتصال",
+    "connect": "ربط",
+    "syncNow": "مزامنة الآن",
+    "remove": "إزالة",
+    "recentRuns": "عمليات حديثة",
+    "runsEmpty": "لا توجد عمليات لهذا الاتصال بعد",
+    "runStats": "{scanned} مفحوص · {changed} معدّل · {conflicts} تعارض",
+    "saved": "تم حفظ الاتصال",
+    "connected": "تم الربط",
+    "synced": "بدأت المزامنة",
+    "loadError": "تعذر تحميل مزامنة الملفات",
+    "actionError": "تعذر إكمال الإجراء",
+    "provider": {
+      "onedrive": "OneDrive",
+      "sharepoint": "SharePoint"
+    },
+    "source": {
+      "platform": "المنصة تفوز",
+      "file": "الملف يفوز",
+      "manual_review": "مراجعة يدوية"
+    },
+    "conflict": {
+      "prefer_platform": "تفضيل المنصة",
+      "prefer_file": "تفضيل الملف",
+      "flag": "وضع علامة على التعارض"
+    },
+    "status": {
+      "draft": "مسودة",
+      "connected": "متصل",
+      "syncing": "قيد المزامنة",
+      "error": "خطأ",
+      "disabled": "معطّل"
+    },
+    "runStatus": {
+      "queued": "في الطابور",
+      "running": "قيد التشغيل",
+      "completed": "مكتمل",
+      "failed": "فشل",
+      "cancelled": "ملغى"
+    }
+  },
+  "supplierInvoices": {
+    "title": "الفواتير / التكاليف",
+    "subtitle": "فواتير المورد وتكاليف البنود للمورد المحدد",
+    "selectSupplier": "اختر مورداً لإدارة الفواتير",
+    "count": "فواتير",
+    "empty": "لا توجد فواتير بعد",
+    "lines": "بنود",
+    "create": "فاتورة جديدة",
+    "invoiceNumber": "رقم الفاتورة",
+    "lineDescription": "وصف البند",
+    "quantity": "الكمية",
+    "unitCost": "تكلفة الوحدة",
+    "tax": "الضريبة",
+    "add": "إضافة فاتورة",
+    "saved": "تم حفظ الفاتورة",
+    "loadError": "تعذر تحميل الفواتير",
+    "actionError": "تعذر تحديث الفاتورة",
+    "status": {
+      "draft": "مسودة",
+      "received": "مستلمة",
+      "approved": "معتمدة",
+      "paid": "مدفوعة",
+      "cancelled": "ملغاة"
+    }
+  },
+  "integrations": {
+    "title": "التكاملات الخارجية",
+    "subtitle": "اربط مزودي الرسائل والبريد والرسائل النصية والمحاسبة",
+    "refresh": "تحديث",
+    "catalogTitle": "الكتالوج",
+    "addTitle": "إضافة تكامل",
+    "configured": "المُعدّة",
+    "empty": "لا توجد تكاملات بعد",
+    "displayName": "الاسم المعروض",
+    "create": "إنشاء",
+    "probe": "اختبار",
+    "enable": "تفعيل",
+    "disable": "تعطيل",
+    "remove": "إزالة",
+    "lastProbe": "آخر اختبار",
+    "saved": "تم الحفظ",
+    "probed": "اكتمل الاختبار",
+    "loadError": "تعذر تحميل التكاملات",
+    "actionError": "تعذر إكمال الإجراء",
+    "provider": {
+      "whatsapp": "واتساب",
+      "email": "البريد",
+      "sms": "رسائل قصيرة",
+      "accounting": "محاسبة",
+      "custom": "مخصص"
+    },
+    "catalog": {
+      "whatsapp": "إرسال واستقبال رسائل واتساب عبر Cloud API",
+      "email": "SMTP أو واجهة مزود لإيصالات الحجوزات والتنبيهات",
+      "sms": "رمز التحقق وإشعارات العمليات عبر الرسائل القصيرة",
+      "accounting": "دفع الفواتير والمدفوعات إلى دفتر الحسابات",
+      "custom": "موصل webhook أو API مخصص"
+    },
+    "status": {
+      "draft": "مسودة",
+      "configured": "مُعدّ",
+      "healthy": "سليم",
+      "degraded": "متدهور",
+      "error": "خطأ",
+      "disabled": "معطّل"
     }
   }
 }

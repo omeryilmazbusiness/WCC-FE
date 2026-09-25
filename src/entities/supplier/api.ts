@@ -4,6 +4,9 @@ import { parseSession, SESSION_COOKIE } from "@/shared/api/session";
 import type {
   ConfirmationStatus,
   Supplier,
+  SupplierInvoice,
+  SupplierInvoiceLine,
+  SupplierInvoiceStatus,
   SupplierLink,
   SupplierLinkType,
 } from "./model";
@@ -70,6 +73,48 @@ function mapLink(raw: Raw): SupplierLink {
   };
 }
 
+function mapInvoiceLine(raw: Raw): SupplierInvoiceLine {
+  const quantity = Number(raw.quantity ?? 0);
+  const unitCost = Number(raw.unit_cost ?? raw.unitCost ?? 0);
+  const lineTotal = Number(
+    raw.line_total ?? raw.lineTotal ?? quantity * unitCost,
+  );
+  return {
+    id: str(raw.id),
+    description: str(raw.description),
+    quantity,
+    unitCost,
+    linkId: (raw.link_id ?? raw.linkId ?? null) as string | null,
+    lineTotal,
+  };
+}
+
+function mapInvoice(raw: Raw): SupplierInvoice {
+  const linesRaw = Array.isArray(raw.lines) ? (raw.lines as Raw[]) : [];
+  const lines = linesRaw.map(mapInvoiceLine);
+  const subtotal = Number(
+    raw.subtotal ?? lines.reduce((s, l) => s + l.lineTotal, 0),
+  );
+  const taxTotal = Number(raw.tax_total ?? raw.taxTotal ?? 0);
+  return {
+    id: str(raw.id),
+    supplierId: str(raw.supplier_id ?? raw.supplierId),
+    branchId: str(raw.branch_id ?? raw.branchId),
+    invoiceNumber: str(raw.invoice_number ?? raw.invoiceNumber),
+    status: str(raw.status ?? "draft") as SupplierInvoiceStatus,
+    currency: str(raw.currency ?? "SAR"),
+    issueDate: str(raw.issue_date ?? raw.issueDate),
+    dueDate: str(raw.due_date ?? raw.dueDate),
+    notes: str(raw.notes),
+    subtotal,
+    taxTotal,
+    total: Number(raw.total ?? subtotal + taxTotal),
+    lines,
+    createdAt: str(raw.created_at ?? raw.createdAt),
+    updatedAt: str(raw.updated_at ?? raw.updatedAt),
+  };
+}
+
 export type CreateSupplierInput = {
   code: string;
   nameEn?: string;
@@ -99,6 +144,32 @@ export type CreateLinkInput = {
   notes?: string;
 };
 
+export type CreateInvoiceInput = {
+  supplierId: string;
+  invoiceNumber: string;
+  currency?: string;
+  issueDate?: string;
+  dueDate?: string;
+  notes?: string;
+  taxTotal?: number;
+  lines?: {
+    description: string;
+    quantity: number;
+    unitCost: number;
+    linkId?: string;
+  }[];
+};
+
+export type SetInvoiceLinesInput = {
+  lines: {
+    description: string;
+    quantity: number;
+    unitCost: number;
+    linkId?: string;
+  }[];
+  taxTotal?: number;
+};
+
 export interface SupplierRepository {
   list(activeOnly?: boolean): Promise<Supplier[]>;
   getById(id: string): Promise<Supplier>;
@@ -110,6 +181,17 @@ export interface SupplierRepository {
   confirmLink(linkId: string, confirmationRef?: string): Promise<SupplierLink>;
   listUnconfirmed(): Promise<SupplierLink[]>;
   listOversold(): Promise<SupplierLink[]>;
+  listInvoices(supplierId: string): Promise<SupplierInvoice[]>;
+  getInvoice(id: string): Promise<SupplierInvoice>;
+  createInvoice(input: CreateInvoiceInput): Promise<SupplierInvoice>;
+  updateInvoiceStatus(
+    id: string,
+    status: SupplierInvoiceStatus,
+  ): Promise<SupplierInvoice>;
+  setInvoiceLines(
+    id: string,
+    input: SetInvoiceLinesInput,
+  ): Promise<SupplierInvoice>;
 }
 
 class ApiRepo implements SupplierRepository {
@@ -216,6 +298,69 @@ class ApiRepo implements SupplierRepository {
     const rows = Array.isArray(data) ? data : (data.items ?? []);
     return rows.map(mapLink);
   }
+
+  async listInvoices(supplierId: string) {
+    const data = await this.http.request<Raw[] | { items?: Raw[] }>(
+      `/suppliers/invoices?supplier_id=${encodeURIComponent(supplierId)}`,
+    );
+    const rows = Array.isArray(data) ? data : (data.items ?? []);
+    return rows.map(mapInvoice);
+  }
+
+  async getInvoice(id: string) {
+    return mapInvoice(
+      await this.http.request<Raw>(`/suppliers/invoices/${id}`),
+    );
+  }
+
+  async createInvoice(input: CreateInvoiceInput) {
+    return mapInvoice(
+      await this.http.request<Raw>("/suppliers/invoices", {
+        method: "POST",
+        body: JSON.stringify({
+          supplier_id: input.supplierId,
+          invoice_number: input.invoiceNumber,
+          currency: input.currency ?? "SAR",
+          issue_date: input.issueDate ?? "",
+          due_date: input.dueDate ?? "",
+          notes: input.notes ?? "",
+          tax_total: input.taxTotal ?? 0,
+          lines: (input.lines ?? []).map((l) => ({
+            description: l.description,
+            quantity: l.quantity,
+            unit_cost: l.unitCost,
+            link_id: l.linkId,
+          })),
+        }),
+      }),
+    );
+  }
+
+  async updateInvoiceStatus(id: string, status: SupplierInvoiceStatus) {
+    return mapInvoice(
+      await this.http.request<Raw>(`/suppliers/invoices/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      }),
+    );
+  }
+
+  async setInvoiceLines(id: string, input: SetInvoiceLinesInput) {
+    return mapInvoice(
+      await this.http.request<Raw>(`/suppliers/invoices/${id}/lines`, {
+        method: "PUT",
+        body: JSON.stringify({
+          lines: input.lines.map((l) => ({
+            description: l.description,
+            quantity: l.quantity,
+            unit_cost: l.unitCost,
+            link_id: l.linkId,
+          })),
+          tax_total: input.taxTotal,
+        }),
+      }),
+    );
+  }
 }
 
 class MemoryRepo implements SupplierRepository {
@@ -250,6 +395,34 @@ class MemoryRepo implements SupplierRepository {
       currency: "SAR",
       notes: "",
       oversold: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  ];
+  private invoices: SupplierInvoice[] = [
+    {
+      id: "inv-1",
+      supplierId: "sup-1",
+      branchId: "br-1",
+      invoiceNumber: "INV-2026-001",
+      status: "received",
+      currency: "SAR",
+      issueDate: new Date().toISOString().slice(0, 10),
+      dueDate: "",
+      notes: "",
+      subtotal: 170000,
+      taxTotal: 25500,
+      total: 195500,
+      lines: [
+        {
+          id: "il-1",
+          description: "Hotel allotment — Makkah",
+          quantity: 2,
+          unitCost: 85000,
+          linkId: "lnk-1",
+          lineTotal: 170000,
+        },
+      ],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
@@ -349,6 +522,79 @@ class MemoryRepo implements SupplierRepository {
   async listOversold() {
     return this.links.filter((l) => l.oversold);
   }
+
+  async listInvoices(supplierId: string) {
+    return this.invoices
+      .filter((i) => i.supplierId === supplierId)
+      .map((i) => ({ ...i, lines: i.lines.map((l) => ({ ...l })) }));
+  }
+
+  async getInvoice(id: string) {
+    const inv = this.invoices.find((x) => x.id === id);
+    if (!inv) throw new Error("invoice not found");
+    return { ...inv, lines: inv.lines.map((l) => ({ ...l })) };
+  }
+
+  async createInvoice(input: CreateInvoiceInput) {
+    const now = new Date().toISOString();
+    const lines: SupplierInvoiceLine[] = (input.lines ?? []).map((l) => ({
+      id: crypto.randomUUID(),
+      description: l.description,
+      quantity: l.quantity,
+      unitCost: l.unitCost,
+      linkId: l.linkId ?? null,
+      lineTotal: l.quantity * l.unitCost,
+    }));
+    const subtotal = lines.reduce((s, l) => s + l.lineTotal, 0);
+    const taxTotal = input.taxTotal ?? 0;
+    const inv: SupplierInvoice = {
+      id: crypto.randomUUID(),
+      supplierId: input.supplierId,
+      branchId: "br-1",
+      invoiceNumber: input.invoiceNumber,
+      status: "draft",
+      currency: input.currency ?? "SAR",
+      issueDate: input.issueDate ?? now.slice(0, 10),
+      dueDate: input.dueDate ?? "",
+      notes: input.notes ?? "",
+      subtotal,
+      taxTotal,
+      total: subtotal + taxTotal,
+      lines,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.invoices.unshift(inv);
+    return { ...inv, lines: inv.lines.map((l) => ({ ...l })) };
+  }
+
+  async updateInvoiceStatus(id: string, status: SupplierInvoiceStatus) {
+    const inv = await this.getInvoice(id);
+    inv.status = status;
+    inv.updatedAt = new Date().toISOString();
+    const i = this.invoices.findIndex((x) => x.id === id);
+    this.invoices[i] = inv;
+    return { ...inv, lines: inv.lines.map((l) => ({ ...l })) };
+  }
+
+  async setInvoiceLines(id: string, input: SetInvoiceLinesInput) {
+    const inv = await this.getInvoice(id);
+    inv.lines = input.lines.map((l) => ({
+      id: crypto.randomUUID(),
+      description: l.description,
+      quantity: l.quantity,
+      unitCost: l.unitCost,
+      linkId: l.linkId ?? null,
+      lineTotal: l.quantity * l.unitCost,
+    }));
+    inv.subtotal = inv.lines.reduce((s, l) => s + l.lineTotal, 0);
+    if (input.taxTotal != null) inv.taxTotal = input.taxTotal;
+    inv.total = inv.subtotal + inv.taxTotal;
+    inv.updatedAt = new Date().toISOString();
+    const i = this.invoices.findIndex((x) => x.id === id);
+    this.invoices[i] = inv;
+    return { ...inv, lines: inv.lines.map((l) => ({ ...l })) };
+  }
 }
 
 let mem: MemoryRepo | null = null;
@@ -383,5 +629,19 @@ export function createSupplierRepository(): SupplierRepository {
       mem.listUnconfirmed.bind(mem),
     ),
     listOversold: wrap(api.listOversold.bind(api), mem.listOversold.bind(mem)),
+    listInvoices: wrap(api.listInvoices.bind(api), mem.listInvoices.bind(mem)),
+    getInvoice: wrap(api.getInvoice.bind(api), mem.getInvoice.bind(mem)),
+    createInvoice: wrap(
+      api.createInvoice.bind(api),
+      mem.createInvoice.bind(mem),
+    ),
+    updateInvoiceStatus: wrap(
+      api.updateInvoiceStatus.bind(api),
+      mem.updateInvoiceStatus.bind(mem),
+    ),
+    setInvoiceLines: wrap(
+      api.setInvoiceLines.bind(api),
+      mem.setInvoiceLines.bind(mem),
+    ),
   };
 }

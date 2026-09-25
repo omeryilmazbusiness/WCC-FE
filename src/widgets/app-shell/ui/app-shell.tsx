@@ -18,6 +18,7 @@ import {
   Sparkles,
   FileWarning,
   Truck,
+  Plug,
   Shield,
   KeyRound,
   ScrollText,
@@ -66,6 +67,10 @@ export function AppShell({ user, children }: Props) {
   const finance =
     user.role === "finance" || user.role === "gm" || user.role === "manager";
   const opsNav = manager || user.role === "operations";
+  const integrationsNav =
+    manager ||
+    user.role === "admin" ||
+    user.role === "operations";
 
   const items = uniqueNavByHref([
     manager
@@ -103,6 +108,15 @@ export function AppShell({ user, children }: Props) {
             href: routes.missingDocs,
             label: t("missingDocs"),
             icon: FileWarning,
+          },
+        ]
+      : []),
+    ...(integrationsNav
+      ? [
+          {
+            href: routes.integrations,
+            label: t("integrations"),
+            icon: Plug,
           },
         ]
       : []),

@@ -17,6 +17,7 @@
     "reports": "Reports",
     "aiSetup": "AI setup",
     "suppliers": "Suppliers",
+    "integrations": "Integrations",
     "missingDocs": "Missing docs",
     "tasks": "Tasks",
     "users": "Users",
@@ -997,6 +998,8 @@
     "tabHistoryHint": "Past imports & errors",
     "tabExport": "Export",
     "tabExportHint": "Download as CSV",
+    "tabSync": "Sync",
+    "tabSyncHint": "OneDrive / SharePoint",
     "stepFile": "1 · File",
     "stepMatch": "2 · Match",
     "stepRun": "3 · Run",
@@ -1088,6 +1091,7 @@
     "nameEn": "Name (EN)",
     "selectSupplier": "Select a supplier",
     "linksTitle": "Links",
+    "invoicesTab": "Invoices / Costs",
     "links": "links",
     "linksEmpty": "No links yet",
     "addLink": "Add link",
@@ -1142,6 +1146,126 @@
       "pending": "Pending",
       "confirmed": "Confirmed",
       "cancelled": "Cancelled"
+    }
+  },
+  "fileSync": {
+    "title": "File sync",
+    "subtitle": "Connect OneDrive or SharePoint folders to keep CRM data aligned",
+    "refresh": "Refresh",
+    "newConnection": "New connection",
+    "connections": "Connections",
+    "empty": "No sync connections yet",
+    "displayName": "Display name",
+    "remotePath": "Remote path",
+    "entityType": "Entity type",
+    "sourceOfTruth": "Source of truth",
+    "conflictPolicy": "Conflict policy",
+    "create": "Create connection",
+    "connect": "Connect",
+    "syncNow": "Sync now",
+    "remove": "Remove",
+    "recentRuns": "Recent runs",
+    "runsEmpty": "No runs yet for this connection",
+    "runStats": "{scanned} scanned · {changed} changed · {conflicts} conflicts",
+    "saved": "Connection saved",
+    "connected": "Connected",
+    "synced": "Sync started",
+    "loadError": "Could not load file sync",
+    "actionError": "Could not complete action",
+    "provider": {
+      "onedrive": "OneDrive",
+      "sharepoint": "SharePoint"
+    },
+    "source": {
+      "platform": "Platform wins",
+      "file": "File wins",
+      "manual_review": "Manual review"
+    },
+    "conflict": {
+      "prefer_platform": "Prefer platform",
+      "prefer_file": "Prefer file",
+      "flag": "Flag conflicts"
+    },
+    "status": {
+      "draft": "Draft",
+      "connected": "Connected",
+      "syncing": "Syncing",
+      "error": "Error",
+      "disabled": "Disabled"
+    },
+    "runStatus": {
+      "queued": "Queued",
+      "running": "Running",
+      "completed": "Completed",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    }
+  },
+  "supplierInvoices": {
+    "title": "Invoices / Costs",
+    "subtitle": "Supplier invoices and line costs for the selected supplier",
+    "selectSupplier": "Select a supplier to manage invoices",
+    "count": "invoices",
+    "empty": "No invoices yet",
+    "lines": "lines",
+    "create": "New invoice",
+    "invoiceNumber": "Invoice #",
+    "lineDescription": "Line description",
+    "quantity": "Qty",
+    "unitCost": "Unit cost",
+    "tax": "Tax",
+    "add": "Add invoice",
+    "saved": "Invoice saved",
+    "loadError": "Could not load invoices",
+    "actionError": "Could not update invoice",
+    "status": {
+      "draft": "Draft",
+      "received": "Received",
+      "approved": "Approved",
+      "paid": "Paid",
+      "cancelled": "Cancelled"
+    }
+  },
+  "integrations": {
+    "title": "External integrations",
+    "subtitle": "Connect messaging, email, SMS, and accounting providers",
+    "refresh": "Refresh",
+    "catalogTitle": "Catalog",
+    "addTitle": "Add integration",
+    "configured": "Configured",
+    "empty": "No integrations configured yet",
+    "displayName": "Display name",
+    "create": "Create",
+    "probe": "Probe",
+    "enable": "Enable",
+    "disable": "Disable",
+    "remove": "Remove",
+    "lastProbe": "Last probe",
+    "saved": "Saved",
+    "probed": "Probe complete",
+    "loadError": "Could not load integrations",
+    "actionError": "Could not complete action",
+    "provider": {
+      "whatsapp": "WhatsApp",
+      "email": "Email",
+      "sms": "SMS",
+      "accounting": "Accounting",
+      "custom": "Custom"
+    },
+    "catalog": {
+      "whatsapp": "Send and receive WhatsApp messages via Cloud API",
+      "email": "SMTP or provider API for booking receipts and alerts",
+      "sms": "OTP and operational SMS notifications",
+      "accounting": "Push invoices and payments to your ledger",
+      "custom": "Custom webhook or API connector"
+    },
+    "status": {
+      "draft": "Draft",
+      "configured": "Configured",
+      "healthy": "Healthy",
+      "degraded": "Degraded",
+      "error": "Error",
+      "disabled": "Disabled"
     }
   }
 }
