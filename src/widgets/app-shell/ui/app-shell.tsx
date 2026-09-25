@@ -14,6 +14,7 @@ import {
   Wallet,
   Target,
   FileSpreadsheet,
+  FileBarChart2,
   FileWarning,
   Truck,
   Shield,
@@ -68,6 +69,7 @@ export function AppShell({ user, children }: Props) {
             label: t("importExport"),
             icon: FileSpreadsheet,
           },
+          { href: routes.reports, label: t("reports"), icon: FileBarChart2 },
         ]
       : []),
     ...(opsNav
@@ -87,6 +89,7 @@ export function AppShell({ user, children }: Props) {
             label: t("importExport"),
             icon: FileSpreadsheet,
           },
+          { href: routes.reports, label: t("reports"), icon: FileBarChart2 },
         ]
       : []),
     ...(admin

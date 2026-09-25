@@ -14,6 +14,7 @@
     "finance": "Finance",
     "targets": "Targets",
     "importExport": "Import / Export",
+    "reports": "Reports",
     "suppliers": "Suppliers",
     "missingDocs": "Missing docs",
     "tasks": "Tasks",
@@ -730,6 +731,34 @@
     "push": "Push alerts",
     "savePrefs": "Save",
     "cancel": "Cancel"
+  },
+  "reports": {
+    "title": "Reports",
+    "subtitle": "Parameterized performance, readiness, SLA, finance, and integration views",
+    "refresh": "Refresh",
+    "export": "Export CSV",
+    "exported": "Export downloaded",
+    "exportError": "Could not export report",
+    "loadError": "Could not load report",
+    "loading": "Loading…",
+    "empty": "No rows for this period",
+    "emptyHint": "Adjust filters or pick another report.",
+    "from": "From",
+    "to": "To",
+    "channel": "Channel",
+    "provider": "Provider",
+    "apply": "Apply",
+    "colLabel": "Row",
+    "colDrill": "Open",
+    "open": "Open",
+    "kinds": {
+      "sales": "Sales",
+      "targets": "Targets",
+      "readiness": "Readiness",
+      "sla": "SLA",
+      "finance": "Finance",
+      "integrations": "Integrations"
+    }
   },
   "common": {
     "loading": "Loading…",
