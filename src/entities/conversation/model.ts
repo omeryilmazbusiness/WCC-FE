@@ -100,6 +100,34 @@ export type ConversationListFilter = {
   unansweredMinutes?: number;
 };
 
+export type NextTaskOutcome =
+  | "follow_up"
+  | "send_quote"
+  | "docs_pending"
+  | "payment_due";
+
+export const NEXT_TASK_OUTCOMES: NextTaskOutcome[] = [
+  "follow_up",
+  "send_quote",
+  "docs_pending",
+  "payment_due",
+];
+
+export type NextTaskSuggestion = {
+  outcome: NextTaskOutcome | string;
+  title: string;
+  description: string;
+  dueAt: string | null;
+  priority: number;
+  kind: string;
+};
+
+export type ConfirmedNextTask = {
+  taskId: string;
+  title: string;
+  outcome: string;
+};
+
 export function isSLABreached(c: Conversation, now = new Date()): boolean {
   if (c.slaBreachedAt) return true;
   if (!c.slaDueAt || c.status !== "open") return false;

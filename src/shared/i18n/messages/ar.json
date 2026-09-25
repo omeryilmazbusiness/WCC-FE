@@ -23,7 +23,9 @@
     "users": "المستخدمون",
     "roles": "الأدوار",
     "audit": "التدقيق",
-    "logout": "تسجيل الخروج"
+    "logout": "تسجيل الخروج",
+    "settings": "الإعدادات",
+    "rooming": "توزيع الغرف"
   },
   "auth": {
     "title": "تسجيل الدخول",
@@ -91,7 +93,13 @@
       "leadsOpen": "عملاء محتملون مفتوحون",
       "tasksOverdue": "مهام متأخرة",
       "bookingsUnpaid": "غير مدفوع",
-      "missingDocs": "مستندات ناقصة"
+      "missingDocs": "مستندات ناقصة",
+      "booked": "محجوز",
+      "collected": "محصّل",
+      "margin": "الهامش",
+      "bookedHint": "مبلغ الحجوزات (وحدات صغرى)",
+      "collectedHint": "المحصّل (وحدات صغرى)",
+      "marginHint": "الهامش (وحدات صغرى)"
     },
     "quick": {
       "lead": "عميل محتمل جديد",
@@ -886,7 +894,10 @@
     "filter": "تصفية",
     "search": "بحث",
     "actions": "إجراءات",
-    "retry": "إعادة المحاولة"
+    "retry": "إعادة المحاولة",
+    "permissionDenied": "تم رفض الوصول",
+    "permissionDeniedHint": "ليس لديك صلاحية لعرض هذه الشاشة.",
+    "loadingPanel": "جارٍ التحميل…"
   },
   "finance": {
     "queuesTitle": "طوابير المالية",
@@ -1146,7 +1157,12 @@
       "pending": "قيد الانتظار",
       "confirmed": "مؤكد",
       "cancelled": "ملغى"
-    }
+    },
+    "issuesTab": "المشكلات",
+    "issuesTitle": "سجل المشكلات",
+    "issuesEmpty": "لا توجد ملاحظات بعد",
+    "issueNotePh": "أضف ملاحظة…",
+    "addIssue": "إضافة ملاحظة"
   },
   "fileSync": {
     "title": "مزامنة الملفات",
@@ -1266,6 +1282,131 @@
       "degraded": "متدهور",
       "error": "خطأ",
       "disabled": "معطّل"
+    },
+    "editConfig": "الإعدادات",
+    "saveConfig": "حفظ الإعدادات",
+    "configField": {
+      "phone_number_id": "معرّف رقم الهاتف",
+      "access_token": "رمز الوصول",
+      "waba_id": "معرّف WABA",
+      "smtp_host": "مضيف SMTP",
+      "api_key": "مفتاح API",
+      "webhook_url": "رابط Webhook",
+      "account_id": "معرّف الحساب"
     }
+  },
+  "adminSettings": {
+    "title": "إعدادات النظام",
+    "subtitle": "SLA، التصعيد، الأسباب، القوالب، الحقول والعتبات",
+    "loadError": "تعذر تحميل الإعدادات",
+    "actionError": "تعذر حفظ الإعدادات",
+    "saved": "تم الحفظ",
+    "save": "حفظ",
+    "add": "إضافة",
+    "remove": "حذف",
+    "empty": "لا توجد عناصر",
+    "enabled": "مفعّل",
+    "disabled": "معطّل",
+    "enable": "تفعيل",
+    "disable": "تعطيل",
+    "required": "مطلوب",
+    "sections": {
+      "sla": "SLA",
+      "escalation": "التصعيد",
+      "lostReasons": "أسباب الخسارة",
+      "templates": "القوالب",
+      "fields": "الحقول",
+      "thresholds": "العتبات",
+      "events": "كتالوج الأحداث",
+      "docPolicies": "سياسات المستندات"
+    },
+    "sla": {
+      "firstResponse": "أول رد (دقائق)",
+      "resolve": "الإغلاق (دقائق)",
+      "businessHours": "ساعات العمل فقط"
+    },
+    "escalation": {
+      "after": "بعد"
+    },
+    "lostReasons": {
+      "code": "الرمز",
+      "label": "التسمية"
+    },
+    "templates": {
+      "code": "الرمز",
+      "body": "النص"
+    },
+    "fields": {
+      "add": "إضافة حقل",
+      "entity": {
+        "lead": "فرصة",
+        "customer": "عميل",
+        "booking": "حجز"
+      }
+    },
+    "thresholds": {
+      "softCapacity": "سعة ناعمة %",
+      "hardCapacity": "سعة صلبة %",
+      "overdueTask": "مهمة متأخرة (ساعات)",
+      "unpaidBooking": "حجز غير مدفوع (أيام)",
+      "marginAlert": "تنبيه الهامش %"
+    },
+    "docPoliciesBody": "سياسات المستندات تُدار عبر قوائم التحقق وعمليات الترحيل.",
+    "docPoliciesLink": "فتح المستندات الناقصة"
+  },
+  "rooming": {
+    "title": "توزيع الغرف",
+    "subtitle": "الغرف وقائمة المجموعة وتصدير CSV حسب المغادرة",
+    "departure": "المغادرة",
+    "pickDeparture": "اختر مغادرة",
+    "departureIdPh": "معرّف المغادرة",
+    "rooms": "الغرف",
+    "roomsEmpty": "لا توجد غرف بعد",
+    "groupList": "قائمة المجموعة",
+    "groupEmpty": "لا توجد تعيينات بعد",
+    "roomLabel": "تسمية الغرفة",
+    "capacity": "السعة",
+    "addRoom": "إضافة غرفة",
+    "remove": "حذف",
+    "unassign": "إلغاء التعيين",
+    "unassigned": "غير معيّن",
+    "exportCsv": "تصدير CSV",
+    "exported": "تم التصدير",
+    "exportError": "فشل التصدير",
+    "loadError": "تعذر التحميل",
+    "actionError": "تعذر إتمام العملية",
+    "saved": "تم الحفظ"
+  },
+  "search": {
+    "placeholder": "بحث…",
+    "clear": "مسح البحث",
+    "searching": "جارٍ البحث…",
+    "empty": "لا توجد نتائج",
+    "entity": {
+      "customer": "عميل",
+      "lead": "فرصة",
+      "booking": "حجز",
+      "conversation": "محادثة",
+      "task": "مهمة",
+      "package": "باقة",
+      "departure": "مغادرة",
+      "supplier": "مورد"
+    }
+  },
+  "nextTask": {
+    "title": "النتيجة التالية",
+    "confirm": "تأكيد وإنشاء مهمة",
+    "suggested": "تم اقتراح المهمة",
+    "confirmed": "تم إنشاء المهمة",
+    "outcomes": {
+      "follow_up": "متابعة",
+      "send_quote": "إرسال عرض",
+      "docs_pending": "مستندات معلّقة",
+      "payment_due": "دفعة مستحقة"
+    }
+  },
+  "supplierIssues": {
+    "title": "مشكلات المورد",
+    "add": "إضافة ملاحظة"
   }
 }

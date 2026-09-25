@@ -46,6 +46,9 @@ function mapKPI(raw: Raw): DashboardKPI {
     tasksOverdue: Number(raw.tasksOverdue ?? raw.tasks_overdue ?? 0),
     bookingsUnpaid: Number(raw.bookingsUnpaid ?? raw.bookings_unpaid ?? 0),
     missingDocs: Number(raw.missingDocs ?? raw.missing_docs ?? 0),
+    bookedAmt: Number(raw.bookedAmt ?? raw.booked_amt ?? 0),
+    collectedAmt: Number(raw.collectedAmt ?? raw.collected_amt ?? 0),
+    marginAmt: Number(raw.marginAmt ?? raw.margin_amt ?? 0),
     periodFrom: String(raw.periodFrom ?? raw.period_from ?? ""),
     periodTo: String(raw.periodTo ?? raw.period_to ?? ""),
   };
@@ -190,6 +193,9 @@ export class MemoryDashboardRepository implements DashboardRepository {
       tasksOverdue,
       bookingsUnpaid,
       missingDocs,
+      bookedAmt: 1_250_000_00,
+      collectedAmt: 420_000_00,
+      marginAmt: 95_000_00,
       periodFrom: period.from.toISOString(),
       periodTo: period.to.toISOString(),
     };

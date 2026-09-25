@@ -82,3 +82,16 @@ export const INVOICE_STATUSES: SupplierInvoiceStatus[] = [
   "paid",
   "cancelled",
 ];
+
+export type IssueEvent = {
+  id: string;
+  supplierId: string;
+  note: string;
+  createdBy: string;
+  createdByName: string;
+  createdAt: string;
+};
+
+export type CreateIssueInput = {
+  note: string;
+};

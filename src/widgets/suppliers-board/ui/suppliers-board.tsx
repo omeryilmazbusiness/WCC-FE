@@ -6,6 +6,7 @@ import { Truck } from "lucide-react";
 import {
   createSupplierRepository,
   LINK_TYPES,
+  type IssueEvent,
   type Supplier,
   type SupplierLink,
   type SupplierLinkType,
@@ -28,7 +29,7 @@ import {
 } from "@/shared/ui";
 
 type Props = { repository?: SupplierRepository };
-type DetailTab = "links" | "invoices";
+type DetailTab = "links" | "invoices" | "issues";
 
 export function SuppliersBoard({ repository }: Props) {
   const repo = useMemo(
@@ -42,6 +43,8 @@ export function SuppliersBoard({ repository }: Props) {
   const [selectedId, setSelectedId] = useState<string>("");
   const [detailTab, setDetailTab] = useState<DetailTab>("links");
   const [links, setLinks] = useState<SupplierLink[]>([]);
+  const [issues, setIssues] = useState<IssueEvent[]>([]);
+  const [issueNote, setIssueNote] = useState("");
   const [unconfirmed, setUnconfirmed] = useState<SupplierLink[]>([]);
   const [oversold, setOversold] = useState<SupplierLink[]>([]);
   const [busy, setBusy] = useState(false);
@@ -79,6 +82,10 @@ export function SuppliersBoard({ repository }: Props) {
       .listLinks(selectedId)
       .then(setLinks)
       .catch(() => setLinks([]));
+    void repo
+      .listIssues(selectedId)
+      .then(setIssues)
+      .catch(() => setIssues([]));
   }, [selectedId, repo]);
 
   async function run(fn: () => Promise<unknown>) {
@@ -199,13 +206,17 @@ export function SuppliersBoard({ repository }: Props) {
               <p className="text-sm text-zinc-500">{t("selectSupplier")}</p>
             ) : (
               <>
-                <div className="grid grid-cols-2 gap-1 rounded-xl bg-zinc-50 p-1">
+                <div className="grid grid-cols-3 gap-1 rounded-xl bg-zinc-50 p-1">
                   {(
                     [
                       { id: "links" as const, label: t("linksTitle") },
                       {
                         id: "invoices" as const,
                         label: t("invoicesTab"),
+                      },
+                      {
+                        id: "issues" as const,
+                        label: t("issuesTab"),
                       },
                     ] as const
                   ).map((tab) => (
@@ -370,12 +381,62 @@ export function SuppliersBoard({ repository }: Props) {
                       </Button>
                     </div>
                   </>
-                ) : (
+                ) : null}
+
+                {detailTab === "invoices" ? (
                   <SupplierInvoicesPanel
                     supplierId={selectedId}
                     repository={repo}
                   />
-                )}
+                ) : null}
+
+                {detailTab === "issues" ? (
+                  <div className="space-y-3">
+                    <p className="text-sm font-semibold text-zinc-950">
+                      {t("issuesTitle")}
+                    </p>
+                    {issues.length === 0 ? (
+                      <p className="text-sm text-zinc-500">{t("issuesEmpty")}</p>
+                    ) : (
+                      <ul className="divide-y divide-zinc-100 rounded-xl border border-zinc-100">
+                        {issues.map((iss) => (
+                          <li key={iss.id} className="px-3 py-2.5 text-sm">
+                            <p className="text-zinc-900">{iss.note}</p>
+                            <p className="mt-1 text-[11px] text-zinc-400">
+                              {iss.createdByName || iss.createdBy} ·{" "}
+                              {iss.createdAt
+                                ? new Date(iss.createdAt).toLocaleString()
+                                : ""}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      <Input
+                        className="min-w-[180px] flex-1"
+                        placeholder={t("issueNotePh")}
+                        value={issueNote}
+                        onChange={(e) => setIssueNote(e.target.value)}
+                      />
+                      <Button
+                        size="sm"
+                        disabled={busy || !issueNote.trim()}
+                        onClick={() =>
+                          void run(async () => {
+                            await repo.createIssue(selectedId, {
+                              note: issueNote.trim(),
+                            });
+                            setIssueNote("");
+                            setIssues(await repo.listIssues(selectedId));
+                          })
+                        }
+                      >
+                        {t("addIssue")}
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
               </>
             )}
           </div>

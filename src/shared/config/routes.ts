@@ -25,6 +25,8 @@ export const routes = {
   adminUsers: "/admin/users",
   adminRoles: "/admin/roles",
   adminAudit: "/admin/audit",
+  adminSettings: "/admin/settings",
+  rooming: "/rooming",
 } as const;
 
 export type AppRole =

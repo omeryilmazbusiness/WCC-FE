@@ -44,6 +44,19 @@ export function IntegrationsBoard() {
   const [busy, setBusy] = useState(false);
   const [provider, setProvider] = useState<ExtIntProvider>("whatsapp");
   const [displayName, setDisplayName] = useState("");
+  const [configValues, setConfigValues] = useState<Record<string, string>>({});
+  const [editConfigId, setEditConfigId] = useState<string | null>(null);
+  const [editConfig, setEditConfig] = useState<Record<string, string>>({});
+
+  const selectedCatalog = useMemo(
+    () => catalog.find((c) => c.provider === provider) ?? null,
+    [catalog, provider],
+  );
+  const schemaFields = selectedCatalog?.configSchema ?? [];
+
+  useEffect(() => {
+    setConfigValues({});
+  }, [provider]);
 
   const refresh = useCallback(async () => {
     const [cat, list] = await Promise.all([repo.catalog(), repo.list()]);
@@ -183,17 +196,39 @@ export function IntegrationsBoard() {
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
               />
+              {schemaFields.map((field) => (
+                <Input
+                  key={field}
+                  className="h-8 bg-white"
+                  placeholder={t(`configField.${field}` as "configField.access_token") || field}
+                  value={configValues[field] ?? ""}
+                  onChange={(e) =>
+                    setConfigValues((prev) => ({
+                      ...prev,
+                      [field]: e.target.value,
+                    }))
+                  }
+                />
+              ))}
               <Button
                 size="sm"
                 className="w-full"
                 disabled={busy || !displayName.trim()}
                 onClick={() =>
                   void run(async () => {
+                    const config: Record<string, string> = {};
+                    for (const key of schemaFields) {
+                      const v = configValues[key]?.trim();
+                      if (v) config[key] = v;
+                    }
                     await repo.create({
                       provider,
                       displayName: displayName.trim(),
+                      config:
+                        Object.keys(config).length > 0 ? config : undefined,
                     });
                     setDisplayName("");
+                    setConfigValues({});
                   })
                 }
               >
@@ -213,54 +248,115 @@ export function IntegrationsBoard() {
                 {items.map((item) => (
                   <li
                     key={item.id}
-                    className="flex flex-wrap items-center gap-2 px-3 py-2.5 text-sm"
+                    className="flex flex-col gap-2 px-3 py-2.5 text-sm"
                   >
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-zinc-900">
-                        {item.displayName}
-                      </p>
-                      <p className="text-[11px] text-zinc-400">
-                        {t(
-                          `provider.${item.provider}` as "provider.whatsapp",
-                        )}
-                        {item.lastProbeAt
-                          ? ` · ${t("lastProbe")}: ${new Date(item.lastProbeAt).toLocaleString()}`
-                          : ""}
-                      </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-zinc-900">
+                          {item.displayName}
+                        </p>
+                        <p className="text-[11px] text-zinc-400">
+                          {t(
+                            `provider.${item.provider}` as "provider.whatsapp",
+                          )}
+                          {item.lastProbeAt
+                            ? ` · ${t("lastProbe")}: ${new Date(item.lastProbeAt).toLocaleString()}`
+                            : ""}
+                        </p>
+                      </div>
+                      <Badge className={statusTone(item.status)}>
+                        {t(`status.${item.status}` as "status.healthy")}
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={busy}
+                        onClick={() =>
+                          void run(() => repo.probe(item.id), "probed")
+                        }
+                      >
+                        {t("probe")}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={busy}
+                        onClick={() => {
+                          if (editConfigId === item.id) {
+                            setEditConfigId(null);
+                            return;
+                          }
+                          const cat = catalog.find(
+                            (c) => c.provider === item.provider,
+                          );
+                          const next: Record<string, string> = {
+                            ...item.config,
+                          };
+                          for (const key of cat?.configSchema ?? []) {
+                            if (next[key] == null) next[key] = "";
+                          }
+                          setEditConfig(next);
+                          setEditConfigId(item.id);
+                        }}
+                      >
+                        {t("editConfig")}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={busy}
+                        onClick={() =>
+                          void run(() =>
+                            repo.update(item.id, { enabled: !item.enabled }),
+                          )
+                        }
+                      >
+                        {item.enabled ? t("disable") : t("enable")}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={busy}
+                        onClick={() => void run(() => repo.remove(item.id))}
+                      >
+                        {t("remove")}
+                      </Button>
                     </div>
-                    <Badge className={statusTone(item.status)}>
-                      {t(`status.${item.status}` as "status.healthy")}
-                    </Badge>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      disabled={busy}
-                      onClick={() =>
-                        void run(() => repo.probe(item.id), "probed")
-                      }
-                    >
-                      {t("probe")}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={busy}
-                      onClick={() =>
-                        void run(() =>
-                          repo.update(item.id, { enabled: !item.enabled }),
-                        )
-                      }
-                    >
-                      {item.enabled ? t("disable") : t("enable")}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={busy}
-                      onClick={() => void run(() => repo.remove(item.id))}
-                    >
-                      {t("remove")}
-                    </Button>
+                    {editConfigId === item.id ? (
+                      <div className="space-y-2 rounded-xl border border-zinc-100 bg-zinc-50/80 p-3">
+                        {Object.keys(editConfig).map((key) => (
+                          <Input
+                            key={key}
+                            className="h-8 bg-white"
+                            placeholder={
+                              t(`configField.${key}` as "configField.access_token") ||
+                              key
+                            }
+                            value={editConfig[key] ?? ""}
+                            onChange={(e) =>
+                              setEditConfig((prev) => ({
+                                ...prev,
+                                [key]: e.target.value,
+                              }))
+                            }
+                          />
+                        ))}
+                        <Button
+                          size="sm"
+                          disabled={busy}
+                          onClick={() =>
+                            void run(async () => {
+                              await repo.update(item.id, {
+                                config: editConfig,
+                              });
+                              setEditConfigId(null);
+                            })
+                          }
+                        >
+                          {t("saveConfig")}
+                        </Button>
+                      </div>
+                    ) : null}
                   </li>
                 ))}
               </ul>

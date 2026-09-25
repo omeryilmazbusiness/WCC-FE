@@ -4,11 +4,14 @@ import { parseSession, SESSION_COOKIE } from "@/shared/api/session";
 import type {
   ChannelHealth,
   ConnectCredentials,
+  ConfirmedNextTask,
   Conversation,
   ConversationListFilter,
   ConversationStatus,
   InboxChannel,
   InboxMessage,
+  NextTaskOutcome,
+  NextTaskSuggestion,
   SocialChannel,
 } from "./model";
 import { isSLABreached, SOCIAL_CHANNELS } from "./model";
@@ -46,6 +49,14 @@ export interface ConversationRepository {
     credentials: ConnectCredentials,
   ): Promise<ChannelHealth>;
   disconnectChannel(provider: SocialChannel): Promise<ChannelHealth>;
+  suggestNextTask(
+    conversationId: string,
+    outcome: NextTaskOutcome,
+  ): Promise<NextTaskSuggestion>;
+  confirmNextTask(
+    conversationId: string,
+    outcome: NextTaskOutcome,
+  ): Promise<ConfirmedNextTask>;
 }
 
 type Raw = Record<string, unknown>;
@@ -115,6 +126,25 @@ function mapHealth(raw: Raw): ChannelHealth {
     publicMeta,
     webhookPath: String(raw.webhook_path ?? raw.webhookPath ?? "") || undefined,
     webhookUrl: String(raw.webhook_url ?? raw.webhookUrl ?? "") || undefined,
+  };
+}
+
+function mapNextTaskSuggestion(raw: Raw): NextTaskSuggestion {
+  return {
+    outcome: String(raw.outcome ?? ""),
+    title: String(raw.title ?? ""),
+    description: String(raw.description ?? raw.body ?? ""),
+    dueAt: (raw.due_at ?? raw.dueAt ?? null) as string | null,
+    priority: Number(raw.priority ?? 50),
+    kind: String(raw.kind ?? "follow_up"),
+  };
+}
+
+function mapConfirmedNextTask(raw: Raw): ConfirmedNextTask {
+  return {
+    taskId: String(raw.task_id ?? raw.taskId ?? raw.id ?? ""),
+    title: String(raw.title ?? ""),
+    outcome: String(raw.outcome ?? ""),
   };
 }
 
@@ -223,6 +253,36 @@ export class ApiConversationRepository implements ConversationRepository {
       await this.http.request<Raw>(
         `/integrations/accounts/${provider}/disconnect`,
         { method: "POST", body: JSON.stringify({}) },
+      ),
+    );
+  }
+
+  async suggestNextTask(
+    conversationId: string,
+    outcome: NextTaskOutcome,
+  ): Promise<NextTaskSuggestion> {
+    return mapNextTaskSuggestion(
+      await this.http.request<Raw>(
+        `/conversations/${conversationId}/suggest-next-task`,
+        {
+          method: "POST",
+          body: JSON.stringify({ outcome }),
+        },
+      ),
+    );
+  }
+
+  async confirmNextTask(
+    conversationId: string,
+    outcome: NextTaskOutcome,
+  ): Promise<ConfirmedNextTask> {
+    return mapConfirmedNextTask(
+      await this.http.request<Raw>(
+        `/conversations/${conversationId}/confirm-next-task`,
+        {
+          method: "POST",
+          body: JSON.stringify({ outcome }),
+        },
       ),
     );
   }
@@ -461,6 +521,40 @@ export class MemoryConversationRepository implements ConversationRepository {
     saveSocialAccounts(this.branchId, next);
     return next.find((a) => a.provider === provider)!;
   }
+
+  async suggestNextTask(
+    conversationId: string,
+    outcome: NextTaskOutcome,
+  ): Promise<NextTaskSuggestion> {
+    const titles: Record<NextTaskOutcome, string> = {
+      follow_up: "Follow up with guest",
+      send_quote: "Send quote",
+      docs_pending: "Collect pending documents",
+      payment_due: "Chase payment",
+    };
+    const due = new Date();
+    due.setUTCDate(due.getUTCDate() + 1);
+    return {
+      outcome,
+      title: titles[outcome] ?? `Next: ${outcome}`,
+      description: `Suggested from conversation ${conversationId}`,
+      dueAt: due.toISOString(),
+      priority: outcome === "payment_due" ? 10 : 40,
+      kind: outcome === "docs_pending" ? "document" : "follow_up",
+    };
+  }
+
+  async confirmNextTask(
+    conversationId: string,
+    outcome: NextTaskOutcome,
+  ): Promise<ConfirmedNextTask> {
+    const suggestion = await this.suggestNextTask(conversationId, outcome);
+    return {
+      taskId: crypto.randomUUID(),
+      title: suggestion.title,
+      outcome,
+    };
+  }
 }
 
 const SOCIAL_STORAGE = "wcc.inbox.social.";
@@ -584,6 +678,14 @@ export function createConversationRepository(
     disconnectChannel: wrap(
       api.disconnectChannel.bind(api),
       memory.disconnectChannel.bind(memory),
+    ),
+    suggestNextTask: wrap(
+      api.suggestNextTask.bind(api),
+      memory.suggestNextTask.bind(memory),
+    ),
+    confirmNextTask: wrap(
+      api.confirmNextTask.bind(api),
+      memory.confirmNextTask.bind(memory),
     ),
   };
 }

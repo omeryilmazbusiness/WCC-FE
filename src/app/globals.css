@@ -84,6 +84,27 @@ body {
   font-family: var(--font-arabic), var(--font-sans);
 }
 
+/* Epic 17 T-213: RTL mirroring for directional chrome */
+[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
+
+[dir="rtl"] aside nav a {
+  text-align: start;
+}
+
+/* Epic 17 T-214: touch-friendly targets on inbox / booking / tasks */
+@media (max-width: 767px) {
+  .touch-target,
+  [data-touch="true"] button,
+  [data-testid="inbox-board"] button,
+  [data-testid="task-queue"] button,
+  [data-testid^="complete-task-"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
 /* Soft Light auth atmosphere — subtle zinc wash, no teal */
 .auth-backdrop {
   background:

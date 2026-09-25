@@ -22,6 +22,8 @@ import {
   Shield,
   KeyRound,
   ScrollText,
+  Settings,
+  BedDouble,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { SessionUser } from "@/shared/api/session";
@@ -104,6 +106,7 @@ export function AppShell({ user, children }: Props) {
     ...(opsNav
       ? [
           { href: routes.suppliers, label: t("suppliers"), icon: Truck },
+          { href: routes.rooming, label: t("rooming"), icon: BedDouble },
           {
             href: routes.missingDocs,
             label: t("missingDocs"),
@@ -135,6 +138,11 @@ export function AppShell({ user, children }: Props) {
           { href: routes.adminUsers, label: t("users"), icon: Shield },
           { href: routes.adminRoles, label: t("roles"), icon: KeyRound },
           { href: routes.adminAudit, label: t("audit"), icon: ScrollText },
+          {
+            href: routes.adminSettings,
+            label: t("settings"),
+            icon: Settings,
+          },
         ]
       : []),
   ]);
@@ -143,7 +151,7 @@ export function AppShell({ user, children }: Props) {
     <SessionUserProvider user={user}>
       <ToastProvider>
         <SessionExpiryWatcher />
-        <div className="flex min-h-screen bg-[#F9FAFB]">
+        <div className="flex min-h-screen bg-[#F9FAFB]" data-testid="app-shell">
           <aside className="sticky top-0 flex h-screen w-[var(--shell-width)] shrink-0 flex-col bg-zinc-950 text-white">
             <div className="flex h-12 items-center gap-2.5 border-b border-white/10 px-4">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white text-zinc-950 shadow-sm">

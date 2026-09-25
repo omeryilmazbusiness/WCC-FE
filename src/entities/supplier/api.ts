@@ -3,6 +3,8 @@ import { FetchHttpClient, type HttpClient } from "@/shared/api/http-client";
 import { parseSession, SESSION_COOKIE } from "@/shared/api/session";
 import type {
   ConfirmationStatus,
+  CreateIssueInput,
+  IssueEvent,
   Supplier,
   SupplierInvoice,
   SupplierInvoiceLine,
@@ -115,6 +117,17 @@ function mapInvoice(raw: Raw): SupplierInvoice {
   };
 }
 
+function mapIssue(raw: Raw): IssueEvent {
+  return {
+    id: str(raw.id),
+    supplierId: str(raw.supplier_id ?? raw.supplierId),
+    note: str(raw.note ?? raw.body),
+    createdBy: str(raw.created_by ?? raw.createdBy),
+    createdByName: str(raw.created_by_name ?? raw.createdByName),
+    createdAt: str(raw.created_at ?? raw.createdAt),
+  };
+}
+
 export type CreateSupplierInput = {
   code: string;
   nameEn?: string;
@@ -192,6 +205,8 @@ export interface SupplierRepository {
     id: string,
     input: SetInvoiceLinesInput,
   ): Promise<SupplierInvoice>;
+  listIssues(supplierId: string): Promise<IssueEvent[]>;
+  createIssue(supplierId: string, input: CreateIssueInput): Promise<IssueEvent>;
 }
 
 class ApiRepo implements SupplierRepository {
@@ -361,6 +376,23 @@ class ApiRepo implements SupplierRepository {
       }),
     );
   }
+
+  async listIssues(supplierId: string) {
+    const data = await this.http.request<Raw[] | { items?: Raw[] }>(
+      `/suppliers/${supplierId}/issues`,
+    );
+    const rows = Array.isArray(data) ? data : (data.items ?? []);
+    return rows.map(mapIssue);
+  }
+
+  async createIssue(supplierId: string, input: CreateIssueInput) {
+    return mapIssue(
+      await this.http.request<Raw>(`/suppliers/${supplierId}/issues`, {
+        method: "POST",
+        body: JSON.stringify({ note: input.note }),
+      }),
+    );
+  }
 }
 
 class MemoryRepo implements SupplierRepository {
@@ -425,6 +457,16 @@ class MemoryRepo implements SupplierRepository {
       ],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+    },
+  ];
+  private issues: IssueEvent[] = [
+    {
+      id: "iss-1",
+      supplierId: "sup-1",
+      note: "Allotment confirmation delayed for Makkah block",
+      createdBy: "u-1",
+      createdByName: "Ops",
+      createdAt: new Date().toISOString(),
     },
   ];
 
@@ -595,6 +637,29 @@ class MemoryRepo implements SupplierRepository {
     this.invoices[i] = inv;
     return { ...inv, lines: inv.lines.map((l) => ({ ...l })) };
   }
+
+  async listIssues(supplierId: string) {
+    return this.issues
+      .filter((i) => i.supplierId === supplierId)
+      .map((i) => ({ ...i }))
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+  }
+
+  async createIssue(supplierId: string, input: CreateIssueInput) {
+    const issue: IssueEvent = {
+      id: crypto.randomUUID(),
+      supplierId,
+      note: input.note,
+      createdBy: "local",
+      createdByName: "You",
+      createdAt: new Date().toISOString(),
+    };
+    this.issues.unshift(issue);
+    return { ...issue };
+  }
 }
 
 let mem: MemoryRepo | null = null;
@@ -643,5 +708,7 @@ export function createSupplierRepository(): SupplierRepository {
       api.setInvoiceLines.bind(api),
       mem.setInvoiceLines.bind(mem),
     ),
+    listIssues: wrap(api.listIssues.bind(api), mem.listIssues.bind(mem)),
+    createIssue: wrap(api.createIssue.bind(api), mem.createIssue.bind(mem)),
   };
 }

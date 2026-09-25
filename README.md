@@ -215,6 +215,38 @@ API-backed via `createDocumentRepository()` / `createVisaRepository()` / `create
 - Nav → `/integrations` — accounting / GDS / payment gateway stubs (enable + probe)
 - Entities: `filesync`, `extint`; supplier API extended for invoices; memory fallbacks included
 
+## Epic 17 Cross-Cutting Hardening & Definition of Done
+
+| Task | Status |
+|------|--------|
+| T-213 RTL/LTR visual QA (Manager, Employee, Inbox, Booking) | Done |
+| T-214 Mobile usability (inbox / booking / tasks) | Done |
+| T-215 UI acceptance scenarios (PDF gate surfaces) | Done |
+| T-216 Empty / loading / error / permission-denied polish | Done |
+| T-217 Acceptance gate sign-off pack | Done (shared checklist in BE docs) |
+
+- Shared UI: `LoadingState`, `PermissionDenied`, `QueryState` (composes empty/error/loading/denied)
+- Shell: left sidebar always visible; touch-target CSS for inbox/tasks
+- RTL: `[dir=rtl]` font + chrome rules in `globals.css`
+- E2E: `e2e/epic17-acceptance.spec.ts`
+
+## Epic 18 %100 Gap Closure
+
+| Task | Status |
+|------|--------|
+| T-219 Integration connection config UI | Done |
+| T-220–T-227 Admin settings hub (SLA, escalation, lost reasons, templates, fields, thresholds) | Done |
+| T-229 Rooming / group list screen + CSV | Done |
+| T-230 Dashboard Booked / Collected / Margin labels | Done |
+| T-232 Next-task suggestion UX (inbox outcome → confirm) | Done |
+| T-233 Global search (header) | Done |
+| T-235 Supplier issue history panel | Done |
+
+- `/admin/settings` — GM/admin settings hub
+- `/rooming` — manager/operations departure rooming
+- Header global search; manager monetary KPI cards; inbox next-task confirm; suppliers Issues tab
+- Entities: `adminconfig`, `rooming`, `search` (+ supplier issues / conversation suggest)
+
 ## Demo login
 
 Works offline via demo auth fallback (or against `wodi-crm-be`):

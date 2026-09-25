@@ -12,8 +12,8 @@ import {
 import { Link } from "@/shared/i18n/navigation";
 import {
   Button,
-  EmptyState,
   PageHeader,
+  QueryState,
   Screen,
   Tabs,
   TabsContent,
@@ -212,12 +212,13 @@ export function ReportsBoard() {
               </div>
             ) : null}
 
-            {!result || result.rows.length === 0 ? (
-              <EmptyState
-                title={busy ? t("loading") : t("empty")}
-                description={t("emptyHint")}
-              />
-            ) : (
+            <QueryState
+              loading={busy && !result}
+              loadingLabel={t("loading")}
+              empty={!result || result.rows.length === 0}
+              emptyTitle={t("empty")}
+              emptyDescription={t("emptyHint")}
+            >
               <div className="overflow-x-auto rounded-2xl border border-zinc-200/80 bg-white">
                 <table className="min-w-full text-left text-sm">
                   <thead className="border-b border-zinc-100 bg-zinc-50/80 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
@@ -232,7 +233,7 @@ export function ReportsBoard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {result.rows.map((row) => (
+                    {(result?.rows ?? []).map((row) => (
                       <tr
                         key={row.id}
                         className="border-b border-zinc-50 last:border-0"
@@ -271,7 +272,7 @@ export function ReportsBoard() {
                   </tbody>
                 </table>
               </div>
-            )}
+            </QueryState>
           </TabsContent>
         ))}
       </Tabs>

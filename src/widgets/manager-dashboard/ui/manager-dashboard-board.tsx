@@ -10,6 +10,7 @@ import {
   Package,
   Plus,
   Target,
+  TrendingUp,
   Users,
   Wallet,
 } from "lucide-react";
@@ -119,6 +120,18 @@ export function ManagerDashboardBoard() {
     target.targetAmount > 0
       ? Math.round((target.actualAmount / target.targetAmount) * 100)
       : 0;
+
+  const teamCollected = team.reduce((s, m) => s + (m.collectedAmt ?? 0), 0);
+  const bookedAmt = kpi.bookedAmt ?? 0;
+  const collectedAmt = kpi.collectedAmt || teamCollected || 0;
+  const marginAmt = kpi.marginAmt ?? 0;
+
+  function moneyLabel(minor: number): string {
+    if (!minor) return "—";
+    return (minor / 100).toLocaleString(undefined, {
+      maximumFractionDigits: 0,
+    });
+  }
 
   return (
     <ListScreen
@@ -240,6 +253,33 @@ export function ManagerDashboardBoard() {
             accent="violet"
           />
         </Link>
+      </div>
+
+      <div
+        className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3"
+        data-testid="manager-money-kpis"
+      >
+        <MetricCard
+          label={t("kpi.booked")}
+          value={moneyLabel(bookedAmt)}
+          icon={Package}
+          accent="sky"
+          hint={t("kpi.bookedHint")}
+        />
+        <MetricCard
+          label={t("kpi.collected")}
+          value={moneyLabel(collectedAmt)}
+          icon={Wallet}
+          accent="emerald"
+          hint={t("kpi.collectedHint")}
+        />
+        <MetricCard
+          label={t("kpi.margin")}
+          value={moneyLabel(marginAmt)}
+          icon={TrendingUp}
+          accent="violet"
+          hint={t("kpi.marginHint")}
+        />
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2">

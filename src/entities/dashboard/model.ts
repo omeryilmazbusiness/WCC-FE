@@ -3,6 +3,12 @@ export type DashboardKPI = {
   tasksOverdue: number;
   bookingsUnpaid: number;
   missingDocs: number;
+  /** Minor units (e.g. halalas / cents). */
+  bookedAmt?: number;
+  /** Minor units. */
+  collectedAmt?: number;
+  /** Minor units. */
+  marginAmt?: number;
   periodFrom: string;
   periodTo: string;
 };

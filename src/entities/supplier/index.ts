@@ -6,6 +6,8 @@ export type {
   SupplierInvoice,
   SupplierInvoiceLine,
   SupplierInvoiceStatus,
+  IssueEvent,
+  CreateIssueInput,
 } from "./model";
 export { LINK_TYPES, INVOICE_STATUSES } from "./model";
 export {

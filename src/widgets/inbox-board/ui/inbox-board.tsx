@@ -16,10 +16,13 @@ import {
   hasConnectedSocial,
   isSLABreached,
   unansweredAgeMinutes,
+  NEXT_TASK_OUTCOMES,
   type ChannelHealth,
   type Conversation,
   type ConversationRepository,
   type InboxMessage,
+  type NextTaskOutcome,
+  type NextTaskSuggestion,
 } from "@/entities/conversation";
 import { createLeadRepository } from "@/entities/lead";
 import { createTaskRepository } from "@/entities/task";
@@ -59,6 +62,7 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
   const t = useTranslations("inbox");
   const ts = useTranslations("inboxSetup");
   const tc = useTranslations("common");
+  const tNext = useTranslations("nextTask");
   const { push } = useToast();
   const user = useSessionUser();
   const manager = isManagerRole(user.role);
@@ -79,6 +83,12 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
   const [noteMode, setNoteMode] = useState(false);
   const [aiSummary, setAiSummary] = useState("");
   const [aiNext, setAiNext] = useState("");
+  const [suggestion, setSuggestion] = useState<NextTaskSuggestion | null>(
+    null,
+  );
+  const [pendingOutcome, setPendingOutcome] = useState<NextTaskOutcome | null>(
+    null,
+  );
   const aiRepo = useMemo(() => createAIRepository(), []);
   const [busy, setBusy] = useState(false);
 
@@ -106,6 +116,11 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
     () => (accounts ?? []).filter((a) => a.connected),
     [accounts],
   );
+
+  useEffect(() => {
+    setSuggestion(null);
+    setPendingOutcome(null);
+  }, [selectedId]);
 
   const listFilter = useMemo(
     () => ({
@@ -255,6 +270,44 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
       push({ title: t("taskCreated"), tone: "success" });
     } catch {
       push({ title: t("actionError"), tone: "error" });
+    }
+  }
+
+  async function suggestOutcome(outcome: NextTaskOutcome) {
+    if (!selected) return;
+    setBusy(true);
+    setPendingOutcome(outcome);
+    try {
+      const s = await repository.suggestNextTask(selected.id, outcome);
+      setSuggestion(s);
+      push({ title: tNext("suggested"), tone: "info" });
+    } catch {
+      push({ title: t("actionError"), tone: "error" });
+      setPendingOutcome(null);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function confirmOutcome() {
+    if (!selected || !pendingOutcome) return;
+    setBusy(true);
+    try {
+      const confirmed = await repository.confirmNextTask(
+        selected.id,
+        pendingOutcome,
+      );
+      push({
+        title: tNext("confirmed"),
+        description: confirmed.title,
+        tone: "success",
+      });
+      setSuggestion(null);
+      setPendingOutcome(null);
+    } catch {
+      push({ title: t("actionError"), tone: "error" });
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -585,6 +638,49 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
                   <Copy className="h-4 w-4" />
                   {t("duplicate")}
                 </Button>
+              </div>
+
+              <div className="flex flex-col gap-2 border-t border-zinc-100 pt-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                  {tNext("title")}
+                </p>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {NEXT_TASK_OUTCOMES.map((outcome) => (
+                    <Button
+                      key={outcome}
+                      type="button"
+                      size="sm"
+                      variant={
+                        pendingOutcome === outcome ? "default" : "outline"
+                      }
+                      disabled={busy}
+                      onClick={() => void suggestOutcome(outcome)}
+                    >
+                      {tNext(`outcomes.${outcome}`)}
+                    </Button>
+                  ))}
+                </div>
+                {suggestion ? (
+                  <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs">
+                    <p className="font-semibold text-zinc-900">
+                      {suggestion.title}
+                    </p>
+                    {suggestion.description ? (
+                      <p className="mt-1 text-zinc-500">
+                        {suggestion.description}
+                      </p>
+                    ) : null}
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="mt-2 w-full"
+                      disabled={busy || !pendingOutcome}
+                      onClick={() => void confirmOutcome()}
+                    >
+                      {tNext("confirm")}
+                    </Button>
+                  </div>
+                ) : null}
               </div>
 
               <div className="flex flex-col gap-2 border-t border-zinc-100 pt-4">

@@ -5,6 +5,7 @@ import { LogOut } from "lucide-react";
 import { NotificationBell } from "@/features/notifications";
 import { LocaleSwitcher } from "@/features/switch-locale";
 import { BranchScopeSelect } from "@/features/branch-scope";
+import { GlobalSearch } from "@/features/global-search";
 import { clearSession } from "@/features/auth-by-credentials";
 import { apiLogout } from "@/entities/identity/api";
 import { routes } from "@/shared/config/routes";
@@ -17,7 +18,7 @@ type Props = {
 };
 
 /**
- * Slim utility bar — branch scope / notifications / locale / logout.
+ * Slim utility bar — branch scope / search / notifications / locale / logout.
  */
 export function AppHeader({ className }: Props) {
   const tNav = useTranslations("nav");
@@ -37,8 +38,9 @@ export function AppHeader({ className }: Props) {
         className,
       )}
     >
-      <div className="me-auto">
+      <div className="me-auto flex min-w-0 flex-1 items-center gap-3">
         <BranchScopeSelect />
+        <GlobalSearch />
       </div>
       <NotificationBell surface="light" />
       <LocaleSwitcher surface="light" compact />

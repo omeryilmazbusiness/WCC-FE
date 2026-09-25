@@ -23,7 +23,9 @@
     "users": "Users",
     "roles": "Roles",
     "audit": "Audit",
-    "logout": "Sign out"
+    "logout": "Sign out",
+    "settings": "Settings",
+    "rooming": "Rooming"
   },
   "auth": {
     "title": "Sign in",
@@ -91,7 +93,13 @@
       "leadsOpen": "Leads open",
       "tasksOverdue": "Overdue tasks",
       "bookingsUnpaid": "Unpaid",
-      "missingDocs": "Missing docs"
+      "missingDocs": "Missing docs",
+      "booked": "Booked",
+      "collected": "Collected",
+      "margin": "Margin",
+      "bookedHint": "Booked amount (minor units)",
+      "collectedHint": "Collected amount (minor units)",
+      "marginHint": "Margin amount (minor units)"
     },
     "quick": {
       "lead": "New lead",
@@ -886,7 +894,10 @@
     "filter": "Filter",
     "search": "Search",
     "actions": "Actions",
-    "retry": "Retry"
+    "retry": "Retry",
+    "permissionDenied": "Access denied",
+    "permissionDeniedHint": "You do not have permission to view this screen.",
+    "loadingPanel": "Loading…"
   },
   "finance": {
     "queuesTitle": "Finance queues",
@@ -1146,7 +1157,12 @@
       "pending": "Pending",
       "confirmed": "Confirmed",
       "cancelled": "Cancelled"
-    }
+    },
+    "issuesTab": "Issues",
+    "issuesTitle": "Issue history",
+    "issuesEmpty": "No issue notes yet",
+    "issueNotePh": "Add a note…",
+    "addIssue": "Add note"
   },
   "fileSync": {
     "title": "File sync",
@@ -1266,6 +1282,131 @@
       "degraded": "Degraded",
       "error": "Error",
       "disabled": "Disabled"
+    },
+    "editConfig": "Config",
+    "saveConfig": "Save config",
+    "configField": {
+      "phone_number_id": "Phone number ID",
+      "access_token": "Access token",
+      "waba_id": "WABA ID",
+      "smtp_host": "SMTP host",
+      "api_key": "API key",
+      "webhook_url": "Webhook URL",
+      "account_id": "Account ID"
     }
+  },
+  "adminSettings": {
+    "title": "Admin settings",
+    "subtitle": "SLA, escalation, lost reasons, templates, fields, and thresholds",
+    "loadError": "Could not load settings",
+    "actionError": "Could not save settings",
+    "saved": "Saved",
+    "save": "Save",
+    "add": "Add",
+    "remove": "Remove",
+    "empty": "Nothing here yet",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "enable": "Enable",
+    "disable": "Disable",
+    "required": "Required",
+    "sections": {
+      "sla": "SLA",
+      "escalation": "Escalation",
+      "lostReasons": "Lost reasons",
+      "templates": "Templates",
+      "fields": "Fields",
+      "thresholds": "Thresholds",
+      "events": "Events catalog",
+      "docPolicies": "Doc policies"
+    },
+    "sla": {
+      "firstResponse": "First response (minutes)",
+      "resolve": "Resolve (minutes)",
+      "businessHours": "Business hours only"
+    },
+    "escalation": {
+      "after": "After"
+    },
+    "lostReasons": {
+      "code": "Code",
+      "label": "Label"
+    },
+    "templates": {
+      "code": "Code",
+      "body": "Body"
+    },
+    "fields": {
+      "add": "Add field",
+      "entity": {
+        "lead": "Lead",
+        "customer": "Customer",
+        "booking": "Booking"
+      }
+    },
+    "thresholds": {
+      "softCapacity": "Soft capacity %",
+      "hardCapacity": "Hard capacity %",
+      "overdueTask": "Overdue task (hours)",
+      "unpaidBooking": "Unpaid booking (days)",
+      "marginAlert": "Margin alert %"
+    },
+    "docPoliciesBody": "Document policies are managed via checklists and missing-docs ops.",
+    "docPoliciesLink": "Open missing docs"
+  },
+  "rooming": {
+    "title": "Rooming",
+    "subtitle": "Rooms, group list, and CSV export by departure",
+    "departure": "Departure",
+    "pickDeparture": "Pick a departure",
+    "departureIdPh": "Departure UUID",
+    "rooms": "Rooms",
+    "roomsEmpty": "No rooms yet",
+    "groupList": "Group list",
+    "groupEmpty": "No assignments yet",
+    "roomLabel": "Room label",
+    "capacity": "Capacity",
+    "addRoom": "Add room",
+    "remove": "Remove",
+    "unassign": "Unassign",
+    "unassigned": "Unassigned",
+    "exportCsv": "Export CSV",
+    "exported": "Exported",
+    "exportError": "Export failed",
+    "loadError": "Could not load rooming",
+    "actionError": "Could not complete action",
+    "saved": "Saved"
+  },
+  "search": {
+    "placeholder": "Search…",
+    "clear": "Clear search",
+    "searching": "Searching…",
+    "empty": "No results",
+    "entity": {
+      "customer": "Customer",
+      "lead": "Lead",
+      "booking": "Booking",
+      "conversation": "Conversation",
+      "task": "Task",
+      "package": "Package",
+      "departure": "Departure",
+      "supplier": "Supplier"
+    }
+  },
+  "nextTask": {
+    "title": "Outcome",
+    "confirm": "Confirm & create task",
+    "suggested": "Task suggested",
+    "confirmed": "Task created",
+    "outcomes": {
+      "follow_up": "Follow up",
+      "send_quote": "Send quote",
+      "docs_pending": "Docs pending",
+      "payment_due": "Payment due"
+    }
+  },
+  "supplierIssues": {
+    "title": "Supplier issues",
+    "add": "Add note"
   }
 }
