@@ -718,8 +718,18 @@
   "notifications": {
     "title": "الإشعارات",
     "empty": "لا توجد إشعارات جديدة",
-    "markAllRead": "تعيين الكل كمقروء",
-    "dismiss": "إخفاء"
+    "markAllRead": "تأكيد الكل",
+    "dismiss": "إخفاء",
+    "acknowledge": "تأكيد الاستلام",
+    "resolve": "إغلاق",
+    "preferences": "قنوات التنبيه",
+    "prefsHint": "إشعارات التطبيق دائمًا مفعّلة. البريد والدفع اختياريان.",
+    "inApp": "داخل التطبيق",
+    "mandatory": "إلزامي",
+    "email": "ملخصات البريد",
+    "push": "تنبيهات الدفع",
+    "savePrefs": "حفظ",
+    "cancel": "إلغاء"
   },
   "common": {
     "loading": "جارٍ التحميل…",

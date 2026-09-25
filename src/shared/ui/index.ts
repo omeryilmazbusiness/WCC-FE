@@ -5,7 +5,7 @@
  *
  * ```tsx
  * import { Button, SearchField, FilterBar, FilterChip, useToast } from "@/shared/ui";
- * import { NotificationBell, pushNotification } from "@/features/notifications";
+ * import { NotificationBell } from "@/features/notifications";
  * ```
  *
  * Layering (FSD):

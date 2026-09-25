@@ -718,8 +718,18 @@
   "notifications": {
     "title": "Notifications",
     "empty": "You're all caught up",
-    "markAllRead": "Mark all read",
-    "dismiss": "Dismiss"
+    "markAllRead": "Ack all",
+    "dismiss": "Dismiss",
+    "acknowledge": "Acknowledge",
+    "resolve": "Resolve",
+    "preferences": "Alert channels",
+    "prefsHint": "In-app alerts are always on. Email and push are optional.",
+    "inApp": "In-app",
+    "mandatory": "Required",
+    "email": "Email digests",
+    "push": "Push alerts",
+    "savePrefs": "Save",
+    "cancel": "Cancel"
   },
   "common": {
     "loading": "Loading…",
