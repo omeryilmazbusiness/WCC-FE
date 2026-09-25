@@ -15,19 +15,21 @@ import {
   Target,
   FileSpreadsheet,
   FileBarChart2,
+  Sparkles,
   FileWarning,
   Truck,
   Shield,
   KeyRound,
   ScrollText,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import type { SessionUser } from "@/shared/api/session";
 import { SessionUserProvider } from "@/shared/api/session-context";
 import { canAccessAdmin, routes } from "@/shared/config/routes";
 import { Link, usePathname } from "@/shared/i18n/navigation";
 import { cn } from "@/shared/lib/cn";
 import { ToastProvider } from "@/shared/ui";
-import { isManagerRole } from "@/entities/user";
+import { canConfigureAI, isManagerRole } from "@/entities/user";
 import { SessionExpiryWatcher } from "@/features/auth-by-credentials/ui/session-expiry-watcher";
 import { AppHeader } from "./app-header";
 
@@ -36,17 +38,36 @@ type Props = {
   children: React.ReactNode;
 };
 
+type NavItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+};
+
+/** Keep first occurrence — prevents React key collisions when role gates overlap (e.g. gm). */
+function uniqueNavByHref(items: NavItem[]): NavItem[] {
+  const seen = new Set<string>();
+  const out: NavItem[] = [];
+  for (const item of items) {
+    if (seen.has(item.href)) continue;
+    seen.add(item.href);
+    out.push(item);
+  }
+  return out;
+}
+
 export function AppShell({ user, children }: Props) {
   const t = useTranslations("nav");
   const ta = useTranslations("app");
   const pathname = usePathname();
   const manager = isManagerRole(user.role);
   const admin = canAccessAdmin(user.role);
+  const aiSetup = canConfigureAI(user.role);
   const finance =
     user.role === "finance" || user.role === "gm" || user.role === "manager";
   const opsNav = manager || user.role === "operations";
 
-  const items = [
+  const items = uniqueNavByHref([
     manager
       ? { href: routes.manager, label: t("manager"), icon: LayoutDashboard }
       : user.role === "finance"
@@ -71,6 +92,9 @@ export function AppShell({ user, children }: Props) {
           },
           { href: routes.reports, label: t("reports"), icon: FileBarChart2 },
         ]
+      : []),
+    ...(aiSetup
+      ? [{ href: routes.aiSetup, label: t("aiSetup"), icon: Sparkles }]
       : []),
     ...(opsNav
       ? [
@@ -99,7 +123,7 @@ export function AppShell({ user, children }: Props) {
           { href: routes.adminAudit, label: t("audit"), icon: ScrollText },
         ]
       : []),
-  ];
+  ]);
 
   return (
     <SessionUserProvider user={user}>

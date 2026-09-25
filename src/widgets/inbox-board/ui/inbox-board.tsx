@@ -23,6 +23,7 @@ import {
 } from "@/entities/conversation";
 import { createLeadRepository } from "@/entities/lead";
 import { createTaskRepository } from "@/entities/task";
+import { createAIRepository } from "@/entities/ai";
 import { isManagerRole } from "@/entities/user";
 import { InboxSetupWizard } from "@/features/inbox-setup";
 import { useSessionUser } from "@/shared/api/session-context";
@@ -76,13 +77,16 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
   const [messages, setMessages] = useState<InboxMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [noteMode, setNoteMode] = useState(false);
+  const [aiSummary, setAiSummary] = useState("");
+  const [aiNext, setAiNext] = useState("");
+  const aiRepo = useMemo(() => createAIRepository(), []);
   const [busy, setBusy] = useState(false);
 
   const connected = useMemo(
     () => (accounts ? hasConnectedSocial(accounts) : false),
     [accounts],
   );
-  const showSetup = Boolean(accounts) && (!connected || forceSetup) && manager;
+  const showSetup = Boolean(accounts) && forceSetup && manager;
   const showWaiting = Boolean(accounts) && !connected && !manager;
 
   useEffect(() => {
@@ -120,23 +124,23 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
   );
 
   const reload = useCallback(async () => {
-    if (!connected || forceSetup) return;
+    if (forceSetup) return;
     const list = await repository.list(listFilter);
     setRows(list);
     setSelectedId((prev) => {
       if (prev && list.some((c) => c.id === prev)) return prev;
       return list[0]?.id ?? null;
     });
-  }, [repository, listFilter, connected, forceSetup]);
+  }, [repository, listFilter, forceSetup]);
 
   useEffect(() => {
-    if (!connected || forceSetup) return;
+    if (forceSetup) return;
     void reload();
-  }, [reload, connected, forceSetup]);
+  }, [reload, forceSetup]);
 
   useEffect(() => {
     let cancelled = false;
-    if (!selectedId || !connected || forceSetup) {
+    if (!selectedId || forceSetup) {
       setMessages((prev) => (prev.length === 0 ? prev : []));
       return;
     }
@@ -146,7 +150,7 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [selectedId, repository, connected, forceSetup]);
+  }, [selectedId, repository, forceSetup]);
 
   const selected = useMemo(
     () => rows?.find((c) => c.id === selectedId) ?? null,
@@ -171,6 +175,22 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
       });
     } catch {
       push({ title: t("actionError"), tone: "error" });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function assist() {
+    if (!selected) return;
+    setBusy(true);
+    try {
+      const out = await aiRepo.conversationAssist(selected.id);
+      setAiSummary(out.summary || "");
+      setAiNext(out.nextStep || "");
+      if (out.replyDraft) setDraft(out.replyDraft);
+      push({ title: t("aiAssistDone"), tone: "success" });
+    } catch {
+      push({ title: t("aiAssistError"), tone: "error" });
     } finally {
       setBusy(false);
     }
@@ -463,7 +483,7 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
                 ))}
               </div>
               <div className="border-t border-zinc-100 p-3">
-                <div className="mb-2 flex gap-2">
+                <div className="mb-2 flex flex-wrap gap-2">
                   <Button
                     type="button"
                     size="sm"
@@ -472,7 +492,22 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
                   >
                     {t("internalNote")}
                   </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={busy || !selected}
+                    onClick={() => void assist()}
+                  >
+                    {t("aiAssist")}
+                  </Button>
                 </div>
+                {aiSummary ? (
+                  <div className="mb-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-medium text-zinc-600">
+                    <p className="font-semibold text-zinc-900">{aiSummary}</p>
+                    {aiNext ? <p className="mt-1">{aiNext}</p> : null}
+                  </div>
+                ) : null}
                 <Textarea
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}

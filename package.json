@@ -10,6 +10,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test:i18n": "node scripts/check-i18n-keys.mjs",
+    "test:branch-setup": "node --experimental-strip-types scripts/selftest-branch-setup.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },

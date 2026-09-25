@@ -19,6 +19,7 @@ import {
   type TargetStatus,
   type TargetWeight,
 } from "@/entities/revenuetarget";
+import { TargetAIInsight } from "@/features/ai-target-insight";
 import { Link } from "@/shared/i18n/navigation";
 import { routes } from "@/shared/config/routes";
 import {
@@ -318,6 +319,7 @@ export function TargetPerformanceBoard() {
         </div>
       ) : (
         <div className="mt-5 space-y-4">
+          <TargetAIInsight targetId={selectedId} />
           {/* Progress hero — compact */}
           <section
             data-testid="target-progress-hero"

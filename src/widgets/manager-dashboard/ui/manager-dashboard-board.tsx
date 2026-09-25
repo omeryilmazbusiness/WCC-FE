@@ -35,6 +35,8 @@ import {
   SelectValue,
   SurfacePanel,
 } from "@/shared/ui";
+import { AIExecutiveSummaryCard } from "./ai-executive-summary-card";
+import { BranchSetupHost } from "@/features/branch-setup";
 
 const repo = createDashboardRepository();
 
@@ -167,6 +169,8 @@ export function ManagerDashboardBoard() {
         </div>
       }
     >
+      <BranchSetupHost />
+
       <SurfacePanel
         title={target.label}
         description={t("targetHeroBody", { pct: progressPct })}
@@ -197,6 +201,8 @@ export function ManagerDashboardBoard() {
           </Badge>
         </div>
       </SurfacePanel>
+
+      <AIExecutiveSummaryCard />
 
       <div
         className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"

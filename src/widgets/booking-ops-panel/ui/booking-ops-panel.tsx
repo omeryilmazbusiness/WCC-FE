@@ -17,6 +17,7 @@ import {
   type VisaStatus,
 } from "@/entities/visa";
 import type { BookingParticipant } from "@/entities/booking";
+import { OCRConfirmPanel } from "@/features/ai-ocr";
 import { cn } from "@/shared/lib/cn";
 import {
   Badge,
@@ -416,6 +417,16 @@ export function BookingOpsPanel({
                 />
               </label>
             </div>
+            <OCRConfirmPanel
+              onConfirmFields={(fields) => {
+                push({
+                  title: t("ocrConfirmed", {
+                    name: fields.full_name || fields.passport_no || "OK",
+                  }),
+                  tone: "success",
+                });
+              }}
+            />
           </div>
         </div>
       ) : null}

@@ -159,6 +159,34 @@ export async function listBranches(): Promise<Branch[]> {
   );
 }
 
+export async function updateBranch(
+  id: string,
+  body: { code: string; name_en: string; name_ar?: string },
+): Promise<Branch> {
+  return withDemoFallback(
+    async () => {
+      const raw = await http().request<unknown>(`/branches/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          code: body.code,
+          name_en: body.name_en,
+          name_ar: body.name_ar ?? "",
+        }),
+      });
+      const mapped = mapBranch(raw);
+      if (!mapped) throw new Error("invalid branch");
+      return mapped;
+    },
+    () => ({
+      ...DEMO_BRANCH,
+      id,
+      code: body.code,
+      name_en: body.name_en,
+      name_ar: body.name_ar ?? "",
+    }),
+  );
+}
+
 export async function listTeams(branchId?: string): Promise<Team[]> {
   const q = branchId ? `?branch_id=${branchId}` : "";
   return withDemoFallback(

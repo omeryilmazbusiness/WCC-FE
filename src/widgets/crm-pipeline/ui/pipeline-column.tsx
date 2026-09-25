@@ -12,6 +12,7 @@ import { LeadStageMenu } from "@/features/change-lead-stage";
 import { ConvertLeadDialog } from "@/features/convert-lead";
 import { LEAD_STAGE_TONES, StageBadge } from "@/shared/ui";
 import { cn } from "@/shared/lib/cn";
+import { LeadPriorityBadge } from "./lead-priority-badge";
 
 type Props = {
   stage: LeadStage;
@@ -71,7 +72,10 @@ export function PipelineColumn({
               className="w-full text-start"
               onClick={() => onOpenLead(lead)}
             >
-              <p className="text-sm font-semibold text-zinc-950">{lead.fullName}</p>
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-sm font-semibold text-zinc-950">{lead.fullName}</p>
+                <LeadPriorityBadge leadId={lead.id} />
+              </div>
               <p className="mt-1 text-xs font-medium text-zinc-500">{lead.phone}</p>
               <p className="mt-2 truncate text-xs text-zinc-400">
                 {lead.ownerName}
