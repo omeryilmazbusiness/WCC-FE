@@ -35,17 +35,6 @@ export type ApiUser = {
   failed_login_attempts?: number;
 };
 
-export type AuditEvent = {
-  id: string;
-  actor_id?: string | null;
-  action: string;
-  entity_type: string;
-  entity_id?: string | null;
-  branch_id?: string | null;
-  metadata?: Record<string, unknown>;
-  created_at: string;
-};
-
 const DEMO_BRANCH: Branch = {
   id: "11111111-1111-1111-1111-111111111111",
   code: "HQ",
@@ -263,42 +252,5 @@ export async function fetchPermissionMatrix(): Promise<{
         APP_ROLES.map((role) => [role, [...DEMO_ROLE_PERMISSIONS[role]]]),
       ),
     }),
-  );
-}
-
-export async function listAuditEvents(params?: {
-  actorId?: string;
-  entityType?: string;
-  from?: string;
-  to?: string;
-}): Promise<AuditEvent[]> {
-  const sp = new URLSearchParams();
-  if (params?.actorId) sp.set("actor_id", params.actorId);
-  if (params?.entityType) sp.set("entity_type", params.entityType);
-  if (params?.from) sp.set("from", params.from);
-  if (params?.to) sp.set("to", params.to);
-  const qs = sp.toString() ? `?${sp}` : "";
-  return withDemoFallback(
-    () => http.request<AuditEvent[]>(`/audit-events${qs}`),
-    () => [
-      {
-        id: "a1",
-        actor_id: DEMO_USERS[0].id,
-        action: "auth.login",
-        entity_type: "user",
-        entity_id: DEMO_USERS[0].id,
-        created_at: new Date().toISOString(),
-        metadata: {},
-      },
-      {
-        id: "a2",
-        actor_id: DEMO_USERS[1].id,
-        action: "user.updated",
-        entity_type: "user",
-        entity_id: DEMO_USERS[2].id,
-        created_at: new Date(Date.now() - 3600_000).toISOString(),
-        metadata: { before: { role: "employee" }, after: { role: "employee" } },
-      },
-    ],
   );
 }

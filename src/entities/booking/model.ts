@@ -33,7 +33,9 @@ export type BookingParticipant = {
   id: string;
   bookingId: string;
   fullName: string;
+  /** Always masked by the API ("••••1234"); the full value only via the reveal endpoint. */
   passportNo: string;
+  passportLast4: string;
   nationality: string;
   dateOfBirth: string | null;
   createdAt: string;
@@ -110,6 +112,7 @@ export type LineItemInput = {
 
 export type ParticipantInput = {
   fullName: string;
+  /** On update, blank or the masked value keeps the stored passport. */
   passportNo?: string;
   nationality?: string;
   dateOfBirth?: string | null;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
@@ -22,6 +22,7 @@ import {
   Button,
   DataTable,
   EmptyState,
+  MaskedSecret,
   PageHeader,
   QueryState,
   Screen,
@@ -31,6 +32,7 @@ import {
   TabsTrigger,
   useMutationFeedback,
 } from "@/shared/ui";
+import { PrivacyMenu } from "./privacy-menu";
 
 const repo = createCustomerRepository();
 const bookingRepo = createBookingRepository();
@@ -45,6 +47,7 @@ export function Customer360View({ customerId }: Props) {
   const feedback = useMutationFeedback();
   const canWrite = useCan("customers.write");
   const canBookings = useCan("bookings.read");
+  const canRevealPii = useCan("pii.read");
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [companions, setCompanions] = useState<CompanionLink[]>([]);
@@ -215,34 +218,40 @@ export function Customer360View({ customerId }: Props) {
         title={customer.fullName}
         description={customer.fullNameAr || undefined}
         actions={
-          canWrite ? (
           <div className="flex flex-wrap gap-2">
-            <EditCustomerDialog
-              customer={customer}
-              repository={repo}
-              onSaved={() => {
-                feedback.success(t("updatedToast"));
-                void refresh();
-              }}
-            />
-            <MergeCustomerDialog
-              target={customer}
-              repository={repo}
-              onMerged={() => {
-                feedback.success(t("mergedToast"));
-                void refresh();
-              }}
-            />
-            <LinkCompanionDialog
-              customerId={customer.id}
-              repository={repo}
-              onLinked={() => {
-                feedback.success(t("companionLinked"));
-                void refresh();
-              }}
-            />
+            {customer.anonymizedAt ? (
+              <Badge className="self-center bg-zinc-900 normal-case text-white">{t("anonymized")}</Badge>
+            ) : null}
+            {canWrite ? (
+              <>
+                <EditCustomerDialog
+                  customer={customer}
+                  repository={repo}
+                  onSaved={() => {
+                    feedback.success(t("updatedToast"));
+                    void refresh();
+                  }}
+                />
+                <MergeCustomerDialog
+                  target={customer}
+                  repository={repo}
+                  onMerged={() => {
+                    feedback.success(t("mergedToast"));
+                    void refresh();
+                  }}
+                />
+                <LinkCompanionDialog
+                  customerId={customer.id}
+                  repository={repo}
+                  onLinked={() => {
+                    feedback.success(t("companionLinked"));
+                    void refresh();
+                  }}
+                />
+              </>
+            ) : null}
+            <PrivacyMenu customer={customer} repository={repo} onAnonymized={() => void refresh()} />
           </div>
-          ) : undefined
         }
       />
 
@@ -265,7 +274,17 @@ export function Customer360View({ customerId }: Props) {
             <Field label={t("phone")} value={customer.phone} />
             <Field label={t("email")} value={customer.email || "—"} />
             <Field label={t("nationality")} value={customer.nationality || "—"} />
-            <Field label={t("passport")} value={customer.passportNo || "—"} />
+            <Field
+              label={t("passport")}
+              value={
+                <MaskedSecret
+                  id={customer.id}
+                  masked={customer.passportNo}
+                  canReveal={canRevealPii}
+                  onReveal={() => repo.revealPassport(customer.id)}
+                />
+              }
+            />
             <Field
               label={t("dob")}
               value={
@@ -384,7 +403,7 @@ function Field({
   className,
 }: {
   label: string;
-  value: string;
+  value: ReactNode;
   className?: string;
 }) {
   return (

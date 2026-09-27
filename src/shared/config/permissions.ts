@@ -11,6 +11,7 @@ export const PERMISSIONS = [
   "customers.read",
   "customers.write",
   "pii.read",
+  "privacy.manage",
   "leads.read",
   "leads.write",
   "bookings.read",
@@ -147,13 +148,14 @@ export const DEMO_ROLE_PERMISSIONS: Record<AppRole, readonly Permission[]> = {
   gm: PERMISSIONS,
   admin: [
     "users.read", "users.write", "users.unlock", "roles.read", "audit.read", "branches.read", "ops.read",
-    "integrations.read", "integrations.write",
+    "privacy.manage", "integrations.read", "integrations.write",
     "notifications.read", "notifications.write", "notifications.manage",
     "reports.read", "reports.export", "ai.read", "ai.write", "ai.setup",
     "filesync.read", "filesync.write", "settings.read", "settings.write",
   ],
   manager: PERMISSIONS.filter(
-    (p) => p !== "users.write" && p !== "users.unlock" && p !== "ops.read",
+    (p) =>
+      p !== "users.write" && p !== "users.unlock" && p !== "ops.read" && p !== "privacy.manage",
   ),
   employee: [
     "branches.read", "customers.read", "customers.write", "leads.read", "leads.write",

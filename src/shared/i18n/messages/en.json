@@ -515,7 +515,10 @@
     "filterHasAr": "Has Arabic name",
     "filterEnOnly": "English only",
     "createdToastTitle": "Customer created",
-    "createdToastBody": "The record is ready in Customer 360."
+    "createdToastBody": "The record is ready in Customer 360.",
+    "passportUnchanged": "unchanged ({masked})",
+    "passportUnchangedHint": "Leave empty to keep the current passport number.",
+    "anonymized": "Anonymized"
   },
   "pipeline": {
     "title": "CRM Pipeline",
@@ -1544,6 +1547,95 @@
       "revokedToast": "Device signed out",
       "othersRevokedToast": "{count, plural, =0 {No other devices were signed in} one {# device signed out} other {# devices signed out}}",
       "revokeError": "Could not sign out the session"
+    }
+  },
+  "pii": {
+    "show": "Show",
+    "showAria": "Show full value",
+    "hide": "Hide",
+    "copy": "Copy",
+    "copied": "Copied to clipboard",
+    "copyError": "Could not copy",
+    "revealError": "Could not reveal the value",
+    "hidesIn": "Hides in {seconds}s"
+  },
+  "privacy": {
+    "menu": "Privacy",
+    "export": "Export data",
+    "exported": "Customer data exported",
+    "exportError": "Could not export customer data",
+    "anonymize": "Anonymize",
+    "anonymizeTitle": "Anonymize {name}?",
+    "anonymizeDescription": "KVKK erasure: the customer's personal data is permanently removed.",
+    "anonymizeWarning": "This is irreversible. Name, contact details, passport, date of birth and notes are erased for good and cannot be restored — not even by an administrator.",
+    "reasonLabel": "Reason",
+    "reasonPlaceholder": "e.g. Erasure request received from the customer by email",
+    "reasonHint": "At least {min} characters. Recorded in the audit log.",
+    "confirmNameLabel": "Type “{name}” to confirm",
+    "confirmNameMismatch": "The name does not match.",
+    "confirm": "Anonymize permanently",
+    "cancel": "Cancel",
+    "anonymized": "Customer anonymized",
+    "anonymizeError": "Could not anonymize the customer",
+    "activeBookings": "This customer still has active bookings. Complete or cancel them before anonymizing."
+  },
+  "audit": {
+    "title": "Audit log",
+    "subtitle": "Who did what, when and from where — filter, inspect changes and export",
+    "exportCsv": "Export CSV",
+    "exported": "Audit log exported",
+    "exportError": "Could not export the audit log",
+    "loadError": "Could not load audit events",
+    "empty": "No audit events yet",
+    "emptyFiltered": "No audit events match these filters",
+    "filters": {
+      "entityType": "Entity type",
+      "action": "Action",
+      "actor": "Actor",
+      "from": "From",
+      "to": "To",
+      "entityId": "Entity ID",
+      "entityIdPlaceholder": "Paste an ID…",
+      "all": "All",
+      "reset": "Reset filters"
+    },
+    "columns": {
+      "time": "Time",
+      "actor": "Actor",
+      "action": "Action",
+      "entity": "Entity",
+      "ip": "IP",
+      "session": "Session"
+    },
+    "actorType": {
+      "user": "User",
+      "system": "System",
+      "webhook": "Webhook"
+    },
+    "details": {
+      "expand": "Show details",
+      "collapse": "Hide details",
+      "changes": "Changes",
+      "noChanges": "No field changes recorded",
+      "field": "Field",
+      "before": "Before",
+      "after": "After",
+      "added": "added",
+      "removed": "removed",
+      "changed": "changed",
+      "extra": "Extra",
+      "requestId": "Request ID",
+      "sessionId": "Session ID",
+      "entityId": "Entity ID",
+      "actorId": "Actor ID",
+      "branchId": "Branch ID",
+      "userAgent": "User agent"
+    },
+    "pagination": {
+      "summary": "{from}–{to} of {total}",
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {page} of {pages}"
     }
   }
 }

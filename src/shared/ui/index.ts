@@ -124,3 +124,4 @@ export {
   type DescribedError,
 } from "./use-describe-error";
 export { useMutationFeedback } from "./use-mutation-feedback";
+export { MaskedSecret } from "./masked-secret";

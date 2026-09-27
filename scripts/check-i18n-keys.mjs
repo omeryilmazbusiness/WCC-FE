@@ -86,6 +86,15 @@ for (const k of arT) {
   if (!enT.has(k)) missing.push(`[parity-en] ${k}`);
 }
 
+const enAll = flatten(en);
+const arAll = flatten(ar);
+for (const k of enAll) {
+  if (!arAll.has(k)) missing.push(`[parity-ar] ${k}`);
+}
+for (const k of arAll) {
+  if (!enAll.has(k)) missing.push(`[parity-en] ${k}`);
+}
+
 const uniq = [...new Set(missing)];
 if (uniq.length) {
   console.error("i18n key check FAILED:");
@@ -94,5 +103,5 @@ if (uniq.length) {
 }
 
 console.log(
-  `i18n key check OK — ${keys.length} board keys, ${enT.size} targets leaves, en/ar parity`,
+  `i18n key check OK — ${keys.length} board keys, ${enT.size} targets leaves, ${enAll.size} keys en/ar parity`,
 );

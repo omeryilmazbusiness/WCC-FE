@@ -29,6 +29,7 @@ import {
   DialogTitle,
   EmptyState,
   Input,
+  MaskedSecret,
   PageHeader,
   QueryState,
   Screen,
@@ -69,6 +70,7 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
   const feedback = useMutationFeedback();
   const canWrite = useCan("bookings.write");
   const canCreateTasks = useCan("tasks.write");
+  const canRevealPii = useCan("pii.read");
 
   const [booking, setBooking] = useState<Booking | null>(null);
   const [participants, setParticipants] = useState<BookingParticipant[]>([]);
@@ -429,8 +431,16 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
                 <li key={p.id} className="flex items-center justify-between gap-3 px-5 py-3 text-sm">
                   <div>
                     <p className="font-semibold text-zinc-950">{p.fullName}</p>
-                    <p className="text-zinc-500">
-                      {p.passportNo || t("passportMissing")} · {p.nationality || "—"}
+                    <p className="flex flex-wrap items-center gap-1.5 text-zinc-500">
+                      <MaskedSecret
+                        id={p.id}
+                        masked={p.passportNo}
+                        canReveal={canRevealPii}
+                        onReveal={() => repo.revealParticipantPassport(booking.id, p.id)}
+                        emptyLabel={t("passportMissing")}
+                      />
+                      <span aria-hidden>·</span>
+                      <span>{p.nationality || "—"}</span>
                     </p>
                   </div>
                   {draft ? (

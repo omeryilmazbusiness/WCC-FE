@@ -1,4 +1,4 @@
-export type { Branch, Team, ApiUser, AuditEvent } from "./api";
+export type { Branch, Team, ApiUser } from "./api";
 export {
   listBranches,
   updateBranch,
@@ -9,5 +9,4 @@ export {
   unlockUser,
   revokeUserSessions,
   fetchPermissionMatrix,
-  listAuditEvents,
 } from "./api";

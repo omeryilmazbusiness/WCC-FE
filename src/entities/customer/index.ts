@@ -1,6 +1,7 @@
 export type {
   Customer,
   CustomerCreateInput,
+  CustomerDataExport,
   CustomerUpdateInput,
   CompanionLink,
   TimelineItem,

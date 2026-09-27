@@ -1,5 +1,6 @@
 import { http, type HttpClient } from "@/shared/api/http-client";
 import { createRepository } from "@/shared/api/repository";
+import { maskedLast4, passportPatchValue, toMaskedSecret } from "@/shared/lib/pii";
 import type {
   Booking,
   BookingChecklistItem,
@@ -36,6 +37,8 @@ export interface BookingRepository {
     input: ParticipantInput,
   ): Promise<BookingParticipant>;
   deleteParticipant(id: string, participantId: string): Promise<void>;
+  /** Full participant passport number (`pii.read`, audited). Never cache the result. */
+  revealParticipantPassport(id: string, participantId: string): Promise<string>;
   listLineItems(id: string): Promise<BookingLineItem[]>;
   setLineItems(
     id: string,
@@ -75,11 +78,16 @@ function mapBooking(raw: Raw): Booking {
 }
 
 function mapParticipant(raw: Raw): BookingParticipant {
+  const passportNo = toMaskedSecret(
+    String(raw.passportNo ?? raw.passport_no ?? ""),
+    (raw.passportLast4 ?? raw.passport_last4) as string | null | undefined,
+  );
   return {
     id: String(raw.id),
     bookingId: String(raw.bookingId ?? raw.booking_id ?? ""),
     fullName: String(raw.fullName ?? raw.full_name ?? ""),
-    passportNo: String(raw.passportNo ?? raw.passport_no ?? ""),
+    passportNo,
+    passportLast4: String(raw.passportLast4 ?? raw.passport_last4 ?? "") || maskedLast4(passportNo),
     nationality: String(raw.nationality ?? ""),
     dateOfBirth: (raw.dateOfBirth ?? raw.date_of_birth ?? null) as string | null,
     createdAt: String(raw.createdAt ?? raw.created_at ?? ""),
@@ -252,12 +260,20 @@ export class ApiBookingRepository implements BookingRepository {
         method: "PATCH",
         body: JSON.stringify({
           full_name: input.fullName,
-          passport_no: input.passportNo ?? "",
+          passport_no: passportPatchValue(input.passportNo),
           nationality: input.nationality ?? "",
           date_of_birth: input.dateOfBirth || null,
         }),
       }),
     );
+  }
+
+  async revealParticipantPassport(id: string, participantId: string): Promise<string> {
+    const data = await this.http.request<{ passport_no?: string }>(
+      `/bookings/${id}/participants/${participantId}/reveal-passport`,
+      { method: "POST", body: JSON.stringify({}) },
+    );
+    return String(data?.passport_no ?? "");
   }
 
   async deleteParticipant(id: string, participantId: string): Promise<void> {
@@ -370,7 +386,8 @@ function ensureDemo() {
       id: "bp-1",
       bookingId: id,
       fullName: "Ahmed Demo",
-      passportNo: "A1234567",
+      passportNo: "••••4567",
+      passportLast4: "4567",
       nationality: "EG",
       dateOfBirth: "1990-01-15",
       createdAt: new Date().toISOString(),
@@ -548,7 +565,8 @@ export class MemoryBookingRepository implements BookingRepository {
       id: crypto.randomUUID(),
       bookingId: id,
       fullName: input.fullName,
-      passportNo: input.passportNo ?? "",
+      passportNo: toMaskedSecret(input.passportNo),
+      passportLast4: maskedLast4(toMaskedSecret(input.passportNo)),
       nationality: input.nationality ?? "",
       dateOfBirth: input.dateOfBirth ?? null,
       createdAt: new Date().toISOString(),
@@ -565,15 +583,22 @@ export class MemoryBookingRepository implements BookingRepository {
     const list = parts[id] ?? [];
     const i = list.findIndex((p) => p.id === participantId);
     if (i < 0) throw new Error("participant not found");
+    const passport = passportPatchValue(input.passportNo);
     list[i] = {
       ...list[i],
       fullName: input.fullName,
-      passportNo: input.passportNo ?? "",
+      ...(passport
+        ? { passportNo: toMaskedSecret(passport), passportLast4: maskedLast4(toMaskedSecret(passport)) }
+        : {}),
       nationality: input.nationality ?? "",
       dateOfBirth: input.dateOfBirth ?? null,
     };
     parts[id] = list;
     return { ...list[i] };
+  }
+
+  async revealParticipantPassport(): Promise<string> {
+    throw new Error("Passport reveal requires the backend");
   }
 
   async deleteParticipant(id: string, participantId: string): Promise<void> {

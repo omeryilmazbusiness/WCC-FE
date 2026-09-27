@@ -348,6 +348,50 @@ production), `API_BASE_URL`, `COOKIE_SECURE`, `SESSION_MAX_AGE_SECONDS`, `BFF_AL
 backend; `e2e/epic19-security.spec.ts` covers cookies, CSRF, guards and the Security page. The
 write journey in `f8-f11.spec.ts` needs `E2E_LIVE_BACKEND=1` plus a running backend.
 
+## Epic 20 Data protection & audit
+
+| Task | Status |
+|------|--------|
+| T-262 Masked passport everywhere + audited "Show" (`pii.read`) | Done |
+| T-266 Audit viewer (filters, pagination, before/after diff, CSV export) | Done |
+| KVKK export / anonymize on Customer 360 (`privacy.manage`) | Done |
+
+**Masked PII.** Customer and participant reads carry a masked `passport_no` ("••••1234") plus
+`passport_last4`; the mappers additionally run `toMaskedSecret()` (`@/shared/lib/pii`) so a full
+number never reaches the DOM from a read. `@/shared/ui` `MaskedSecret` renders the masked value
+(customers list, Customer 360, booking participants); with `pii.read` it shows **Show** → the audited
+reveal endpoint, displays the value for 30 s with a countdown and **Copy**, then re-masks. The full
+value lives only in component state (no store, no cache, no `localStorage`) and is dropped on unmount
+or when the row changes. Without `pii.read` there is no button.
+
+**Editing.** The customer edit dialog starts the passport field empty with the placeholder
+"unchanged (••••1234)". `passportPatchValue()` turns blank input or any masked value into
+`undefined`, so `passport_no` is omitted from the PATCH (customers and participants) and the masked
+string can never be stored as a new passport.
+
+**KVKK.** Customer 360 → **Privacy** menu (only with `privacy.manage`, GM + Admin):
+- *Export data* (`features/export-customer-data`) → `GET /v1/customers/{id}/export`, downloaded as `customer-<id>.json`.
+- *Anonymize* (`features/anonymize-customer`) → irreversible-warning dialog, reason ≥ 10 characters and
+  the customer's name typed to confirm → `POST /v1/customers/{id}/anonymize {reason}`; 409
+  `customer_has_active_bookings` is shown inline; the customer reloads on success.
+
+**Audit viewer.** `/admin/audit` (`audit.read`), data via `entities/audit`: filters for entity type,
+action (`/v1/audit-events/actions`), actor (users list, only with `users.read`), date range (local
+days → RFC 3339 `from` / `to`) and entity id; 50 rows per page from `meta`; each row expands into a
+before/after table from the pure `diffObjects()` (`@/shared/lib/diff-objects`, added / removed /
+changed highlighted) plus extra, user agent, request / session ids. **Export CSV** downloads
+`/v1/audit-events/export.csv` with the current filters; the BFF proxy streams any body type and
+forwards `Content-Type` / `Content-Disposition` (it drops `Content-Length` when the upstream body
+was compressed, since `fetch` has already decoded it).
+
+Endpoints: `POST /v1/customers/{id}/reveal-passport`, `POST /v1/bookings/{id}/participants/{pid}/reveal-passport`
+(`pii.read`); `GET /v1/customers/{id}/export`, `POST /v1/customers/{id}/anonymize` (`privacy.manage`);
+`GET /v1/audit-events`, `GET /v1/audit-events/export.csv`, `GET /v1/audit-events/actions` (`audit.read`).
+Demo mode serves only the audit list / actions from memory; reveal, export and anonymize always need the backend.
+
+Tests: `npm run test:privacy` (diff, masking / no-resend, audit query, anonymize rules);
+`npm run test:i18n` now checks full en/ar key parity.
+
 ## Demo login
 
 Demo mode only (`NEXT_PUBLIC_DEMO_MODE=true` with the backend unreachable); otherwise log in against `wodi-crm-be`:

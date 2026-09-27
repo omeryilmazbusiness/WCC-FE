@@ -1,9 +1,11 @@
 import { http, type HttpClient } from "@/shared/api/http-client";
 import { createRepository } from "@/shared/api/repository";
+import { maskedLast4, passportPatchValue, toMaskedSecret } from "@/shared/lib/pii";
 import type {
   CompanionLink,
   Customer,
   CustomerCreateInput,
+  CustomerDataExport,
   CustomerUpdateInput,
   DuplicateMatch,
   TimelineItem,
@@ -21,12 +23,22 @@ export interface CustomerRepository {
   linkCompanion(id: string, companionId: string, relation: string, notes?: string): Promise<void>;
   unlinkCompanion(id: string, companionId: string): Promise<void>;
   checkDuplicates(input: Partial<CustomerCreateInput>): Promise<DuplicateMatch[]>;
+  /** Full passport number (`pii.read`, audited). Never cache the result. */
+  revealPassport(id: string): Promise<string>;
+  /** KVKK data export bundle (`privacy.manage`). */
+  exportData(id: string): Promise<CustomerDataExport>;
+  /** Irreversible KVKK erasure (`privacy.manage`); 409 `customer_has_active_bookings`. */
+  anonymize(id: string, reason: string): Promise<Customer>;
 }
 
 type ApiCustomer = Record<string, unknown>;
 
 function mapCustomer(raw: ApiCustomer): Customer {
   const prefs = raw.preferences;
+  const passportNo = toMaskedSecret(
+    String(raw.passportNo ?? raw.passport_no ?? ""),
+    (raw.passportLast4 ?? raw.passport_last4) as string | null | undefined,
+  );
   return {
     id: String(raw.id),
     branchId: String(raw.branchId ?? raw.branch_id ?? ""),
@@ -35,7 +47,8 @@ function mapCustomer(raw: ApiCustomer): Customer {
     phone: String(raw.phone ?? ""),
     email: String(raw.email ?? ""),
     nationality: String(raw.nationality ?? ""),
-    passportNo: String(raw.passportNo ?? raw.passport_no ?? ""),
+    passportNo,
+    passportLast4: String(raw.passportLast4 ?? raw.passport_last4 ?? "") || maskedLast4(passportNo),
     dateOfBirth: (raw.dateOfBirth ?? raw.date_of_birth ?? null) as string | null,
     preferences:
       prefs && typeof prefs === "object" && !Array.isArray(prefs)
@@ -47,6 +60,7 @@ function mapCustomer(raw: ApiCustomer): Customer {
     notes: String(raw.notes ?? ""),
     mergedIntoId: (raw.mergedIntoId ?? raw.merged_into_id ?? null) as string | null,
     isActive: Boolean(raw.isActive ?? raw.is_active ?? true),
+    anonymizedAt: (raw.anonymizedAt ?? raw.anonymized_at ?? null) as string | null,
     createdAt: String(raw.createdAt ?? raw.created_at ?? ""),
     updatedAt: String(raw.updatedAt ?? raw.updated_at ?? ""),
   };
@@ -109,7 +123,7 @@ export class ApiCustomerRepository implements CustomerRepository {
         phone: input.phone,
         email: input.email,
         nationality: input.nationality,
-        passport_no: input.passportNo,
+        passport_no: passportPatchValue(input.passportNo),
         date_of_birth: input.dateOfBirth,
         clear_dob: input.clearDob,
         special_requirements: input.specialRequirements,
@@ -157,11 +171,33 @@ export class ApiCustomerRepository implements CustomerRepository {
     if (input.fullName) sp.set("full_name", input.fullName);
     if (input.phone) sp.set("phone", input.phone);
     if (input.email) sp.set("email", input.email);
-    if (input.passportNo) sp.set("passport_no", input.passportNo);
+    const passport = passportPatchValue(input.passportNo);
+    if (passport) sp.set("passport_no", passport);
     const data = await this.http.request<Record<string, unknown>[]>(
       `/customers/duplicates?${sp.toString()}`,
     );
     return (Array.isArray(data) ? data : []).map(mapDup);
+  }
+
+  async revealPassport(id: string): Promise<string> {
+    const data = await this.http.request<{ passport_no?: string }>(
+      `/customers/${id}/reveal-passport`,
+      { method: "POST", body: JSON.stringify({}) },
+    );
+    return String(data?.passport_no ?? "");
+  }
+
+  async exportData(id: string): Promise<CustomerDataExport> {
+    return this.http.request<CustomerDataExport>(`/customers/${id}/export`);
+  }
+
+  async anonymize(id: string, reason: string): Promise<Customer> {
+    return mapCustomer(
+      await this.http.request<ApiCustomer>(`/customers/${id}/anonymize`, {
+        method: "POST",
+        body: JSON.stringify({ reason }),
+      }),
+    );
   }
 }
 
@@ -174,7 +210,8 @@ const memoryStore: Customer[] = [
     phone: "+966500000001",
     email: "ahmed@example.com",
     nationality: "SA",
-    passportNo: "A12****78",
+    passportNo: "••••5678",
+    passportLast4: "5678",
     dateOfBirth: "1990-05-12",
     preferences: { language: "ar" },
     specialRequirements: "Wheelchair assist",
@@ -192,6 +229,7 @@ const memoryStore: Customer[] = [
     email: "",
     nationality: "SA",
     passportNo: "",
+    passportLast4: "",
     notes: "Family companion demo",
     isActive: true,
     createdAt: new Date().toISOString(),
@@ -239,7 +277,8 @@ export class MemoryCustomerRepository implements CustomerRepository {
       phone: input.phone,
       email: input.email ?? "",
       nationality: input.nationality ?? "",
-      passportNo: input.passportNo ?? "",
+      passportNo: toMaskedSecret(input.passportNo),
+      passportLast4: maskedLast4(toMaskedSecret(input.passportNo)),
       dateOfBirth: input.dateOfBirth,
       specialRequirements: input.specialRequirements ?? "",
       notes: input.notes ?? "",
@@ -260,6 +299,8 @@ export class MemoryCustomerRepository implements CustomerRepository {
   async update(id: string, input: CustomerUpdateInput): Promise<Customer> {
     const idx = memoryStore.findIndex((c) => c.id === id);
     if (idx < 0) throw new Error("Customer not found");
+    const passport = passportPatchValue(input.passportNo);
+    const passportNo = passport ? toMaskedSecret(passport) : undefined;
     memoryStore[idx] = {
       ...memoryStore[idx],
       ...Object.fromEntries(
@@ -269,7 +310,8 @@ export class MemoryCustomerRepository implements CustomerRepository {
           phone: input.phone,
           email: input.email,
           nationality: input.nationality,
-          passportNo: input.passportNo,
+          passportNo,
+          passportLast4: passportNo ? maskedLast4(passportNo) : undefined,
           dateOfBirth: input.clearDob ? null : input.dateOfBirth,
           specialRequirements: input.specialRequirements,
           notes: input.notes,
@@ -338,6 +380,32 @@ export class MemoryCustomerRepository implements CustomerRepository {
     return memoryStore
       .filter((c) => input.phone && c.phone === input.phone)
       .map((c) => ({ customer: c, reasons: ["phone"], score: 100 }));
+  }
+
+  async revealPassport(): Promise<string> {
+    throw new Error("Passport reveal requires the backend");
+  }
+
+  async exportData(id: string): Promise<CustomerDataExport> {
+    return { customer: await this.getById(id) };
+  }
+
+  async anonymize(id: string): Promise<Customer> {
+    const idx = memoryStore.findIndex((c) => c.id === id);
+    if (idx < 0) throw new Error("Customer not found");
+    memoryStore[idx] = {
+      ...memoryStore[idx],
+      fullName: "Anonymized customer",
+      fullNameAr: "",
+      phone: "",
+      email: "",
+      passportNo: "",
+      passportLast4: "",
+      dateOfBirth: null,
+      notes: "",
+      anonymizedAt: new Date().toISOString(),
+    };
+    return memoryStore[idx];
   }
 }
 

@@ -21,12 +21,15 @@ const FORWARD_RESPONSE_HEADERS = [
   "x-request-id",
 ];
 
+/** Streams any upstream body (JSON, CSV, files) through unchanged, with its download headers. */
 function toResponse(upstream: Response): NextResponse {
   const headers = new Headers();
   for (const name of FORWARD_RESPONSE_HEADERS) {
     const value = upstream.headers.get(name);
     if (value) headers.set(name, value);
   }
+  // fetch() already decoded a compressed body, so the upstream length no longer matches it.
+  if (upstream.headers.has("content-encoding")) headers.delete("content-length");
   const bodyless = upstream.status === 204 || upstream.status === 304;
   return new NextResponse(bodyless ? null : upstream.body, { status: upstream.status, headers });
 }

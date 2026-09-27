@@ -515,7 +515,10 @@
     "filterHasAr": "اسم عربي موجود",
     "filterEnOnly": "إنجليزي فقط",
     "createdToastTitle": "تم إنشاء العميل",
-    "createdToastBody": "السجل جاهز في ملف العميل 360."
+    "createdToastBody": "السجل جاهز في ملف العميل 360.",
+    "passportUnchanged": "بدون تغيير ({masked})",
+    "passportUnchangedHint": "اتركه فارغًا للإبقاء على رقم الجواز الحالي.",
+    "anonymized": "مجهول الهوية"
   },
   "pipeline": {
     "title": "خط مبيعات CRM",
@@ -1544,6 +1547,95 @@
       "revokedToast": "تم تسجيل خروج الجهاز",
       "othersRevokedToast": "{count, plural, zero {لا توجد أجهزة أخرى مسجّلة} one {تم تسجيل خروج جهاز واحد} two {تم تسجيل خروج جهازين} few {تم تسجيل خروج # أجهزة} many {تم تسجيل خروج # جهازًا} other {تم تسجيل خروج # جهاز}}",
       "revokeError": "تعذّر تسجيل الخروج من الجلسة"
+    }
+  },
+  "pii": {
+    "show": "إظهار",
+    "showAria": "إظهار القيمة الكاملة",
+    "hide": "إخفاء",
+    "copy": "نسخ",
+    "copied": "تم النسخ إلى الحافظة",
+    "copyError": "تعذّر النسخ",
+    "revealError": "تعذّر إظهار القيمة",
+    "hidesIn": "تُخفى خلال {seconds} ث"
+  },
+  "privacy": {
+    "menu": "الخصوصية",
+    "export": "تصدير البيانات",
+    "exported": "تم تصدير بيانات العميل",
+    "exportError": "تعذّر تصدير بيانات العميل",
+    "anonymize": "إخفاء الهوية",
+    "anonymizeTitle": "إخفاء هوية {name}؟",
+    "anonymizeDescription": "محو وفق قانون حماية البيانات (KVKK): تُحذف البيانات الشخصية للعميل نهائيًا.",
+    "anonymizeWarning": "لا يمكن التراجع عن هذا الإجراء. سيتم محو الاسم وبيانات الاتصال والجواز وتاريخ الميلاد والملاحظات نهائيًا ولا يمكن استعادتها، حتى من قِبل المسؤول.",
+    "reasonLabel": "السبب",
+    "reasonPlaceholder": "مثال: طلب محو وارد من العميل عبر البريد الإلكتروني",
+    "reasonHint": "{min} أحرف على الأقل. يُسجَّل في سجل التدقيق.",
+    "confirmNameLabel": "اكتب «{name}» للتأكيد",
+    "confirmNameMismatch": "الاسم غير مطابق.",
+    "confirm": "إخفاء الهوية نهائيًا",
+    "cancel": "إلغاء",
+    "anonymized": "تم إخفاء هوية العميل",
+    "anonymizeError": "تعذّر إخفاء هوية العميل",
+    "activeBookings": "لدى هذا العميل حجوزات نشطة. أكمِلها أو ألغِها قبل إخفاء الهوية."
+  },
+  "audit": {
+    "title": "سجل التدقيق",
+    "subtitle": "من فعل ماذا ومتى ومن أين — صفِّ السجلات وافحص التغييرات وصدّرها",
+    "exportCsv": "تصدير CSV",
+    "exported": "تم تصدير سجل التدقيق",
+    "exportError": "تعذّر تصدير سجل التدقيق",
+    "loadError": "تعذّر تحميل أحداث التدقيق",
+    "empty": "لا توجد أحداث تدقيق بعد",
+    "emptyFiltered": "لا توجد أحداث تطابق عوامل التصفية",
+    "filters": {
+      "entityType": "نوع الكيان",
+      "action": "الإجراء",
+      "actor": "المنفّذ",
+      "from": "من",
+      "to": "إلى",
+      "entityId": "معرّف الكيان",
+      "entityIdPlaceholder": "الصق معرّفًا…",
+      "all": "الكل",
+      "reset": "إعادة ضبط التصفية"
+    },
+    "columns": {
+      "time": "الوقت",
+      "actor": "المنفّذ",
+      "action": "الإجراء",
+      "entity": "الكيان",
+      "ip": "عنوان IP",
+      "session": "الجلسة"
+    },
+    "actorType": {
+      "user": "مستخدم",
+      "system": "النظام",
+      "webhook": "Webhook"
+    },
+    "details": {
+      "expand": "عرض التفاصيل",
+      "collapse": "إخفاء التفاصيل",
+      "changes": "التغييرات",
+      "noChanges": "لم تُسجَّل تغييرات على الحقول",
+      "field": "الحقل",
+      "before": "قبل",
+      "after": "بعد",
+      "added": "مُضاف",
+      "removed": "محذوف",
+      "changed": "مُعدَّل",
+      "extra": "بيانات إضافية",
+      "requestId": "معرّف الطلب",
+      "sessionId": "معرّف الجلسة",
+      "entityId": "معرّف الكيان",
+      "actorId": "معرّف المنفّذ",
+      "branchId": "معرّف الفرع",
+      "userAgent": "وكيل المستخدم"
+    },
+    "pagination": {
+      "summary": "{from}–{to} من {total}",
+      "previous": "السابق",
+      "next": "التالي",
+      "page": "صفحة {page} من {pages}"
     }
   }
 }

@@ -6,13 +6,16 @@ export type Customer = {
   phone: string;
   email: string;
   nationality: string;
+  /** Always masked by the API ("••••1234"); the full value only via `revealPassport`. */
   passportNo: string;
+  passportLast4: string;
   dateOfBirth?: string | null;
   preferences?: Record<string, unknown>;
   specialRequirements?: string;
   notes: string;
   mergedIntoId?: string | null;
   isActive?: boolean;
+  anonymizedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -29,6 +32,10 @@ export type CustomerCreateInput = {
   notes?: string;
 };
 
+/** KVKK export bundle — opaque JSON, downloaded as-is. */
+export type CustomerDataExport = Record<string, unknown>;
+
+/** A blank or masked `passportNo` keeps the stored passport. */
 export type CustomerUpdateInput = Partial<CustomerCreateInput> & {
   clearDob?: boolean;
   preferences?: Record<string, unknown>;

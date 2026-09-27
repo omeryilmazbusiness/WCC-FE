@@ -12,6 +12,7 @@
     "test:i18n": "node scripts/check-i18n-keys.mjs",
     "test:branch-setup": "node --experimental-strip-types scripts/selftest-branch-setup.ts",
     "test:sessions": "node --experimental-strip-types scripts/selftest-sessions.ts",
+    "test:privacy": "node --experimental-strip-types scripts/selftest-privacy.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },

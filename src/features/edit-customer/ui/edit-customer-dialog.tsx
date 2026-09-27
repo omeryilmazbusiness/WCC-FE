@@ -25,6 +25,7 @@ import {
   useMutationFeedback,
 } from "@/shared/ui";
 import { applyFieldErrors } from "@/shared/lib/form-errors";
+import { passportPatchValue } from "@/shared/lib/pii";
 
 const schema = z.object({
   fullName: z.string().min(2),
@@ -61,7 +62,7 @@ export function EditCustomerDialog({ customer, repository, onSaved }: Props) {
       phone: customer.phone,
       email: customer.email ?? "",
       nationality: customer.nationality ?? "",
-      passportNo: customer.passportNo ?? "",
+      passportNo: "",
       dateOfBirth: customer.dateOfBirth?.slice(0, 10) ?? "",
       specialRequirements: customer.specialRequirements ?? "",
       notes: customer.notes ?? "",
@@ -76,7 +77,7 @@ export function EditCustomerDialog({ customer, repository, onSaved }: Props) {
         phone: values.phone,
         email: values.email || "",
         nationality: values.nationality,
-        passportNo: values.passportNo,
+        passportNo: passportPatchValue(values.passportNo),
         dateOfBirth: values.dateOfBirth || undefined,
         clearDob: !values.dateOfBirth,
         specialRequirements: values.specialRequirements,
@@ -103,7 +104,7 @@ export function EditCustomerDialog({ customer, repository, onSaved }: Props) {
             phone: customer.phone,
             email: customer.email ?? "",
             nationality: customer.nationality ?? "",
-            passportNo: customer.passportNo ?? "",
+            passportNo: "",
             dateOfBirth: customer.dateOfBirth?.slice(0, 10) ?? "",
             specialRequirements: customer.specialRequirements ?? "",
             notes: customer.notes ?? "",
@@ -144,9 +145,18 @@ export function EditCustomerDialog({ customer, repository, onSaved }: Props) {
                       <Input
                         dir={name === "fullNameAr" ? "rtl" : undefined}
                         type={name === "email" ? "email" : "text"}
+                        placeholder={
+                          name === "passportNo" && customer.passportNo
+                            ? t("passportUnchanged", { masked: customer.passportNo })
+                            : undefined
+                        }
+                        autoComplete={name === "passportNo" ? "off" : undefined}
                         {...field}
                       />
                     </FormControl>
+                    {name === "passportNo" && customer.passportNo ? (
+                      <p className="text-xs text-zinc-500">{t("passportUnchangedHint")}</p>
+                    ) : null}
                     <FormMessage />
                   </FormItem>
                 )}

@@ -13,10 +13,10 @@ import { useApiQuery } from "@/shared/lib/use-api-query";
 import { Link } from "@/shared/i18n/navigation";
 import { routes } from "@/shared/config/routes";
 import {
-  Badge,
   DataTable,
   EmptyState,
   ListScreen,
+  MaskedSecret,
   QueryState,
   SearchFilterBar,
   useMutationFeedback,
@@ -32,6 +32,7 @@ export function CustomersListView() {
   const tc = useTranslations("common");
   const feedback = useMutationFeedback();
   const canWrite = useCan("customers.write");
+  const canRevealPii = useCan("pii.read");
   const [query, setQuery] = useState("");
   const [emailFilter, setEmailFilter] = useState<EmailFilter>("all");
   const [nameFilter, setNameFilter] = useState<NameFilter>("all");
@@ -89,12 +90,14 @@ export function CustomersListView() {
     {
       id: "passport",
       header: t("passport"),
-      cell: ({ row }) =>
-        row.original.passportNo ? (
-          <Badge>{row.original.passportNo}</Badge>
-        ) : (
-          "—"
-        ),
+      cell: ({ row }) => (
+        <MaskedSecret
+          id={row.original.id}
+          masked={row.original.passportNo}
+          canReveal={canRevealPii}
+          onReveal={() => repo.revealPassport(row.original.id)}
+        />
+      ),
     },
   ];
 
