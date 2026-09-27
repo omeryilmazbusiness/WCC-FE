@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { CalendarClock } from "lucide-react";
 import type { Task, TaskRepository } from "@/entities/task";
+import { useCan } from "@/entities/viewer";
 import {
   Button,
   Dialog,
@@ -23,13 +24,16 @@ import {
   FormMessage,
   Input,
   useToast,
+  useMutationFeedback,
 } from "@/shared/ui";
+import { applyFieldErrors } from "@/shared/lib/form-errors";
 
 const schema = z.object({
   dueAt: z.string().min(1),
 });
 
 type FormValues = z.infer<typeof schema>;
+const FIELDS = schema.keyof().options;
 
 type Props = {
   task: Task;
@@ -51,9 +55,11 @@ export function RescheduleTaskDialog({
   onChanged,
   compact,
 }: Props) {
+  const allowed = useCan("tasks.write");
   const t = useTranslations("tasks");
   const tc = useTranslations("common");
   const { push } = useToast();
+  const feedback = useMutationFeedback();
   const [open, setOpen] = useState(false);
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -69,10 +75,12 @@ export function RescheduleTaskDialog({
       onChanged(updated);
       push({ title: t("rescheduledTitle"), tone: "success" });
       setOpen(false);
-    } catch {
-      push({ title: t("actionError"), tone: "error" });
+    } catch (err) {
+      if (!applyFieldErrors(form.setError, err, FIELDS)) feedback.error(err, t("actionError"));
     }
   }
+
+  if (!allowed) return null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

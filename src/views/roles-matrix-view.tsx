@@ -1,40 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { fetchPermissionMatrix } from "@/entities/identity/api";
-import {
-  EmptyState,
-  ErrorState,
-  ListScreen,
-} from "@/shared/ui";
+import { fetchPermissionMatrix } from "@/entities/identity";
+import { useApiQuery } from "@/shared/lib/use-api-query";
+import { ListScreen, QueryState } from "@/shared/ui";
 import { Shield } from "lucide-react";
 import { SurfacePanel } from "@/shared/ui/surface-panel";
 
 export function RolesMatrixView() {
   const t = useTranslations("admin");
-  const [roles, setRoles] = useState<string[]>([]);
-  const [matrix, setMatrix] = useState<Record<string, string[]>>({});
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    void fetchPermissionMatrix()
-      .then((res) => {
-        setRoles(res.roles);
-        setMatrix(res.permissions);
-      })
-      .catch(() => setError(t("loadError")));
-  }, [t]);
+  const query = useApiQuery(() => fetchPermissionMatrix(), []);
+  const roles = query.data?.roles ?? [];
+  const matrix: Record<string, string[]> = query.data?.permissions ?? {};
 
   const allPerms = Array.from(new Set(Object.values(matrix).flat())).sort();
 
   return (
     <ListScreen title={t("rolesTitle")} description={t("rolesSubtitle")}>
-      {error ? (
-        <ErrorState title={error} />
-      ) : roles.length === 0 ? (
-        <EmptyState title={t("rolesEmpty")} />
-      ) : (
+      <QueryState
+        loading={query.loading}
+        error={query.error}
+        errorTitle={t("loadError")}
+        onRetry={() => void query.reload()}
+        empty={roles.length === 0}
+        emptyTitle={t("rolesEmpty")}
+      >
         <SurfacePanel
           title={t("rolesTitle")}
           icon={Shield}
@@ -74,7 +64,7 @@ export function RolesMatrixView() {
           </table>
           </div>
         </SurfacePanel>
-      )}
+      </QueryState>
     </ListScreen>
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { Lead, LeadOwner, LeadRepository } from "@/entities/lead";
+import { useCan } from "@/entities/viewer";
 import {
   Button,
   Dialog,
@@ -16,6 +17,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  useMutationFeedback,
 } from "@/shared/ui";
 
 type Props = {
@@ -25,7 +27,9 @@ type Props = {
 };
 
 export function AssignLeadDialog({ lead, repository, onAssigned }: Props) {
+  const allowed = useCan("leads.write");
   const t = useTranslations("pipeline");
+  const feedback = useMutationFeedback();
   const tc = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [owners, setOwners] = useState<LeadOwner[]>([]);
@@ -34,9 +38,12 @@ export function AssignLeadDialog({ lead, repository, onAssigned }: Props) {
 
   useEffect(() => {
     if (!open) return;
-    void repository.listOwners().then(setOwners);
+    void repository
+      .listOwners()
+      .then(setOwners)
+      .catch((err: unknown) => feedback.error(err));
     setOwnerId(lead.ownerId);
-  }, [open, repository, lead.ownerId]);
+  }, [open, repository, lead.ownerId, feedback]);
 
   async function save() {
     const owner = owners.find((o) => o.id === ownerId);
@@ -46,10 +53,14 @@ export function AssignLeadDialog({ lead, repository, onAssigned }: Props) {
       const updated = await repository.assign(lead.id, owner.id, owner.name);
       onAssigned(updated);
       setOpen(false);
+    } catch (err) {
+      feedback.error(err);
     } finally {
       setBusy(false);
     }
   }
+
+  if (!allowed) return null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

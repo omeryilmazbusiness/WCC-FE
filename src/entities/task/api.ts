@@ -1,6 +1,5 @@
-import { env } from "@/shared/config/env";
-import { FetchHttpClient, type HttpClient } from "@/shared/api/http-client";
-import { parseSession, SESSION_COOKIE } from "@/shared/api/session";
+import { http, type HttpClient } from "@/shared/api/http-client";
+import { createRepository } from "@/shared/api/repository";
 import {
   canTransitionTask,
   type Task,
@@ -9,18 +8,6 @@ import {
   type TaskPriority,
   type TaskStatus,
 } from "./model";
-
-function tokenFromCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  const raw = document.cookie
-    .split("; ")
-    .find((c) => c.startsWith(`${SESSION_COOKIE}=`))
-    ?.split("=")
-    .slice(1)
-    .join("=");
-  const session = parseSession(raw ? decodeURIComponent(raw) : null);
-  return session?.accessToken ?? null;
-}
 
 export interface TaskRepository {
   list(params?: {
@@ -576,51 +563,11 @@ export function getMemoryTaskRepository(): MemoryTaskRepository {
 }
 
 export function createTaskRepository(): TaskRepository {
-  const http = new FetchHttpClient(env.apiBaseUrl, tokenFromCookie);
   const api = new ApiTaskRepository(http);
   const memory = getMemoryTaskRepository();
-  const wrap =
-    <A extends unknown[], R>(
-      fn: (...args: A) => Promise<R>,
-      fallback: (...args: A) => Promise<R>,
-    ) =>
-    async (...args: A) => {
-      try {
-        return await fn(...args);
-      } catch {
-        return fallback(...args);
-      }
-    };
-
-  return {
-    list: wrap(api.list.bind(api), memory.list.bind(memory)),
-    listMine: wrap(api.listMine.bind(api), memory.listMine.bind(memory)),
-    listToday: wrap(api.listToday.bind(api), memory.listToday.bind(memory)),
-    listByRelated: wrap(
-      api.listByRelated.bind(api),
-      memory.listByRelated.bind(memory),
-    ),
-    getById: wrap(api.getById.bind(api), memory.getById.bind(memory)),
-    create: wrap(api.create.bind(api), memory.create.bind(memory)),
-    complete: wrap(api.complete.bind(api), memory.complete.bind(memory)),
-    reschedule: wrap(api.reschedule.bind(api), memory.reschedule.bind(memory)),
-    changeStatus: wrap(
-      api.changeStatus.bind(api),
-      memory.changeStatus.bind(memory),
-    ),
-    assign: wrap(api.assign.bind(api), memory.assign.bind(memory)),
-    bulkAssign: wrap(api.bulkAssign.bind(api), memory.bulkAssign.bind(memory)),
-    escalateOverdue: wrap(
-      api.escalateOverdue.bind(api),
-      memory.escalateOverdue.bind(memory),
-    ),
-    ensureFollowUpForLead: wrap(
-      api.ensureFollowUpForLead.bind(api),
-      memory.ensureFollowUpForLead.bind(memory),
-    ),
-    ensureBookingOpsTasks: wrap(
-      api.ensureBookingOpsTasks.bind(api),
-      memory.ensureBookingOpsTasks.bind(memory),
-    ),
-  };
+  return createRepository<TaskRepository>({
+    api,
+    memory,
+    reads: ["list", "listMine", "listToday", "listByRelated", "getById"],
+  });
 }

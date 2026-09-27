@@ -6,6 +6,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import type { TourPackage, TourPackageRepository } from "@/entities/tourpackage";
+import { useCan } from "@/entities/viewer";
 import {
   Button,
   Dialog,
@@ -21,7 +22,9 @@ import {
   FormLabel,
   FormMessage,
   Input,
+  useMutationFeedback,
 } from "@/shared/ui";
+import { applyFieldErrors } from "@/shared/lib/form-errors";
 
 const schema = z.object({
   code: z.string().min(2),
@@ -30,6 +33,7 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
+const FIELDS = schema.keyof().options;
 
 type Props = {
   source: TourPackage;
@@ -38,8 +42,10 @@ type Props = {
 };
 
 export function ClonePackageDialog({ source, repository, onCloned }: Props) {
+  const allowed = useCan("packages.write");
   const t = useTranslations("packages");
   const tc = useTranslations("common");
+  const feedback = useMutationFeedback();
   const [open, setOpen] = useState(false);
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -51,15 +57,23 @@ export function ClonePackageDialog({ source, repository, onCloned }: Props) {
   });
 
   async function onSubmit(values: FormValues) {
-    const pkg = await repository.clonePackage({
-      sourceId: source.id,
-      code: values.code,
-      nameEn: values.nameEn,
-      nameAr: values.nameAr,
-    });
+    let pkg: TourPackage;
+    try {
+      pkg = await repository.clonePackage({
+        sourceId: source.id,
+        code: values.code,
+        nameEn: values.nameEn,
+        nameAr: values.nameAr,
+      });
+    } catch (err) {
+      if (!applyFieldErrors(form.setError, err, FIELDS)) feedback.error(err, t("saveError"));
+      return;
+    }
     onCloned(pkg);
     setOpen(false);
   }
+
+  if (!allowed) return null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

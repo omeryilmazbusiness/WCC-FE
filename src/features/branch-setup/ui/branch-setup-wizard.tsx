@@ -26,7 +26,7 @@ import {
 } from "../model/setup-status";
 import { ChannelsStepPanel } from "./channels-step-panel";
 import { OrgStepPanel } from "./org-step-panel";
-import { AIProviderForm } from "@/features/ai-setup/ui/ai-provider-form";
+import { AIProviderForm } from "@/features/ai-setup";
 
 type Props = {
   aiSetup: AISetup | null;

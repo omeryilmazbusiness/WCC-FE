@@ -12,6 +12,7 @@ import {
   type BookingReadiness,
   type BookingRepository,
 } from "@/entities/booking";
+import { useCan } from "@/entities/viewer";
 import { ConfirmBookingTasksButton } from "@/features/confirm-booking-tasks";
 import { BookingFinancePanel } from "@/widgets/booking-finance-panel";
 import { BookingOpsPanel } from "@/widgets/booking-ops-panel";
@@ -27,9 +28,9 @@ import {
   DialogHeader,
   DialogTitle,
   EmptyState,
-  ErrorState,
   Input,
   PageHeader,
+  QueryState,
   Screen,
   Select,
   SelectContent,
@@ -40,7 +41,7 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-  useToast,
+  useMutationFeedback,
 } from "@/shared/ui";
 
 type Props = {
@@ -65,14 +66,16 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
   const t = useTranslations("bookings");
   const tc = useTranslations("common");
   const locale = useLocale();
-  const { push } = useToast();
+  const feedback = useMutationFeedback();
+  const canWrite = useCan("bookings.write");
+  const canCreateTasks = useCan("tasks.write");
 
   const [booking, setBooking] = useState<Booking | null>(null);
   const [participants, setParticipants] = useState<BookingParticipant[]>([]);
   const [lineItems, setLineItems] = useState<BookingLineItem[]>([]);
   const [checklist, setChecklist] = useState<BookingChecklistItem[]>([]);
   const [ready, setReady] = useState<BookingReadiness | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
   const [tab, setTab] = useState("overview");
   const [overrideOpen, setOverrideOpen] = useState(false);
   const [overrideReason, setOverrideReason] = useState("");
@@ -117,10 +120,10 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
               },
             ],
       );
-    } catch {
-      setError(t("loadError"));
+    } catch (err) {
+      setError(err);
     }
-  }, [bookingId, repo, t]);
+  }, [bookingId, repo]);
 
   useEffect(() => {
     void refresh();
@@ -135,14 +138,10 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
       });
       setPaxName("");
       setPaxPassport("");
-      push({ title: t("participantAdded"), tone: "success" });
+      feedback.success(t("participantAdded"));
       await refresh();
-    } catch (e) {
-      push({
-        title: t("saveError"),
-        description: e instanceof Error ? e.message : undefined,
-        tone: "error",
-      });
+    } catch (err) {
+      feedback.error(err, t("saveError"));
     }
   }
 
@@ -161,14 +160,10 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
       );
       setBooking(res.booking);
       setLineItems(res.items);
-      push({ title: t("linesSaved"), tone: "success" });
+      feedback.success(t("linesSaved"));
       await refresh();
-    } catch (e) {
-      push({
-        title: t("saveError"),
-        description: e instanceof Error ? e.message : undefined,
-        tone: "error",
-      });
+    } catch (err) {
+      feedback.error(err, t("saveError"));
     }
   }
 
@@ -176,8 +171,8 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
     try {
       await repo.updateChecklist(bookingId, item.id, !item.completed);
       await refresh();
-    } catch {
-      push({ title: t("saveError"), tone: "error" });
+    } catch (err) {
+      feedback.error(err, t("saveError"));
     }
   }
 
@@ -186,14 +181,10 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
     try {
       const updated = await repo.confirm(booking.id);
       setBooking(updated);
-      push({ title: t("confirmedTitle"), tone: "success" });
+      feedback.success(t("confirmedTitle"));
       await refresh();
-    } catch (e) {
-      push({
-        title: t("confirmError"),
-        description: e instanceof Error ? e.message : undefined,
-        tone: "error",
-      });
+    } catch (err) {
+      feedback.error(err, t("confirmError"));
     }
   }
 
@@ -203,21 +194,24 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
       await repo.overrideReadiness(bookingId, overrideReason.trim());
       setOverrideOpen(false);
       setOverrideReason("");
-      push({ title: t("overrideReady"), tone: "success" });
+      feedback.success(t("overrideReady"));
       await refresh();
-    } catch (e) {
-      push({
-        title: t("saveError"),
-        description: e instanceof Error ? e.message : undefined,
-        tone: "error",
-      });
+    } catch (err) {
+      feedback.error(err, t("saveError"));
     }
   }
 
   if (error) {
     return (
       <Screen>
-        <ErrorState title={error} retryLabel={tc("retry")} onRetry={() => void refresh()} />
+        <QueryState
+          error={error}
+          errorTitle={t("loadError")}
+          retryLabel={tc("retry")}
+          onRetry={() => void refresh()}
+        >
+          {null}
+        </QueryState>
       </Screen>
     );
   }
@@ -229,7 +223,7 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
     );
   }
 
-  const draft = booking.status === "draft";
+  const draft = canWrite && booking.status === "draft";
 
   return (
     <Screen>
@@ -253,7 +247,7 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
                 {t("confirm")}
               </Button>
             ) : null}
-            {booking.status === "confirmed" ? (
+            {canCreateTasks && booking.status === "confirmed" ? (
               <ConfirmBookingTasksButton
                 bookingId={booking.id}
                 label={booking.id.slice(0, 8)}
@@ -444,8 +438,12 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
                       size="sm"
                       variant="outline"
                       onClick={async () => {
-                        await repo.deleteParticipant(booking.id, p.id);
-                        await refresh();
+                        try {
+                          await repo.deleteParticipant(booking.id, p.id);
+                          await refresh();
+                        } catch (err) {
+                          feedback.error(err, t("saveError"));
+                        }
                       }}
                     >
                       {t("remove")}
@@ -586,6 +584,7 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
                 <Button
                   size="sm"
                   variant={item.completed ? "default" : "outline"}
+                  disabled={!canWrite}
                   onClick={() => void toggleCheck(item)}
                 >
                   {item.completed ? t("done") : t("markDone")}

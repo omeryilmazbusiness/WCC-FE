@@ -1,6 +1,5 @@
-import { env } from "@/shared/config/env";
-import { FetchHttpClient, type HttpClient } from "@/shared/api/http-client";
-import { parseSession, SESSION_COOKIE } from "@/shared/api/session";
+import { http, type HttpClient } from "@/shared/api/http-client";
+import { createRepository } from "@/shared/api/repository";
 import {
   canTransitionLead,
   type ChangeStageInput,
@@ -13,18 +12,6 @@ import {
   type LeadStage,
   type StageHistoryItem,
 } from "./model";
-
-function tokenFromCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  const raw = document.cookie
-    .split("; ")
-    .find((c) => c.startsWith(`${SESSION_COOKIE}=`))
-    ?.split("=")
-    .slice(1)
-    .join("=");
-  const session = parseSession(raw ? decodeURIComponent(raw) : null);
-  return session?.accessToken ?? null;
-}
 
 export interface LeadRepository {
   list(params?: {
@@ -527,93 +514,18 @@ export function groupLeadsByStage(leads: Lead[]): Record<LeadStage, Lead[]> {
 }
 
 export function createLeadRepository(): LeadRepository {
-  const http = new FetchHttpClient(env.apiBaseUrl, tokenFromCookie);
   const api = new ApiLeadRepository(http);
   const memory = new MemoryLeadRepository();
-  return {
-    async list(p) {
-      try {
-        return await api.list(p);
-      } catch {
-        return memory.list(p);
-      }
-    },
-    async listByCustomerId(id) {
-      try {
-        return await api.listByCustomerId(id);
-      } catch {
-        return memory.listByCustomerId(id);
-      }
-    },
-    async getById(id) {
-      try {
-        return await api.getById(id);
-      } catch {
-        return memory.getById(id);
-      }
-    },
-    async create(input) {
-      try {
-        return await api.create(input);
-      } catch {
-        return memory.create(input);
-      }
-    },
-    async changeStage(id, input) {
-      try {
-        return await api.changeStage(id, input);
-      } catch {
-        return memory.changeStage(id, input);
-      }
-    },
-    async assign(id, ownerId, ownerName) {
-      try {
-        return await api.assign(id, ownerId, ownerName);
-      } catch {
-        return memory.assign(id, ownerId, ownerName);
-      }
-    },
-    async bulkAssign(ids, ownerId, ownerName) {
-      try {
-        return await api.bulkAssign(ids, ownerId, ownerName);
-      } catch {
-        return memory.bulkAssign(ids, ownerId, ownerName);
-      }
-    },
-    async history(id) {
-      try {
-        return await api.history(id);
-      } catch {
-        return memory.history(id);
-      }
-    },
-    async convert(id, input) {
-      try {
-        return await api.convert(id, input);
-      } catch {
-        return memory.convert(id, input);
-      }
-    },
-    async setNoFollowUp(id, v) {
-      try {
-        return await api.setNoFollowUp(id, v);
-      } catch {
-        return memory.setNoFollowUp(id, v);
-      }
-    },
-    async analytics() {
-      try {
-        return await api.analytics();
-      } catch {
-        return memory.analytics();
-      }
-    },
-    async listOwners() {
-      try {
-        return await api.listOwners();
-      } catch {
-        return memory.listOwners();
-      }
-    },
-  };
+  return createRepository<LeadRepository>({
+    api,
+    memory,
+    reads: [
+      "list",
+      "listByCustomerId",
+      "getById",
+      "history",
+      "analytics",
+      "listOwners",
+    ],
+  });
 }

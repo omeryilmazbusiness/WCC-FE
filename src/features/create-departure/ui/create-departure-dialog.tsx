@@ -9,6 +9,7 @@ import type {
   Departure,
   TourPackageRepository,
 } from "@/entities/tourpackage";
+import { useCan } from "@/entities/viewer";
 import {
   Button,
   Dialog,
@@ -24,8 +25,9 @@ import {
   FormLabel,
   FormMessage,
   Input,
-  useToast,
+  useMutationFeedback,
 } from "@/shared/ui";
+import { applyFieldErrors } from "@/shared/lib/form-errors";
 
 const schema = z
   .object({
@@ -52,6 +54,7 @@ const schema = z
   });
 
 type FormValues = z.infer<typeof schema>;
+const FIELDS = schema.keyof().options;
 
 type Props = {
   packageId: string;
@@ -64,9 +67,10 @@ export function CreateDepartureDialog({
   repository,
   onCreated,
 }: Props) {
+  const allowed = useCan("packages.write");
   const t = useTranslations("packages");
   const tc = useTranslations("common");
-  const { push } = useToast();
+  const feedback = useMutationFeedback();
   const [open, setOpen] = useState(false);
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -101,10 +105,12 @@ export function CreateDepartureDialog({
         basePrice: "0",
         currency: "USD",
       });
-    } catch {
-      push({ title: t("saveError"), tone: "error" });
+    } catch (err) {
+      if (!applyFieldErrors(form.setError, err, FIELDS)) feedback.error(err, t("saveError"));
     }
   }
+
+  if (!allowed) return null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

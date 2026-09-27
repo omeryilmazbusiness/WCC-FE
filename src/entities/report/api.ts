@@ -1,6 +1,5 @@
-import { env } from "@/shared/config/env";
-import { FetchHttpClient, type HttpClient } from "@/shared/api/http-client";
-import { parseSession, SESSION_COOKIE } from "@/shared/api/session";
+import { http, type HttpClient } from "@/shared/api/http-client";
+import { createRepository } from "@/shared/api/repository";
 import type {
   DrillRef,
   ReportFilter,
@@ -9,18 +8,6 @@ import type {
   ReportResult,
   ReportRow,
 } from "./model";
-
-function tokenFromCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  const raw = document.cookie
-    .split("; ")
-    .find((c) => c.startsWith(`${SESSION_COOKIE}=`))
-    ?.split("=")
-    .slice(1)
-    .join("=");
-  const session = parseSession(raw ? decodeURIComponent(raw) : null);
-  return session?.accessToken ?? null;
-}
 
 type Raw = Record<string, unknown>;
 
@@ -100,17 +87,10 @@ class ApiRepo implements ReportRepository {
   }
 
   async exportCsv(kind: ReportKind, filter?: ReportFilter) {
-    const token = tokenFromCookie();
-    const res = await fetch(
-      `${env.apiBaseUrl}/reports/export?kind=${encodeURIComponent(kind)}${qs(filter).replace("?", "&")}`,
-      {
-        headers: {
-          Accept: "text/csv",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      },
+    const res = await this.http.raw(
+      `/reports/export?kind=${encodeURIComponent(kind)}${qs(filter).replace("?", "&")}`,
+      { headers: { Accept: "text/csv" } },
     );
-    if (!res.ok) throw new Error("export failed");
     return res.blob();
   }
 }
@@ -161,24 +141,11 @@ class MemoryRepo implements ReportRepository {
 let mem: MemoryRepo | null = null;
 
 export function createReportRepository(): ReportRepository {
-  const http = new FetchHttpClient(env.apiBaseUrl, tokenFromCookie);
   const api = new ApiRepo(http);
   if (!mem) mem = new MemoryRepo();
-  const wrap =
-    <A extends unknown[], R>(
-      fn: (...args: A) => Promise<R>,
-      fallback: (...args: A) => Promise<R>,
-    ) =>
-    async (...args: A) => {
-      try {
-        return await fn(...args);
-      } catch {
-        return fallback(...args);
-      }
-    };
-  return {
-    kinds: wrap(api.kinds.bind(api), mem.kinds.bind(mem)),
-    run: wrap(api.run.bind(api), mem.run.bind(mem)),
-    exportCsv: wrap(api.exportCsv.bind(api), mem.exportCsv.bind(mem)),
-  };
+  return createRepository<ReportRepository>({
+    api,
+    memory: mem,
+    reads: ["kinds", "run", "exportCsv"],
+  });
 }

@@ -41,6 +41,7 @@ export function useNotifications() {
   const [unread, setUnread] = useState(0);
   const [prefs, setPrefs] = useState<NotificationPreference | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<unknown>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -52,6 +53,9 @@ export function useNotifications() {
       setItems(list.map(toBellItem));
       setUnread(count);
       setPrefs(preferences);
+      setError(null);
+    } catch (err) {
+      setError(err);
     } finally {
       setLoading(false);
     }
@@ -98,6 +102,7 @@ export function useNotifications() {
     unread,
     prefs,
     loading,
+    error,
     refresh,
     acknowledge,
     resolve,

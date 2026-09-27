@@ -3,4 +3,6 @@ export const env = {
     process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080/v1",
   appName: process.env.NEXT_PUBLIC_APP_NAME ?? "WODI Command Center",
   appShortName: process.env.NEXT_PUBLIC_APP_SHORT_NAME ?? "WCC",
+  /** Offline demo: memory repos serve reads only when the backend is unreachable. */
+  demoMode: process.env.NEXT_PUBLIC_DEMO_MODE === "true",
 } as const;

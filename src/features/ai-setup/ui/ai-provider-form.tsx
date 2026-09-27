@@ -10,7 +10,7 @@ import {
   type AISetup,
 } from "@/entities/ai";
 import { cn } from "@/shared/lib/cn";
-import { Button, useToast } from "@/shared/ui";
+import { Button, useToast, useMutationFeedback } from "@/shared/ui";
 
 type Props = {
   initial?: AISetup | null;
@@ -21,6 +21,7 @@ type Props = {
 export function AIProviderForm({ initial, onSaved }: Props) {
   const t = useTranslations("aiSetup");
   const { push } = useToast();
+  const feedback = useMutationFeedback();
   const repo = useMemo(() => createAIRepository(), []);
   const [provider, setProvider] = useState<AIProvider>(
     (initial?.provider as AIProvider) || "openai",
@@ -46,8 +47,8 @@ export function AIProviderForm({ initial, onSaved }: Props) {
       setApiKey("");
       onSaved?.(setup);
       push({ title: t("saved"), tone: "success" });
-    } catch {
-      push({ title: t("saveError"), tone: "error" });
+    } catch (err) {
+      feedback.error(err, t("saveError"));
     } finally {
       setBusy(false);
     }

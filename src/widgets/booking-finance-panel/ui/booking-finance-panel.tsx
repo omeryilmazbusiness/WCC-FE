@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   createPaymentRepository,
@@ -9,7 +9,15 @@ import {
   type PaymentRepository,
   type PaymentSchedule,
 } from "@/entities/payment";
-import { Button, Input, Label, useToast } from "@/shared/ui";
+import { useCan } from "@/entities/viewer";
+import { useApiQuery } from "@/shared/lib/use-api-query";
+import {
+  Button,
+  Input,
+  Label,
+  QueryState,
+  useMutationFeedback,
+} from "@/shared/ui";
 import { cn } from "@/shared/lib/cn";
 
 type Props = {
@@ -42,10 +50,9 @@ export function BookingFinancePanel({
     [repository],
   );
   const t = useTranslations("finance");
-  const { push } = useToast();
-  const [summary, setSummary] = useState<FinancialSummary | null>(null);
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [schedules, setSchedules] = useState<PaymentSchedule[]>([]);
+  const feedback = useMutationFeedback();
+  const canWrite = useCan("payments.write");
+  const canApprove = useCan("payments.approve");
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState("card");
   const [dueAt, setDueAt] = useState("");
@@ -53,38 +60,48 @@ export function BookingFinancePanel({
   const [refundAmt, setRefundAmt] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const refresh = useCallback(async () => {
-    const [s, p, sc] = await Promise.all([
+  const query = useApiQuery(async () => {
+    const [summary, payments, schedules] = await Promise.all([
       repo.summary(bookingId),
       repo.listByBooking(bookingId),
       repo.listSchedules(bookingId),
     ]);
-    setSummary(s);
-    setPayments(p);
-    setSchedules(sc);
+    return { summary, payments, schedules };
   }, [bookingId, repo]);
-
-  useEffect(() => {
-    void refresh().catch(() => {
-      push({ title: t("loadError"), tone: "error" });
-    });
-  }, [refresh, push, t]);
+  const summary: FinancialSummary | null = query.data?.summary ?? null;
+  const payments: Payment[] = query.data?.payments ?? [];
+  const schedules: PaymentSchedule[] = query.data?.schedules ?? [];
 
   async function run(fn: () => Promise<unknown>) {
     setBusy(true);
     try {
       await fn();
-      await refresh();
+      await query.reload();
       onChanged?.();
-      push({ title: t("saved"), tone: "success" });
-    } catch {
-      push({ title: t("actionError"), tone: "error" });
+      feedback.success(t("saved"));
+    } catch (err) {
+      feedback.error(err, t("actionError"));
     } finally {
       setBusy(false);
     }
   }
 
   const cur = summary?.currency ?? currency;
+
+  if (!query.data) {
+    return (
+      <div data-testid="booking-finance-panel">
+        <QueryState
+          loading={query.loading}
+          error={query.error}
+          errorTitle={t("loadError")}
+          onRetry={() => void query.reload()}
+        >
+          {null}
+        </QueryState>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8" data-testid="booking-finance-panel">
@@ -112,6 +129,7 @@ export function BookingFinancePanel({
         </div>
       ) : null}
 
+      {canWrite ? (
       <section className="space-y-3">
         <h3 className="text-lg font-semibold text-zinc-900">{t("recordTitle")}</h3>
         <div className="flex flex-wrap items-end gap-3">
@@ -150,6 +168,7 @@ export function BookingFinancePanel({
           </Button>
         </div>
       </section>
+      ) : null}
 
       <section className="space-y-3">
         <h3 className="text-lg font-semibold text-zinc-900">{t("ledgerTitle")}</h3>
@@ -172,7 +191,7 @@ export function BookingFinancePanel({
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  {p.status === "unverified" ? (
+                  {canWrite && p.status === "unverified" ? (
                     <Button
                       size="sm"
                       variant="secondary"
@@ -182,7 +201,7 @@ export function BookingFinancePanel({
                       {t("verify")}
                     </Button>
                   ) : null}
-                  {p.eventType === "charge" && p.status === "verified" ? (
+                  {canWrite && p.eventType === "charge" && p.status === "verified" ? (
                     <Button
                       size="sm"
                       variant="ghost"
@@ -192,7 +211,7 @@ export function BookingFinancePanel({
                       {t("reverse")}
                     </Button>
                   ) : null}
-                  {p.eventType === "refund" && p.status === "pending_approval" ? (
+                  {canApprove && p.eventType === "refund" && p.status === "pending_approval" ? (
                     <>
                       <Button
                         size="sm"
@@ -220,6 +239,7 @@ export function BookingFinancePanel({
 
       <section className="space-y-3">
         <h3 className="text-lg font-semibold text-zinc-900">{t("scheduleTitle")}</h3>
+        {canWrite ? (
         <div className="flex flex-wrap items-end gap-3">
           <div className="space-y-1.5">
             <Label>{t("dueAt")}</Label>
@@ -254,6 +274,7 @@ export function BookingFinancePanel({
             {t("addSchedule")}
           </Button>
         </div>
+        ) : null}
         <ul className="space-y-2">
           {schedules.map((s) => (
             <li key={s.id} className="flex items-center justify-between gap-3">
@@ -261,7 +282,7 @@ export function BookingFinancePanel({
                 {money(s.amount, s.currency)} · {s.status} ·{" "}
                 {new Date(s.dueAt).toLocaleString()}
               </p>
-              {s.status === "open" ? (
+              {canWrite && s.status === "open" ? (
                 <Button
                   size="sm"
                   variant="ghost"
@@ -276,6 +297,7 @@ export function BookingFinancePanel({
         </ul>
       </section>
 
+      {canWrite ? (
       <section className="space-y-3">
         <h3 className="text-lg font-semibold text-zinc-900">{t("refundTitle")}</h3>
         <div className="flex flex-wrap items-end gap-3">
@@ -303,6 +325,7 @@ export function BookingFinancePanel({
         </div>
         <p className={cn("text-sm text-zinc-400")}>{t("refundHint")}</p>
       </section>
+      ) : null}
     </div>
   );
 }

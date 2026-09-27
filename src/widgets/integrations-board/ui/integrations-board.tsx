@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Plug, RefreshCw } from "lucide-react";
 import {
@@ -10,19 +10,22 @@ import {
   type ExtIntStatus,
   type ExternalIntegration,
 } from "@/entities/extint";
+import { useCan } from "@/entities/viewer";
+import { useApiQuery } from "@/shared/lib/use-api-query";
 import {
   Badge,
   Button,
   EmptyState,
   Input,
   PageHeader,
+  QueryState,
   Screen,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-  useToast,
+  useMutationFeedback,
 } from "@/shared/ui";
 import { cn } from "@/shared/lib/cn";
 
@@ -36,17 +39,28 @@ function statusTone(status: ExtIntStatus) {
 
 export function IntegrationsBoard() {
   const t = useTranslations("integrations");
-  const { push } = useToast();
+  const feedback = useMutationFeedback();
+  const canWrite = useCan("integrations.write");
   const repo = useMemo(() => createExtIntRepository(), []);
 
-  const [catalog, setCatalog] = useState<ExtIntCatalogItem[]>([]);
-  const [items, setItems] = useState<ExternalIntegration[]>([]);
   const [busy, setBusy] = useState(false);
   const [provider, setProvider] = useState<ExtIntProvider>("whatsapp");
   const [displayName, setDisplayName] = useState("");
   const [configValues, setConfigValues] = useState<Record<string, string>>({});
   const [editConfigId, setEditConfigId] = useState<string | null>(null);
   const [editConfig, setEditConfig] = useState<Record<string, string>>({});
+
+  const query = useApiQuery(async () => {
+    const [cat, list] = await Promise.all([repo.catalog(), repo.list()]);
+    setProvider((prev) =>
+      cat.length && !cat.some((c) => c.provider === prev)
+        ? cat[0]!.provider
+        : prev,
+    );
+    return { catalog: cat, items: list };
+  }, [repo]);
+  const catalog = useMemo<ExtIntCatalogItem[]>(() => query.data?.catalog ?? [], [query.data]);
+  const items: ExternalIntegration[] = query.data?.items ?? [];
 
   const selectedCatalog = useMemo(
     () => catalog.find((c) => c.provider === provider) ?? null,
@@ -58,33 +72,14 @@ export function IntegrationsBoard() {
     setConfigValues({});
   }, [provider]);
 
-  const refresh = useCallback(async () => {
-    const [cat, list] = await Promise.all([repo.catalog(), repo.list()]);
-    setCatalog(cat);
-    setItems(list);
-    setProvider((prev) =>
-      cat.length && !cat.some((c) => c.provider === prev)
-        ? cat[0]!.provider
-        : prev,
-    );
-  }, [repo]);
-
-  useEffect(() => {
-    void refresh().catch(() => push({ title: t("loadError"), tone: "error" }));
-  }, [refresh, push, t]);
-
   async function run(fn: () => Promise<unknown>, okKey: "saved" | "probed" = "saved") {
     setBusy(true);
     try {
       await fn();
-      await refresh();
-      push({ title: t(okKey), tone: "success" });
-    } catch (e) {
-      push({
-        title: t("actionError"),
-        description: e instanceof Error ? e.message : undefined,
-        tone: "error",
-      });
+      await query.reload();
+      feedback.success(t(okKey));
+    } catch (err) {
+      feedback.error(err, t("actionError"));
     } finally {
       setBusy(false);
     }
@@ -103,12 +98,8 @@ export function IntegrationsBoard() {
           <Button
             size="sm"
             variant="secondary"
-            disabled={busy}
-            onClick={() =>
-              void refresh().catch(() =>
-                push({ title: t("loadError"), tone: "error" }),
-              )
-            }
+            disabled={busy || query.loading}
+            onClick={() => void query.reload()}
           >
             <RefreshCw className="me-1.5 h-3.5 w-3.5" />
             {t("refresh")}
@@ -116,6 +107,12 @@ export function IntegrationsBoard() {
         }
       />
 
+      <QueryState
+        loading={query.loading && !query.data}
+        error={query.error}
+        errorTitle={t("loadError")}
+        onRetry={() => void query.reload()}
+      >
       <div className="overflow-hidden rounded-2xl bg-white shadow-[0_8px_28px_-14px_rgba(15,23,42,0.22)]">
         <div className="grid gap-0 lg:grid-cols-[280px_1fr]">
           <aside className="border-b border-zinc-100 bg-zinc-50/80 p-4 lg:border-b-0 lg:border-e">
@@ -168,6 +165,7 @@ export function IntegrationsBoard() {
               ))}
             </ul>
 
+            {canWrite ? (
             <div className="mt-4 space-y-2 border-t border-zinc-200/80 pt-3">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
                 {t("addTitle")}
@@ -235,6 +233,7 @@ export function IntegrationsBoard() {
                 {t("create")}
               </Button>
             </div>
+            ) : null}
           </aside>
 
           <div className="space-y-3 p-4 sm:p-5">
@@ -267,6 +266,8 @@ export function IntegrationsBoard() {
                       <Badge className={statusTone(item.status)}>
                         {t(`status.${item.status}` as "status.healthy")}
                       </Badge>
+                      {canWrite ? (
+                      <>
                       <Button
                         size="sm"
                         variant="secondary"
@@ -321,6 +322,8 @@ export function IntegrationsBoard() {
                       >
                         {t("remove")}
                       </Button>
+                      </>
+                      ) : null}
                     </div>
                     {editConfigId === item.id ? (
                       <div className="space-y-2 rounded-xl border border-zinc-100 bg-zinc-50/80 p-3">
@@ -364,6 +367,7 @@ export function IntegrationsBoard() {
           </div>
         </div>
       </div>
+      </QueryState>
     </Screen>
   );
 }

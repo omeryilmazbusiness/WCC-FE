@@ -1,6 +1,5 @@
-import { env } from "@/shared/config/env";
-import { FetchHttpClient, type HttpClient } from "@/shared/api/http-client";
-import { parseSession, SESSION_COOKIE } from "@/shared/api/session";
+import { http, type HttpClient } from "@/shared/api/http-client";
+import { createRepository } from "@/shared/api/repository";
 import type {
   CreateLostReasonInput,
   CreateTemplateInput,
@@ -17,18 +16,6 @@ import type {
   UpdateLostReasonInput,
   UpdateTemplateInput,
 } from "./model";
-
-function tokenFromCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  const raw = document.cookie
-    .split("; ")
-    .find((c) => c.startsWith(`${SESSION_COOKIE}=`))
-    ?.split("=")
-    .slice(1)
-    .join("=");
-  const session = parseSession(raw ? decodeURIComponent(raw) : null);
-  return session?.accessToken ?? null;
-}
 
 type Raw = Record<string, unknown>;
 
@@ -557,82 +544,20 @@ class MemoryRepo implements AdminConfigRepository {
 let mem: MemoryRepo | null = null;
 
 export function createAdminConfigRepository(): AdminConfigRepository {
-  const http = new FetchHttpClient(env.apiBaseUrl, tokenFromCookie);
   const api = new ApiRepo(http);
   if (!mem) mem = new MemoryRepo();
-  const wrap =
-    <A extends unknown[], R>(
-      fn: (...args: A) => Promise<R>,
-      fallback: (...args: A) => Promise<R>,
-    ) =>
-    async (...args: A) => {
-      try {
-        return await fn(...args);
-      } catch {
-        return fallback(...args);
-      }
-    };
-  return {
-    getSla: wrap(api.getSla.bind(api), mem.getSla.bind(mem)),
-    putSla: wrap(api.putSla.bind(api), mem.putSla.bind(mem)),
-    listEscalation: wrap(
-      api.listEscalation.bind(api),
-      mem.listEscalation.bind(mem),
-    ),
-    putEscalation: wrap(
-      api.putEscalation.bind(api),
-      mem.putEscalation.bind(mem),
-    ),
-    deleteEscalation: wrap(
-      api.deleteEscalation.bind(api),
-      mem.deleteEscalation.bind(mem),
-    ),
-    listLostReasons: wrap(
-      api.listLostReasons.bind(api),
-      mem.listLostReasons.bind(mem),
-    ),
-    createLostReason: wrap(
-      api.createLostReason.bind(api),
-      mem.createLostReason.bind(mem),
-    ),
-    updateLostReason: wrap(
-      api.updateLostReason.bind(api),
-      mem.updateLostReason.bind(mem),
-    ),
-    deleteLostReason: wrap(
-      api.deleteLostReason.bind(api),
-      mem.deleteLostReason.bind(mem),
-    ),
-    listTemplates: wrap(
-      api.listTemplates.bind(api),
-      mem.listTemplates.bind(mem),
-    ),
-    createTemplate: wrap(
-      api.createTemplate.bind(api),
-      mem.createTemplate.bind(mem),
-    ),
-    getTemplate: wrap(api.getTemplate.bind(api), mem.getTemplate.bind(mem)),
-    updateTemplate: wrap(
-      api.updateTemplate.bind(api),
-      mem.updateTemplate.bind(mem),
-    ),
-    deleteTemplate: wrap(
-      api.deleteTemplate.bind(api),
-      mem.deleteTemplate.bind(mem),
-    ),
-    getFields: wrap(api.getFields.bind(api), mem.getFields.bind(mem)),
-    putFields: wrap(api.putFields.bind(api), mem.putFields.bind(mem)),
-    getThresholds: wrap(
-      api.getThresholds.bind(api),
-      mem.getThresholds.bind(mem),
-    ),
-    putThresholds: wrap(
-      api.putThresholds.bind(api),
-      mem.putThresholds.bind(mem),
-    ),
-    listEventsCatalog: wrap(
-      api.listEventsCatalog.bind(api),
-      mem.listEventsCatalog.bind(mem),
-    ),
-  };
+  return createRepository<AdminConfigRepository>({
+    api,
+    memory: mem,
+    reads: [
+      "getSla",
+      "listEscalation",
+      "listLostReasons",
+      "listTemplates",
+      "getTemplate",
+      "getFields",
+      "getThresholds",
+      "listEventsCatalog",
+    ],
+  });
 }

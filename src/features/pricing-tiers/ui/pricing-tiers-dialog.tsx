@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { PricingTier, TierInput, TourPackageRepository } from "@/entities/tourpackage";
+import { useCan } from "@/entities/viewer";
 import {
   Button,
   Dialog,
@@ -18,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
   useToast,
+  useMutationFeedback,
 } from "@/shared/ui";
 
 type Row = TierInput & { key: string };
@@ -29,29 +31,34 @@ type Props = {
 };
 
 export function PricingTiersDialog({ packageId, repository, onSaved }: Props) {
+  const allowed = useCan("packages.write");
   const t = useTranslations("packages");
   const tc = useTranslations("common");
   const { push } = useToast();
+  const feedback = useMutationFeedback();
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState<Row[]>([]);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!open) return;
-    void repository.listPackageTiers(packageId).then((tiers: PricingTier[]) => {
-      setRows(
-        tiers.map((x) => ({
-          key: x.id,
-          code: x.code,
-          label: x.label,
-          kind: x.kind,
-          amount: x.amount / 100,
-          currency: x.currency,
-          isActive: x.isActive,
-        })),
-      );
-    });
-  }, [open, packageId, repository]);
+    void repository
+      .listPackageTiers(packageId)
+      .then((tiers: PricingTier[]) => {
+        setRows(
+          tiers.map((x) => ({
+            key: x.id,
+            code: x.code,
+            label: x.label,
+            kind: x.kind,
+            amount: x.amount / 100,
+            currency: x.currency,
+            isActive: x.isActive,
+          })),
+        );
+      })
+      .catch((err: unknown) => feedback.error(err, t("tiersError")));
+  }, [open, packageId, repository, feedback, t]);
 
   function addRow() {
     setRows((prev) => [
@@ -87,12 +94,14 @@ export function PricingTiersDialog({ packageId, repository, onSaved }: Props) {
       push({ title: t("tiersSaved"), tone: "success" });
       onSaved?.();
       setOpen(false);
-    } catch {
-      push({ title: t("tiersError"), tone: "error" });
+    } catch (err) {
+      feedback.error(err, t("tiersError"));
     } finally {
       setBusy(false);
     }
   }
+
+  if (!allowed) return null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

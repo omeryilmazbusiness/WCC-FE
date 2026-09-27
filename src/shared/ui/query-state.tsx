@@ -1,14 +1,17 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { EmptyState } from "./empty-state";
 import { ErrorState } from "./error-state";
 import { LoadingState } from "./loading-state";
 import { PermissionDenied } from "./permission-denied";
+import { useDescribeError } from "./use-describe-error";
 
 type QueryStateProps = {
   loading?: boolean;
-  error?: string | null;
+  /** A string message, or any thrown value (typed `ApiError` → 403 / 409 / 423 / 5xx UX). */
+  error?: unknown;
   forbidden?: boolean;
   empty?: boolean;
   loadingLabel?: string;
@@ -32,36 +35,43 @@ export function QueryState({
   forbidden,
   empty,
   loadingLabel,
-  errorTitle = "Something went wrong",
-  emptyTitle = "Nothing here yet",
+  errorTitle,
+  emptyTitle,
   emptyDescription,
-  forbiddenTitle = "Access denied",
+  forbiddenTitle,
   forbiddenDescription,
   retryLabel,
   onRetry,
   children,
 }: QueryStateProps) {
+  const t = useTranslations("errors");
+  const describe = useDescribeError();
+
   if (loading) return <LoadingState label={loadingLabel} />;
-  if (forbidden) {
+
+  const described = error && typeof error !== "string" ? describe(error) : null;
+
+  if (forbidden || described?.kind === "forbidden") {
     return (
       <PermissionDenied
-        title={forbiddenTitle}
-        description={forbiddenDescription}
+        title={forbiddenTitle ?? t("forbiddenTitle")}
+        description={forbiddenDescription ?? t("forbiddenDescription")}
       />
     );
   }
   if (error) {
+    const retryable = !described || !["validation", "notFound"].includes(described.kind);
     return (
       <ErrorState
-        title={errorTitle}
-        description={error}
-        retryLabel={retryLabel}
-        onRetry={onRetry}
+        title={errorTitle ?? described?.title ?? t("unknownTitle")}
+        description={typeof error === "string" ? error : described?.description}
+        retryLabel={retryable ? (retryLabel ?? t("retry")) : undefined}
+        onRetry={retryable ? onRetry : undefined}
       />
     );
   }
   if (empty) {
-    return <EmptyState title={emptyTitle} description={emptyDescription} />;
+    return <EmptyState title={emptyTitle ?? t("emptyTitle")} description={emptyDescription} />;
   }
   return <>{children}</>;
 }

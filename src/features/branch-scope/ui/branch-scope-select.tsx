@@ -2,13 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { useSessionUser } from "@/shared/api/session-context";
-import { isAdminRole } from "@/entities/user";
+import { useCan, useViewer } from "@/entities/viewer";
 import {
   getScopedBranchId,
   setScopedBranchId,
-} from "@/features/branch-scope/model/scope-store";
-import { listBranches, type Branch } from "@/entities/identity/api";
+} from "../model/scope-store";
+import { listBranches, type Branch } from "@/entities/identity";
 import {
   Select,
   SelectContent,
@@ -19,12 +18,15 @@ import {
 
 export function BranchScopeSelect() {
   const t = useTranslations("admin");
-  const user = useSessionUser();
+  const { user, scope } = useViewer();
+  const canReadBranches = useCan("branches.read");
+  const visible = canReadBranches && scope !== "own";
   const [branches, setBranches] = useState<Branch[]>([]);
   const [value, setValue] = useState(user.branchId);
 
   useEffect(() => {
     setValue(getScopedBranchId(user.branchId));
+    if (!visible) return;
     void listBranches()
       .then(setBranches)
       .catch(() =>
@@ -38,11 +40,9 @@ export function BranchScopeSelect() {
           },
         ]),
       );
-  }, [user.branchId]);
+  }, [user.branchId, visible]);
 
-  if (!isAdminRole(user.role) && user.role !== "manager") {
-    return null;
-  }
+  if (!visible) return null;
 
   return (
     <div className="flex items-center gap-2">

@@ -1,28 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { createLeadRepository, type Lead } from "@/entities/lead";
-import { Screen } from "@/shared/ui";
+import { createLeadRepository } from "@/entities/lead";
+import { useApiQuery } from "@/shared/lib/use-api-query";
+import { QueryState, Screen } from "@/shared/ui";
 import { CrmPipelineBoard } from "@/widgets/crm-pipeline";
 
 const repo = createLeadRepository();
 
 export function PipelineView() {
   const tc = useTranslations("common");
-  const [leads, setLeads] = useState<Lead[] | null>(null);
+  const query = useApiQuery(() => repo.list(), []);
 
-  useEffect(() => {
-    void repo.list().then(setLeads);
-  }, []);
-
-  if (!leads) {
+  if (!query.data) {
     return (
       <Screen>
-        <p className="text-sm font-medium text-zinc-500">{tc("loading")}</p>
+        <QueryState
+          loading={query.loading}
+          loadingLabel={tc("loading")}
+          error={query.error}
+          onRetry={() => void query.reload()}
+        >
+          {null}
+        </QueryState>
       </Screen>
     );
   }
 
-  return <CrmPipelineBoard repository={repo} initialLeads={leads} />;
+  return <CrmPipelineBoard repository={repo} initialLeads={query.data} />;
 }

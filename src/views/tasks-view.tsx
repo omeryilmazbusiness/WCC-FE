@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { createTaskRepository, type Task } from "@/entities/task";
-import { useSessionUser } from "@/shared/api/session-context";
-import { EmptyState, Screen } from "@/shared/ui";
-import { isManagerRole } from "@/entities/user";
+import { createTaskRepository } from "@/entities/task";
+import { useCan, useViewer } from "@/entities/viewer";
+import { useApiQuery } from "@/shared/lib/use-api-query";
+import { EmptyState, QueryState, Screen } from "@/shared/ui";
 import { TasksBoard } from "@/widgets/tasks-board";
 
 const repo = createTaskRepository();
@@ -13,28 +12,28 @@ const repo = createTaskRepository();
 export function TasksView() {
   const t = useTranslations("tasks");
   const tc = useTranslations("common");
-  const user = useSessionUser();
-  const [tasks, setTasks] = useState<Task[] | null>(null);
+  const { user, scope } = useViewer();
+  const canWrite = useCan("tasks.write");
+  const managerMode = scope !== "own" && canWrite;
 
-  useEffect(() => {
-    void (async () => {
-      if (isManagerRole(user.role)) {
-        try {
-          await repo.escalateOverdue();
-        } catch {
-          /* optional */
-        }
-        setTasks(await repo.list());
-      } else {
-        setTasks(await repo.listMine(user.id));
-      }
-    })();
-  }, [user.id, user.role]);
+  const query = useApiQuery(async () => {
+    if (!managerMode) return repo.listMine(user.id);
+    await repo.escalateOverdue().catch(() => undefined);
+    return repo.list();
+  }, [user.id, managerMode]);
+  const tasks = query.data;
 
   if (!tasks) {
     return (
       <Screen>
-        <p className="text-sm font-medium text-zinc-500">{tc("loading")}</p>
+        <QueryState
+          loading={query.loading}
+          loadingLabel={tc("loading")}
+          error={query.error}
+          onRetry={() => void query.reload()}
+        >
+          {null}
+        </QueryState>
       </Screen>
     );
   }
@@ -51,8 +50,8 @@ export function TasksView() {
     <TasksBoard
       repository={repo}
       initialTasks={tasks}
-      assigneeId={isManagerRole(user.role) ? undefined : user.id}
-      managerMode={isManagerRole(user.role)}
+      assigneeId={managerMode ? undefined : user.id}
+      managerMode={managerMode}
     />
   );
 }

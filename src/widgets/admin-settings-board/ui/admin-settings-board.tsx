@@ -24,6 +24,7 @@ import {
   type SlaSettings,
   type ThresholdSettings,
 } from "@/entities/adminconfig";
+import { useCan } from "@/entities/viewer";
 import { routes } from "@/shared/config/routes";
 import { Link } from "@/shared/i18n/navigation";
 import {
@@ -32,13 +33,14 @@ import {
   Input,
   Label,
   PageHeader,
+  QueryState,
   Screen,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
   Textarea,
-  useToast,
+  useMutationFeedback,
 } from "@/shared/ui";
 
 type Section =
@@ -53,7 +55,10 @@ type Section =
 
 export function AdminSettingsBoard() {
   const t = useTranslations("adminSettings");
-  const { push } = useToast();
+  const feedback = useMutationFeedback();
+  const canWrite = useCan("settings.write");
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [loaded, setLoaded] = useState(false);
   const repo = useMemo(() => createAdminConfigRepository(), []);
   const [tab, setTab] = useState<Section>("sla");
   const [busy, setBusy] = useState(false);
@@ -91,22 +96,28 @@ export function AdminSettingsBoard() {
     setEvents(ev);
   }, [repo, fieldEntity]);
 
+  const load = useCallback(async () => {
+    setLoadError(null);
+    try {
+      await refresh();
+      setLoaded(true);
+    } catch (err) {
+      setLoadError(err);
+    }
+  }, [refresh]);
+
   useEffect(() => {
-    void refresh().catch(() => push({ title: t("loadError"), tone: "error" }));
-  }, [refresh, push, t]);
+    void load();
+  }, [load]);
 
   async function run(fn: () => Promise<unknown>) {
     setBusy(true);
     try {
       await fn();
       await refresh();
-      push({ title: t("saved"), tone: "success" });
+      feedback.success(t("saved"));
     } catch (err) {
-      push({
-        title: t("actionError"),
-        description: err instanceof Error ? err.message : undefined,
-        tone: "error",
-      });
+      feedback.error(err, t("actionError"));
     } finally {
       setBusy(false);
     }
@@ -156,6 +167,12 @@ export function AdminSettingsBoard() {
         })}
       </div>
 
+      <QueryState
+        loading={!loaded && !loadError}
+        error={loadError}
+        errorTitle={t("loadError")}
+        onRetry={() => void load()}
+      >
       <Tabs value={tab} onValueChange={(v) => setTab(v as Section)}>
         <TabsList className="hidden">
           {sections.map((s) => (
@@ -215,7 +232,7 @@ export function AdminSettingsBoard() {
               </div>
               <Button
                 size="sm"
-                disabled={busy}
+                disabled={!canWrite || busy}
                 onClick={() => void run(() => repo.putSla(sla))}
               >
                 {t("save")}
@@ -255,7 +272,7 @@ export function AdminSettingsBoard() {
                   <Button
                     size="sm"
                     variant="outline"
-                    disabled={busy}
+                    disabled={!canWrite || busy}
                     onClick={() =>
                       void run(() =>
                         repo.putEscalation(rule.kind, {
@@ -290,7 +307,7 @@ export function AdminSettingsBoard() {
                   <Button
                     size="sm"
                     variant="outline"
-                    disabled={busy}
+                    disabled={!canWrite || busy}
                     onClick={() =>
                       void run(() => repo.deleteLostReason(r.id))
                     }
@@ -315,7 +332,7 @@ export function AdminSettingsBoard() {
               />
               <Button
                 size="sm"
-                disabled={busy || !newReasonCode.trim()}
+                disabled={!canWrite || busy || !newReasonCode.trim()}
                 onClick={() =>
                   void run(async () => {
                     await repo.createLostReason({
@@ -348,7 +365,7 @@ export function AdminSettingsBoard() {
                     <Button
                       size="sm"
                       variant="outline"
-                      disabled={busy}
+                      disabled={!canWrite || busy}
                       onClick={() =>
                         void run(() => repo.deleteTemplate(tpl.id))
                       }
@@ -373,7 +390,7 @@ export function AdminSettingsBoard() {
               />
               <Button
                 size="sm"
-                disabled={busy || !newTplCode.trim()}
+                disabled={!canWrite || busy || !newTplCode.trim()}
                 onClick={() =>
                   void run(async () => {
                     await repo.createTemplate({
@@ -420,7 +437,7 @@ export function AdminSettingsBoard() {
             </ul>
             <Button
               size="sm"
-              disabled={busy}
+              disabled={!canWrite || busy}
               onClick={() =>
                 void run(() =>
                   repo.putFields(fieldEntity, [
@@ -474,7 +491,7 @@ export function AdminSettingsBoard() {
               </div>
               <Button
                 size="sm"
-                disabled={busy}
+                disabled={!canWrite || busy}
                 onClick={() => void run(() => repo.putThresholds(thresholds))}
               >
                 {t("save")}
@@ -516,6 +533,7 @@ export function AdminSettingsBoard() {
           </div>
         </TabsContent>
       </Tabs>
+      </QueryState>
     </Screen>
   );
 }

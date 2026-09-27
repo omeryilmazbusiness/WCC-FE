@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import type { Lead, LeadOwner, LeadRepository } from "@/entities/lead";
 import { createCustomerRepository } from "@/entities/customer";
+import { useCan } from "@/entities/viewer";
 import {
   Button,
   Dialog,
@@ -27,7 +28,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  useMutationFeedback,
 } from "@/shared/ui";
+import { applyFieldErrors } from "@/shared/lib/form-errors";
 
 const schema = z.object({
   fullName: z.string().min(2),
@@ -38,6 +41,7 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
+const FIELDS = schema.keyof().options;
 
 type Props = {
   repository: LeadRepository;
@@ -45,8 +49,10 @@ type Props = {
 };
 
 export function CreateLeadDialog({ repository, onCreated }: Props) {
+  const allowed = useCan("leads.write");
   const t = useTranslations("pipeline");
   const tc = useTranslations("common");
+  const feedback = useMutationFeedback();
   const [open, setOpen] = useState(false);
   const [owners, setOwners] = useState<LeadOwner[]>([]);
   const [customers, setCustomers] = useState<{ id: string; name: string }[]>(
@@ -65,30 +71,40 @@ export function CreateLeadDialog({ repository, onCreated }: Props) {
 
   useEffect(() => {
     if (!open) return;
-    void repository.listOwners().then((list) => {
-      setOwners(list);
-      if (list[0] && !form.getValues("ownerId")) {
-        form.setValue("ownerId", list[0].id);
-      }
-    });
+    void repository
+      .listOwners()
+      .then((list) => {
+        setOwners(list);
+        if (list[0] && !form.getValues("ownerId")) {
+          form.setValue("ownerId", list[0].id);
+        }
+      })
+      .catch((err: unknown) => feedback.error(err));
     void createCustomerRepository()
       .search("")
       .then((rows) =>
         setCustomers(rows.map((c) => ({ id: c.id, name: c.fullName }))),
-      );
-  }, [open, repository, form]);
+      )
+      .catch(() => setCustomers([]));
+  }, [open, repository, form, feedback]);
 
   async function onSubmit(values: FormValues) {
     const owner = owners.find((o) => o.id === values.ownerId);
     if (!owner) return;
-    const lead = await repository.create({
-      fullName: values.fullName,
-      phone: values.phone,
-      source: values.source,
-      ownerId: owner.id,
-      ownerName: owner.name,
-      customerId: values.customerId || null,
-    });
+    let lead: Lead;
+    try {
+      lead = await repository.create({
+        fullName: values.fullName,
+        phone: values.phone,
+        source: values.source,
+        ownerId: owner.id,
+        ownerName: owner.name,
+        customerId: values.customerId || null,
+      });
+    } catch (err) {
+      if (!applyFieldErrors(form.setError, err, FIELDS)) feedback.error(err);
+      return;
+    }
     onCreated(lead);
     setOpen(false);
     form.reset({
@@ -99,6 +115,8 @@ export function CreateLeadDialog({ repository, onCreated }: Props) {
       customerId: "",
     });
   }
+
+  if (!allowed) return null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

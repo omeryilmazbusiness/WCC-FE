@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { PlaneTakeoff } from "lucide-react";
 import { createTaskRepository } from "@/entities/task";
-import { Button, useToast } from "@/shared/ui";
+import { useCan } from "@/entities/viewer";
+import { Button, useToast, useMutationFeedback } from "@/shared/ui";
 
 type Props = {
   bookingId: string;
@@ -20,8 +21,10 @@ export function ConfirmBookingTasksButton({
   customerId,
   onDone,
 }: Props) {
+  const allowed = useCan("tasks.write");
   const t = useTranslations("tasks");
   const { push } = useToast();
+  const feedback = useMutationFeedback();
   const [busy, setBusy] = useState(false);
 
   async function onClick() {
@@ -40,12 +43,14 @@ export function ConfirmBookingTasksButton({
         tone: "success",
       });
       onDone?.();
-    } catch {
-      push({ title: t("actionError"), tone: "error" });
+    } catch (err) {
+      feedback.error(err, t("actionError"));
     } finally {
       setBusy(false);
     }
   }
+
+  if (!allowed) return null;
 
   return (
     <Button

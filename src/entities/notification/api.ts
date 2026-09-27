@@ -1,6 +1,5 @@
-import { env } from "@/shared/config/env";
-import { FetchHttpClient, type HttpClient } from "@/shared/api/http-client";
-import { parseSession, SESSION_COOKIE } from "@/shared/api/session";
+import { http, type HttpClient } from "@/shared/api/http-client";
+import { createRepository } from "@/shared/api/repository";
 import type {
   AppNotification,
   EscalationRule,
@@ -8,18 +7,6 @@ import type {
   NotificationSeverity,
   NotificationStatus,
 } from "./model";
-
-function tokenFromCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  const raw = document.cookie
-    .split("; ")
-    .find((c) => c.startsWith(`${SESSION_COOKIE}=`))
-    ?.split("=")
-    .slice(1)
-    .join("=");
-  const session = parseSession(raw ? decodeURIComponent(raw) : null);
-  return session?.accessToken ?? null;
-}
 
 type Raw = Record<string, unknown>;
 
@@ -309,38 +296,11 @@ class MemoryRepo implements NotificationRepository {
 let mem: MemoryRepo | null = null;
 
 export function createNotificationRepository(): NotificationRepository {
-  const http = new FetchHttpClient(env.apiBaseUrl, tokenFromCookie);
   const api = new ApiRepo(http);
   if (!mem) mem = new MemoryRepo();
-  const wrap =
-    <A extends unknown[], R>(
-      fn: (...args: A) => Promise<R>,
-      fallback: (...args: A) => Promise<R>,
-    ) =>
-    async (...args: A) => {
-      try {
-        return await fn(...args);
-      } catch {
-        return fallback(...args);
-      }
-    };
-  return {
-    list: wrap(api.list.bind(api), mem.list.bind(mem)),
-    unreadCount: wrap(api.unreadCount.bind(api), mem.unreadCount.bind(mem)),
-    acknowledge: wrap(api.acknowledge.bind(api), mem.acknowledge.bind(mem)),
-    resolve: wrap(api.resolve.bind(api), mem.resolve.bind(mem)),
-    acknowledgeAll: wrap(
-      api.acknowledgeAll.bind(api),
-      mem.acknowledgeAll.bind(mem),
-    ),
-    getPreferences: wrap(
-      api.getPreferences.bind(api),
-      mem.getPreferences.bind(mem),
-    ),
-    updatePreferences: wrap(
-      api.updatePreferences.bind(api),
-      mem.updatePreferences.bind(mem),
-    ),
-    listRules: wrap(api.listRules.bind(api), mem.listRules.bind(mem)),
-  };
+  return createRepository<NotificationRepository>({
+    api,
+    memory: mem,
+    reads: ["list", "unreadCount", "getPreferences", "listRules"],
+  });
 }

@@ -1,8 +1,10 @@
 /**
  * Route map — single source for navigation & role redirects (OCP-friendly).
+ * Route → permission guards live in `./permissions`.
  */
 export const routes = {
   login: "/login",
+  security: "/security",
   manager: "/manager",
   workspace: "/workspace",
   customers: "/customers",
@@ -37,13 +39,15 @@ export type AppRole =
   | "operations"
   | "admin";
 
-export function homeForRole(role: AppRole): string {
-  if (role === "employee" || role === "operations") return routes.workspace;
-  if (role === "admin") return routes.adminUsers;
-  if (role === "finance") return routes.finance;
-  return routes.manager;
-}
+export const APP_ROLES: readonly AppRole[] = [
+  "gm",
+  "manager",
+  "employee",
+  "finance",
+  "operations",
+  "admin",
+];
 
-export function canAccessAdmin(role: AppRole): boolean {
-  return role === "gm" || role === "admin";
+export function isAppRole(value: unknown): value is AppRole {
+  return typeof value === "string" && (APP_ROLES as readonly string[]).includes(value);
 }

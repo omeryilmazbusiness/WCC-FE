@@ -6,6 +6,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import type { Customer, CustomerRepository } from "@/entities/customer";
+import { useCan } from "@/entities/viewer";
 import {
   Button,
   Dialog,
@@ -22,7 +23,9 @@ import {
   FormMessage,
   Input,
   useToast,
+  useMutationFeedback,
 } from "@/shared/ui";
+import { applyFieldErrors } from "@/shared/lib/form-errors";
 
 const schema = z.object({
   fullName: z.string().min(2),
@@ -34,6 +37,7 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
+const FIELDS = schema.keyof().options;
 
 type Props = {
   repository: CustomerRepository;
@@ -41,9 +45,11 @@ type Props = {
 };
 
 export function CreateCustomerDialog({ repository, onCreated }: Props) {
+  const allowed = useCan("customers.write");
   const t = useTranslations("customers");
   const tc = useTranslations("common");
   const { push } = useToast();
+  const feedback = useMutationFeedback();
   const [open, setOpen] = useState(false);
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -79,10 +85,12 @@ export function CreateCustomerDialog({ repository, onCreated }: Props) {
       onCreated?.(result.customer);
       setOpen(false);
       form.reset();
-    } catch {
-      push({ title: t("createError"), tone: "error" });
+    } catch (err) {
+      if (!applyFieldErrors(form.setError, err, FIELDS)) feedback.error(err, t("createError"));
     }
   }
+
+  if (!allowed) return null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

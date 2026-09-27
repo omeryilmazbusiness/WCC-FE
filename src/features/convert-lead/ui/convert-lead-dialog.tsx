@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { Lead, LeadRepository } from "@/entities/lead";
 import { createTourPackageRepository } from "@/entities/tourpackage";
+import { useCan } from "@/entities/viewer";
 import { useRouter } from "@/shared/i18n/navigation";
 import { routes } from "@/shared/config/routes";
 import {
@@ -21,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
   useToast,
+  useMutationFeedback,
 } from "@/shared/ui";
 
 type Props = {
@@ -30,9 +32,11 @@ type Props = {
 };
 
 export function ConvertLeadDialog({ lead, repository, onConverted }: Props) {
+  const allowed = useCan("leads.write");
   const t = useTranslations("pipeline");
   const tc = useTranslations("common");
   const { push } = useToast();
+  const feedback = useMutationFeedback();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [departureId, setDepartureId] = useState("");
@@ -86,16 +90,14 @@ export function ConvertLeadDialog({ lead, repository, onConverted }: Props) {
       });
       setOpen(false);
       router.push(routes.booking(res.bookingId));
-    } catch (e) {
-      push({
-        title: t("convertError"),
-        description: e instanceof Error ? e.message : undefined,
-        tone: "error",
-      });
+    } catch (err) {
+      feedback.error(err, t("convertError"));
     } finally {
       setBusy(false);
     }
   }
+
+  if (!allowed) return null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

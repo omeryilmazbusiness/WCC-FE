@@ -17,10 +17,10 @@ import {
   updateBranch,
   type ApiUser,
   type Branch,
-} from "@/entities/identity/api";
+} from "@/entities/identity";
 import { useSessionUser } from "@/shared/api/session-context";
 import { cn } from "@/shared/lib/cn";
-import { useToast } from "@/shared/ui";
+import { useToast, useMutationFeedback } from "@/shared/ui";
 import {
   ORG_ROLE_DEFAULTS,
   ORG_SEED_ROLES,
@@ -57,6 +57,7 @@ export function OrgStepPanel({ onChanged, onContinueToAi }: Props) {
   const t = useTranslations("branchSetup");
   const user = useSessionUser();
   const { push } = useToast();
+  const feedback = useMutationFeedback();
   const [branch, setBranch] = useState<Branch | null>(null);
   const [code, setCode] = useState("");
   const [nameEn, setNameEn] = useState("");
@@ -135,8 +136,8 @@ export function OrgStepPanel({ onChanged, onContinueToAi }: Props) {
         tone: "success",
       });
       await reload();
-    } catch {
-      push({ title: t("staffCreateError"), tone: "error" });
+    } catch (err) {
+      feedback.error(err, t("staffCreateError"));
     } finally {
       setBusy(false);
     }
@@ -164,8 +165,8 @@ export function OrgStepPanel({ onChanged, onContinueToAi }: Props) {
       onChanged({ companyNamed: true, staffRolesPresent: staffRoles });
       push({ title: t("companySaved"), tone: "success" });
       onContinueToAi();
-    } catch {
-      push({ title: t("companySaveError"), tone: "error" });
+    } catch (err) {
+      feedback.error(err, t("companySaveError"));
     } finally {
       setBusy(false);
     }

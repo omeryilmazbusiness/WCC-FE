@@ -19,6 +19,7 @@ import {
   type TargetStatus,
   type TargetWeight,
 } from "@/entities/revenuetarget";
+import { useCan } from "@/entities/viewer";
 import { TargetAIInsight } from "@/features/ai-target-insight";
 import { Link } from "@/shared/i18n/navigation";
 import { routes } from "@/shared/config/routes";
@@ -29,8 +30,10 @@ import {
   Input,
   Label,
   PageHeader,
+  QueryState,
   Screen,
   SegmentedControl,
+  useMutationFeedback,
   useToast,
 } from "@/shared/ui";
 import { cn } from "@/shared/lib/cn";
@@ -82,7 +85,12 @@ const STATUS_STYLE: Record<
 export function TargetPerformanceBoard() {
   const t = useTranslations("targets");
   const { push } = useToast();
+  const feedback = useMutationFeedback();
+  const canWrite = useCan("targets.write");
+  const canAI = useCan("ai.read");
   const repo = useMemo(() => createRevenueTargetRepository(), []);
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [listLoaded, setListLoaded] = useState(false);
 
   const [targets, setTargets] = useState<RevenueTarget[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -139,16 +147,27 @@ export function TargetPerformanceBoard() {
     [repo],
   );
 
+  const reload = useCallback(async () => {
+    setLoadError(null);
+    try {
+      await loadList();
+      if (selectedId) await loadSelected(selectedId);
+      setListLoaded(true);
+    } catch (err) {
+      setLoadError(err);
+    }
+  }, [loadList, loadSelected, selectedId]);
+
   useEffect(() => {
-    void loadList().catch(() => push({ title: t("loadError"), tone: "error" }));
-  }, [loadList, push, t]);
+    void loadList()
+      .then(() => setListLoaded(true))
+      .catch(setLoadError);
+  }, [loadList]);
 
   useEffect(() => {
     if (!selectedId) return;
-    void loadSelected(selectedId).catch(() =>
-      push({ title: t("loadError"), tone: "error" }),
-    );
-  }, [selectedId, loadSelected, push, t]);
+    void loadSelected(selectedId).catch(setLoadError);
+  }, [selectedId, loadSelected]);
 
   async function createTarget() {
     try {
@@ -162,12 +181,12 @@ export function TargetPerformanceBoard() {
         curveType: "linear",
         currency: "SAR",
       });
-      push({ title: t("created"), tone: "success" });
+      feedback.success(t("created"));
       setSelectedId(created.id);
       setCreating(false);
       await loadList();
-    } catch {
-      push({ title: t("saveError"), tone: "error" });
+    } catch (err) {
+      feedback.error(err, t("saveError"));
     }
   }
 
@@ -190,9 +209,9 @@ export function TargetPerformanceBoard() {
       const saved = await repo.setWeights(selectedId, weightsBps);
       setWeights(saved);
       await loadSelected(selectedId);
-      push({ title: t("weightsSaved"), tone: "success" });
-    } catch {
-      push({ title: t("saveError"), tone: "error" });
+      feedback.success(t("weightsSaved"));
+    } catch (err) {
+      feedback.error(err, t("saveError"));
     }
   }
 
@@ -201,9 +220,9 @@ export function TargetPerformanceBoard() {
     try {
       const p = await repo.recompute(selectedId);
       setProgress(p);
-      push({ title: t("recomputed"), tone: "success" });
-    } catch {
-      push({ title: t("saveError"), tone: "error" });
+      feedback.success(t("recomputed"));
+    } catch (err) {
+      feedback.error(err, t("saveError"));
     }
   }
 
@@ -239,6 +258,7 @@ export function TargetPerformanceBoard() {
         title={t("title")}
         description={t("subtitle")}
         actions={
+          canWrite ? (
           <div className="flex items-center gap-2">
             <Button
               size="sm"
@@ -259,10 +279,11 @@ export function TargetPerformanceBoard() {
               </Button>
             ) : null}
           </div>
+          ) : undefined
         }
       />
 
-      {creating ? (
+      {canWrite && creating ? (
         <div className="mt-4 grid gap-3 rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-[0_10px_30px_-24px_rgba(15,23,42,0.35)] sm:grid-cols-2 lg:grid-cols-5">
           <Field label={t("fields.label")}>
             <Input value={label} onChange={(e) => setLabel(e.target.value)} />
@@ -313,13 +334,24 @@ export function TargetPerformanceBoard() {
         ) : null}
       </div>
 
-      {!selectedId || !progress ? (
+      {loadError || !listLoaded ? (
+        <div className="mt-8">
+          <QueryState
+            loading={!listLoaded && !loadError}
+            error={loadError}
+            errorTitle={t("loadError")}
+            onRetry={() => void reload()}
+          >
+            {null}
+          </QueryState>
+        </div>
+      ) : !selectedId || !progress ? (
         <div className="mt-8">
           <EmptyState title={t("empty")} description={t("emptyHint")} />
         </div>
       ) : (
         <div className="mt-5 space-y-4">
-          <TargetAIInsight targetId={selectedId} />
+          {canAI ? <TargetAIInsight targetId={selectedId} /> : null}
           {/* Progress hero — compact */}
           <section
             data-testid="target-progress-hero"
@@ -445,7 +477,7 @@ export function TargetPerformanceBoard() {
                       onChange={(e) => setWeightDraft(e.target.value)}
                     />
                   </div>
-                  <Button onClick={() => void saveSeasonality()}>
+                  <Button disabled={!canWrite} onClick={() => void saveSeasonality()}>
                     {t("saveWeights")}
                   </Button>
                 </div>

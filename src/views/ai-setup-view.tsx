@@ -1,45 +1,32 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { Check, Sparkles } from "lucide-react";
-import { createAIRepository, type AISetup } from "@/entities/ai";
-import { AIProviderForm } from "@/features/ai-setup/ui/ai-provider-form";
+import { createAIRepository } from "@/entities/ai";
+import { AIProviderForm } from "@/features/ai-setup";
 import { routes } from "@/shared/config/routes";
 import { Link } from "@/shared/i18n/navigation";
-import { Button, Screen } from "@/shared/ui";
+import { useApiQuery } from "@/shared/lib/use-api-query";
+import { Button, QueryState, Screen } from "@/shared/ui";
 
 /** Standalone /setup/ai page — same BYO form as dashboard wizard step 1. */
 export function AISetupView() {
   const t = useTranslations("aiSetup");
   const repo = useMemo(() => createAIRepository(), []);
-  const [initial, setInitial] = useState<AISetup | null>(null);
-  const [loading, setLoading] = useState(true);
+  const setup = useApiQuery(() => repo.getSetup(), [repo]);
+  const initial = setup.data ?? null;
 
-  useEffect(() => {
-    let cancelled = false;
-    void repo
-      .getSetup()
-      .then((s) => {
-        if (!cancelled) setInitial(s);
-      })
-      .catch(() => {
-        if (!cancelled) setInitial(null);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [repo]);
-
-  if (loading) {
+  if (!setup.data) {
     return (
       <Screen>
-        <div className="py-16 text-center text-sm font-medium text-zinc-400">
-          …
-        </div>
+        <QueryState
+          loading={setup.loading}
+          error={setup.error}
+          onRetry={() => void setup.reload()}
+        >
+          {null}
+        </QueryState>
       </Screen>
     );
   }
@@ -78,7 +65,7 @@ export function AISetupView() {
           </ul>
           <AIProviderForm
             initial={initial}
-            onSaved={(s) => setInitial(s)}
+            onSaved={(s) => setup.setData(s)}
           />
         </div>
 

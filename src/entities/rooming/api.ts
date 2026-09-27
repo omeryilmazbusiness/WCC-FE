@@ -1,6 +1,5 @@
-import { env } from "@/shared/config/env";
-import { FetchHttpClient, type HttpClient } from "@/shared/api/http-client";
-import { parseSession, SESSION_COOKIE } from "@/shared/api/session";
+import { http, type HttpClient } from "@/shared/api/http-client";
+import { createRepository } from "@/shared/api/repository";
 import type {
   AssignRoomInput,
   CreateRoomInput,
@@ -10,18 +9,6 @@ import type {
   RoomWithAssignments,
   UpdateRoomInput,
 } from "./model";
-
-function tokenFromCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  const raw = document.cookie
-    .split("; ")
-    .find((c) => c.startsWith(`${SESSION_COOKIE}=`))
-    ?.split("=")
-    .slice(1)
-    .join("=");
-  const session = parseSession(raw ? decodeURIComponent(raw) : null);
-  return session?.accessToken ?? null;
-}
 
 type Raw = Record<string, unknown>;
 
@@ -177,17 +164,10 @@ class ApiRepo implements RoomingRepository {
   }
 
   async exportGroupListCsv(departureId: string) {
-    const token = tokenFromCookie();
-    const res = await fetch(
-      `${env.apiBaseUrl}/departures/${departureId}/rooms/group-list.csv`,
-      {
-        headers: {
-          Accept: "text/csv",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      },
+    const res = await this.http.raw(
+      `/departures/${departureId}/rooms/group-list.csv`,
+      { headers: { Accept: "text/csv" } },
     );
-    if (!res.ok) throw new Error("CSV export failed");
     return res.blob();
   }
 }
@@ -325,32 +305,11 @@ class MemoryRepo implements RoomingRepository {
 let mem: MemoryRepo | null = null;
 
 export function createRoomingRepository(): RoomingRepository {
-  const http = new FetchHttpClient(env.apiBaseUrl, tokenFromCookie);
   const api = new ApiRepo(http);
   if (!mem) mem = new MemoryRepo();
-  const wrap =
-    <A extends unknown[], R>(
-      fn: (...args: A) => Promise<R>,
-      fallback: (...args: A) => Promise<R>,
-    ) =>
-    async (...args: A) => {
-      try {
-        return await fn(...args);
-      } catch {
-        return fallback(...args);
-      }
-    };
-  return {
-    listRooms: wrap(api.listRooms.bind(api), mem.listRooms.bind(mem)),
-    createRoom: wrap(api.createRoom.bind(api), mem.createRoom.bind(mem)),
-    updateRoom: wrap(api.updateRoom.bind(api), mem.updateRoom.bind(mem)),
-    deleteRoom: wrap(api.deleteRoom.bind(api), mem.deleteRoom.bind(mem)),
-    assign: wrap(api.assign.bind(api), mem.assign.bind(mem)),
-    unassign: wrap(api.unassign.bind(api), mem.unassign.bind(mem)),
-    groupList: wrap(api.groupList.bind(api), mem.groupList.bind(mem)),
-    exportGroupListCsv: wrap(
-      api.exportGroupListCsv.bind(api),
-      mem.exportGroupListCsv.bind(mem),
-    ),
-  };
+  return createRepository<RoomingRepository>({
+    api,
+    memory: mem,
+    reads: ["listRooms", "groupList", "exportGroupListCsv"],
+  });
 }

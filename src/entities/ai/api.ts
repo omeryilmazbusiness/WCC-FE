@@ -1,6 +1,6 @@
-import { env } from "@/shared/config/env";
-import { FetchHttpClient, type HttpClient } from "@/shared/api/http-client";
-import { parseSession, SESSION_COOKIE } from "@/shared/api/session";
+import { http, type HttpClient } from "@/shared/api/http-client";
+import { isApiError, isNetworkError } from "@/shared/api/api-error";
+import { createRepository } from "@/shared/api/repository";
 import type {
   AIProvider,
   AISetup,
@@ -10,18 +10,6 @@ import type {
   OCRResult,
   TargetInsight,
 } from "./model";
-
-function tokenFromCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  const raw = document.cookie
-    .split("; ")
-    .find((c) => c.startsWith(`${SESSION_COOKIE}=`))
-    ?.split("=")
-    .slice(1)
-    .join("=");
-  const session = parseSession(raw ? decodeURIComponent(raw) : null);
-  return session?.accessToken ?? null;
-}
 
 type Raw = Record<string, unknown>;
 
@@ -263,49 +251,24 @@ let mem: MemoryRepo | null = null;
 
 /**
  * Live setup status with no memory fallback — used by login / AISetupGate.
- * Returns null when the API is unreachable (do not block the app).
+ * Returns null when the API is unreachable or the caller may not read AI setup
+ * (do not block the app); other HTTP errors propagate.
  */
 export async function fetchAISetupStrict(): Promise<AISetup | null> {
   try {
-    const http = new FetchHttpClient(env.apiBaseUrl, tokenFromCookie);
     return await new ApiRepo(http).getSetup();
-  } catch {
-    return null;
+  } catch (err) {
+    if (isNetworkError(err) || (isApiError(err) && err.status === 403)) return null;
+    throw err;
   }
 }
 
 export function createAIRepository(): AIRepository {
-  const http = new FetchHttpClient(env.apiBaseUrl, tokenFromCookie);
   const api = new ApiRepo(http);
   if (!mem) mem = new MemoryRepo();
-  const wrap =
-    <A extends unknown[], R>(
-      fn: (...args: A) => Promise<R>,
-      fallback: (...args: A) => Promise<R>,
-    ) =>
-    async (...args: A) => {
-      try {
-        return await fn(...args);
-      } catch {
-        return fallback(...args);
-      }
-    };
-  return {
-    getSetup: wrap(api.getSetup.bind(api), mem.getSetup.bind(mem)),
-    completeSetup: wrap(
-      api.completeSetup.bind(api),
-      mem.completeSetup.bind(mem),
-    ),
-    dailySummary: wrap(api.dailySummary.bind(api), mem.dailySummary.bind(mem)),
-    conversationAssist: wrap(
-      api.conversationAssist.bind(api),
-      mem.conversationAssist.bind(mem),
-    ),
-    scoreLead: wrap(api.scoreLead.bind(api), mem.scoreLead.bind(mem)),
-    targetInsight: wrap(
-      api.targetInsight.bind(api),
-      mem.targetInsight.bind(mem),
-    ),
-    ocrExtract: wrap(api.ocrExtract.bind(api), mem.ocrExtract.bind(mem)),
-  };
+  return createRepository<AIRepository>({
+    api,
+    memory: mem,
+    reads: ["getSetup", "dailySummary", "targetInsight"],
+  });
 }

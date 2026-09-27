@@ -1,25 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   createPaymentRepository,
   FINANCE_QUEUES,
-  type FinanceQueueItem,
   type FinanceQueueKind,
 } from "@/entities/payment";
+import { useCan } from "@/entities/viewer";
+import { useApiQuery } from "@/shared/lib/use-api-query";
 import { Link } from "@/shared/i18n/navigation";
 import { routes } from "@/shared/config/routes";
 import {
   Button,
-  EmptyState,
   PageHeader,
+  QueryState,
   Screen,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-  useToast,
+  useMutationFeedback,
 } from "@/shared/ui";
 
 function money(amount: number, currency: string) {
@@ -36,29 +37,12 @@ function money(amount: number, currency: string) {
 
 export function FinanceQueuesBoard() {
   const t = useTranslations("finance");
-  const { push } = useToast();
+  const feedback = useMutationFeedback();
+  const canApprove = useCan("payments.approve");
   const repo = useMemo(() => createPaymentRepository(), []);
   const [kind, setKind] = useState<FinanceQueueKind>("overdue");
-  const [items, setItems] = useState<FinanceQueueItem[]>([]);
-  const [busy, setBusy] = useState(false);
-
-  const load = useCallback(
-    async (k: FinanceQueueKind) => {
-      setBusy(true);
-      try {
-        setItems(await repo.queue(k));
-      } catch {
-        push({ title: t("loadError"), tone: "error" });
-      } finally {
-        setBusy(false);
-      }
-    },
-    [repo, push, t],
-  );
-
-  useEffect(() => {
-    void load(kind);
-  }, [kind, load]);
+  const queue = useApiQuery(() => repo.queue(kind), [repo, kind]);
+  const items = queue.data ?? [];
 
   async function exportCsv() {
     try {
@@ -69,8 +53,8 @@ export function FinanceQueuesBoard() {
       a.download = `finance-${kind}.csv`;
       a.click();
       URL.revokeObjectURL(url);
-    } catch {
-      push({ title: t("exportError"), tone: "error" });
+    } catch (err) {
+      feedback.error(err, t("exportError"));
     }
   }
 
@@ -78,10 +62,10 @@ export function FinanceQueuesBoard() {
     if (!id) return;
     try {
       await repo.approveRefund(id);
-      push({ title: t("saved"), tone: "success" });
-      await load(kind);
-    } catch {
-      push({ title: t("actionError"), tone: "error" });
+      feedback.success(t("saved"));
+      await queue.reload();
+    } catch (err) {
+      feedback.error(err, t("actionError"));
     }
   }
 
@@ -111,11 +95,15 @@ export function FinanceQueuesBoard() {
         </TabsList>
         {FINANCE_QUEUES.map((k) => (
           <TabsContent key={k} value={k} className="mt-6">
-            {busy ? (
-              <p className="text-sm text-zinc-400">{t("loading")}</p>
-            ) : items.length === 0 ? (
-              <EmptyState title={t("queueEmpty")} description={t("queueEmptyHint")} />
-            ) : (
+            <QueryState
+              loading={queue.loading}
+              loadingLabel={t("loading")}
+              error={queue.error}
+              onRetry={() => void queue.reload()}
+              empty={items.length === 0}
+              emptyTitle={t("queueEmpty")}
+              emptyDescription={t("queueEmptyHint")}
+            >
               <ul className="space-y-4">
                 {items.map((it, i) => (
                   <li
@@ -140,7 +128,7 @@ export function FinanceQueuesBoard() {
                           {t("openBooking")}
                         </Link>
                       </Button>
-                      {kind === "refunds" && it.paymentId ? (
+                      {canApprove && kind === "refunds" && it.paymentId ? (
                         <Button
                           size="sm"
                           onClick={() => void onApprove(it.paymentId)}
@@ -152,7 +140,7 @@ export function FinanceQueuesBoard() {
                   </li>
                 ))}
               </ul>
-            )}
+            </QueryState>
           </TabsContent>
         ))}
       </Tabs>

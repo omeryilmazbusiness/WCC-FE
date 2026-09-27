@@ -41,6 +41,31 @@ export function formatDateTime(
   });
 }
 
+const RELATIVE_UNITS: readonly [Intl.RelativeTimeFormatUnit, number][] = [
+  ["year", 365 * 24 * 3600],
+  ["month", 30 * 24 * 3600],
+  ["week", 7 * 24 * 3600],
+  ["day", 24 * 3600],
+  ["hour", 3600],
+  ["minute", 60],
+];
+
+/** "5 minutes ago" / "in 2 days" / "now" in the UI locale. */
+export function formatRelativeTime(
+  value: string | number | Date,
+  locale: string,
+  now: number = Date.now(),
+): string {
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  const seconds = Math.round((d.getTime() - now) / 1000);
+  const rtf = new Intl.RelativeTimeFormat(toIntlLocale(locale), { numeric: "auto" });
+  for (const [unit, size] of RELATIVE_UNITS) {
+    if (Math.abs(seconds) >= size) return rtf.format(Math.round(seconds / size), unit);
+  }
+  return rtf.format(0, "second");
+}
+
 /** Locale-aware number formatting. */
 export function formatNumber(
   value: number,

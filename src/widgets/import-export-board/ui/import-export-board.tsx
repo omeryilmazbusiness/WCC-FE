@@ -27,17 +27,19 @@ import {
   type ImportJob,
   type ImportMode,
 } from "@/entities/importexport";
+import { useCan } from "@/entities/viewer";
 import { FileSyncPanel } from "@/features/file-sync";
 import {
   Button,
   EmptyState,
+  QueryState,
   Screen,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-  useToast,
+  useMutationFeedback,
 } from "@/shared/ui";
 import { cn } from "@/shared/lib/cn";
 
@@ -77,11 +79,14 @@ const ENTITY_META: Record<
 
 export function ImportExportBoard() {
   const t = useTranslations("importExport");
-  const { push } = useToast();
+  const feedback = useMutationFeedback();
+  const canWrite = useCan("imports.write");
+  const canSync = useCan("filesync.read");
   const repo = useMemo(() => createImportExportRepository(), []);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [tab, setTab] = useState<Tab>("bring");
+  const [tab, setTab] = useState<Tab>(canWrite ? "bring" : "history");
+  const [loadError, setLoadError] = useState<unknown>(null);
   const [step, setStep] = useState<Step>(1);
   const [entityType, setEntityType] = useState<ImportEntityType>("customers");
   const [mode, setMode] = useState<ImportMode>("upsert");
@@ -131,11 +136,18 @@ export function ImportExportBoard() {
     setJobs(hist);
   }, [repo]);
 
+  const reloadMeta = useCallback(async () => {
+    setLoadError(null);
+    try {
+      await loadMeta();
+    } catch (err) {
+      setLoadError(err);
+    }
+  }, [loadMeta]);
+
   useEffect(() => {
-    void loadMeta().catch(() =>
-      push({ title: t("loadError"), tone: "error" }),
-    );
-  }, [loadMeta, push, t]);
+    void reloadMeta();
+  }, [reloadMeta]);
 
   async function onFile(file: File | null) {
     if (!file) return;
@@ -145,10 +157,10 @@ export function ImportExportBoard() {
       setJob(uploaded);
       setMapping({ ...uploaded.mapping });
       setStep(2);
-      push({ title: t("uploaded"), tone: "success" });
+      feedback.success(t("uploaded"));
       await loadMeta();
-    } catch {
-      push({ title: t("uploadError"), tone: "error" });
+    } catch (err) {
+      feedback.error(err, t("uploadError"));
     } finally {
       setBusy(false);
     }
@@ -162,9 +174,9 @@ export function ImportExportBoard() {
       const updated = await repo.validate(job.id);
       setJob(updated);
       setStep(3);
-      push({ title: t("validated"), tone: "success" });
-    } catch {
-      push({ title: t("saveError"), tone: "error" });
+      feedback.success(t("validated"));
+    } catch (err) {
+      feedback.error(err, t("saveError"));
     } finally {
       setBusy(false);
     }
@@ -176,10 +188,10 @@ export function ImportExportBoard() {
     try {
       const updated = await repo.confirm(job.id);
       setJob(updated);
-      push({ title: t("confirmed"), tone: "success" });
+      feedback.success(t("confirmed"));
       await loadMeta();
-    } catch {
-      push({ title: t("saveError"), tone: "error" });
+    } catch (err) {
+      feedback.error(err, t("saveError"));
     } finally {
       setBusy(false);
     }
@@ -191,8 +203,8 @@ export function ImportExportBoard() {
     try {
       const blob = await repo.downloadErrors(id);
       downloadBlob(blob, `import-errors-${id.slice(0, 8)}.csv`);
-    } catch {
-      push({ title: t("downloadError"), tone: "error" });
+    } catch (err) {
+      feedback.error(err, t("downloadError"));
     }
   }
 
@@ -201,9 +213,9 @@ export function ImportExportBoard() {
     try {
       const blob = await repo.exportCsv(exportEntity);
       downloadBlob(blob, `${exportEntity}-export.csv`);
-      push({ title: t("exported"), tone: "success" });
-    } catch {
-      push({ title: t("exportError"), tone: "error" });
+      feedback.success(t("exported"));
+    } catch (err) {
+      feedback.error(err, t("exportError"));
     } finally {
       setBusy(false);
     }
@@ -244,12 +256,14 @@ export function ImportExportBoard() {
 
   const done = job?.status === "completed" || job?.status === "failed";
 
-  const tabs: { id: Tab; icon: LucideIcon; label: string }[] = [
-    { id: "bring", icon: Upload, label: t("tabBring") },
-    { id: "history", icon: History, label: t("tabHistory") },
-    { id: "export", icon: Download, label: t("tabExport") },
-    { id: "sync", icon: Cloud, label: t("tabSync") },
-  ];
+  const tabs = (
+    [
+      { id: "bring", icon: Upload, label: t("tabBring"), allowed: canWrite },
+      { id: "history", icon: History, label: t("tabHistory"), allowed: true },
+      { id: "export", icon: Download, label: t("tabExport"), allowed: canWrite },
+      { id: "sync", icon: Cloud, label: t("tabSync"), allowed: canSync },
+    ] satisfies { id: Tab; icon: LucideIcon; label: string; allowed: boolean }[]
+  ).filter((x) => x.allowed);
 
   return (
     <Screen data-testid="import-export-board" className="!space-y-3">
@@ -287,7 +301,7 @@ export function ImportExportBoard() {
       {/* One card — everything inside */}
       <div className="overflow-hidden rounded-2xl bg-white shadow-[0_8px_28px_-14px_rgba(15,23,42,0.22)]">
         {/* Symmetric tab bar */}
-        <div className="grid grid-cols-2 gap-1 bg-zinc-50 p-1.5 sm:grid-cols-4">
+        <div className="flex flex-wrap gap-1 bg-zinc-50 p-1.5">
           {tabs.map(({ id, icon: Icon, label }) => {
             const on = tab === id;
             return (
@@ -296,7 +310,7 @@ export function ImportExportBoard() {
                 type="button"
                 onClick={() => setTab(id)}
                 className={cn(
-                  "flex items-center justify-center gap-2 rounded-xl py-2.5 text-[13px] font-semibold transition",
+                  "flex min-w-[45%] flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-[13px] font-semibold transition sm:min-w-0",
                   on
                     ? id === "bring"
                       ? "bg-sky-600 text-white shadow-sm"
@@ -316,6 +330,15 @@ export function ImportExportBoard() {
         </div>
 
         <div className="p-4 sm:p-5">
+          {loadError ? (
+            <QueryState
+              error={loadError}
+              errorTitle={t("loadError")}
+              onRetry={() => void reloadMeta()}
+            >
+              {null}
+            </QueryState>
+          ) : null}
           {/* ——— IMPORT ——— */}
           {tab === "bring" && step === 1 ? (
             <div className="grid gap-4 lg:grid-cols-2 lg:gap-5">

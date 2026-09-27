@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import type { ColumnDef } from "@tanstack/react-table";
-import { listAuditEvents, type AuditEvent } from "@/entities/identity/api";
+import { listAuditEvents, type AuditEvent } from "@/entities/identity";
 import { formatDateTime } from "@/shared/lib/format";
+import { useApiQuery } from "@/shared/lib/use-api-query";
 import {
   DataTable,
-  EmptyState,
-  ErrorState,
   ListScreen,
+  QueryState,
   SearchFilterBar,
 } from "@/shared/ui";
 
@@ -17,31 +17,13 @@ export function AuditLogView() {
   const t = useTranslations("admin");
   const tc = useTranslations("common");
   const locale = useLocale();
-  const [rows, setRows] = useState<AuditEvent[]>([]);
   const [entityType, setEntityType] = useState("all");
   const [query, setQuery] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loaded, setLoaded] = useState(false);
-
-  async function refresh(entity = entityType) {
-    try {
-      setError(null);
-      setRows(
-        await listAuditEvents({
-          entityType: entity === "all" ? undefined : entity,
-        }),
-      );
-    } catch {
-      setError(t("loadError"));
-    } finally {
-      setLoaded(true);
-    }
-  }
-
-  useEffect(() => {
-    void refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const events = useApiQuery(
+    () => listAuditEvents({ entityType: entityType === "all" ? undefined : entityType }),
+    [entityType],
+  );
+  const rows = useMemo<AuditEvent[]>(() => events.data ?? [], [events.data]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -99,17 +81,13 @@ export function AuditLogView() {
           onReset={() => {
             setQuery("");
             setEntityType("all");
-            void refresh("all");
           }}
           sections={[
             {
               id: "entity",
               label: t("entity"),
               value: entityType,
-              onChange: (v: string) => {
-                setEntityType(v);
-                void refresh(v);
-              },
+              onChange: setEntityType,
               options: [
                 { value: "all", label: t("allEntities") },
                 { value: "user", label: "user" },
@@ -121,13 +99,17 @@ export function AuditLogView() {
         />
       }
     >
-      {error ? (
-        <ErrorState title={error} retryLabel={tc("retry")} onRetry={() => void refresh()} />
-      ) : !loaded ? null : filtered.length === 0 ? (
-        <EmptyState title={t("auditEmpty")} />
-      ) : (
+      <QueryState
+        loading={events.loading && !events.data}
+        error={events.error}
+        errorTitle={t("loadError")}
+        retryLabel={tc("retry")}
+        onRetry={() => void events.reload()}
+        empty={filtered.length === 0}
+        emptyTitle={t("auditEmpty")}
+      >
         <DataTable columns={columns} data={filtered} />
-      )}
+      </QueryState>
     </ListScreen>
   );
 }

@@ -1,6 +1,5 @@
-import { env } from "@/shared/config/env";
-import { FetchHttpClient, type HttpClient } from "@/shared/api/http-client";
-import { parseSession, SESSION_COOKIE } from "@/shared/api/session";
+import { http, type HttpClient } from "@/shared/api/http-client";
+import { createRepository } from "@/shared/api/repository";
 import type {
   RevenueTarget,
   TargetContribution,
@@ -10,18 +9,6 @@ import type {
   TargetSource,
   TargetWeight,
 } from "./model";
-
-function tokenFromCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  const raw = document.cookie
-    .split("; ")
-    .find((c) => c.startsWith(`${SESSION_COOKIE}=`))
-    ?.split("=")
-    .slice(1)
-    .join("=");
-  const session = parseSession(raw ? decodeURIComponent(raw) : null);
-  return session?.accessToken ?? null;
-}
 
 type Raw = Record<string, unknown>;
 
@@ -327,7 +314,7 @@ class MemoryRepo implements RevenueTargetRepository {
     this.shares.set(id, shares);
     return shares;
   }
-  async contributions(id: string) {
+  async contributions() {
     return [
       {
         userId: "u1",
@@ -382,32 +369,18 @@ class MemoryRepo implements RevenueTargetRepository {
 let mem: MemoryRepo | null = null;
 
 export function createRevenueTargetRepository(): RevenueTargetRepository {
-  const http = new FetchHttpClient(env.apiBaseUrl, tokenFromCookie);
   const api = new ApiRepo(http);
   if (!mem) mem = new MemoryRepo();
-  const wrap =
-    <A extends unknown[], R>(
-      fn: (...args: A) => Promise<R>,
-      fallback: (...args: A) => Promise<R>,
-    ) =>
-    async (...args: A) => {
-      try {
-        return await fn(...args);
-      } catch {
-        return fallback(...args);
-      }
-    };
-  return {
-    list: wrap(api.list.bind(api), mem.list.bind(mem)),
-    create: wrap(api.create.bind(api), mem.create.bind(mem)),
-    update: wrap(api.update.bind(api), mem.update.bind(mem)),
-    progress: wrap(api.progress.bind(api), mem.progress.bind(mem)),
-    setWeights: wrap(api.setWeights.bind(api), mem.setWeights.bind(mem)),
-    getWeights: wrap(api.getWeights.bind(api), mem.getWeights.bind(mem)),
-    setShares: wrap(api.setShares.bind(api), mem.setShares.bind(mem)),
-    contributions: wrap(api.contributions.bind(api), mem.contributions.bind(mem)),
-    series: wrap(api.series.bind(api), mem.series.bind(mem)),
-    sources: wrap(api.sources.bind(api), mem.sources.bind(mem)),
-    recompute: wrap(api.recompute.bind(api), mem.recompute.bind(mem)),
-  };
+  return createRepository<RevenueTargetRepository>({
+    api,
+    memory: mem,
+    reads: [
+      "list",
+      "progress",
+      "getWeights",
+      "contributions",
+      "series",
+      "sources",
+    ],
+  });
 }

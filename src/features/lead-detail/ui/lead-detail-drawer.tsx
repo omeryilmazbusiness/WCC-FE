@@ -7,6 +7,7 @@ import type {
   LeadRepository,
   StageHistoryItem,
 } from "@/entities/lead";
+import { useCan } from "@/entities/viewer";
 import { AssignLeadDialog } from "@/features/assign-lead";
 import { LeadStageMenu } from "@/features/change-lead-stage";
 import { ConvertLeadDialog } from "@/features/convert-lead";
@@ -21,6 +22,7 @@ import {
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
+  useMutationFeedback,
 } from "@/shared/ui";
 
 type Props = {
@@ -40,11 +42,16 @@ export function LeadDetailDrawer({
 }: Props) {
   const t = useTranslations("pipeline");
   const locale = useLocale();
+  const feedback = useMutationFeedback();
+  const canWrite = useCan("leads.write");
   const [history, setHistory] = useState<StageHistoryItem[]>([]);
 
   useEffect(() => {
     if (!lead || !open) return;
-    void repository.history(lead.id).then(setHistory);
+    void repository
+      .history(lead.id)
+      .then(setHistory)
+      .catch(() => setHistory([]));
   }, [lead, open, repository]);
 
   return (
@@ -155,17 +162,21 @@ export function LeadDetailDrawer({
                 repository={repository}
                 onConverted={(updated) => onChanged(updated)}
               />
-              {lead.stage !== "won" && lead.stage !== "lost" ? (
+              {canWrite && lead.stage !== "won" && lead.stage !== "lost" ? (
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={async () => {
-                    const updated = await repository.setNoFollowUp(
-                      lead.id,
-                      !lead.noFollowUp,
-                    );
-                    onChanged(updated);
+                    try {
+                      const updated = await repository.setNoFollowUp(
+                        lead.id,
+                        !lead.noFollowUp,
+                      );
+                      onChanged(updated);
+                    } catch (err) {
+                      feedback.error(err);
+                    }
                   }}
                 >
                   {lead.noFollowUp ? t("clearNoFollowUp") : t("markNoFollowUp")}

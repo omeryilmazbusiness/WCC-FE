@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import type { BookingRepository } from "@/entities/booking";
 import { createCustomerRepository } from "@/entities/customer";
 import { createTourPackageRepository } from "@/entities/tourpackage";
+import { useCan } from "@/entities/viewer";
 import { useRouter } from "@/shared/i18n/navigation";
 import { routes } from "@/shared/config/routes";
 import {
@@ -22,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
   useToast,
+  useMutationFeedback,
 } from "@/shared/ui";
 
 type Props = {
@@ -37,9 +39,11 @@ export function CreateBookingDialog({
   defaultDepartureId,
   onCreated,
 }: Props) {
+  const allowed = useCan("bookings.write");
   const t = useTranslations("bookings");
   const tc = useTranslations("common");
   const { push } = useToast();
+  const feedback = useMutationFeedback();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [customerId, setCustomerId] = useState(defaultCustomerId ?? "");
@@ -83,16 +87,14 @@ export function CreateBookingDialog({
       setOpen(false);
       onCreated?.(b.id);
       router.push(routes.booking(b.id));
-    } catch (e) {
-      push({
-        title: t("saveError"),
-        description: e instanceof Error ? e.message : undefined,
-        tone: "error",
-      });
+    } catch (err) {
+      feedback.error(err, t("saveError"));
     } finally {
       setBusy(false);
     }
   }
+
+  if (!allowed) return null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

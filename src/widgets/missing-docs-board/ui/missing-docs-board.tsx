@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Download, FileWarning } from "lucide-react";
@@ -11,13 +11,8 @@ import {
 } from "@/entities/document";
 import { Link } from "@/shared/i18n/navigation";
 import { routes } from "@/shared/config/routes";
-import {
-  Button,
-  EmptyState,
-  Input,
-  Screen,
-  useToast,
-} from "@/shared/ui";
+import { useApiQuery } from "@/shared/lib/use-api-query";
+import { Button, Input, QueryState, Screen } from "@/shared/ui";
 
 type Props = { repository?: DocumentRepository };
 
@@ -46,35 +41,22 @@ export function MissingDocsBoard({ repository }: Props) {
     [repository],
   );
   const t = useTranslations("ops");
-  const { push } = useToast();
   const search = useSearchParams();
   const qDep = search.get("departure_id") ?? search.get("departureId") ?? "";
 
   const [departureId, setDepartureId] = useState(qDep);
-  const [rows, setRows] = useState<MissingDocsRow[]>([]);
-  const [busy, setBusy] = useState(false);
+  const [loadedId, setLoadedId] = useState(qDep.trim());
+  const query = useApiQuery(() => repo.missingDocs(loadedId), [repo, loadedId], {
+    enabled: Boolean(loadedId),
+  });
+  const rows: MissingDocsRow[] = loadedId ? (query.data ?? []) : [];
+  const busy = query.loading;
 
-  const load = useCallback(
-    async (id: string) => {
-      if (!id.trim()) {
-        setRows([]);
-        return;
-      }
-      setBusy(true);
-      try {
-        setRows(await repo.missingDocs(id.trim()));
-      } catch {
-        push({ title: t("loadError"), tone: "error" });
-      } finally {
-        setBusy(false);
-      }
-    },
-    [repo, push, t],
-  );
-
-  useEffect(() => {
-    if (qDep) void load(qDep);
-  }, [qDep, load]);
+  function load(id: string) {
+    const next = id.trim();
+    if (next === loadedId) void query.reload();
+    else setLoadedId(next);
+  }
 
   return (
     <Screen data-testid="missing-docs-board" className="!space-y-3">
@@ -114,19 +96,22 @@ export function MissingDocsBoard({ repository }: Props) {
           <Button
             size="sm"
             disabled={busy || !departureId.trim()}
-            onClick={() => void load(departureId)}
+            onClick={() => load(departureId)}
           >
             {t("load")}
           </Button>
         </div>
 
         <div className="p-4">
-          {rows.length === 0 ? (
-            <EmptyState
-              title={t("missingDocsEmpty")}
-              description={t("missingDocsEmptyHint")}
-            />
-          ) : (
+          <QueryState
+            loading={busy}
+            error={query.error}
+            errorTitle={t("loadError")}
+            onRetry={() => void query.reload()}
+            empty={rows.length === 0}
+            emptyTitle={t("missingDocsEmpty")}
+            emptyDescription={t("missingDocsEmptyHint")}
+          >
             <ul className="divide-y divide-zinc-100 rounded-xl border border-zinc-100">
               {rows.map((r, i) => (
                 <li
@@ -158,7 +143,7 @@ export function MissingDocsBoard({ repository }: Props) {
                 </li>
               ))}
             </ul>
-          )}
+          </QueryState>
         </div>
       </div>
     </Screen>

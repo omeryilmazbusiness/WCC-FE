@@ -247,15 +247,119 @@ API-backed via `createDocumentRepository()` / `createVisaRepository()` / `create
 - Header global search; manager monetary KPI cards; inbox next-task confirm; suppliers Issues tab
 - Entities: `adminconfig`, `rooming`, `search` (+ supplier issues / conversation suggest)
 
+## Epic 19 Security
+
+| Task | Status |
+|------|--------|
+| T-244 Single repository factory; demo fallback only for reads on network errors | Done |
+| T-245 Typed `ApiError` + QueryState / toast / field-error UX | Done |
+| T-247 Viewer permissions, `<Can>` / `useCan()`, permission-driven nav + route guard | Done |
+| T-252 MFA login step + Security page (enroll, confirm, disable, recovery codes) | Done |
+| T-254 Lockout countdown (423 / 429) + admin Unlock | Done |
+| T-256 HttpOnly BFF session, `/api/proxy`, CSRF | Done |
+| Server-side sessions: 401 code handling, active sessions UI, admin "Sign out everywhere" | Done |
+
+**Session (BFF).** The browser never sees a token. `src/app/api/auth/*` route handlers
+call the backend and set HttpOnly cookies (`Secure` in production, `SameSite=Lax`, `Path=/`):
+
+| Cookie | Content | Max-Age |
+|--------|---------|---------|
+| `wcc_at` | access token | backend `expires_in` |
+| `wcc_rt` | opaque rotating refresh token | `SESSION_MAX_AGE_SECONDS` (7 d) |
+| `wcc_session` | HMAC-signed viewer snapshot (user, permissions, scope) — UI routing only | same as `wcc_rt` |
+
+- `POST /api/auth/login` → `authenticated` \| `mfa_required` (challenge) \| `mfa_setup_required` (GM/Admin without MFA: no session; the backend `enrollment_token` is kept in the HttpOnly `wcc_mfa_setup` cookie)
+- `POST /api/auth/mfa/setup` → `{secret, otpauth_url}`; `POST /api/auth/mfa/setup/confirm {code}` → session cookies + `recovery_codes` (shown once)
+- `POST /api/auth/mfa/verify`, `POST /api/auth/refresh`, `POST /api/auth/logout` (backend logout with the refresh token, then cookies cleared), `GET /api/auth/me`
+- `/api/proxy/[...path]` forwards to `API_BASE_URL`, attaches the access cookie and performs **at most one** refresh per request (single-flight, rotated pair stored) before retrying — see the 401 table below. Token endpoints are not proxied.
+- Server components use `createServerHttpClient()` (`@/shared/api/server/server-http`) to call the backend directly with the cookie token. RSC cannot rotate or clear cookies, so any backend 401 there surfaces as `session_expired` (with `reason`); the next browser call through the proxy refreshes or ends the session.
+- CSRF: mutations to `/api/auth/*` and `/api/proxy/*` require `X-Requested-With: wcc` and a same-origin `Origin` (extra origins via `BFF_ALLOWED_ORIGINS`).
+
+**Session model.** Every access token carries a backend session id, so sessions are server-side and
+revocable:
+
+- **Opaque rotating refresh.** Each refresh returns a new opaque refresh token (the FE never parses it).
+  Refresh is single-flight per Node process with a 30 s reuse window for the rotated pair; across
+  instances the backend accepts a concurrently reused token for a 10 s grace window, so multi-instance
+  deployments need no sticky sessions.
+- **Idle + absolute lifetime.** A session ends after inactivity or at its absolute lifetime; refresh then
+  returns 401 and the user is sent to login ("session expired").
+- **Immediate revocation.** Revoking a session (self, "sign out all other devices", admin, deactivation)
+  makes the next request with its access token fail with `session_revoked`; the BFF clears cookies and
+  the login page shows "You were signed out on this device".
+- **Active sessions UI.** `/security` → `features/manage-sessions` `SessionsCard`: device ("Chrome on
+  macOS", parsed by a dependency-free UA parser), IP, sign-in method, last active (relative,
+  `Intl.RelativeTimeFormat`), "This device" badge, per-row sign out (current row = normal logout) and
+  "Sign out all other devices". Admins with `users.write` get "Sign out everywhere" per user on
+  `/admin/users` (`features/revoke-user-sessions`).
+
+Endpoints: `GET /v1/auth/sessions`, `DELETE /v1/auth/sessions/{id}`,
+`POST /v1/auth/sessions/revoke-others`, `POST /v1/users/{id}/sessions/revoke` (`users.write`).
+
+**401 handling** (pure policy in `src/shared/api/server/unauthorized-policy.ts`, used by the proxy and
+`GET /api/auth/me`; `npm run test:sessions`):
+
+| Backend 401 `error.code` | Refreshed already in this request? | BFF action | Browser receives |
+|---|---|---|---|
+| `session_revoked` | any | no refresh; clear auth cookies | 401 `session_expired`, `reason: "revoked"` |
+| `token_stale` | no | refresh once, retry; re-sign `wcc_session` from `/v1/auth/me`; header `x-wcc-viewer-refreshed` → `ViewerProvider` re-reads the viewer | retried upstream response |
+| other (e.g. expired access token) | no | refresh once, retry; extend `wcc_session` expiry | retried upstream response |
+| any except `session_revoked` | yes | clear auth cookies | 401 `session_expired`, `reason: "expired"` |
+| any, no `wcc_rt` cookie | — | clear auth cookies | 401 `session_expired`, `reason: "expired"` |
+| refresh fails 400 / 401 | — | clear auth cookies | 401 `session_expired` (`reason: "revoked"` if the refresh 401 is `session_revoked`, else `"expired"`) |
+| refresh fails network / 5xx | — | cookies kept | the error (503 `upstream_unavailable` / 5xx) |
+
+On 401 `session_expired`, `http` redirects to `/{locale}/login?reason=expired|revoked` and the login
+page shows the matching banner.
+
+**Client API.** `@/shared/api/http-client` exports `http` (proxy client; 401 → login),
+`@/shared/api/api-error` exports `ApiError {status, code, message, fieldErrors?, retryAfter?}`
+parsed from `{error:{code,message}}`, and `@/shared/api/repository` exports
+`createRepository({ api, memory, reads })` / `withDemoFallback(read, fallback)`. Every entity
+repository goes through the factory; only methods listed in `reads` may fall back to memory, and only
+when `NEXT_PUBLIC_DEMO_MODE=true` **and** the error is a network error (backend unreachable →
+proxy `503 upstream_unavailable`). Writes and HTTP errors always throw.
+
+**Error UX.** `QueryState` maps `ApiError` → 403 PermissionDenied, 5xx/network ErrorState + retry;
+`useMutationFeedback()` toasts success/error (409 conflict, 423 locked with retry-after);
+`applyFieldErrors()` puts 400/422 `fieldErrors` on react-hook-form fields; `useApiQuery()` for reads.
+
+**Permissions.** `src/shared/config/permissions.ts` is the single route → permission map
+(mirrors `router.go` / `rbac.go`). The sidebar filters on it and `middleware.ts` enforces it from the
+signed HttpOnly `wcc_session` cookie (the backend remains the authority). `entities/viewer` provides
+`ViewerProvider` (refreshes `/auth/me`), `useCan(perm)`, `<Can perm>`; mutation buttons are hidden
+when the permission is missing (e.g. admin has no `customers.read`, Unlock needs `users.unlock`).
+
+**MFA / lockout.** Login shows a 6-digit (or recovery code) step for `mfa_required`. GM/Admin without
+MFA complete setup inside the login card (`mfa_setup_required`) before any session exists. The shared
+enrollment UI lives in `@/shared/ui/mfa` and is reused by the login step and `features/manage-mfa`. `/security`: enroll (QR + manual
+secret), confirm (recovery codes shown once, copy/download), disable (`password` + `code`), regenerate
+recovery codes. 423 `account_locked` / 429 show a live countdown from `Retry-After`.
+
+**Env.** See `.env.example`: `NEXT_PUBLIC_DEMO_MODE` (default `false`), `SESSION_SECRET` (required in
+production), `API_BASE_URL`, `COOKIE_SECURE`, `SESSION_MAX_AGE_SECONDS`, `BFF_ALLOWED_ORIGINS`.
+`NEXT_PUBLIC_USE_DEMO_AUTH` is removed.
+
+**Operational notes.**
+- The BFF forwards `X-Forwarded-For` / `User-Agent` to the backend; configure the backend's trusted proxies so lockout and audit see the real client IP.
+- Refresh single-flight and the 30 s rotated-token reuse cache are per Node process; concurrent refreshes on different instances are covered by the backend's 10 s refresh grace window.
+
+**E2E.** `playwright.config.ts` starts the app with `NEXT_PUBLIC_DEMO_MODE=true` and an unreachable
+backend; `e2e/epic19-security.spec.ts` covers cookies, CSRF, guards and the Security page. The
+write journey in `f8-f11.spec.ts` needs `E2E_LIVE_BACKEND=1` plus a running backend.
+
 ## Demo login
 
-Works offline via demo auth fallback (or against `wodi-crm-be`):
+Demo mode only (`NEXT_PUBLIC_DEMO_MODE=true` with the backend unreachable); otherwise log in against `wodi-crm-be`:
 
 | Email | Password | Lands on |
 |-------|----------|----------|
 | `manager@wodi.local` | `ChangeMe123!` | `/manager` |
 | `gm@wodi.local` | `ChangeMe123!` | `/manager` |
 | `sales@wodi.local` | `ChangeMe123!` | `/workspace` |
+| `finance@wodi.local` | `ChangeMe123!` | `/finance` |
+| `ops@wodi.local` | `ChangeMe123!` | `/workspace` |
+| `admin@wodi.local` | `ChangeMe123!` | `/admin/users` |
 
 ## F1–F8 coverage
 
@@ -275,3 +379,7 @@ Works offline via demo auth fallback (or against `wodi-crm-be`):
 ## New screen rule
 
 Use `@/shared/ui` (`ListScreen`, `SearchFilterBar`, `Button`, …). Do not reinvent search, filters, or chrome.
+
+## Go-Live Backlog (Epic 19–26)
+
+FE ve BE taskları tek listede: `wodi-crm-be/docs/GO_LIVE_BACKLOG.md` (T-236–T-345).

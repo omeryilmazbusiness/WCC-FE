@@ -1,21 +1,8 @@
-import { env } from "@/shared/config/env";
-import { FetchHttpClient, ApiError } from "@/shared/api/http-client";
-import { parseSession, SESSION_COOKIE } from "@/shared/api/session";
-import type { AppRole } from "@/shared/config/routes";
-
-function tokenFromCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  const raw = document.cookie
-    .split("; ")
-    .find((c) => c.startsWith(`${SESSION_COOKIE}=`))
-    ?.split("=")
-    .slice(1)
-    .join("=");
-  const session = parseSession(raw ? decodeURIComponent(raw) : null);
-  return session?.accessToken ?? null;
-}
-
-const http = () => new FetchHttpClient(env.apiBaseUrl, tokenFromCookie);
+import { AUTH_ENDPOINTS, type RevokedCountResponse } from "@/shared/api/auth-contract";
+import { http } from "@/shared/api/http-client";
+import { withDemoFallback } from "@/shared/api/repository";
+import { DEMO_ROLE_PERMISSIONS } from "@/shared/config/permissions";
+import { APP_ROLES, type AppRole } from "@/shared/config/routes";
 
 export type Branch = {
   id: string;
@@ -43,6 +30,9 @@ export type ApiUser = {
   team_id?: string | null;
   is_active: boolean;
   mfa_enabled?: boolean;
+  /** RFC 3339; set while a login lockout is active. */
+  locked_until?: string | null;
+  failed_login_attempts?: number;
 };
 
 export type AuditEvent = {
@@ -138,19 +128,10 @@ const DEMO_USERS: ApiUser[] = [
   },
 ];
 
-async function withDemoFallback<T>(fn: () => Promise<T>, demo: () => T): Promise<T> {
-  try {
-    return await fn();
-  } catch (err) {
-    if (err instanceof ApiError || err instanceof TypeError) return demo();
-    throw err;
-  }
-}
-
 export async function listBranches(): Promise<Branch[]> {
   return withDemoFallback(
     async () => {
-      const raw = await http().request<unknown[]>("/branches");
+      const raw = await http.request<unknown[]>("/branches");
       return (Array.isArray(raw) ? raw : [])
         .map(mapBranch)
         .filter((b): b is Branch => b !== null);
@@ -163,35 +144,24 @@ export async function updateBranch(
   id: string,
   body: { code: string; name_en: string; name_ar?: string },
 ): Promise<Branch> {
-  return withDemoFallback(
-    async () => {
-      const raw = await http().request<unknown>(`/branches/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          code: body.code,
-          name_en: body.name_en,
-          name_ar: body.name_ar ?? "",
-        }),
-      });
-      const mapped = mapBranch(raw);
-      if (!mapped) throw new Error("invalid branch");
-      return mapped;
-    },
-    () => ({
-      ...DEMO_BRANCH,
-      id,
+  const raw = await http.request<unknown>(`/branches/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({
       code: body.code,
       name_en: body.name_en,
       name_ar: body.name_ar ?? "",
     }),
-  );
+  });
+  const mapped = mapBranch(raw);
+  if (!mapped) throw new Error("invalid branch");
+  return mapped;
 }
 
 export async function listTeams(branchId?: string): Promise<Team[]> {
   const q = branchId ? `?branch_id=${branchId}` : "";
   return withDemoFallback(
     async () => {
-      const raw = await http().request<unknown[]>(`/teams${q}`);
+      const raw = await http.request<unknown[]>(`/teams${q}`);
       return (Array.isArray(raw) ? raw : [])
         .map(mapTeam)
         .filter((t): t is Team => t !== null);
@@ -220,7 +190,7 @@ export async function listUsers(params?: {
   if (params?.branchId) sp.set("branch_id", params.branchId);
   const qs = sp.toString() ? `?${sp}` : "";
   return withDemoFallback(
-    () => http().request<ApiUser[]>(`/users${qs}`),
+    () => http.request<ApiUser[]>(`/users${qs}`),
     () =>
       DEMO_USERS.filter((u) => {
         if (params?.role && u.role !== params.role) return false;
@@ -230,7 +200,7 @@ export async function listUsers(params?: {
   );
 }
 
-export async function createUser(body: {
+export function createUser(body: {
   email: string;
   password: string;
   full_name: string;
@@ -238,25 +208,13 @@ export async function createUser(body: {
   branch_id: string;
   team_id?: string;
 }): Promise<ApiUser> {
-  return withDemoFallback(
-    () =>
-      http().request<ApiUser>("/users", {
-        method: "POST",
-        body: JSON.stringify(body),
-      }),
-    () => ({
-      id: crypto.randomUUID(),
-      email: body.email,
-      full_name: body.full_name,
-      role: body.role,
-      branch_id: body.branch_id,
-      team_id: body.team_id,
-      is_active: true,
-    }),
-  );
+  return http.request<ApiUser>("/users", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
 }
 
-export async function updateUser(
+export function updateUser(
   id: string,
   body: Partial<{
     full_name: string;
@@ -267,17 +225,26 @@ export async function updateUser(
     password: string;
   }>,
 ): Promise<ApiUser> {
-  return withDemoFallback(
-    () =>
-      http().request<ApiUser>(`/users/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify(body),
-      }),
-    () => {
-      const u = DEMO_USERS.find((x) => x.id === id) ?? DEMO_USERS[0];
-      return { ...u, ...body, full_name: body.full_name ?? u.full_name };
-    },
-  );
+  return http.request<ApiUser>(`/users/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+/** Clears a login lockout (requires `users.unlock`). */
+export function unlockUser(id: string): Promise<ApiUser> {
+  return http.request<ApiUser>(AUTH_ENDPOINTS.unlockUser(id), {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
+}
+
+/** Revokes every active session of the user immediately (requires `users.write`). */
+export function revokeUserSessions(id: string): Promise<RevokedCountResponse> {
+  return http.request<RevokedCountResponse>(AUTH_ENDPOINTS.revokeUserSessions(id), {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
 }
 
 export async function fetchPermissionMatrix(): Promise<{
@@ -286,20 +253,15 @@ export async function fetchPermissionMatrix(): Promise<{
 }> {
   return withDemoFallback(
     () =>
-      http().request<{
+      http.request<{
         roles: AppRole[];
         permissions: Record<string, string[]>;
       }>("/permissions"),
     () => ({
-      roles: ["gm", "manager", "employee", "finance", "operations", "admin"],
-      permissions: {
-        gm: ["users.read", "users.write", "roles.read", "audit.read", "dashboard.read", "leads.read", "leads.write", "bookings.read", "bookings.write", "tasks.read", "tasks.write"],
-        admin: ["users.read", "users.write", "roles.read", "audit.read", "ops.read"],
-        manager: ["users.read", "roles.read", "audit.read", "dashboard.read", "leads.read", "leads.write", "bookings.read", "bookings.write", "tasks.read", "tasks.write"],
-        employee: ["customers.write", "leads.read", "leads.write", "bookings.read", "bookings.write", "tasks.read", "tasks.write"],
-        finance: ["payments.read", "payments.write", "bookings.read", "bookings.write", "audit.read", "tasks.read"],
-        operations: ["documents.write", "bookings.read", "bookings.write", "packages.write", "tasks.read", "tasks.write"],
-      },
+      roles: [...APP_ROLES],
+      permissions: Object.fromEntries(
+        APP_ROLES.map((role) => [role, [...DEMO_ROLE_PERMISSIONS[role]]]),
+      ),
     }),
   );
 }
@@ -317,7 +279,7 @@ export async function listAuditEvents(params?: {
   if (params?.to) sp.set("to", params.to);
   const qs = sp.toString() ? `?${sp}` : "";
   return withDemoFallback(
-    () => http().request<AuditEvent[]>(`/audit-events${qs}`),
+    () => http.request<AuditEvent[]>(`/audit-events${qs}`),
     () => [
       {
         id: "a1",
@@ -339,12 +301,4 @@ export async function listAuditEvents(params?: {
       },
     ],
   );
-}
-
-export async function apiLogout(): Promise<void> {
-  try {
-    await http().request("/auth/logout", { method: "POST" });
-  } catch {
-    // offline / demo — ignore
-  }
 }

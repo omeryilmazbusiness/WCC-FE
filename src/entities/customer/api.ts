@@ -1,6 +1,5 @@
-import { env } from "@/shared/config/env";
-import { ApiError, FetchHttpClient, type HttpClient } from "@/shared/api/http-client";
-import { parseSession, SESSION_COOKIE } from "@/shared/api/session";
+import { http, type HttpClient } from "@/shared/api/http-client";
+import { createRepository } from "@/shared/api/repository";
 import type {
   CompanionLink,
   Customer,
@@ -9,18 +8,6 @@ import type {
   DuplicateMatch,
   TimelineItem,
 } from "./model";
-
-function tokenFromCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  const raw = document.cookie
-    .split("; ")
-    .find((c) => c.startsWith(`${SESSION_COOKIE}=`))
-    ?.split("=")
-    .slice(1)
-    .join("=");
-  const session = parseSession(raw ? decodeURIComponent(raw) : null);
-  return session?.accessToken ?? null;
-}
 
 /** Port — features depend on this, not on fetch details (DIP). */
 export interface CustomerRepository {
@@ -88,15 +75,9 @@ export class ApiCustomerRepository implements CustomerRepository {
   }
 
   async create(input: CustomerCreateInput) {
-    // FetchHttpClient returns data only; meta is dropped — call fetch for meta
-    const token = tokenFromCookie();
-    const res = await fetch(`${env.apiBaseUrl}/customers`, {
+    // raw() keeps the envelope so duplicate-warning `meta` survives
+    const res = await this.http.raw("/customers", {
       method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
       body: JSON.stringify({
         full_name: input.fullName,
         full_name_ar: input.fullNameAr ?? "",
@@ -110,9 +91,6 @@ export class ApiCustomerRepository implements CustomerRepository {
       }),
     });
     const payload = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      throw new ApiError(payload?.error?.message ?? res.statusText, res.status, payload?.error?.code);
-    }
     const customer = mapCustomer(payload.data ?? payload);
     const dups = (payload.meta?.duplicates ?? []).map((d: Record<string, unknown>) => mapDup(d));
     return {
@@ -364,79 +342,17 @@ export class MemoryCustomerRepository implements CustomerRepository {
 }
 
 export function createCustomerRepository(): CustomerRepository {
-  const http = new FetchHttpClient(env.apiBaseUrl, tokenFromCookie);
   const api = new ApiCustomerRepository(http);
   const memory = new MemoryCustomerRepository();
-  return {
-    async search(q) {
-      try {
-        return await api.search(q);
-      } catch {
-        return memory.search(q);
-      }
-    },
-    async getById(id) {
-      try {
-        return await api.getById(id);
-      } catch {
-        return memory.getById(id);
-      }
-    },
-    async create(input) {
-      try {
-        return await api.create(input);
-      } catch {
-        return memory.create(input);
-      }
-    },
-    async update(id, input) {
-      try {
-        return await api.update(id, input);
-      } catch {
-        return memory.update(id, input);
-      }
-    },
-    async merge(t, s) {
-      try {
-        return await api.merge(t, s);
-      } catch {
-        return memory.merge(t, s);
-      }
-    },
-    async timeline(id) {
-      try {
-        return await api.timeline(id);
-      } catch {
-        return memory.timeline(id);
-      }
-    },
-    async listCompanions(id) {
-      try {
-        return await api.listCompanions(id);
-      } catch {
-        return memory.listCompanions(id);
-      }
-    },
-    async linkCompanion(id, c, r, n) {
-      try {
-        return await api.linkCompanion(id, c, r, n);
-      } catch {
-        return memory.linkCompanion(id, c, r, n);
-      }
-    },
-    async unlinkCompanion(id, c) {
-      try {
-        return await api.unlinkCompanion(id, c);
-      } catch {
-        return memory.unlinkCompanion(id, c);
-      }
-    },
-    async checkDuplicates(input) {
-      try {
-        return await api.checkDuplicates(input);
-      } catch {
-        return memory.checkDuplicates(input);
-      }
-    },
-  };
+  return createRepository<CustomerRepository>({
+    api,
+    memory,
+    reads: [
+      "search",
+      "getById",
+      "timeline",
+      "listCompanions",
+      "checkDuplicates",
+    ],
+  });
 }

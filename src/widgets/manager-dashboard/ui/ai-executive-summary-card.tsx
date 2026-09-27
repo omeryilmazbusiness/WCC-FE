@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Sparkles } from "lucide-react";
 import { createAIRepository, type DailySummary } from "@/entities/ai";
 import { routes } from "@/shared/config/routes";
 import { Link } from "@/shared/i18n/navigation";
-import { Button, SurfacePanel } from "@/shared/ui";
+import { useCan } from "@/entities/viewer";
+import { Button, QueryState, SurfacePanel } from "@/shared/ui";
 
 export function AIExecutiveSummaryCard() {
   const t = useTranslations("ai");
@@ -14,24 +15,28 @@ export function AIExecutiveSummaryCard() {
   const [summary, setSummary] = useState<DailySummary | null>(null);
   const [configured, setConfigured] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  const canSetup = useCan("ai.setup");
 
-  async function load() {
+  const load = useCallback(async () => {
     setBusy(true);
+    setError(null);
     try {
       const setup = await repo.getSetup();
       setConfigured(setup.configured && setup.enabled);
       const s = await repo.dailySummary();
       setSummary(s);
-    } catch {
+    } catch (err) {
       setSummary(null);
+      setError(err);
     } finally {
       setBusy(false);
     }
-  }
+  }, [repo]);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   return (
     <SurfacePanel
@@ -43,7 +48,7 @@ export function AIExecutiveSummaryCard() {
       data-testid="ai-executive-summary"
       actions={
         <div className="flex gap-2">
-          {configured === false ? (
+          {canSetup && configured === false ? (
             <Button asChild size="sm" variant="outline">
               <Link href={routes.aiSetup}>{t("configure")}</Link>
             </Button>
@@ -60,7 +65,11 @@ export function AIExecutiveSummaryCard() {
         </div>
       }
     >
-      {summary?.headline ? (
+      {error ? (
+        <QueryState error={error} onRetry={() => void load()}>
+          {null}
+        </QueryState>
+      ) : summary?.headline ? (
         <p className="text-sm font-semibold text-zinc-950">{summary.headline}</p>
       ) : (
         <p className="text-sm font-medium text-zinc-500">

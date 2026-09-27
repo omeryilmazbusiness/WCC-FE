@@ -14,22 +14,26 @@ import {
   type FileSyncRun,
   type FileSyncSourceOfTruth,
 } from "@/entities/filesync";
+import { useCan } from "@/entities/viewer";
 import {
   Badge,
   Button,
   EmptyState,
   Input,
+  QueryState,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-  useToast,
+  useMutationFeedback,
 } from "@/shared/ui";
 
 export function FileSyncPanel() {
   const t = useTranslations("fileSync");
-  const { push } = useToast();
+  const feedback = useMutationFeedback();
+  const canWrite = useCan("filesync.write");
+  const [loadError, setLoadError] = useState<unknown>(null);
   const repo = useMemo(() => createFileSyncRepository(), []);
 
   const [connections, setConnections] = useState<FileSyncConnection[]>([]);
@@ -55,9 +59,18 @@ export function FileSyncPanel() {
     else setRuns([]);
   }, [repo, selectedId]);
 
+  const load = useCallback(async () => {
+    setLoadError(null);
+    try {
+      await refresh();
+    } catch (err) {
+      setLoadError(err);
+    }
+  }, [refresh]);
+
   useEffect(() => {
-    void refresh().catch(() => push({ title: t("loadError"), tone: "error" }));
-  }, [refresh, push, t]);
+    void load();
+  }, [load]);
 
   useEffect(() => {
     if (!selectedId) {
@@ -75,13 +88,9 @@ export function FileSyncPanel() {
     try {
       await fn();
       await refresh();
-      push({ title: t(okKey), tone: "success" });
-    } catch (e) {
-      push({
-        title: t("actionError"),
-        description: e instanceof Error ? e.message : undefined,
-        tone: "error",
-      });
+      feedback.success(t(okKey));
+    } catch (err) {
+      feedback.error(err, t("actionError"));
     } finally {
       setBusy(false);
     }
@@ -108,18 +117,25 @@ export function FileSyncPanel() {
           size="sm"
           variant="secondary"
           disabled={busy}
-          onClick={() =>
-            void refresh().catch(() =>
-              push({ title: t("loadError"), tone: "error" }),
-            )
-          }
+          onClick={() => void load()}
         >
           <RefreshCw className="me-1.5 h-3.5 w-3.5" />
           {t("refresh")}
         </Button>
       </div>
 
+      {loadError ? (
+        <QueryState
+          error={loadError}
+          errorTitle={t("loadError")}
+          onRetry={() => void load()}
+        >
+          {null}
+        </QueryState>
+      ) : null}
+
       <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
+        {canWrite ? (
         <div className="space-y-2 rounded-xl bg-zinc-50 p-3">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
             {t("newConnection")}
@@ -217,6 +233,7 @@ export function FileSyncPanel() {
             {t("create")}
           </Button>
         </div>
+        ) : null}
 
         <div className="space-y-2">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
@@ -262,7 +279,7 @@ export function FileSyncPanel() {
             </ul>
           )}
 
-          {selectedId ? (
+          {canWrite && selectedId ? (
             <div className="flex flex-wrap gap-2 pt-1">
               <Button
                 size="sm"

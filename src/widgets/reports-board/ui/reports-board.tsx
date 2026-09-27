@@ -20,6 +20,7 @@ import {
   TabsList,
   TabsTrigger,
   useToast,
+  useMutationFeedback,
 } from "@/shared/ui";
 import { cn } from "@/shared/lib/cn";
 
@@ -53,6 +54,7 @@ function severityClass(sev: string) {
 export function ReportsBoard() {
   const t = useTranslations("reports");
   const { push } = useToast();
+  const feedback = useMutationFeedback();
   const repo = useMemo(() => createReportRepository(), []);
   const range = useMemo(() => defaultRange(), []);
   const [kind, setKind] = useState<ReportKind>("sales");
@@ -61,6 +63,7 @@ export function ReportsBoard() {
   const [channel, setChannel] = useState("");
   const [provider, setProvider] = useState("");
   const [result, setResult] = useState<ReportResult | null>(null);
+  const [loadError, setLoadError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
 
   const filter = useCallback((): ReportFilter => {
@@ -73,15 +76,16 @@ export function ReportsBoard() {
   const load = useCallback(
     async (k: ReportKind) => {
       setBusy(true);
+      setLoadError(null);
       try {
         setResult(await repo.run(k, filter()));
-      } catch {
-        push({ title: t("loadError"), tone: "error" });
+      } catch (err) {
+        setLoadError(err);
       } finally {
         setBusy(false);
       }
     },
-    [repo, filter, push, t],
+    [repo, filter],
   );
 
   useEffect(() => {
@@ -98,8 +102,8 @@ export function ReportsBoard() {
       a.click();
       URL.revokeObjectURL(url);
       push({ title: t("exported"), tone: "success" });
-    } catch {
-      push({ title: t("exportError"), tone: "error" });
+    } catch (err) {
+      feedback.error(err, t("exportError"));
     }
   }
 
@@ -215,6 +219,9 @@ export function ReportsBoard() {
             <QueryState
               loading={busy && !result}
               loadingLabel={t("loading")}
+              error={loadError}
+              errorTitle={t("loadError")}
+              onRetry={() => void load(kind)}
               empty={!result || result.rows.length === 0}
               emptyTitle={t("empty")}
               emptyDescription={t("emptyHint")}

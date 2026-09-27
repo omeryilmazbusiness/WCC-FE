@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   createSupplierRepository,
@@ -9,17 +9,19 @@ import {
   type SupplierInvoiceStatus,
   type SupplierRepository,
 } from "@/entities/supplier";
+import { useCan } from "@/entities/viewer";
+import { useApiQuery } from "@/shared/lib/use-api-query";
 import {
   Badge,
   Button,
-  EmptyState,
   Input,
+  QueryState,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-  useToast,
+  useMutationFeedback,
 } from "@/shared/ui";
 
 type Props = {
@@ -33,13 +35,17 @@ function money(minor: number) {
 
 export function SupplierInvoicesPanel({ supplierId, repository }: Props) {
   const t = useTranslations("supplierInvoices");
-  const { push } = useToast();
+  const feedback = useMutationFeedback();
+  const canWrite = useCan("suppliers.write");
   const repo = useMemo(
     () => repository ?? createSupplierRepository(),
     [repository],
   );
 
-  const [invoices, setInvoices] = useState<SupplierInvoice[]>([]);
+  const query = useApiQuery(() => repo.listInvoices(supplierId), [repo, supplierId], {
+    enabled: Boolean(supplierId),
+  });
+  const invoices: SupplierInvoice[] = query.data ?? [];
   const [busy, setBusy] = useState(false);
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [lineDesc, setLineDesc] = useState("");
@@ -47,30 +53,14 @@ export function SupplierInvoicesPanel({ supplierId, repository }: Props) {
   const [lineCost, setLineCost] = useState("0");
   const [taxMajor, setTaxMajor] = useState("0");
 
-  const refresh = useCallback(async () => {
-    if (!supplierId) {
-      setInvoices([]);
-      return;
-    }
-    setInvoices(await repo.listInvoices(supplierId));
-  }, [repo, supplierId]);
-
-  useEffect(() => {
-    void refresh().catch(() => push({ title: t("loadError"), tone: "error" }));
-  }, [refresh, push, t]);
-
   async function run(fn: () => Promise<unknown>) {
     setBusy(true);
     try {
       await fn();
-      await refresh();
-      push({ title: t("saved"), tone: "success" });
-    } catch (e) {
-      push({
-        title: t("actionError"),
-        description: e instanceof Error ? e.message : undefined,
-        tone: "error",
-      });
+      await query.reload();
+      feedback.success(t("saved"));
+    } catch (err) {
+      feedback.error(err, t("actionError"));
     } finally {
       setBusy(false);
     }
@@ -104,9 +94,14 @@ export function SupplierInvoicesPanel({ supplierId, repository }: Props) {
         </span>
       </div>
 
-      {invoices.length === 0 ? (
-        <EmptyState title={t("empty")} />
-      ) : (
+      <QueryState
+        loading={query.loading}
+        error={query.error}
+        errorTitle={t("loadError")}
+        onRetry={() => void query.reload()}
+        empty={invoices.length === 0}
+        emptyTitle={t("empty")}
+      >
         <ul className="divide-y divide-zinc-100 rounded-xl border border-zinc-100">
           {invoices.map((inv) => (
             <li
@@ -135,7 +130,7 @@ export function SupplierInvoicesPanel({ supplierId, repository }: Props) {
                   )
                 }
               >
-                <SelectTrigger className="h-8 w-[130px]" disabled={busy}>
+                <SelectTrigger className="h-8 w-[130px]" disabled={busy || !canWrite}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -149,8 +144,9 @@ export function SupplierInvoicesPanel({ supplierId, repository }: Props) {
             </li>
           ))}
         </ul>
-      )}
+      </QueryState>
 
+      {canWrite ? (
       <div className="space-y-2 rounded-xl border border-dashed border-zinc-200 p-3">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
           {t("create")}
@@ -220,6 +216,7 @@ export function SupplierInvoicesPanel({ supplierId, repository }: Props) {
           </Button>
         </div>
       </div>
+      ) : null}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { ColumnDef } from "@tanstack/react-table";
 import type {
@@ -10,11 +10,13 @@ import type {
 import { CreatePackageDialog } from "@/features/create-package";
 import { Link } from "@/shared/i18n/navigation";
 import { routes } from "@/shared/config/routes";
+import { useApiQuery } from "@/shared/lib/use-api-query";
 import {
   Badge,
   DataTable,
   EmptyState,
   ListScreen,
+  QueryState,
   SearchFilterBar,
   useToast,
 } from "@/shared/ui";
@@ -27,21 +29,12 @@ export function PackagesListBoard({ repository }: Props) {
   const t = useTranslations("packages");
   const tc = useTranslations("common");
   const { push } = useToast();
-  const [rows, setRows] = useState<TourPackage[]>([]);
+  const packages = useApiQuery(() => repository.listPackages(false), [repository]);
+  const rows = useMemo<TourPackage[]>(() => packages.data ?? [], [packages.data]);
   const [query, setQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<"all" | "active" | "inactive">(
     "all",
   );
-  const [loaded, setLoaded] = useState(false);
-
-  async function refresh() {
-    setRows(await repository.listPackages(false));
-    setLoaded(true);
-  }
-
-  useEffect(() => {
-    void refresh();
-  }, [repository]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -93,7 +86,7 @@ export function PackagesListBoard({ repository }: Props) {
         <CreatePackageDialog
           repository={repository}
           onCreated={async () => {
-            await refresh();
+            await packages.reload();
             push({
               title: t("packageCreatedTitle"),
               description: t("packageCreatedBody"),
@@ -139,11 +132,18 @@ export function PackagesListBoard({ repository }: Props) {
         />
       }
     >
-      {loaded && filtered.length === 0 ? (
-        <EmptyState title={t("empty")} description={t("emptyHint")} />
-      ) : (
-        <DataTable columns={columns} data={filtered} emptyMessage={t("empty")} />
-      )}
+      <QueryState
+        loading={packages.loading && !packages.data}
+        loadingLabel={tc("loading")}
+        error={packages.error}
+        onRetry={() => void packages.reload()}
+      >
+        {filtered.length === 0 ? (
+          <EmptyState title={t("empty")} description={t("emptyHint")} />
+        ) : (
+          <DataTable columns={columns} data={filtered} emptyMessage={t("empty")} />
+        )}
+      </QueryState>
     </ListScreen>
   );
 }

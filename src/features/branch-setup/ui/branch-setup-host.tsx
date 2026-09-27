@@ -12,7 +12,7 @@ import {
   createConversationRepository,
   type ChannelHealth,
 } from "@/entities/conversation";
-import { listBranches, listUsers } from "@/entities/identity/api";
+import { listBranches, listUsers } from "@/entities/identity";
 import { useSessionUser } from "@/shared/api/session-context";
 import { Button } from "@/shared/ui";
 import { browserSetupDismissStore } from "../model/dismiss-store";
@@ -84,7 +84,7 @@ export function BranchSetupHost({ forceOpen = false, onForceConsumed }: Props) {
       setLoaded(true);
       return;
     }
-    void reload();
+    void reload().catch(() => setLoaded(true));
   }, [user.role, reload]);
 
   const onOrgChange = useCallback(

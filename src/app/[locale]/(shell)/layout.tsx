@@ -18,5 +18,5 @@ export default async function ShellLayout({ children, params }: Props) {
     return null;
   }
 
-  return <AppShell user={session.user}>{children}</AppShell>;
+  return <AppShell viewer={session}>{children}</AppShell>;
 }

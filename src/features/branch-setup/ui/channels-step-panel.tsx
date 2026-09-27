@@ -10,9 +10,9 @@ import {
   type ConversationRepository,
   type SocialChannel,
 } from "@/entities/conversation";
-import { ConnectChannelDialog } from "@/features/inbox-setup/ui/connect-channel-dialog";
+import { ConnectChannelDialog } from "@/features/inbox-setup";
 import { cn } from "@/shared/lib/cn";
-import { useToast } from "@/shared/ui";
+import { useToast, useMutationFeedback } from "@/shared/ui";
 
 type Props = {
   repository: ConversationRepository;
@@ -68,6 +68,7 @@ export function ChannelsStepPanel({
   const t = useTranslations("branchSetup");
   const ti = useTranslations("inboxSetup");
   const { push } = useToast();
+  const feedback = useMutationFeedback();
   const [busy, setBusy] = useState(false);
   const [dialogChannel, setDialogChannel] = useState<SocialChannel | null>(
     null,
@@ -91,8 +92,8 @@ export function ChannelsStepPanel({
         }),
         tone: "success",
       });
-    } catch {
-      push({ title: ti("connectError"), tone: "error" });
+    } catch (err) {
+      feedback.error(err, ti("connectError"));
       throw new Error("connect failed");
     } finally {
       setBusy(false);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Booking, BookingRepository, BookingStatus } from "@/entities/booking";
@@ -13,7 +13,9 @@ import {
   EmptyState,
   ListScreen,
   SearchFilterBar,
+  QueryState,
 } from "@/shared/ui";
+import { useApiQuery } from "@/shared/lib/use-api-query";
 
 type Props = {
   repository: BookingRepository;
@@ -48,26 +50,18 @@ export function BookingsListBoard({
 }: Props) {
   const t = useTranslations("bookings");
   const tc = useTranslations("common");
-  const [rows, setRows] = useState<Booking[]>([]);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<BookingStatus | "all">("all");
-  const [loaded, setLoaded] = useState(false);
-
-  async function refresh() {
-    setRows(
-      await repository.list({
+  const bookings = useApiQuery(
+    () =>
+      repository.list({
         customerId,
         departureId,
         status: status === "all" ? undefined : status,
       }),
-    );
-    setLoaded(true);
-  }
-
-  useEffect(() => {
-    void refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [repository, customerId, departureId, status]);
+    [repository, customerId, departureId, status],
+  );
+  const rows = useMemo<Booking[]>(() => bookings.data ?? [], [bookings.data]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -126,7 +120,7 @@ export function BookingsListBoard({
           repository={repository}
           defaultCustomerId={customerId}
           defaultDepartureId={departureId}
-          onCreated={() => void refresh()}
+          onCreated={() => void bookings.reload()}
         />
       }
       toolbar={
@@ -157,13 +151,18 @@ export function BookingsListBoard({
         />
       }
     >
-      {!loaded ? (
-        <p className="text-sm text-zinc-500">{t("loading")}</p>
-      ) : filtered.length === 0 ? (
-        <EmptyState title={t("empty")} description={t("emptyHint")} />
-      ) : (
-        <DataTable columns={columns} data={filtered} />
-      )}
+      <QueryState
+        loading={bookings.loading && !bookings.data}
+        loadingLabel={t("loading")}
+        error={bookings.error}
+        onRetry={() => void bookings.reload()}
+      >
+        {filtered.length === 0 ? (
+          <EmptyState title={t("empty")} description={t("emptyHint")} />
+        ) : (
+          <DataTable columns={columns} data={filtered} />
+        )}
+      </QueryState>
     </ListScreen>
   );
 }

@@ -105,6 +105,7 @@ function ToastViewport({
         return (
           <div
             key={toast.id}
+            role={tone === "error" ? "alert" : "status"}
             className={cn(
               "pointer-events-auto flex items-start gap-3 rounded-[20px] border bg-white p-4 shadow-[0_16px_40px_-22px_rgba(15,23,42,0.4)] transition-all duration-300",
               toneStyles[tone],

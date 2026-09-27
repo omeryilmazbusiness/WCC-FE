@@ -1,6 +1,5 @@
-import { env } from "@/shared/config/env";
-import { FetchHttpClient, type HttpClient } from "@/shared/api/http-client";
-import { parseSession, SESSION_COOKIE } from "@/shared/api/session";
+import { http, type HttpClient } from "@/shared/api/http-client";
+import { createRepository } from "@/shared/api/repository";
 import type {
   ChannelHealth,
   ConnectCredentials,
@@ -15,18 +14,6 @@ import type {
   SocialChannel,
 } from "./model";
 import { isSLABreached, SOCIAL_CHANNELS } from "./model";
-
-function tokenFromCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  const raw = document.cookie
-    .split("; ")
-    .find((c) => c.startsWith(`${SESSION_COOKIE}=`))
-    ?.split("=")
-    .slice(1)
-    .join("=");
-  const session = parseSession(raw ? decodeURIComponent(raw) : null);
-  return session?.accessToken ?? null;
-}
 
 export interface ConversationRepository {
   list(filter?: ConversationListFilter): Promise<Conversation[]>;
@@ -640,52 +627,12 @@ export function getMemoryConversationRepository(): MemoryConversationRepository 
 export function createConversationRepository(
   branchId = BRANCH,
 ): ConversationRepository {
-  const http = new FetchHttpClient(env.apiBaseUrl, tokenFromCookie);
   const api = new ApiConversationRepository(http);
   const memory = getMemoryConversationRepository();
   memory.branchId = branchId;
-  const wrap =
-    <A extends unknown[], R>(
-      fn: (...args: A) => Promise<R>,
-      fallback: (...args: A) => Promise<R>,
-    ) =>
-    async (...args: A) => {
-      try {
-        return await fn(...args);
-      } catch {
-        return fallback(...args);
-      }
-    };
-
-  return {
-    list: wrap(api.list.bind(api), memory.list.bind(memory)),
-    get: wrap(api.get.bind(api), memory.get.bind(memory)),
-    listMessages: wrap(
-      api.listMessages.bind(api),
-      memory.listMessages.bind(memory),
-    ),
-    reply: wrap(api.reply.bind(api), memory.reply.bind(memory)),
-    assign: wrap(api.assign.bind(api), memory.assign.bind(memory)),
-    setStatus: wrap(api.setStatus.bind(api), memory.setStatus.bind(memory)),
-    channelHealth: wrap(
-      api.channelHealth.bind(api),
-      memory.channelHealth.bind(memory),
-    ),
-    connectChannel: wrap(
-      api.connectChannel.bind(api),
-      memory.connectChannel.bind(memory),
-    ),
-    disconnectChannel: wrap(
-      api.disconnectChannel.bind(api),
-      memory.disconnectChannel.bind(memory),
-    ),
-    suggestNextTask: wrap(
-      api.suggestNextTask.bind(api),
-      memory.suggestNextTask.bind(memory),
-    ),
-    confirmNextTask: wrap(
-      api.confirmNextTask.bind(api),
-      memory.confirmNextTask.bind(memory),
-    ),
-  };
+  return createRepository<ConversationRepository>({
+    api,
+    memory,
+    reads: ["list", "get", "listMessages", "channelHealth"],
+  });
 }

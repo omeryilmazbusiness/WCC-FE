@@ -9,6 +9,7 @@ import {
   type LeadRepository,
   type LeadStage,
 } from "@/entities/lead";
+import { useCan } from "@/entities/viewer";
 import {
   Button,
   DropdownMenu,
@@ -20,6 +21,7 @@ import {
   StageBadge,
   LEAD_STAGE_TONES,
   useToast,
+  useMutationFeedback,
 } from "@/shared/ui";
 import { LostReasonDialog } from "./lost-reason-dialog";
 
@@ -32,6 +34,8 @@ type Props = {
 export function LeadStageMenu({ lead, repository, onChanged }: Props) {
   const t = useTranslations("pipeline");
   const { push } = useToast();
+  const feedback = useMutationFeedback();
+  const canWrite = useCan("leads.write");
   const [lostOpen, setLostOpen] = useState(false);
   const options = nextStages(lead.stage);
 
@@ -49,9 +53,18 @@ export function LeadStageMenu({ lead, repository, onChanged }: Props) {
         description: t("movedBody", { stage: t(`stages.${stage}`) }),
         tone: "success",
       });
-    } catch {
-      push({ title: t("stageError"), tone: "error" });
+    } catch (err) {
+      feedback.error(err, t("stageError"));
     }
+  }
+
+  if (!canWrite) {
+    return (
+      <StageBadge
+        tone={LEAD_STAGE_TONES[lead.stage]}
+        label={t(`stages.${lead.stage}`)}
+      />
+    );
   }
 
   return (

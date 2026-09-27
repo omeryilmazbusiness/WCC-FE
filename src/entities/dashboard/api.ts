@@ -1,6 +1,5 @@
-import { env } from "@/shared/config/env";
-import { FetchHttpClient, type HttpClient } from "@/shared/api/http-client";
-import { parseSession, SESSION_COOKIE } from "@/shared/api/session";
+import { http, type HttpClient } from "@/shared/api/http-client";
+import { createRepository } from "@/shared/api/repository";
 import { createTaskRepository, isTaskOverdue } from "@/entities/task";
 import { createLeadRepository } from "@/entities/lead";
 import type {
@@ -10,18 +9,6 @@ import type {
   TargetSnapshot,
   TeamMemberStat,
 } from "./model";
-
-function tokenFromCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  const raw = document.cookie
-    .split("; ")
-    .find((c) => c.startsWith(`${SESSION_COOKIE}=`))
-    ?.split("=")
-    .slice(1)
-    .join("=");
-  const session = parseSession(raw ? decodeURIComponent(raw) : null);
-  return session?.accessToken ?? null;
-}
 
 export interface DashboardRepository {
   getKPIs(from?: Date, to?: Date): Promise<DashboardKPI>;
@@ -304,27 +291,17 @@ export function getMemoryDashboardRepository(): MemoryDashboardRepository {
 }
 
 export function createDashboardRepository(): DashboardRepository {
-  const http = new FetchHttpClient(env.apiBaseUrl, tokenFromCookie);
   const api = new ApiDashboardRepository(http);
   const memory = getMemoryDashboardRepository();
-  const wrap =
-    <A extends unknown[], R>(
-      fn: (...args: A) => Promise<R>,
-      fallback: (...args: A) => Promise<R>,
-    ) =>
-    async (...args: A) => {
-      try {
-        return await fn(...args);
-      } catch {
-        return fallback(...args);
-      }
-    };
-
-  return {
-    getKPIs: wrap(api.getKPIs.bind(api), memory.getKPIs.bind(memory)),
-    getTeamStats: wrap(api.getTeamStats.bind(api), memory.getTeamStats.bind(memory)),
-    getAttention: wrap(api.getAttention.bind(api), memory.getAttention.bind(memory)),
-    getMyWork: wrap(api.getMyWork.bind(api), memory.getMyWork.bind(memory)),
-    getTarget: wrap(api.getTarget.bind(api), memory.getTarget.bind(memory)),
-  };
+  return createRepository<DashboardRepository>({
+    api,
+    memory,
+    reads: [
+      "getKPIs",
+      "getTeamStats",
+      "getAttention",
+      "getMyWork",
+      "getTarget",
+    ],
+  });
 }

@@ -17,6 +17,7 @@ import {
   SearchFilterBar,
   SegmentedControl,
   useToast,
+  useMutationFeedback,
 } from "@/shared/ui";
 import { TaskColumn } from "./task-column";
 import { TaskTable } from "./task-table";
@@ -39,6 +40,7 @@ export function TasksBoard({
   const t = useTranslations("tasks");
   const tc = useTranslations("common");
   const { push } = useToast();
+  const feedback = useMutationFeedback();
   const [tasks, setTasks] = useState(initialTasks);
   const [view, setView] = useState<ViewMode>("kanban");
   const [query, setQuery] = useState("");
@@ -89,8 +91,8 @@ export function TasksBoard({
         description: t("movedBody", { status: t(`statuses.${status}`) }),
         tone: "success",
       });
-    } catch {
-      push({ title: t("actionError"), tone: "error" });
+    } catch (err) {
+      feedback.error(err, t("actionError"));
     }
   }
 

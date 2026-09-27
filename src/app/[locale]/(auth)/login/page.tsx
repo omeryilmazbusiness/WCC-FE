@@ -1,7 +1,8 @@
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
-import { LoginForm } from "@/features/auth-by-credentials";
+import { LoginForm, SessionEndedNotice } from "@/features/auth-by-credentials";
 import { LocaleSwitcher } from "@/features/switch-locale";
+import { isSessionEndReason, SESSION_END_PARAM } from "@/shared/api/session-end";
 import {
   Card,
   CardContent,
@@ -10,11 +11,15 @@ import {
   CardTitle,
 } from "@/shared/ui/card";
 
-type Props = { params: Promise<{ locale: string }> };
+type Props = {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
-export default async function LoginPage({ params }: Props) {
+export default async function LoginPage({ params, searchParams }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const reason = (await searchParams)[SESSION_END_PARAM];
   const t = await getTranslations("auth");
   const ta = await getTranslations("app");
 
@@ -33,7 +38,8 @@ export default async function LoginPage({ params }: Props) {
           </CardTitle>
           <CardDescription>{t("subtitle")}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-5">
+          {isSessionEndReason(reason) ? <SessionEndedNotice reason={reason} /> : null}
           <LoginForm />
         </CardContent>
       </Card>

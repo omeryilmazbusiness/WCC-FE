@@ -20,6 +20,7 @@ import {
   SearchFilterBar,
   SegmentedControl,
   useToast,
+  useMutationFeedback,
 } from "@/shared/ui";
 import { PipelineColumn } from "./pipeline-column";
 import { PipelineTable } from "./pipeline-table";
@@ -35,6 +36,7 @@ export function CrmPipelineBoard({ repository, initialLeads }: Props) {
   const t = useTranslations("pipeline");
   const tc = useTranslations("common");
   const { push } = useToast();
+  const feedback = useMutationFeedback();
   const [leads, setLeads] = useState(initialLeads);
   const [view, setView] = useState<ViewMode>("kanban");
   const [query, setQuery] = useState("");
@@ -101,8 +103,8 @@ export function CrmPipelineBoard({ repository, initialLeads }: Props) {
         description: t("movedBody", { stage: t(`stages.${stage}`) }),
         tone: "success",
       });
-    } catch {
-      push({ title: t("stageError"), tone: "error" });
+    } catch (err) {
+      feedback.error(err, t("stageError"));
     }
   }
 
@@ -136,13 +138,15 @@ export function CrmPipelineBoard({ repository, initialLeads }: Props) {
             repository={repository}
             onCreated={(lead) => {
               upsert(lead);
-              void createTaskRepository().ensureFollowUpForLead({
-                leadId: lead.id,
-                leadName: lead.fullName,
-                assigneeId: lead.ownerId,
-                assigneeName: lead.ownerName,
-                customerId: lead.customerId,
-              });
+              void createTaskRepository()
+                .ensureFollowUpForLead({
+                  leadId: lead.id,
+                  leadName: lead.fullName,
+                  assigneeId: lead.ownerId,
+                  assigneeName: lead.ownerName,
+                  customerId: lead.customerId,
+                })
+                .catch((err: unknown) => feedback.error(err));
               push({
                 title: t("createdToastTitle"),
                 description: t("createdToastBody"),

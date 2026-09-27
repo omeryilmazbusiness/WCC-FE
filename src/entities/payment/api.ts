@@ -1,6 +1,5 @@
-import { env } from "@/shared/config/env";
-import { FetchHttpClient, type HttpClient } from "@/shared/api/http-client";
-import { parseSession, SESSION_COOKIE } from "@/shared/api/session";
+import { http, type HttpClient } from "@/shared/api/http-client";
+import { createRepository } from "@/shared/api/repository";
 import type {
   FinanceQueueItem,
   FinanceQueueKind,
@@ -8,18 +7,6 @@ import type {
   Payment,
   PaymentSchedule,
 } from "./model";
-
-function tokenFromCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  const raw = document.cookie
-    .split("; ")
-    .find((c) => c.startsWith(`${SESSION_COOKIE}=`))
-    ?.split("=")
-    .slice(1)
-    .join("=");
-  const session = parseSession(raw ? decodeURIComponent(raw) : null);
-  return session?.accessToken ?? null;
-}
 
 type Raw = Record<string, unknown>;
 
@@ -243,12 +230,10 @@ class ApiPaymentRepository implements PaymentRepository {
   }
 
   async exportCsv(kind: FinanceQueueKind): Promise<Blob> {
-    const token = tokenFromCookie();
-    const res = await fetch(
-      `${env.apiBaseUrl}/finance/export?kind=${encodeURIComponent(kind)}`,
-      { headers: token ? { Authorization: `Bearer ${token}` } : {} },
+    const res = await this.http.raw(
+      `/finance/export?kind=${encodeURIComponent(kind)}`,
+      { headers: { Accept: "text/csv" } },
     );
-    if (!res.ok) throw new Error("export failed");
     return res.blob();
   }
 }
@@ -420,34 +405,11 @@ class MemoryPaymentRepository implements PaymentRepository {
 let mem: MemoryPaymentRepository | null = null;
 
 export function createPaymentRepository(): PaymentRepository {
-  const http = new FetchHttpClient(env.apiBaseUrl, tokenFromCookie);
   const api = new ApiPaymentRepository(http);
   if (!mem) mem = new MemoryPaymentRepository();
-  const wrap =
-    <A extends unknown[], R>(
-      fn: (...args: A) => Promise<R>,
-      fallback: (...args: A) => Promise<R>,
-    ) =>
-    async (...args: A) => {
-      try {
-        return await fn(...args);
-      } catch {
-        return fallback(...args);
-      }
-    };
-  return {
-    listByBooking: wrap(api.listByBooking.bind(api), mem.listByBooking.bind(mem)),
-    summary: wrap(api.summary.bind(api), mem.summary.bind(mem)),
-    record: wrap(api.record.bind(api), mem.record.bind(mem)),
-    verify: wrap(api.verify.bind(api), mem.verify.bind(mem)),
-    reverse: wrap(api.reverse.bind(api), mem.reverse.bind(mem)),
-    requestRefund: wrap(api.requestRefund.bind(api), mem.requestRefund.bind(mem)),
-    approveRefund: wrap(api.approveRefund.bind(api), mem.approveRefund.bind(mem)),
-    rejectRefund: wrap(api.rejectRefund.bind(api), mem.rejectRefund.bind(mem)),
-    listSchedules: wrap(api.listSchedules.bind(api), mem.listSchedules.bind(mem)),
-    createSchedule: wrap(api.createSchedule.bind(api), mem.createSchedule.bind(mem)),
-    cancelSchedule: wrap(api.cancelSchedule.bind(api), mem.cancelSchedule.bind(mem)),
-    queue: wrap(api.queue.bind(api), mem.queue.bind(mem)),
-    exportCsv: wrap(api.exportCsv.bind(api), mem.exportCsv.bind(mem)),
-  };
+  return createRepository<PaymentRepository>({
+    api,
+    memory: mem,
+    reads: ["listByBooking", "summary", "listSchedules", "queue", "exportCsv"],
+  });
 }

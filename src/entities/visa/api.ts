@@ -1,19 +1,6 @@
-import { env } from "@/shared/config/env";
-import { FetchHttpClient, type HttpClient } from "@/shared/api/http-client";
-import { parseSession, SESSION_COOKIE } from "@/shared/api/session";
+import { http, type HttpClient } from "@/shared/api/http-client";
+import { createRepository } from "@/shared/api/repository";
 import type { VisaCase, VisaEvent, VisaStatus } from "./model";
-
-function tokenFromCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  const raw = document.cookie
-    .split("; ")
-    .find((c) => c.startsWith(`${SESSION_COOKIE}=`))
-    ?.split("=")
-    .slice(1)
-    .join("=");
-  const session = parseSession(raw ? decodeURIComponent(raw) : null);
-  return session?.accessToken ?? null;
-}
 
 type Raw = Record<string, unknown>;
 
@@ -180,25 +167,11 @@ class MemoryRepo implements VisaRepository {
 let mem: MemoryRepo | null = null;
 
 export function createVisaRepository(): VisaRepository {
-  const http = new FetchHttpClient(env.apiBaseUrl, tokenFromCookie);
   const api = new ApiRepo(http);
   if (!mem) mem = new MemoryRepo();
-  const wrap =
-    <A extends unknown[], R>(
-      fn: (...args: A) => Promise<R>,
-      fallback: (...args: A) => Promise<R>,
-    ) =>
-    async (...args: A) => {
-      try {
-        return await fn(...args);
-      } catch {
-        return fallback(...args);
-      }
-    };
-  return {
-    listByBooking: wrap(api.listByBooking.bind(api), mem.listByBooking.bind(mem)),
-    getById: wrap(api.getById.bind(api), mem.getById.bind(mem)),
-    create: wrap(api.create.bind(api), mem.create.bind(mem)),
-    transition: wrap(api.transition.bind(api), mem.transition.bind(mem)),
-  };
+  return createRepository<VisaRepository>({
+    api,
+    memory: mem,
+    reads: ["listByBooking", "getById"],
+  });
 }

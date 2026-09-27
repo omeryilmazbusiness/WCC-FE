@@ -117,6 +117,7 @@ export function GlobalSearch() {
                   <button
                     type="button"
                     role="option"
+                    aria-selected={false}
                     className={cn(
                       "flex w-full flex-col gap-0.5 px-4 py-2.5 text-start transition hover:bg-zinc-50",
                     )}

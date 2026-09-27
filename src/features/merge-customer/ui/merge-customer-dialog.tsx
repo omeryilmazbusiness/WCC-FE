@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { Customer, CustomerRepository } from "@/entities/customer";
+import { useCan } from "@/entities/viewer";
 import {
   Button,
   Dialog,
@@ -12,7 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
   Input,
-  useToast,
+  useMutationFeedback,
 } from "@/shared/ui";
 
 type Props = {
@@ -22,9 +23,10 @@ type Props = {
 };
 
 export function MergeCustomerDialog({ target, repository, onMerged }: Props) {
+  const allowed = useCan("customers.write");
   const t = useTranslations("customers");
   const tc = useTranslations("common");
-  const { push } = useToast();
+  const feedback = useMutationFeedback();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [candidates, setCandidates] = useState<Customer[]>([]);
@@ -34,9 +36,12 @@ export function MergeCustomerDialog({ target, repository, onMerged }: Props) {
   useEffect(() => {
     if (!open) return;
     const handle = window.setTimeout(() => {
-      void repository.search(query).then((rows) => {
-        setCandidates(rows.filter((c) => c.id !== target.id && c.isActive !== false));
-      });
+      void repository
+        .search(query)
+        .then((rows) => {
+          setCandidates(rows.filter((c) => c.id !== target.id && c.isActive !== false));
+        })
+        .catch(() => setCandidates([]));
     }, 200);
     return () => window.clearTimeout(handle);
   }, [open, query, repository, target.id]);
@@ -50,12 +55,14 @@ export function MergeCustomerDialog({ target, repository, onMerged }: Props) {
       setOpen(false);
       setSourceId(null);
       setQuery("");
-    } catch {
-      push({ title: t("mergeError"), tone: "error" });
+    } catch (err) {
+      feedback.error(err, t("mergeError"));
     } finally {
       setBusy(false);
     }
   }
+
+  if (!allowed) return null;
 
   return (
     <Dialog

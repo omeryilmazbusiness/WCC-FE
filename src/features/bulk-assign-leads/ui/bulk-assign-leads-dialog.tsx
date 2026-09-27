@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { Lead, LeadOwner, LeadRepository } from "@/entities/lead";
+import { useCan } from "@/entities/viewer";
 import {
   Button,
   Dialog,
@@ -17,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
   useToast,
+  useMutationFeedback,
 } from "@/shared/ui";
 
 type Props = {
@@ -30,9 +32,11 @@ export function BulkAssignLeadsDialog({
   repository,
   onAssigned,
 }: Props) {
+  const allowed = useCan("leads.write");
   const t = useTranslations("pipeline");
   const tc = useTranslations("common");
   const { push } = useToast();
+  const feedback = useMutationFeedback();
   const [open, setOpen] = useState(false);
   const [owners, setOwners] = useState<LeadOwner[]>([]);
   const [ownerId, setOwnerId] = useState("");
@@ -40,11 +44,14 @@ export function BulkAssignLeadsDialog({
 
   useEffect(() => {
     if (!open) return;
-    void repository.listOwners().then((list) => {
-      setOwners(list);
-      if (list[0]) setOwnerId(list[0].id);
-    });
-  }, [open, repository]);
+    void repository
+      .listOwners()
+      .then((list) => {
+        setOwners(list);
+        if (list[0]) setOwnerId(list[0].id);
+      })
+      .catch((err: unknown) => feedback.error(err));
+  }, [open, repository, feedback]);
 
   if (selectedIds.length === 0) return null;
 
@@ -65,12 +72,14 @@ export function BulkAssignLeadsDialog({
         tone: "success",
       });
       setOpen(false);
-    } catch {
-      push({ title: t("assignError"), tone: "error" });
+    } catch (err) {
+      feedback.error(err, t("assignError"));
     } finally {
       setBusy(false);
     }
   }
+
+  if (!allowed) return null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { createAIRepository } from "@/entities/ai";
-import { Button, useToast } from "@/shared/ui";
+import { Button, useToast, useMutationFeedback } from "@/shared/ui";
 
 type Props = {
   onConfirmFields?: (fields: Record<string, string>) => void;
@@ -28,6 +28,7 @@ function fileToBase64(file: File): Promise<string> {
 export function OCRConfirmPanel({ onConfirmFields }: Props) {
   const t = useTranslations("aiOcr");
   const { push } = useToast();
+  const feedback = useMutationFeedback();
   const repo = useMemo(() => createAIRepository(), []);
   const [fields, setFields] = useState<Record<string, string> | null>(null);
   const [busy, setBusy] = useState(false);
@@ -44,8 +45,8 @@ export function OCRConfirmPanel({ onConfirmFields }: Props) {
       });
       setFields(out.fields ?? {});
       push({ title: t("extracted"), tone: "success" });
-    } catch {
-      push({ title: t("error"), tone: "error" });
+    } catch (err) {
+      feedback.error(err, t("error"));
     } finally {
       setBusy(false);
     }

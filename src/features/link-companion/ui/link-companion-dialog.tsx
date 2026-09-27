@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { Customer, CustomerRepository } from "@/entities/customer";
+import { useCan } from "@/entities/viewer";
 import {
   Button,
   Dialog,
@@ -17,7 +18,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  useToast,
+  useMutationFeedback,
 } from "@/shared/ui";
 
 const RELATIONS = ["spouse", "child", "parent", "sibling", "relative", "friend", "other"] as const;
@@ -29,9 +30,10 @@ type Props = {
 };
 
 export function LinkCompanionDialog({ customerId, repository, onLinked }: Props) {
+  const allowed = useCan("customers.write");
   const t = useTranslations("customers");
   const tc = useTranslations("common");
-  const { push } = useToast();
+  const feedback = useMutationFeedback();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [candidates, setCandidates] = useState<Customer[]>([]);
@@ -43,9 +45,12 @@ export function LinkCompanionDialog({ customerId, repository, onLinked }: Props)
   useEffect(() => {
     if (!open) return;
     const handle = window.setTimeout(() => {
-      void repository.search(query).then((rows) => {
-        setCandidates(rows.filter((c) => c.id !== customerId && c.isActive !== false));
-      });
+      void repository
+        .search(query)
+        .then((rows) => {
+          setCandidates(rows.filter((c) => c.id !== customerId && c.isActive !== false));
+        })
+        .catch(() => setCandidates([]));
     }, 200);
     return () => window.clearTimeout(handle);
   }, [open, query, repository, customerId]);
@@ -61,12 +66,14 @@ export function LinkCompanionDialog({ customerId, repository, onLinked }: Props)
       setQuery("");
       setNotes("");
       setRelation("spouse");
-    } catch {
-      push({ title: t("companionError"), tone: "error" });
+    } catch (err) {
+      feedback.error(err, t("companionError"));
     } finally {
       setBusy(false);
     }
   }
+
+  if (!allowed) return null;
 
   return (
     <Dialog

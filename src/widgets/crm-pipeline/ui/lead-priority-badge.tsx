@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createAIRepository, type LeadScore } from "@/entities/ai";
+import { useCan } from "@/entities/viewer";
 import { cn } from "@/shared/lib/cn";
 
 const bandClass: Record<string, string> = {
@@ -13,17 +14,24 @@ const bandClass: Record<string, string> = {
 
 export function LeadPriorityBadge({ leadId }: { leadId: string }) {
   const repo = useMemo(() => createAIRepository(), []);
+  const canScore = useCan("ai.write");
   const [score, setScore] = useState<LeadScore | null>(null);
 
   useEffect(() => {
+    if (!canScore) return;
     let cancelled = false;
-    void repo.scoreLead(leadId, false).then((s) => {
-      if (!cancelled) setScore(s);
-    });
+    void repo
+      .scoreLead(leadId, false)
+      .then((s) => {
+        if (!cancelled) setScore(s);
+      })
+      .catch(() => {
+        if (!cancelled) setScore(null);
+      });
     return () => {
       cancelled = true;
     };
-  }, [leadId, repo]);
+  }, [leadId, repo, canScore]);
 
   if (!score) return null;
 

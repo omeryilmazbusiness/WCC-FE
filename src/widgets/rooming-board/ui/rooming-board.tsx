@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { BedDouble, Download } from "lucide-react";
 import {
@@ -9,89 +9,74 @@ import {
   type RoomWithAssignments,
 } from "@/entities/rooming";
 import { createTourPackageRepository } from "@/entities/tourpackage";
+import { useCan } from "@/entities/viewer";
+import { useApiQuery } from "@/shared/lib/use-api-query";
 import {
   Button,
   EmptyState,
   Input,
   PageHeader,
+  QueryState,
   Screen,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-  useToast,
+  useMutationFeedback,
 } from "@/shared/ui";
 
 type DepartureOption = { id: string; label: string };
 
 export function RoomingBoard() {
   const t = useTranslations("rooming");
-  const { push } = useToast();
+  const feedback = useMutationFeedback();
+  const canWrite = useCan("packages.write");
   const repo = useMemo(() => createRoomingRepository(), []);
   const pkgRepo = useMemo(() => createTourPackageRepository(), []);
 
-  const [departures, setDepartures] = useState<DepartureOption[]>([]);
-  const [departureId, setDepartureId] = useState("");
-  const [rooms, setRooms] = useState<RoomWithAssignments[]>([]);
-  const [group, setGroup] = useState<GroupListRow[]>([]);
+  const [pickedDepartureId, setDepartureId] = useState("");
   const [busy, setBusy] = useState(false);
   const [label, setLabel] = useState("");
   const [capacity, setCapacity] = useState("2");
 
-  useEffect(() => {
-    void (async () => {
-      try {
-        const packages = await pkgRepo.listPackages();
-        const opts: DepartureOption[] = [];
-        for (const pkg of packages.slice(0, 8)) {
-          const deps = await pkgRepo.listDepartures(pkg.id);
-          for (const d of deps) {
-            opts.push({
-              id: d.id,
-              label: `${pkg.code} · ${d.code} · ${d.departDate}`,
-            });
-          }
-        }
-        setDepartures(opts);
-        if (opts[0] && !departureId) setDepartureId(opts[0].id);
-      } catch {
-        setDepartures([]);
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- load once
+  const departuresQuery = useApiQuery(async () => {
+    const packages = await pkgRepo.listPackages();
+    const perPackage = await Promise.all(
+      packages.slice(0, 8).map(async (pkg) =>
+        (await pkgRepo.listDepartures(pkg.id)).map<DepartureOption>((d) => ({
+          id: d.id,
+          label: `${pkg.code} · ${d.code} · ${d.departDate}`,
+        })),
+      ),
+    );
+    return perPackage.flat();
   }, [pkgRepo]);
+  const departures = departuresQuery.data ?? [];
+  const departureId = pickedDepartureId || departures[0]?.id || "";
 
-  const refresh = useCallback(async () => {
-    if (!departureId) {
-      setRooms([]);
-      setGroup([]);
-      return;
-    }
-    const [r, g] = await Promise.all([
-      repo.listRooms(departureId),
-      repo.groupList(departureId),
-    ]);
-    setRooms(r);
-    setGroup(g);
-  }, [repo, departureId]);
-
-  useEffect(() => {
-    void refresh().catch(() => push({ title: t("loadError"), tone: "error" }));
-  }, [refresh, push, t]);
+  const roomingQuery = useApiQuery(
+    async () => {
+      const [rooms, group] = await Promise.all([
+        repo.listRooms(departureId),
+        repo.groupList(departureId),
+      ]);
+      return { rooms, group };
+    },
+    [repo, departureId],
+    { enabled: Boolean(departureId) },
+  );
+  const rooms: RoomWithAssignments[] = roomingQuery.data?.rooms ?? [];
+  const group: GroupListRow[] = roomingQuery.data?.group ?? [];
 
   async function run(fn: () => Promise<unknown>) {
     setBusy(true);
     try {
       await fn();
-      await refresh();
-      push({ title: t("saved"), tone: "success" });
-    } catch (e) {
-      push({
-        title: t("actionError"),
-        description: e instanceof Error ? e.message : undefined,
-        tone: "error",
-      });
+      await roomingQuery.reload();
+      feedback.success(t("saved"));
+    } catch (err) {
+      feedback.error(err, t("actionError"));
     } finally {
       setBusy(false);
     }
@@ -107,13 +92,9 @@ export function RoomingBoard() {
       a.download = `group-list-${departureId.slice(0, 8)}.csv`;
       a.click();
       URL.revokeObjectURL(url);
-      push({ title: t("exported"), tone: "success" });
-    } catch (e) {
-      push({
-        title: t("exportError"),
-        description: e instanceof Error ? e.message : undefined,
-        tone: "error",
-      });
+      feedback.success(t("exported"));
+    } catch (err) {
+      feedback.error(err, t("exportError"));
     }
   }
 
@@ -161,6 +142,7 @@ export function RoomingBoard() {
             />
           )}
         </div>
+        {canWrite ? (
         <div className="flex flex-wrap gap-2">
           <Input
             className="w-[140px]"
@@ -191,11 +173,24 @@ export function RoomingBoard() {
             {t("addRoom")}
           </Button>
         </div>
+        ) : null}
       </div>
 
-      {!departureId ? (
+      {departuresQuery.error ? (
+        <QueryState
+          error={departuresQuery.error}
+          onRetry={() => void departuresQuery.reload()}
+        >
+          {null}
+        </QueryState>
+      ) : !departureId ? (
         <EmptyState title={t("pickDeparture")} icon={BedDouble} />
       ) : (
+        <QueryState
+          loading={roomingQuery.loading && !roomingQuery.data}
+          error={roomingQuery.error}
+          onRetry={() => void roomingQuery.reload()}
+        >
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-2xl border border-zinc-200/80 bg-white p-4">
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
@@ -221,6 +216,7 @@ export function RoomingBoard() {
                           {room.assignments.map((a) => (
                             <li key={a.id} className="flex items-center gap-2">
                               <span>{a.participantName}</span>
+                              {canWrite ? (
                               <button
                                 type="button"
                                 className="text-rose-600 hover:underline"
@@ -233,11 +229,13 @@ export function RoomingBoard() {
                               >
                                 {t("unassign")}
                               </button>
+                              ) : null}
                             </li>
                           ))}
                         </ul>
                       ) : null}
                     </div>
+                    {canWrite ? (
                     <Button
                       size="sm"
                       variant="outline"
@@ -248,6 +246,7 @@ export function RoomingBoard() {
                     >
                       {t("remove")}
                     </Button>
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -279,6 +278,7 @@ export function RoomingBoard() {
             )}
           </div>
         </div>
+        </QueryState>
       )}
     </Screen>
   );

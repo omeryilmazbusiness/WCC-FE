@@ -1,6 +1,5 @@
-import { env } from "@/shared/config/env";
-import { FetchHttpClient, type HttpClient } from "@/shared/api/http-client";
-import { parseSession, SESSION_COOKIE } from "@/shared/api/session";
+import { http, type HttpClient } from "@/shared/api/http-client";
+import { createRepository } from "@/shared/api/repository";
 import type {
   CloneDepartureInput,
   ClonePackageInput,
@@ -13,18 +12,6 @@ import type {
   TourPackage,
   UpdatePackageInput,
 } from "./model";
-
-function tokenFromCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  const raw = document.cookie
-    .split("; ")
-    .find((c) => c.startsWith(`${SESSION_COOKIE}=`))
-    ?.split("=")
-    .slice(1)
-    .join("=");
-  const session = parseSession(raw ? decodeURIComponent(raw) : null);
-  return session?.accessToken ?? null;
-}
 
 export interface TourPackageRepository {
   listPackages(activeOnly?: boolean): Promise<TourPackage[]>;
@@ -555,42 +542,19 @@ export class MemoryTourPackageRepository implements TourPackageRepository {
 }
 
 export function createTourPackageRepository(): TourPackageRepository {
-  const http = new FetchHttpClient(env.apiBaseUrl, tokenFromCookie);
   const api = new ApiTourPackageRepository(http);
   const memory = new MemoryTourPackageRepository();
-  const wrap = <A extends unknown[], R>(
-    fn: (...args: A) => Promise<R>,
-    fallback: (...args: A) => Promise<R>,
-  ) =>
-    async (...args: A) => {
-      try {
-        return await fn(...args);
-      } catch {
-        return fallback(...args);
-      }
-    };
-
-  return {
-    listPackages: wrap(api.listPackages.bind(api), memory.listPackages.bind(memory)),
-    getPackage: wrap(api.getPackage.bind(api), memory.getPackage.bind(memory)),
-    createPackage: wrap(api.createPackage.bind(api), memory.createPackage.bind(memory)),
-    updatePackage: wrap(api.updatePackage.bind(api), memory.updatePackage.bind(memory)),
-    clonePackage: wrap(api.clonePackage.bind(api), memory.clonePackage.bind(memory)),
-    listPackageTiers: wrap(
-      api.listPackageTiers.bind(api),
-      memory.listPackageTiers.bind(memory),
-    ),
-    setPackageTiers: wrap(api.setPackageTiers.bind(api), memory.setPackageTiers.bind(memory)),
-    listDepartures: wrap(api.listDepartures.bind(api), memory.listDepartures.bind(memory)),
-    getDeparture: wrap(api.getDeparture.bind(api), memory.getDeparture.bind(memory)),
-    createDeparture: wrap(api.createDeparture.bind(api), memory.createDeparture.bind(memory)),
-    cloneDeparture: wrap(api.cloneDeparture.bind(api), memory.cloneDeparture.bind(memory)),
-    closeSales: wrap(api.closeSales.bind(api), memory.closeSales.bind(memory)),
-    markFull: wrap(api.markFull.bind(api), memory.markFull.bind(memory)),
-    readiness: wrap(api.readiness.bind(api), memory.readiness.bind(memory)),
-    listDepartureTiers: wrap(
-      api.listDepartureTiers.bind(api),
-      memory.listDepartureTiers.bind(memory),
-    ),
-  };
+  return createRepository<TourPackageRepository>({
+    api,
+    memory,
+    reads: [
+      "listPackages",
+      "getPackage",
+      "listPackageTiers",
+      "listDepartures",
+      "getDeparture",
+      "readiness",
+      "listDepartureTiers",
+    ],
+  });
 }

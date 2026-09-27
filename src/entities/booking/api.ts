@@ -1,6 +1,5 @@
-import { env } from "@/shared/config/env";
-import { FetchHttpClient, type HttpClient } from "@/shared/api/http-client";
-import { parseSession, SESSION_COOKIE } from "@/shared/api/session";
+import { http, type HttpClient } from "@/shared/api/http-client";
+import { createRepository } from "@/shared/api/repository";
 import type {
   Booking,
   BookingChecklistItem,
@@ -13,18 +12,6 @@ import type {
   LineItemInput,
   ParticipantInput,
 } from "./model";
-
-function tokenFromCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  const raw = document.cookie
-    .split("; ")
-    .find((c) => c.startsWith(`${SESSION_COOKIE}=`))
-    ?.split("=")
-    .slice(1)
-    .join("=");
-  const session = parseSession(raw ? decodeURIComponent(raw) : null);
-  return session?.accessToken ?? null;
-}
 
 export interface BookingRepository {
   list(params?: {
@@ -288,14 +275,8 @@ export class ApiBookingRepository implements BookingRepository {
     id: string,
     items: LineItemInput[],
   ): Promise<{ items: BookingLineItem[]; booking: Booking }> {
-    const token = tokenFromCookie();
-    const res = await fetch(`${env.apiBaseUrl}/bookings/${id}/line-items`, {
+    const res = await this.http.raw(`/bookings/${id}/line-items`, {
       method: "PUT",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
       body: JSON.stringify({
         items: items.map((it) => ({
           kind: it.kind,
@@ -307,9 +288,6 @@ export class ApiBookingRepository implements BookingRepository {
       }),
     });
     const payload = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      throw new Error(payload?.error?.message ?? res.statusText);
-    }
     const data = payload.data ?? payload;
     const meta = payload.meta ?? {};
     return {
@@ -665,50 +643,18 @@ export class MemoryBookingRepository implements BookingRepository {
 }
 
 export function createBookingRepository(): BookingRepository {
-  const http = new FetchHttpClient(env.apiBaseUrl, tokenFromCookie);
   const api = new ApiBookingRepository(http);
   const memory = new MemoryBookingRepository();
-  const wrap =
-    <A extends unknown[], R>(
-      fn: (...args: A) => Promise<R>,
-      fallback: (...args: A) => Promise<R>,
-    ) =>
-    async (...args: A) => {
-      try {
-        return await fn(...args);
-      } catch {
-        return fallback(...args);
-      }
-    };
-
-  return {
-    list: wrap(api.list.bind(api), memory.list.bind(memory)),
-    getById: wrap(api.getById.bind(api), memory.getById.bind(memory)),
-    create: wrap(api.create.bind(api), memory.create.bind(memory)),
-    update: wrap(api.update.bind(api), memory.update.bind(memory)),
-    confirm: wrap(api.confirm.bind(api), memory.confirm.bind(memory)),
-    changeStatus: wrap(api.changeStatus.bind(api), memory.changeStatus.bind(memory)),
-    readiness: wrap(api.readiness.bind(api), memory.readiness.bind(memory)),
-    overrideReadiness: wrap(
-      api.overrideReadiness.bind(api),
-      memory.overrideReadiness.bind(memory),
-    ),
-    listParticipants: wrap(
-      api.listParticipants.bind(api),
-      memory.listParticipants.bind(memory),
-    ),
-    addParticipant: wrap(api.addParticipant.bind(api), memory.addParticipant.bind(memory)),
-    updateParticipant: wrap(
-      api.updateParticipant.bind(api),
-      memory.updateParticipant.bind(memory),
-    ),
-    deleteParticipant: wrap(
-      api.deleteParticipant.bind(api),
-      memory.deleteParticipant.bind(memory),
-    ),
-    listLineItems: wrap(api.listLineItems.bind(api), memory.listLineItems.bind(memory)),
-    setLineItems: wrap(api.setLineItems.bind(api), memory.setLineItems.bind(memory)),
-    listChecklist: wrap(api.listChecklist.bind(api), memory.listChecklist.bind(memory)),
-    updateChecklist: wrap(api.updateChecklist.bind(api), memory.updateChecklist.bind(memory)),
-  };
+  return createRepository<BookingRepository>({
+    api,
+    memory,
+    reads: [
+      "list",
+      "getById",
+      "readiness",
+      "listParticipants",
+      "listLineItems",
+      "listChecklist",
+    ],
+  });
 }

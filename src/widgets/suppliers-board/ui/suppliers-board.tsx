@@ -12,6 +12,7 @@ import {
   type SupplierLinkType,
   type SupplierRepository,
 } from "@/entities/supplier";
+import { useCan } from "@/entities/viewer";
 import { SupplierInvoicesPanel } from "@/features/supplier-invoices";
 import { cn } from "@/shared/lib/cn";
 import {
@@ -19,13 +20,14 @@ import {
   Button,
   EmptyState,
   Input,
+  QueryState,
   Screen,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-  useToast,
+  useMutationFeedback,
 } from "@/shared/ui";
 
 type Props = { repository?: SupplierRepository };
@@ -37,7 +39,10 @@ export function SuppliersBoard({ repository }: Props) {
     [repository],
   );
   const t = useTranslations("ops");
-  const { push } = useToast();
+  const feedback = useMutationFeedback();
+  const canWrite = useCan("suppliers.write");
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [loaded, setLoaded] = useState(false);
 
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
@@ -72,9 +77,19 @@ export function SuppliersBoard({ repository }: Props) {
     else setLinks([]);
   }, [repo, selectedId]);
 
+  const load = useCallback(async () => {
+    setLoadError(null);
+    try {
+      await refresh();
+      setLoaded(true);
+    } catch (err) {
+      setLoadError(err);
+    }
+  }, [refresh]);
+
   useEffect(() => {
-    void refresh().catch(() => push({ title: t("loadError"), tone: "error" }));
-  }, [refresh, push, t]);
+    void load();
+  }, [load]);
 
   useEffect(() => {
     if (!selectedId) return;
@@ -93,13 +108,9 @@ export function SuppliersBoard({ repository }: Props) {
     try {
       await fn();
       await refresh();
-      push({ title: t("saved"), tone: "success" });
-    } catch (e) {
-      push({
-        title: t("actionError"),
-        description: e instanceof Error ? e.message : undefined,
-        tone: "error",
-      });
+      feedback.success(t("saved"));
+    } catch (err) {
+      feedback.error(err, t("actionError"));
     } finally {
       setBusy(false);
     }
@@ -124,6 +135,12 @@ export function SuppliersBoard({ repository }: Props) {
         </div>
       </div>
 
+      <QueryState
+        loading={!loaded && !loadError}
+        error={loadError}
+        errorTitle={t("loadError")}
+        onRetry={() => void load()}
+      >
       <div className="overflow-hidden rounded-2xl bg-white shadow-[0_8px_28px_-14px_rgba(15,23,42,0.22)]">
         <div className="grid gap-0 lg:grid-cols-[240px_1fr]">
           <aside className="border-b border-zinc-100 bg-zinc-50/80 p-3 lg:border-b-0 lg:border-e">
@@ -164,6 +181,7 @@ export function SuppliersBoard({ repository }: Props) {
               </ul>
             )}
 
+            {canWrite ? (
             <div className="mt-3 space-y-2 border-t border-zinc-200/80 pt-3">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
                 {t("createSupplier")}
@@ -199,6 +217,7 @@ export function SuppliersBoard({ repository }: Props) {
                 {t("create")}
               </Button>
             </div>
+            ) : null}
           </aside>
 
           <div className="space-y-4 p-4 sm:p-5">
@@ -288,7 +307,7 @@ export function SuppliersBoard({ repository }: Props) {
                                 {t("oversold")}
                               </Badge>
                             ) : null}
-                            {l.confirmationStatus === "pending" ? (
+                            {canWrite && l.confirmationStatus === "pending" ? (
                               <Button
                                 size="sm"
                                 disabled={busy}
@@ -301,6 +320,7 @@ export function SuppliersBoard({ repository }: Props) {
                                 {t("confirmLink")}
                               </Button>
                             ) : null}
+                            {canWrite ? (
                             <Button
                               size="sm"
                               variant="outline"
@@ -313,11 +333,13 @@ export function SuppliersBoard({ repository }: Props) {
                             >
                               {t("remove")}
                             </Button>
+                            ) : null}
                           </li>
                         ))}
                       </ul>
                     )}
 
+                    {canWrite ? (
                     <div className="flex flex-wrap items-end gap-2 rounded-xl border border-dashed border-zinc-200 p-3">
                       <Select
                         value={linkType}
@@ -380,6 +402,7 @@ export function SuppliersBoard({ repository }: Props) {
                         {t("addLink")}
                       </Button>
                     </div>
+                    ) : null}
                   </>
                 ) : null}
 
@@ -412,6 +435,7 @@ export function SuppliersBoard({ repository }: Props) {
                         ))}
                       </ul>
                     )}
+                    {canWrite ? (
                     <div className="flex flex-wrap gap-2">
                       <Input
                         className="min-w-[180px] flex-1"
@@ -435,6 +459,7 @@ export function SuppliersBoard({ repository }: Props) {
                         {t("addIssue")}
                       </Button>
                     </div>
+                    ) : null}
                   </div>
                 ) : null}
               </>
@@ -442,6 +467,7 @@ export function SuppliersBoard({ repository }: Props) {
           </div>
         </div>
       </div>
+      </QueryState>
     </Screen>
   );
 }

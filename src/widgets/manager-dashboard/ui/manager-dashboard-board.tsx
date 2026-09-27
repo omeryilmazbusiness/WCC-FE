@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
@@ -21,14 +21,17 @@ import {
   type TargetSnapshot,
   type TeamMemberStat,
 } from "@/entities/dashboard";
+import { useCan } from "@/entities/viewer";
 import { routes } from "@/shared/config/routes";
 import { Link } from "@/shared/i18n/navigation";
+import { useApiQuery } from "@/shared/lib/use-api-query";
 import {
   Badge,
   Button,
   DataTable,
   ListScreen,
   MetricCard,
+  QueryState,
   Select,
   SelectContent,
   SelectItem,
@@ -84,17 +87,26 @@ export function ManagerDashboardBoard() {
   const t = useTranslations("manager");
   const tc = useTranslations("common");
   const [days, setDays] = useState("30");
-  const [kpi, setKpi] = useState<DashboardKPI | null>(null);
-  const [team, setTeam] = useState<TeamMemberStat[] | null>(null);
-  const [attention, setAttention] = useState<AttentionItem[]>([]);
-  const [target, setTarget] = useState<TargetSnapshot | null>(null);
-
-  useEffect(() => {
+  const canCreateLead = useCan("leads.write");
+  const canCreateBooking = useCan("bookings.write");
+  const canTasks = useCan("tasks.read");
+  const canPackages = useCan("packages.read");
+  const canCustomers = useCan("customers.read");
+  const canAI = useCan("ai.read");
+  const dashboard = useApiQuery(async () => {
     const { from, to } = periodDays(Number(days) || 30);
-    void repo.getKPIs(from, to).then(setKpi);
-    void repo.getTeamStats(from, to).then(setTeam);
-    void repo.getAttention(12).then(setAttention);
-    void repo.getTarget("branch").then(setTarget);
+    const [kpi, team, attention, target] = await Promise.all([
+      repo.getKPIs(from, to),
+      repo.getTeamStats(from, to),
+      repo.getAttention(12),
+      repo.getTarget("branch"),
+    ]);
+    return { kpi, team, attention, target } satisfies {
+      kpi: DashboardKPI;
+      team: TeamMemberStat[];
+      attention: AttentionItem[];
+      target: TargetSnapshot;
+    };
   }, [days]);
 
   const columns = useMemo<ColumnDef<TeamMemberStat>[]>(
@@ -108,13 +120,22 @@ export function ManagerDashboardBoard() {
     [t],
   );
 
-  if (!kpi || !team || !target) {
+  if (!dashboard.data) {
     return (
       <ListScreen title={t("title")} description={t("subtitle")}>
-        <p className="text-sm font-medium text-zinc-500">{tc("loading")}</p>
+        <QueryState
+          loading={dashboard.loading}
+          loadingLabel={tc("loading")}
+          error={dashboard.error}
+          onRetry={() => void dashboard.reload()}
+        >
+          {null}
+        </QueryState>
       </ListScreen>
     );
   }
+
+  const { kpi, team, attention, target } = dashboard.data;
 
   const progressPct =
     target.targetAmount > 0
@@ -149,36 +170,46 @@ export function ManagerDashboardBoard() {
               <SelectItem value="90">{t("period90")}</SelectItem>
             </SelectContent>
           </Select>
-          <Button asChild size="sm" variant="outline">
-            <Link href={routes.pipeline}>
-              <Plus className="h-4 w-4" />
-              {t("quick.lead")}
-            </Link>
-          </Button>
-          <Button asChild size="sm" variant="outline">
-            <Link href={routes.bookings}>
-              <Plus className="h-4 w-4" />
-              {t("quick.booking")}
-            </Link>
-          </Button>
-          <Button asChild size="sm" variant="outline">
-            <Link href={routes.tasks}>
-              <ClipboardList className="h-4 w-4" />
-              {t("quick.tasks")}
-            </Link>
-          </Button>
-          <Button asChild size="sm" variant="outline">
-            <Link href={routes.packages}>
-              <Package className="h-4 w-4" />
-              {t("quick.package")}
-            </Link>
-          </Button>
-          <Button asChild size="sm" variant="outline">
-            <Link href={routes.customers}>
-              <Users className="h-4 w-4" />
-              {t("quick.customers")}
-            </Link>
-          </Button>
+          {canCreateLead ? (
+            <Button asChild size="sm" variant="outline">
+              <Link href={routes.pipeline}>
+                <Plus className="h-4 w-4" />
+                {t("quick.lead")}
+              </Link>
+            </Button>
+          ) : null}
+          {canCreateBooking ? (
+            <Button asChild size="sm" variant="outline">
+              <Link href={routes.bookings}>
+                <Plus className="h-4 w-4" />
+                {t("quick.booking")}
+              </Link>
+            </Button>
+          ) : null}
+          {canTasks ? (
+            <Button asChild size="sm" variant="outline">
+              <Link href={routes.tasks}>
+                <ClipboardList className="h-4 w-4" />
+                {t("quick.tasks")}
+              </Link>
+            </Button>
+          ) : null}
+          {canPackages ? (
+            <Button asChild size="sm" variant="outline">
+              <Link href={routes.packages}>
+                <Package className="h-4 w-4" />
+                {t("quick.package")}
+              </Link>
+            </Button>
+          ) : null}
+          {canCustomers ? (
+            <Button asChild size="sm" variant="outline">
+              <Link href={routes.customers}>
+                <Users className="h-4 w-4" />
+                {t("quick.customers")}
+              </Link>
+            </Button>
+          ) : null}
         </div>
       }
     >
@@ -215,7 +246,7 @@ export function ManagerDashboardBoard() {
         </div>
       </SurfacePanel>
 
-      <AIExecutiveSummaryCard />
+      {canAI ? <AIExecutiveSummaryCard /> : null}
 
       <div
         className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"

@@ -1,15 +1,14 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { LogOut } from "lucide-react";
 import { NotificationBell } from "@/features/notifications";
 import { LocaleSwitcher } from "@/features/switch-locale";
 import { BranchScopeSelect } from "@/features/branch-scope";
 import { GlobalSearch } from "@/features/global-search";
-import { clearSession } from "@/features/auth-by-credentials";
-import { apiLogout } from "@/entities/identity/api";
+import { logout as endSession } from "@/features/auth-by-credentials";
+import { useCan } from "@/entities/viewer";
 import { routes } from "@/shared/config/routes";
-import { useRouter } from "@/shared/i18n/navigation";
 import { Button } from "@/shared/ui";
 import { cn } from "@/shared/lib/cn";
 
@@ -23,12 +22,13 @@ type Props = {
 export function AppHeader({ className }: Props) {
   const tNav = useTranslations("nav");
   const tAuth = useTranslations("auth");
-  const router = useRouter();
+  const locale = useLocale();
+  const canSearch = useCan("dashboard.read");
+  const canNotify = useCan("notifications.read");
 
   async function logout() {
-    await apiLogout();
-    clearSession();
-    router.replace(routes.login);
+    await endSession();
+    window.location.assign(`/${locale}${routes.login}`);
   }
 
   return (
@@ -40,9 +40,9 @@ export function AppHeader({ className }: Props) {
     >
       <div className="me-auto flex min-w-0 flex-1 items-center gap-3">
         <BranchScopeSelect />
-        <GlobalSearch />
+        {canSearch ? <GlobalSearch /> : null}
       </div>
-      <NotificationBell surface="light" />
+      {canNotify ? <NotificationBell surface="light" /> : null}
       <LocaleSwitcher surface="light" compact />
       <Button
         type="button"

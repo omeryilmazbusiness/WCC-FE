@@ -27,7 +27,7 @@ import {
 import { createLeadRepository } from "@/entities/lead";
 import { createTaskRepository } from "@/entities/task";
 import { createAIRepository } from "@/entities/ai";
-import { isManagerRole } from "@/entities/user";
+import { useCan } from "@/entities/viewer";
 import { InboxSetupWizard } from "@/features/inbox-setup";
 import { useSessionUser } from "@/shared/api/session-context";
 import { routes } from "@/shared/config/routes";
@@ -38,6 +38,7 @@ import {
   Button,
   EmptyState,
   PageHeader,
+  QueryState,
   Screen,
   SearchFilterBar,
   Select,
@@ -46,6 +47,7 @@ import {
   SelectTrigger,
   SelectValue,
   Textarea,
+  useMutationFeedback,
   useToast,
 } from "@/shared/ui";
 
@@ -64,8 +66,16 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
   const tc = useTranslations("common");
   const tNext = useTranslations("nextTask");
   const { push } = useToast();
+  const feedback = useMutationFeedback();
   const user = useSessionUser();
-  const manager = isManagerRole(user.role);
+  const canReadChannels = useCan("integrations.read");
+  const canManageChannels = useCan("integrations.write");
+  const canWrite = useCan("inbox.write");
+  const canAssist = useCan("ai.write");
+  const canCreateLead = useCan("leads.write");
+  const canCreateTask = useCan("tasks.write");
+  const canCreateBooking = useCan("bookings.write");
+  const [loadError, setLoadError] = useState<unknown>(null);
   const repository = useMemo(
     () => repositoryProp ?? createConversationRepository(user.branchId),
     [repositoryProp, user.branchId],
@@ -96,21 +106,34 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
     () => (accounts ? hasConnectedSocial(accounts) : false),
     [accounts],
   );
-  const showSetup = Boolean(accounts) && forceSetup && manager;
-  const showWaiting = Boolean(accounts) && !connected && !manager;
+  const showSetup = Boolean(accounts) && forceSetup && canManageChannels;
+  const showWaiting = Boolean(accounts) && !connected && !canManageChannels;
+
+  const loadChannels = useCallback(
+    async (isCancelled: () => boolean = () => false) => {
+      if (!canReadChannels) {
+        setSetupReady(true);
+        return;
+      }
+      try {
+        const list = await repository.channelHealth();
+        if (isCancelled()) return;
+        setAccounts(list);
+        setSetupReady(true);
+      } catch (err) {
+        if (!isCancelled()) setLoadError(err);
+      }
+    },
+    [repository, canReadChannels],
+  );
 
   useEffect(() => {
     let cancelled = false;
-    void repository.channelHealth().then((list) => {
-      if (!cancelled) {
-        setAccounts(list);
-        setSetupReady(true);
-      }
-    });
+    void loadChannels(() => cancelled);
     return () => {
       cancelled = true;
     };
-  }, [repository]);
+  }, [loadChannels]);
 
   const health = useMemo(
     () => (accounts ?? []).filter((a) => a.connected),
@@ -140,7 +163,14 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
 
   const reload = useCallback(async () => {
     if (forceSetup) return;
-    const list = await repository.list(listFilter);
+    let list: Conversation[];
+    try {
+      list = await repository.list(listFilter);
+    } catch (err) {
+      setLoadError(err);
+      return;
+    }
+    setLoadError(null);
     setRows(list);
     setSelectedId((prev) => {
       if (prev && list.some((c) => c.id === prev)) return prev;
@@ -159,13 +189,18 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
       setMessages((prev) => (prev.length === 0 ? prev : []));
       return;
     }
-    void repository.listMessages(selectedId).then((items) => {
-      if (!cancelled) setMessages(items);
-    });
+    void repository
+      .listMessages(selectedId)
+      .then((items) => {
+        if (!cancelled) setMessages(items);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) feedback.error(err);
+      });
     return () => {
       cancelled = true;
     };
-  }, [selectedId, repository, forceSetup]);
+  }, [selectedId, repository, forceSetup, feedback]);
 
   const selected = useMemo(
     () => rows?.find((c) => c.id === selectedId) ?? null,
@@ -188,8 +223,8 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
         title: noteMode ? t("noteSaved") : t("replySent"),
         tone: "success",
       });
-    } catch {
-      push({ title: t("actionError"), tone: "error" });
+    } catch (err) {
+      feedback.error(err, t("actionError"));
     } finally {
       setBusy(false);
     }
@@ -203,9 +238,9 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
       setAiSummary(out.summary || "");
       setAiNext(out.nextStep || "");
       if (out.replyDraft) setDraft(out.replyDraft);
-      push({ title: t("aiAssistDone"), tone: "success" });
-    } catch {
-      push({ title: t("aiAssistError"), tone: "error" });
+      feedback.success(t("aiAssistDone"));
+    } catch (err) {
+      feedback.error(err, t("aiAssistError"));
     } finally {
       setBusy(false);
     }
@@ -216,9 +251,9 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
     try {
       await repository.assign(selected.id, ownerId);
       await reload();
-      push({ title: t("assigned"), tone: "success" });
-    } catch {
-      push({ title: t("actionError"), tone: "error" });
+      feedback.success(t("assigned"));
+    } catch (err) {
+      feedback.error(err, t("actionError"));
     }
   }
 
@@ -227,9 +262,9 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
     try {
       await repository.setStatus(selected.id, status);
       await reload();
-      push({ title: t("statusUpdated"), tone: "success" });
-    } catch {
-      push({ title: t("actionError"), tone: "error" });
+      feedback.success(t("statusUpdated"));
+    } catch (err) {
+      feedback.error(err, t("actionError"));
     }
   }
 
@@ -249,9 +284,9 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
         ownerId: owner.id,
         ownerName: owner.name,
       });
-      push({ title: t("leadCreated"), tone: "success" });
-    } catch {
-      push({ title: t("actionError"), tone: "error" });
+      feedback.success(t("leadCreated"));
+    } catch (err) {
+      feedback.error(err, t("actionError"));
     }
   }
 
@@ -267,9 +302,9 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
         relatedId: selected.id,
         relatedLabel: selected.subject || selected.identityLabel,
       });
-      push({ title: t("taskCreated"), tone: "success" });
-    } catch {
-      push({ title: t("actionError"), tone: "error" });
+      feedback.success(t("taskCreated"));
+    } catch (err) {
+      feedback.error(err, t("actionError"));
     }
   }
 
@@ -281,8 +316,8 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
       const s = await repository.suggestNextTask(selected.id, outcome);
       setSuggestion(s);
       push({ title: tNext("suggested"), tone: "info" });
-    } catch {
-      push({ title: t("actionError"), tone: "error" });
+    } catch (err) {
+      feedback.error(err, t("actionError"));
       setPendingOutcome(null);
     } finally {
       setBusy(false);
@@ -304,14 +339,31 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
       });
       setSuggestion(null);
       setPendingOutcome(null);
-    } catch {
-      push({ title: t("actionError"), tone: "error" });
+    } catch (err) {
+      feedback.error(err, t("actionError"));
     } finally {
       setBusy(false);
     }
   }
 
-  if (!setupReady || accounts === null) {
+  if (loadError && !rows) {
+    return (
+      <Screen>
+        <PageHeader title={t("title")} description={t("subtitle")} />
+        <QueryState
+          error={loadError}
+          onRetry={() => {
+            setLoadError(null);
+            void (setupReady ? reload() : loadChannels());
+          }}
+        >
+          {null}
+        </QueryState>
+      </Screen>
+    );
+  }
+
+  if (!setupReady) {
     return (
       <Screen>
         <p className="text-sm font-medium text-zinc-500">{tc("loading")}</p>
@@ -319,7 +371,7 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
     );
   }
 
-  if (showSetup) {
+  if (showSetup && accounts) {
     return (
       <Screen data-testid="inbox-setup">
         <PageHeader
@@ -381,7 +433,7 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
                 </Badge>
               ))}
             </div>
-            {manager ? (
+            {canManageChannels ? (
               <Button
                 type="button"
                 size="sm"
@@ -535,6 +587,7 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
                   </div>
                 ))}
               </div>
+              {canWrite ? (
               <div className="border-t border-zinc-100 p-3">
                 <div className="mb-2 flex flex-wrap gap-2">
                   <Button
@@ -545,6 +598,7 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
                   >
                     {t("internalNote")}
                   </Button>
+                  {canAssist ? (
                   <Button
                     type="button"
                     size="sm"
@@ -554,6 +608,7 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
                   >
                     {t("aiAssist")}
                   </Button>
+                  ) : null}
                 </div>
                 {aiSummary ? (
                   <div className="mb-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-medium text-zinc-600">
@@ -580,6 +635,7 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
                   </Button>
                 </div>
               </div>
+              ) : null}
             </>
           )}
         </section>
@@ -590,6 +646,8 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
         >
           {!selected ? null : (
             <div className="flex flex-col gap-4">
+              {canWrite ? (
+              <>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
                   {t("assign")}
@@ -682,32 +740,40 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
                   </div>
                 ) : null}
               </div>
+              </>
+              ) : null}
 
               <div className="flex flex-col gap-2 border-t border-zinc-100 pt-4">
                 <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
                   {t("createFrom")}
                 </p>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => void createLeadFromConvo()}
-                >
-                  <UserPlus className="h-4 w-4" />
-                  {t("createLead")}
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => void createTaskFromConvo()}
-                >
-                  <Plus className="h-4 w-4" />
-                  {t("createTask")}
-                </Button>
-                <Button asChild type="button" size="sm" variant="outline">
-                  <Link href={routes.bookings}>{t("createBooking")}</Link>
-                </Button>
+                {canCreateLead ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void createLeadFromConvo()}
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    {t("createLead")}
+                  </Button>
+                ) : null}
+                {canCreateTask ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void createTaskFromConvo()}
+                  >
+                    <Plus className="h-4 w-4" />
+                    {t("createTask")}
+                  </Button>
+                ) : null}
+                {canCreateBooking ? (
+                  <Button asChild type="button" size="sm" variant="outline">
+                    <Link href={routes.bookings}>{t("createBooking")}</Link>
+                  </Button>
+                ) : null}
                 {selected.customerId ? (
                   <Link
                     href={routes.customer(selected.customerId)}

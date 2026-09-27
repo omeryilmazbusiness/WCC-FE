@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { Task, TaskRepository } from "@/entities/task";
 import { createLeadRepository } from "@/entities/lead";
+import { useCan } from "@/entities/viewer";
 import {
   Button,
   Dialog,
@@ -18,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
   useToast,
+  useMutationFeedback,
 } from "@/shared/ui";
 
 type Props = {
@@ -31,9 +33,11 @@ export function BulkAssignTasksDialog({
   taskIds,
   onAssigned,
 }: Props) {
+  const allowed = useCan("tasks.write");
   const t = useTranslations("tasks");
   const tc = useTranslations("common");
   const { push } = useToast();
+  const feedback = useMutationFeedback();
   const [open, setOpen] = useState(false);
   const [ownerId, setOwnerId] = useState("");
   const [busy, setBusy] = useState(false);
@@ -42,11 +46,14 @@ export function BulkAssignTasksDialog({
 
   useEffect(() => {
     if (!open) return;
-    void leadRepo.listOwners().then((rows) => {
-      setOwners(rows.map((o) => ({ id: o.id, name: o.name })));
-      if (rows[0]) setOwnerId(rows[0].id);
-    });
-  }, [open, leadRepo]);
+    void leadRepo
+      .listOwners()
+      .then((rows) => {
+        setOwners(rows.map((o) => ({ id: o.id, name: o.name })));
+        if (rows[0]) setOwnerId(rows[0].id);
+      })
+      .catch((err: unknown) => feedback.error(err));
+  }, [open, leadRepo, feedback]);
 
   async function submit() {
     if (!ownerId || taskIds.length === 0) return;
@@ -61,16 +68,14 @@ export function BulkAssignTasksDialog({
       onAssigned(updated);
       push({ title: t("bulkAssignedTitle"), tone: "success" });
       setOpen(false);
-    } catch (e) {
-      push({
-        title: t("actionError"),
-        description: e instanceof Error ? e.message : undefined,
-        tone: "error",
-      });
+    } catch (err) {
+      feedback.error(err, t("actionError"));
     } finally {
       setBusy(false);
     }
   }
+
+  if (!allowed) return null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

@@ -52,6 +52,7 @@ export {
   DialogDescription,
   DialogClose,
 } from "./dialog";
+export { ConfirmDialog } from "./confirm-dialog";
 export {
   Form,
   FormField,
@@ -116,3 +117,10 @@ export {
   DropdownMenuShortcut,
 } from "./dropdown-menu";
 export { ToastProvider, useToast, type ToastTone } from "./toast";
+export {
+  useDescribeError,
+  errorKind,
+  type ErrorKind,
+  type DescribedError,
+} from "./use-describe-error";
+export { useMutationFeedback } from "./use-mutation-feedback";

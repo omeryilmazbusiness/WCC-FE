@@ -10,6 +10,7 @@ import {
   type TimelineItem,
 } from "@/entities/customer";
 import { createBookingRepository, type Booking } from "@/entities/booking";
+import { useCan } from "@/entities/viewer";
 import { EditCustomerDialog } from "@/features/edit-customer";
 import { MergeCustomerDialog } from "@/features/merge-customer";
 import { LinkCompanionDialog } from "@/features/link-companion";
@@ -21,14 +22,14 @@ import {
   Button,
   DataTable,
   EmptyState,
-  ErrorState,
   PageHeader,
+  QueryState,
   Screen,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-  useToast,
+  useMutationFeedback,
 } from "@/shared/ui";
 
 const repo = createCustomerRepository();
@@ -41,12 +42,14 @@ export function Customer360View({ customerId }: Props) {
   const tc = useTranslations("common");
   const tb = useTranslations("bookings");
   const locale = useLocale();
-  const { push } = useToast();
+  const feedback = useMutationFeedback();
+  const canWrite = useCan("customers.write");
+  const canBookings = useCan("bookings.read");
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [companions, setCompanions] = useState<CompanionLink[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
   const [tab, setTab] = useState("identity");
 
   const refresh = useCallback(async () => {
@@ -56,16 +59,16 @@ export function Customer360View({ customerId }: Props) {
         repo.getById(customerId),
         repo.timeline(customerId),
         repo.listCompanions(customerId),
-        bookingRepo.list({ customerId }),
+        canBookings ? bookingRepo.list({ customerId }) : Promise.resolve<Booking[]>([]),
       ]);
       setCustomer(c);
       setTimeline(tl);
       setCompanions(comps);
       setBookings(bks);
-    } catch {
-      setError(t("loadError"));
+    } catch (err) {
+      setError(err);
     }
-  }, [customerId, t]);
+  }, [customerId, canBookings]);
 
   useEffect(() => {
     void refresh();
@@ -95,22 +98,27 @@ export function Customer360View({ customerId }: Props) {
       {
         id: "actions",
         header: tc("actions"),
-        cell: ({ row }) => (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={async () => {
-              await repo.unlinkCompanion(customerId, row.original.companion_id);
-              push({ title: t("companionRemoved"), tone: "success" });
-              void refresh();
-            }}
-          >
-            {t("unlink")}
-          </Button>
-        ),
+        cell: ({ row }) =>
+          canWrite ? (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                try {
+                  await repo.unlinkCompanion(customerId, row.original.companion_id);
+                  feedback.success(t("companionRemoved"));
+                  void refresh();
+                } catch (err) {
+                  feedback.error(err);
+                }
+              }}
+            >
+              {t("unlink")}
+            </Button>
+          ) : null,
       },
     ],
-    [t, tc, customerId, push, refresh],
+    [t, tc, customerId, feedback, refresh, canWrite],
   );
 
   const timelineColumns = useMemo<ColumnDef<TimelineItem>[]>(
@@ -182,7 +190,14 @@ export function Customer360View({ customerId }: Props) {
   if (error) {
     return (
       <Screen>
-        <ErrorState title={error} retryLabel={tc("retry")} onRetry={() => void refresh()} />
+        <QueryState
+          error={error}
+          errorTitle={t("loadError")}
+          retryLabel={tc("retry")}
+          onRetry={() => void refresh()}
+        >
+          {null}
+        </QueryState>
       </Screen>
     );
   }
@@ -200,12 +215,13 @@ export function Customer360View({ customerId }: Props) {
         title={customer.fullName}
         description={customer.fullNameAr || undefined}
         actions={
+          canWrite ? (
           <div className="flex flex-wrap gap-2">
             <EditCustomerDialog
               customer={customer}
               repository={repo}
               onSaved={() => {
-                push({ title: t("updatedToast"), tone: "success" });
+                feedback.success(t("updatedToast"));
                 void refresh();
               }}
             />
@@ -213,7 +229,7 @@ export function Customer360View({ customerId }: Props) {
               target={customer}
               repository={repo}
               onMerged={() => {
-                push({ title: t("mergedToast"), tone: "success" });
+                feedback.success(t("mergedToast"));
                 void refresh();
               }}
             />
@@ -221,11 +237,12 @@ export function Customer360View({ customerId }: Props) {
               customerId={customer.id}
               repository={repo}
               onLinked={() => {
-                push({ title: t("companionLinked"), tone: "success" });
+                feedback.success(t("companionLinked"));
                 void refresh();
               }}
             />
           </div>
+          ) : undefined
         }
       />
 

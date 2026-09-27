@@ -1,6 +1,5 @@
-import { env } from "@/shared/config/env";
-import { FetchHttpClient, type HttpClient } from "@/shared/api/http-client";
-import { parseSession, SESSION_COOKIE } from "@/shared/api/session";
+import { http, type HttpClient } from "@/shared/api/http-client";
+import { createRepository } from "@/shared/api/repository";
 import type {
   CreateExternalIntegrationInput,
   ExtIntCatalogItem,
@@ -10,18 +9,6 @@ import type {
   ProbeResult,
   UpdateExternalIntegrationInput,
 } from "./model";
-
-function tokenFromCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  const raw = document.cookie
-    .split("; ")
-    .find((c) => c.startsWith(`${SESSION_COOKIE}=`))
-    ?.split("=")
-    .slice(1)
-    .join("=");
-  const session = parseSession(raw ? decodeURIComponent(raw) : null);
-  return session?.accessToken ?? null;
-}
 
 type Raw = Record<string, unknown>;
 
@@ -279,28 +266,11 @@ class MemoryRepo implements ExtIntRepository {
 let mem: MemoryRepo | null = null;
 
 export function createExtIntRepository(): ExtIntRepository {
-  const http = new FetchHttpClient(env.apiBaseUrl, tokenFromCookie);
   const api = new ApiRepo(http);
   if (!mem) mem = new MemoryRepo();
-  const wrap =
-    <A extends unknown[], R>(
-      fn: (...args: A) => Promise<R>,
-      fallback: (...args: A) => Promise<R>,
-    ) =>
-    async (...args: A) => {
-      try {
-        return await fn(...args);
-      } catch {
-        return fallback(...args);
-      }
-    };
-  return {
-    catalog: wrap(api.catalog.bind(api), mem.catalog.bind(mem)),
-    list: wrap(api.list.bind(api), mem.list.bind(mem)),
-    create: wrap(api.create.bind(api), mem.create.bind(mem)),
-    getById: wrap(api.getById.bind(api), mem.getById.bind(mem)),
-    update: wrap(api.update.bind(api), mem.update.bind(mem)),
-    remove: wrap(api.remove.bind(api), mem.remove.bind(mem)),
-    probe: wrap(api.probe.bind(api), mem.probe.bind(mem)),
-  };
+  return createRepository<ExtIntRepository>({
+    api,
+    memory: mem,
+    reads: ["catalog", "list", "getById"],
+  });
 }

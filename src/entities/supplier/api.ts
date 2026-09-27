@@ -1,6 +1,5 @@
-import { env } from "@/shared/config/env";
-import { FetchHttpClient, type HttpClient } from "@/shared/api/http-client";
-import { parseSession, SESSION_COOKIE } from "@/shared/api/session";
+import { http, type HttpClient } from "@/shared/api/http-client";
+import { createRepository } from "@/shared/api/repository";
 import type {
   ConfirmationStatus,
   CreateIssueInput,
@@ -12,18 +11,6 @@ import type {
   SupplierLink,
   SupplierLinkType,
 } from "./model";
-
-function tokenFromCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  const raw = document.cookie
-    .split("; ")
-    .find((c) => c.startsWith(`${SESSION_COOKIE}=`))
-    ?.split("=")
-    .slice(1)
-    .join("=");
-  const session = parseSession(raw ? decodeURIComponent(raw) : null);
-  return session?.accessToken ?? null;
-}
 
 type Raw = Record<string, unknown>;
 
@@ -665,50 +652,20 @@ class MemoryRepo implements SupplierRepository {
 let mem: MemoryRepo | null = null;
 
 export function createSupplierRepository(): SupplierRepository {
-  const http = new FetchHttpClient(env.apiBaseUrl, tokenFromCookie);
   const api = new ApiRepo(http);
   if (!mem) mem = new MemoryRepo();
-  const wrap =
-    <A extends unknown[], R>(
-      fn: (...args: A) => Promise<R>,
-      fallback: (...args: A) => Promise<R>,
-    ) =>
-    async (...args: A) => {
-      try {
-        return await fn(...args);
-      } catch {
-        return fallback(...args);
-      }
-    };
-  return {
-    list: wrap(api.list.bind(api), mem.list.bind(mem)),
-    getById: wrap(api.getById.bind(api), mem.getById.bind(mem)),
-    create: wrap(api.create.bind(api), mem.create.bind(mem)),
-    update: wrap(api.update.bind(api), mem.update.bind(mem)),
-    listLinks: wrap(api.listLinks.bind(api), mem.listLinks.bind(mem)),
-    addLink: wrap(api.addLink.bind(api), mem.addLink.bind(mem)),
-    deleteLink: wrap(api.deleteLink.bind(api), mem.deleteLink.bind(mem)),
-    confirmLink: wrap(api.confirmLink.bind(api), mem.confirmLink.bind(mem)),
-    listUnconfirmed: wrap(
-      api.listUnconfirmed.bind(api),
-      mem.listUnconfirmed.bind(mem),
-    ),
-    listOversold: wrap(api.listOversold.bind(api), mem.listOversold.bind(mem)),
-    listInvoices: wrap(api.listInvoices.bind(api), mem.listInvoices.bind(mem)),
-    getInvoice: wrap(api.getInvoice.bind(api), mem.getInvoice.bind(mem)),
-    createInvoice: wrap(
-      api.createInvoice.bind(api),
-      mem.createInvoice.bind(mem),
-    ),
-    updateInvoiceStatus: wrap(
-      api.updateInvoiceStatus.bind(api),
-      mem.updateInvoiceStatus.bind(mem),
-    ),
-    setInvoiceLines: wrap(
-      api.setInvoiceLines.bind(api),
-      mem.setInvoiceLines.bind(mem),
-    ),
-    listIssues: wrap(api.listIssues.bind(api), mem.listIssues.bind(mem)),
-    createIssue: wrap(api.createIssue.bind(api), mem.createIssue.bind(mem)),
-  };
+  return createRepository<SupplierRepository>({
+    api,
+    memory: mem,
+    reads: [
+      "list",
+      "getById",
+      "listLinks",
+      "listUnconfirmed",
+      "listOversold",
+      "listInvoices",
+      "getInvoice",
+      "listIssues",
+    ],
+  });
 }

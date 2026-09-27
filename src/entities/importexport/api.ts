@@ -1,6 +1,5 @@
-import { env } from "@/shared/config/env";
-import { FetchHttpClient, type HttpClient } from "@/shared/api/http-client";
-import { parseSession, SESSION_COOKIE } from "@/shared/api/session";
+import { http, type HttpClient } from "@/shared/api/http-client";
+import { createRepository } from "@/shared/api/repository";
 import type {
   FieldDef,
   ImportEntityType,
@@ -8,18 +7,6 @@ import type {
   ImportMode,
   MappingTemplate,
 } from "./model";
-
-function tokenFromCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  const raw = document.cookie
-    .split("; ")
-    .find((c) => c.startsWith(`${SESSION_COOKIE}=`))
-    ?.split("=")
-    .slice(1)
-    .join("=");
-  const session = parseSession(raw ? decodeURIComponent(raw) : null);
-  return session?.accessToken ?? null;
-}
 
 type Raw = Record<string, unknown>;
 
@@ -97,15 +84,9 @@ class ApiRepo implements ImportExportRepository {
     fd.append("file", file);
     fd.append("entity_type", entityType);
     fd.append("mode", mode);
-    const token = tokenFromCookie();
-    const res = await fetch(`${env.apiBaseUrl}/imports`, {
-      method: "POST",
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      body: fd,
-    });
-    const payload = (await res.json()) as { data?: Raw; error?: { message?: string } };
-    if (!res.ok) throw new Error(payload.error?.message ?? "upload failed");
-    return mapJob(payload.data ?? {});
+    return mapJob(
+      (await this.http.request<Raw>("/imports", { method: "POST", body: fd })) ?? {},
+    );
   }
 
   async listJobs() {
@@ -146,11 +127,9 @@ class ApiRepo implements ImportExportRepository {
   }
 
   async downloadErrors(id: string) {
-    const token = tokenFromCookie();
-    const res = await fetch(`${env.apiBaseUrl}/imports/${id}/errors`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    const res = await this.http.raw(`/imports/${id}/errors`, {
+      headers: { Accept: "text/csv" },
     });
-    if (!res.ok) throw new Error("errors download failed");
     return res.blob();
   }
 
@@ -197,16 +176,11 @@ class ApiRepo implements ImportExportRepository {
   }
 
   async exportCsv(entityType: ImportEntityType) {
-    const token = tokenFromCookie();
-    const res = await fetch(`${env.apiBaseUrl}/exports`, {
+    const res = await this.http.raw("/exports", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
+      headers: { Accept: "text/csv" },
       body: JSON.stringify({ entity_type: entityType, format: "csv" }),
     });
-    if (!res.ok) throw new Error("export failed");
     return res.blob();
   }
 }
@@ -351,39 +325,11 @@ class MemoryRepo implements ImportExportRepository {
 let mem: MemoryRepo | null = null;
 
 export function createImportExportRepository(): ImportExportRepository {
-  const http = new FetchHttpClient(env.apiBaseUrl, tokenFromCookie);
   const api = new ApiRepo(http);
   if (!mem) mem = new MemoryRepo();
-  const wrap =
-    <A extends unknown[], R>(
-      fn: (...args: A) => Promise<R>,
-      fallback: (...args: A) => Promise<R>,
-    ) =>
-    async (...args: A) => {
-      try {
-        return await fn(...args);
-      } catch {
-        return fallback(...args);
-      }
-    };
-  return {
-    upload: wrap(api.upload.bind(api), mem.upload.bind(mem)),
-    listJobs: wrap(api.listJobs.bind(api), mem.listJobs.bind(mem)),
-    getJob: wrap(api.getJob.bind(api), mem.getJob.bind(mem)),
-    setMapping: wrap(api.setMapping.bind(api), mem.setMapping.bind(mem)),
-    validate: wrap(api.validate.bind(api), mem.validate.bind(mem)),
-    confirm: wrap(api.confirm.bind(api), mem.confirm.bind(mem)),
-    downloadErrors: wrap(
-      api.downloadErrors.bind(api),
-      mem.downloadErrors.bind(mem),
-    ),
-    listTemplates: wrap(api.listTemplates.bind(api), mem.listTemplates.bind(mem)),
-    saveTemplate: wrap(api.saveTemplate.bind(api), mem.saveTemplate.bind(mem)),
-    deleteTemplate: wrap(
-      api.deleteTemplate.bind(api),
-      mem.deleteTemplate.bind(mem),
-    ),
-    schemas: wrap(api.schemas.bind(api), mem.schemas.bind(mem)),
-    exportCsv: wrap(api.exportCsv.bind(api), mem.exportCsv.bind(mem)),
-  };
+  return createRepository<ImportExportRepository>({
+    api,
+    memory: mem,
+    reads: ["listJobs", "getJob", "downloadErrors", "listTemplates", "schemas"],
+  });
 }

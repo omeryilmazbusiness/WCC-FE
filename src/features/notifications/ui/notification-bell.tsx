@@ -12,7 +12,7 @@ import {
   Settings2,
   X,
 } from "lucide-react";
-import { useNotifications } from "@/features/notifications/model/use-notifications";
+import { useNotifications } from "../model/use-notifications";
 import { Link } from "@/shared/i18n/navigation";
 import { cn } from "@/shared/lib/cn";
 import { Button } from "@/shared/ui/button";
@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { IconButton } from "@/shared/ui/icon-button";
+import { useMutationFeedback } from "@/shared/ui/use-mutation-feedback";
 
 function formatTime(iso: string) {
   try {
@@ -61,6 +62,7 @@ export function NotificationBell({ surface = "dark" }: Props) {
     acknowledgeAll,
     updatePreferences,
   } = useNotifications();
+  const feedback = useMutationFeedback();
   const [showPrefs, setShowPrefs] = useState(false);
   const [emailOn, setEmailOn] = useState(false);
   const [pushOn, setPushOn] = useState(false);
@@ -77,9 +79,15 @@ export function NotificationBell({ surface = "dark" }: Props) {
     try {
       await updatePreferences({ emailEnabled: emailOn, pushEnabled: pushOn });
       setShowPrefs(false);
+    } catch (err) {
+      feedback.error(err);
     } finally {
       setSavingPrefs(false);
     }
+  }
+
+  function act(action: Promise<unknown>) {
+    void action.catch((err: unknown) => feedback.error(err));
   }
 
   return (
@@ -124,7 +132,7 @@ export function NotificationBell({ surface = "dark" }: Props) {
                 variant="ghost"
                 size="sm"
                 className="h-8 gap-1.5 text-xs"
-                onClick={() => void acknowledgeAll()}
+                onClick={() => act(acknowledgeAll())}
               >
                 <CheckCheck className="h-3.5 w-3.5" />
                 {t("markAllRead")}
@@ -221,7 +229,7 @@ export function NotificationBell({ surface = "dark" }: Props) {
                           {item.href ? (
                             <Link
                               href={item.href}
-                              onClick={() => void acknowledge(item.id)}
+                              onClick={() => act(acknowledge(item.id))}
                               className={cn(
                                 "truncate text-sm font-semibold hover:underline",
                                 item.read ? "text-zinc-700" : "text-zinc-950",
@@ -251,7 +259,7 @@ export function NotificationBell({ surface = "dark" }: Props) {
                             <button
                               type="button"
                               className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold text-zinc-600 hover:bg-zinc-100"
-                              onClick={() => void acknowledge(item.id)}
+                              onClick={() => act(acknowledge(item.id))}
                             >
                               <Check className="h-3 w-3" />
                               {t("acknowledge")}
@@ -261,7 +269,7 @@ export function NotificationBell({ surface = "dark" }: Props) {
                             <button
                               type="button"
                               className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold text-zinc-600 hover:bg-zinc-100"
-                              onClick={() => void resolve(item.id)}
+                              onClick={() => act(resolve(item.id))}
                             >
                               <CheckCheck className="h-3 w-3" />
                               {t("resolve")}
@@ -272,7 +280,7 @@ export function NotificationBell({ surface = "dark" }: Props) {
                       <button
                         type="button"
                         aria-label={t("dismiss")}
-                        onClick={() => void resolve(item.id)}
+                        onClick={() => act(resolve(item.id))}
                         className="rounded-lg p-1 text-zinc-300 opacity-0 transition-all group-hover:opacity-100 hover:bg-zinc-100 hover:text-zinc-600"
                       >
                         <X className="h-3.5 w-3.5" />

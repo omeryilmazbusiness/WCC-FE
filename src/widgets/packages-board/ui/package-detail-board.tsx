@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import type {
   Departure,
@@ -17,6 +17,8 @@ import {
   PageHeader,
   Screen,
   useToast,
+  QueryState,
+  errorKind,
 } from "@/shared/ui";
 import { DepartureCard } from "./departure-card";
 
@@ -30,9 +32,9 @@ export function PackageDetailBoard({ packageId, repository }: Props) {
   const { push } = useToast();
   const [pkg, setPkg] = useState<TourPackage | null>(null);
   const [deps, setDeps] = useState<Departure[]>([]);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<unknown>(null);
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     try {
       const [p, d] = await Promise.all([
         repository.getPackage(packageId),
@@ -40,15 +42,15 @@ export function PackageDetailBoard({ packageId, repository }: Props) {
       ]);
       setPkg(p);
       setDeps(d);
-      setError(false);
-    } catch {
-      setError(true);
+      setError(null);
+    } catch (err) {
+      setError(err);
     }
-  }
+  }, [packageId, repository]);
 
   useEffect(() => {
     void refresh();
-  }, [packageId, repository]);
+  }, [refresh]);
 
   function upsertDeparture(d: Departure) {
     setDeps((prev) => {
@@ -58,7 +60,17 @@ export function PackageDetailBoard({ packageId, repository }: Props) {
   }
 
   if (error) {
-    return <EmptyState title={t("notFound")} />;
+    return (
+      <Screen>
+        <QueryState
+          error={error}
+          errorTitle={errorKind(error) === "notFound" ? t("notFound") : undefined}
+          onRetry={() => void refresh()}
+        >
+          {null}
+        </QueryState>
+      </Screen>
+    );
   }
 
   if (!pkg) {

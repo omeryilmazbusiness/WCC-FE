@@ -1,6 +1,5 @@
-import { env } from "@/shared/config/env";
-import { FetchHttpClient, type HttpClient } from "@/shared/api/http-client";
-import { parseSession, SESSION_COOKIE } from "@/shared/api/session";
+import { http, type HttpClient } from "@/shared/api/http-client";
+import { createRepository } from "@/shared/api/repository";
 import type {
   CreateFileSyncConnectionInput,
   FileSyncConnection,
@@ -12,18 +11,6 @@ import type {
   FileSyncSourceOfTruth,
   UpdateFileSyncConnectionInput,
 } from "./model";
-
-function tokenFromCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  const raw = document.cookie
-    .split("; ")
-    .find((c) => c.startsWith(`${SESSION_COOKIE}=`))
-    ?.split("=")
-    .slice(1)
-    .join("=");
-  const session = parseSession(raw ? decodeURIComponent(raw) : null);
-  return session?.accessToken ?? null;
-}
 
 type Raw = Record<string, unknown>;
 
@@ -300,41 +287,11 @@ class MemoryRepo implements FileSyncRepository {
 let mem: MemoryRepo | null = null;
 
 export function createFileSyncRepository(): FileSyncRepository {
-  const http = new FetchHttpClient(env.apiBaseUrl, tokenFromCookie);
   const api = new ApiRepo(http);
   if (!mem) mem = new MemoryRepo();
-  const wrap =
-    <A extends unknown[], R>(
-      fn: (...args: A) => Promise<R>,
-      fallback: (...args: A) => Promise<R>,
-    ) =>
-    async (...args: A) => {
-      try {
-        return await fn(...args);
-      } catch {
-        return fallback(...args);
-      }
-    };
-  return {
-    listConnections: wrap(
-      api.listConnections.bind(api),
-      mem.listConnections.bind(mem),
-    ),
-    createConnection: wrap(
-      api.createConnection.bind(api),
-      mem.createConnection.bind(mem),
-    ),
-    getConnection: wrap(api.getConnection.bind(api), mem.getConnection.bind(mem)),
-    updateConnection: wrap(
-      api.updateConnection.bind(api),
-      mem.updateConnection.bind(mem),
-    ),
-    deleteConnection: wrap(
-      api.deleteConnection.bind(api),
-      mem.deleteConnection.bind(mem),
-    ),
-    connect: wrap(api.connect.bind(api), mem.connect.bind(mem)),
-    sync: wrap(api.sync.bind(api), mem.sync.bind(mem)),
-    listRuns: wrap(api.listRuns.bind(api), mem.listRuns.bind(mem)),
-  };
+  return createRepository<FileSyncRepository>({
+    api,
+    memory: mem,
+    reads: ["listConnections", "getConnection", "listRuns"],
+  });
 }

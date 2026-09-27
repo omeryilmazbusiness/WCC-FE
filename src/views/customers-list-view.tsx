@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   createCustomerRepository,
   type Customer,
 } from "@/entities/customer";
+import { useCan } from "@/entities/viewer";
 import { CreateCustomerDialog } from "@/features/create-customer";
+import { useApiQuery } from "@/shared/lib/use-api-query";
 import { Link } from "@/shared/i18n/navigation";
 import { routes } from "@/shared/config/routes";
 import {
@@ -15,8 +17,9 @@ import {
   DataTable,
   EmptyState,
   ListScreen,
+  QueryState,
   SearchFilterBar,
-  useToast,
+  useMutationFeedback,
 } from "@/shared/ui";
 
 const repo = createCustomerRepository();
@@ -27,23 +30,13 @@ type NameFilter = "all" | "has-ar" | "en-only";
 export function CustomersListView() {
   const t = useTranslations("customers");
   const tc = useTranslations("common");
-  const { push } = useToast();
+  const feedback = useMutationFeedback();
+  const canWrite = useCan("customers.write");
   const [query, setQuery] = useState("");
   const [emailFilter, setEmailFilter] = useState<EmailFilter>("all");
   const [nameFilter, setNameFilter] = useState<NameFilter>("all");
-  const [rows, setRows] = useState<Customer[]>([]);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    void repo.search("").then((items) => {
-      setRows(items);
-      setLoaded(true);
-    });
-  }, []);
-
-  async function refresh(q: string) {
-    setRows(await repo.search(q));
-  }
+  const search = useApiQuery(() => repo.search(query), [query]);
+  const rows = useMemo<Customer[]>(() => search.data ?? [], [search.data]);
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
@@ -112,7 +105,6 @@ export function CustomersListView() {
     setQuery("");
     setEmailFilter("all");
     setNameFilter("all");
-    void refresh("");
   }
 
   return (
@@ -120,25 +112,21 @@ export function CustomersListView() {
       title={t("title")}
       description={t("subtitle")}
       actions={
-        <CreateCustomerDialog
-          repository={repo}
-          onCreated={async () => {
-            resetFilters();
-            push({
-              title: t("createdToastTitle"),
-              description: t("createdToastBody"),
-              tone: "success",
-            });
-          }}
-        />
+        canWrite ? (
+          <CreateCustomerDialog
+            repository={repo}
+            onCreated={async () => {
+              resetFilters();
+              await search.reload();
+              feedback.success(t("createdToastTitle"), t("createdToastBody"));
+            }}
+          />
+        ) : undefined
       }
       toolbar={
         <SearchFilterBar
           value={query}
-          onValueChange={(v) => {
-            setQuery(v);
-            void refresh(v);
-          }}
+          onValueChange={setQuery}
           placeholder={t("searchPlaceholder")}
           clearLabel={tc("clearSearch")}
           filterLabel={tc("filter")}
@@ -188,11 +176,18 @@ export function CustomersListView() {
         />
       }
     >
-      {loaded && filtered.length === 0 ? (
-        <EmptyState title={t("empty")} description={t("emptyHint")} />
-      ) : (
-        <DataTable columns={columns} data={filtered} emptyMessage={t("empty")} />
-      )}
+      <QueryState
+        loading={search.loading && !search.data}
+        loadingLabel={tc("loading")}
+        error={search.error}
+        onRetry={() => void search.reload()}
+      >
+        {filtered.length === 0 ? (
+          <EmptyState title={t("empty")} description={t("emptyHint")} />
+        ) : (
+          <DataTable columns={columns} data={filtered} emptyMessage={t("empty")} />
+        )}
+      </QueryState>
     </ListScreen>
   );
 }

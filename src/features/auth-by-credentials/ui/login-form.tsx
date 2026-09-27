@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslations } from "next-intl";
-import { ApiError } from "@/shared/api/http-client";
-import { homeForRole } from "@/shared/config/routes";
-import { useRouter } from "@/shared/i18n/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { isApiError, isNetworkError } from "@/shared/api/api-error";
+import type { LoginResult } from "@/shared/api/auth-contract";
+import { env } from "@/shared/config/env";
+import { routes } from "@/shared/config/routes";
+import { applyFieldErrors } from "@/shared/lib/form-errors";
 import { Button } from "@/shared/ui/button";
 import {
   Form,
@@ -18,11 +20,11 @@ import {
   FormMessage,
 } from "@/shared/ui/form";
 import { Input } from "@/shared/ui/input";
-import {
-  ApiAuthGateway,
-  DemoAuthGateway,
-} from "@/features/auth-by-credentials/model/auth-gateway";
-import { persistSession } from "@/features/auth-by-credentials/model/session-store";
+import { login } from "../model/auth-api";
+import { lockoutFrom, type Lockout } from "../model/lockout";
+import { LockoutNotice } from "./lockout-notice";
+import { MfaCodeStep } from "./mfa-code-step";
+import { MfaSetupStep } from "./mfa-setup-step";
 
 const schema = z.object({
   email: z.string().email(),
@@ -31,42 +33,101 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+const DEMO_DEFAULTS: FormValues = { email: "manager@wodi.local", password: "ChangeMe123!" };
+
 export function LoginForm() {
   const t = useTranslations("auth");
-  const router = useRouter();
+  const locale = useLocale();
   const [error, setError] = useState<string | null>(null);
+  const [challenge, setChallenge] = useState<string | null>(null);
+  const [lockout, setLockout] = useState<Lockout | null>(null);
+  const [setupRequired, setSetupRequired] = useState(false);
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { email: "manager@wodi.local", password: "ChangeMe123!" },
+    defaultValues: env.demoMode ? DEMO_DEFAULTS : { email: "", password: "" },
   });
+
+  const clearLockout = useCallback(() => setLockout(null), []);
+  const navigate = useCallback(
+    // Full navigation so the server layout reads the freshly set HttpOnly cookies.
+    (target: string) => window.location.assign(`/${locale}${target}`),
+    [locale],
+  );
+  const leaveSetup = useCallback(
+    (message?: string) => {
+      setSetupRequired(false);
+      setError(message ?? null);
+      form.resetField("password");
+    },
+    [form],
+  );
+
+  function handleResult(result: LoginResult) {
+    if (result.status === "mfa_required") {
+      setChallenge(result.challenge);
+      return;
+    }
+    if (result.status === "mfa_setup_required") {
+      setChallenge(null);
+      setSetupRequired(true);
+      return;
+    }
+    navigate(
+      result.status === "mfa_enrollment_required" ? `${routes.security}?enroll=required` : result.home,
+    );
+  }
+
+  function handleLockout(next: Lockout) {
+    setChallenge(null);
+    setError(null);
+    setLockout(next);
+  }
 
   async function onSubmit(values: FormValues) {
     setError(null);
     try {
-      let session;
-      try {
-        session = await new ApiAuthGateway().login(values.email, values.password);
-      } catch (err) {
-        // Offline / BE down → demo gateway for F1–F4 shell work
-        if (err instanceof ApiError || err instanceof TypeError) {
-          session = await new DemoAuthGateway().login(
-            values.email,
-            values.password,
-          );
-        } else {
-          throw err;
-        }
+      handleResult(await login(values.email, values.password));
+    } catch (err) {
+      const next = lockoutFrom(err);
+      if (next) {
+        handleLockout(next);
+      } else if (applyFieldErrors(form.setError, err, ["email", "password"])) {
+        return;
+      } else if (isNetworkError(err)) {
+        setError(t("networkError"));
+      } else if (isApiError(err) && err.status === 401) {
+        setError(t("error"));
+      } else {
+        setError(t("genericError"));
       }
-      persistSession(session);
-      router.replace(homeForRole(session.user.role));
-    } catch {
-      setError(t("error"));
     }
   }
+
+  if (setupRequired) {
+    return <MfaSetupStep onComplete={navigate} onBack={leaveSetup} />;
+  }
+
+  if (challenge) {
+    return (
+      <MfaCodeStep
+        challenge={challenge}
+        onAuthenticated={handleResult}
+        onLockout={handleLockout}
+        onBack={(message) => {
+          setChallenge(null);
+          setError(message ?? null);
+          form.resetField("password");
+        }}
+      />
+    );
+  }
+
+  const locked = lockout !== null;
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        {lockout ? <LockoutNotice lockout={lockout} onElapsed={clearLockout} /> : null}
         <FormField
           control={form.control}
           name="email"
@@ -98,7 +159,11 @@ export function LoginForm() {
             {error}
           </p>
         ) : null}
-        <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={form.formState.isSubmitting || locked}
+        >
           {t("submit")}
         </Button>
       </form>

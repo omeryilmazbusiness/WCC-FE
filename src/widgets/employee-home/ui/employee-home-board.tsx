@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { Briefcase, GitBranch, Target } from "lucide-react";
 import {
@@ -13,13 +13,16 @@ import {
   type TaskRepository,
 } from "@/entities/task";
 import { createLeadRepository, type Lead } from "@/entities/lead";
+import { useCan } from "@/entities/viewer";
 import { useSessionUser } from "@/shared/api/session-context";
 import { routes } from "@/shared/config/routes";
 import { Link } from "@/shared/i18n/navigation";
+import { useApiQuery } from "@/shared/lib/use-api-query";
 import {
   EmptyState,
   MetricCard,
   PageHeader,
+  QueryState,
   Screen,
   StageBadge,
   LEAD_STAGE_TONES,
@@ -40,28 +43,34 @@ export function EmployeeHomeBoard({
   const tp = useTranslations("pipeline");
   const tc = useTranslations("common");
   const user = useSessionUser();
-  const [tasks, setTasks] = useState<Task[] | null>(null);
-  const [leads, setLeads] = useState<Lead[] | null>(null);
-  const [target, setTarget] = useState<TargetSnapshot | null>(null);
-  const [workOrder, setWorkOrder] = useState<string[]>([]);
-
-  useEffect(() => {
-    void taskRepository.listToday(user.id).then(setTasks);
-    void createLeadRepository().list().then((all) =>
-      setLeads(all.filter((l) => l.ownerId === user.id)),
-    );
-    void dashRepo.getTarget("personal").then(setTarget);
-    void dashRepo.getMyWork(30).then((items) => {
-      setWorkOrder(items.filter((i) => i.source === "task").map((i) => i.id));
-    });
-  }, [taskRepository, user.id]);
+  const canLeads = useCan("leads.read");
+  const canTargets = useCan("targets.read");
+  const home = useApiQuery(async () => {
+    const [tasks, leads, target, work] = await Promise.all([
+      taskRepository.listToday(user.id),
+      canLeads ? createLeadRepository().list() : Promise.resolve<Lead[]>([]),
+      canTargets ? dashRepo.getTarget("personal") : Promise.resolve<TargetSnapshot | null>(null),
+      dashRepo.getMyWork(30),
+    ]);
+    return {
+      tasks,
+      leads: leads.filter((l) => l.ownerId === user.id),
+      target,
+      workOrder: work.filter((i) => i.source === "task").map((i) => i.id),
+    };
+  }, [taskRepository, user.id, canLeads, canTargets]);
+  const setHome = home.setData;
+  const tasks = home.data?.tasks;
+  const leads = home.data?.leads;
+  const target = home.data?.target ?? null;
+  const workOrder = useMemo(() => home.data?.workOrder ?? [], [home.data]);
 
   function upsert(task: Task) {
-    setTasks((prev) => {
+    setHome((prev) => {
       if (!prev) return prev;
-      const rest = prev.filter((x) => x.id !== task.id);
-      if (task.status === "done" || task.status === "cancelled") return rest;
-      return [task, ...rest];
+      const rest = prev.tasks.filter((x) => x.id !== task.id);
+      const done = task.status === "done" || task.status === "cancelled";
+      return { ...prev, tasks: done ? rest : [task, ...rest] };
     });
   }
 
@@ -83,16 +92,24 @@ export function EmployeeHomeBoard({
       .slice(0, 5);
   }, [leads]);
 
-  if (!tasks || !leads || !target) {
+  if (!home.data) {
     return (
       <Screen>
-        <p className="text-sm font-medium text-zinc-500">{tc("loading")}</p>
+        <PageHeader title={t("title")} description={t("subtitle")} />
+        <QueryState
+          loading={home.loading}
+          loadingLabel={tc("loading")}
+          error={home.error}
+          onRetry={() => void home.reload()}
+        >
+          {null}
+        </QueryState>
       </Screen>
     );
   }
 
   const progressPct =
-    target.targetAmount > 0
+    target && target.targetAmount > 0
       ? Math.round((target.actualAmount / target.targetAmount) * 100)
       : 0;
 
@@ -126,6 +143,7 @@ export function EmployeeHomeBoard({
         </SurfacePanel>
 
         <div className="flex flex-col gap-5">
+          {target ? (
           <SurfacePanel
             title={t("targetTitle")}
             description={t("targetBody")}
@@ -150,7 +168,9 @@ export function EmployeeHomeBoard({
               />
             </div>
           </SurfacePanel>
+          ) : null}
 
+          {canLeads ? (
           <SurfacePanel
             title={t("pipelineTitle")}
             description={t("pipelineBody")}
@@ -190,6 +210,7 @@ export function EmployeeHomeBoard({
               {t("openPipeline")}
             </Link>
           </SurfacePanel>
+          ) : null}
         </div>
       </div>
     </Screen>

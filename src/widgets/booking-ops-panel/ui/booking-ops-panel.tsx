@@ -17,17 +17,20 @@ import {
   type VisaStatus,
 } from "@/entities/visa";
 import type { BookingParticipant } from "@/entities/booking";
+import { useCan } from "@/entities/viewer";
 import { OCRConfirmPanel } from "@/features/ai-ocr";
 import { cn } from "@/shared/lib/cn";
 import {
   Badge,
   Button,
   Input,
+  QueryState,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  useMutationFeedback,
   useToast,
 } from "@/shared/ui";
 
@@ -76,6 +79,11 @@ export function BookingOpsPanel({
   const vRepo = useMemo(() => visaRepo ?? createVisaRepository(), [visaRepo]);
   const t = useTranslations("ops");
   const { push } = useToast();
+  const feedback = useMutationFeedback();
+  const canWriteDocs = useCan("documents.write");
+  const canReviewDocs = useCan("documents.review");
+  const canWriteVisa = useCan("visa.write");
+  const [loadError, setLoadError] = useState<unknown>(null);
 
   const [items, setItems] = useState<DocChecklistItem[]>([]);
   const [docs, setDocs] = useState<Document[]>([]);
@@ -123,9 +131,18 @@ export function BookingOpsPanel({
     await Promise.all(tasks);
   }, [bookingId, docsRepo, vRepo, participants, section]);
 
+  const load = useCallback(async () => {
+    setLoadError(null);
+    try {
+      await refresh();
+    } catch (err) {
+      setLoadError(err);
+    }
+  }, [refresh]);
+
   useEffect(() => {
-    void refresh().catch(() => push({ title: t("loadError"), tone: "error" }));
-  }, [refresh, push, t]);
+    void load();
+  }, [load]);
 
   async function run(fn: () => Promise<unknown>) {
     setBusy(true);
@@ -133,13 +150,9 @@ export function BookingOpsPanel({
       await fn();
       await refresh();
       onChanged?.();
-      push({ title: t("saved"), tone: "success" });
-    } catch (e) {
-      push({
-        title: t("actionError"),
-        description: e instanceof Error ? e.message : undefined,
-        tone: "error",
-      });
+      feedback.success(t("saved"));
+    } catch (err) {
+      feedback.error(err, t("actionError"));
     } finally {
       setBusy(false);
     }
@@ -165,6 +178,20 @@ export function BookingOpsPanel({
 
   const showDocs = section === "documents" || section === "all";
   const showVisa = section === "visa" || section === "all";
+
+  if (loadError) {
+    return (
+      <div data-testid="booking-ops-panel">
+        <QueryState
+          error={loadError}
+          errorTitle={t("loadError")}
+          onRetry={() => void load()}
+        >
+          {null}
+        </QueryState>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4" data-testid="booking-ops-panel">
@@ -219,7 +246,7 @@ export function BookingOpsPanel({
                                   docsRepo.classify(it.documentId!, kind),
                                 )
                               }
-                              disabled={busy}
+                              disabled={busy || !canWriteDocs}
                             >
                               <SelectTrigger className="h-8 w-[110px]">
                                 <SelectValue />
@@ -232,8 +259,9 @@ export function BookingOpsPanel({
                                 ))}
                               </SelectContent>
                             </Select>
-                            {(it.status === "uploaded" ||
-                              it.status === "pending") && (
+                            {canWriteDocs &&
+                              (it.status === "uploaded" ||
+                                it.status === "pending") && (
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -245,8 +273,9 @@ export function BookingOpsPanel({
                                 {t("submit")}
                               </Button>
                             )}
-                            {it.status === "submitted" ||
-                            it.status === "uploaded" ? (
+                            {canReviewDocs &&
+                            (it.status === "submitted" ||
+                              it.status === "uploaded") ? (
                               <>
                                 <Button
                                   size="sm"
@@ -300,7 +329,8 @@ export function BookingOpsPanel({
                         {d.fileName || d.id.slice(0, 8)}
                       </span>
                       <Badge className={statusTone(d.status)}>{d.status}</Badge>
-                      {(d.status === "uploaded" || d.status === "pending") && (
+                      {canWriteDocs &&
+                        (d.status === "uploaded" || d.status === "pending") && (
                         <Button
                           size="sm"
                           variant="outline"
@@ -310,7 +340,8 @@ export function BookingOpsPanel({
                           {t("submit")}
                         </Button>
                       )}
-                      {(d.status === "submitted" || d.status === "uploaded") && (
+                      {canReviewDocs &&
+                        (d.status === "submitted" || d.status === "uploaded") && (
                         <>
                           <Button
                             size="sm"
@@ -342,6 +373,7 @@ export function BookingOpsPanel({
               </div>
             ) : null}
 
+            {canWriteDocs ? (
             <div className="flex flex-wrap items-end gap-2 rounded-xl border border-dashed border-zinc-200 p-3">
               <div className="space-y-1">
                 <p className="text-[11px] font-medium text-zinc-500">{t("kind")}</p>
@@ -417,6 +449,7 @@ export function BookingOpsPanel({
                 />
               </label>
             </div>
+            ) : null}
             <OCRConfirmPanel
               onConfirmFields={(fields) => {
                 push({
@@ -437,7 +470,7 @@ export function BookingOpsPanel({
             <p className="text-sm font-semibold text-zinc-950">{t("visaTitle")}</p>
             <Button
               size="sm"
-              disabled={busy}
+              disabled={busy || !canWriteVisa}
               onClick={() =>
                 void run(() =>
                   vRepo.create({
@@ -520,7 +553,7 @@ export function BookingOpsPanel({
                       ) : null}
                     </div>
                     <div className="mt-2 flex flex-wrap gap-1">
-                      {(VISA_NEXT[c.status] ?? []).map((next: VisaStatus) => (
+                      {(canWriteVisa ? (VISA_NEXT[c.status] ?? []) : []).map((next: VisaStatus) => (
                         <Button
                           key={next}
                           size="sm"

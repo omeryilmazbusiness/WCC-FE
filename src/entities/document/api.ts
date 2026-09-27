@@ -1,6 +1,5 @@
-import { env } from "@/shared/config/env";
-import { FetchHttpClient, type HttpClient } from "@/shared/api/http-client";
-import { parseSession, SESSION_COOKIE } from "@/shared/api/session";
+import { http, type HttpClient } from "@/shared/api/http-client";
+import { createRepository } from "@/shared/api/repository";
 import type {
   DocChecklist,
   DocChecklistItem,
@@ -10,18 +9,6 @@ import type {
   MissingDocsRow,
   PresignResult,
 } from "./model";
-
-function tokenFromCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  const raw = document.cookie
-    .split("; ")
-    .find((c) => c.startsWith(`${SESSION_COOKIE}=`))
-    ?.split("=")
-    .slice(1)
-    .join("=");
-  const session = parseSession(raw ? decodeURIComponent(raw) : null);
-  return session?.accessToken ?? null;
-}
 
 type Raw = Record<string, unknown>;
 
@@ -319,7 +306,7 @@ class MemoryRepo implements DocumentRepository {
     };
   }
 
-  async missingDocs(_departureId: string) {
+  async missingDocs() {
     return [
       {
         bookingId: "bk-demo",
@@ -444,32 +431,11 @@ class MemoryRepo implements DocumentRepository {
 let mem: MemoryRepo | null = null;
 
 export function createDocumentRepository(): DocumentRepository {
-  const http = new FetchHttpClient(env.apiBaseUrl, tokenFromCookie);
   const api = new ApiRepo(http);
   if (!mem) mem = new MemoryRepo();
-  const wrap =
-    <A extends unknown[], R>(
-      fn: (...args: A) => Promise<R>,
-      fallback: (...args: A) => Promise<R>,
-    ) =>
-    async (...args: A) => {
-      try {
-        return await fn(...args);
-      } catch {
-        return fallback(...args);
-      }
-    };
-  return {
-    checklist: wrap(api.checklist.bind(api), mem.checklist.bind(mem)),
-    missingDocs: wrap(api.missingDocs.bind(api), mem.missingDocs.bind(mem)),
-    list: wrap(api.list.bind(api), mem.list.bind(mem)),
-    presign: wrap(api.presign.bind(api), mem.presign.bind(mem)),
-    complete: wrap(api.complete.bind(api), mem.complete.bind(mem)),
-    classify: wrap(api.classify.bind(api), mem.classify.bind(mem)),
-    submit: wrap(api.submit.bind(api), mem.submit.bind(mem)),
-    approve: wrap(api.approve.bind(api), mem.approve.bind(mem)),
-    reject: wrap(api.reject.bind(api), mem.reject.bind(mem)),
-    replace: wrap(api.replace.bind(api), mem.replace.bind(mem)),
-    uploadFile: wrap(api.uploadFile.bind(api), mem.uploadFile.bind(mem)),
-  };
+  return createRepository<DocumentRepository>({
+    api,
+    memory: mem,
+    reads: ["checklist", "missingDocs", "list"],
+  });
 }

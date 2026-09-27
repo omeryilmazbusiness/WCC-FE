@@ -8,10 +8,19 @@ import type {
   TourPackageRepository,
 } from "@/entities/tourpackage";
 import { departureRemaining } from "@/entities/tourpackage";
+import { useCan } from "@/entities/viewer";
 import { CloneDepartureDialog } from "@/features/clone-departure";
 import { Link } from "@/shared/i18n/navigation";
 import { routes } from "@/shared/config/routes";
-import { Badge, Button, CapacityBadge, Card, CardContent, useToast } from "@/shared/ui";
+import {
+  Badge,
+  Button,
+  CapacityBadge,
+  Card,
+  CardContent,
+  useMutationFeedback,
+  useToast,
+} from "@/shared/ui";
 
 type Props = {
   departure: Departure;
@@ -34,6 +43,8 @@ function formatMoney(amount: number, currency: string) {
 export function DepartureCard({ departure, repository, onChanged }: Props) {
   const t = useTranslations("packages");
   const { push } = useToast();
+  const feedback = useMutationFeedback();
+  const canWrite = useCan("packages.write");
   const [ready, setReady] = useState<DepartureReadiness | null>(null);
 
   useEffect(() => {
@@ -48,8 +59,8 @@ export function DepartureCard({ departure, repository, onChanged }: Props) {
         title: closed ? t("salesClosedTitle") : t("salesOpenedTitle"),
         tone: "success",
       });
-    } catch {
-      push({ title: t("actionError"), tone: "error" });
+    } catch (err) {
+      feedback.error(err, t("actionError"));
     }
   }
 
@@ -58,8 +69,8 @@ export function DepartureCard({ departure, repository, onChanged }: Props) {
       const updated = await repository.markFull(departure.id);
       onChanged(updated);
       push({ title: t("markedFullTitle"), tone: "success" });
-    } catch {
-      push({ title: t("actionError"), tone: "error" });
+    } catch (err) {
+      feedback.error(err, t("actionError"));
     }
   }
 
@@ -116,7 +127,7 @@ export function DepartureCard({ departure, repository, onChanged }: Props) {
               repository={repository}
               onCloned={onChanged}
             />
-            {!departure.salesClosed ? (
+            {!canWrite ? null : !departure.salesClosed ? (
               <>
                 <Button
                   type="button"

@@ -19,5 +19,12 @@ export default defineConfig({
     url: "http://127.0.0.1:3000/en/login",
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
+    env: {
+      NEXT_PUBLIC_DEMO_MODE: "true",
+      API_BASE_URL: process.env.API_BASE_URL ?? "http://127.0.0.1:9/v1",
+      NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:9/v1",
+      SESSION_SECRET: process.env.SESSION_SECRET ?? "e2e-only-session-secret-0123456789abcdef",
+      COOKIE_SECURE: "false",
+    },
   },
 });
