@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   createNotificationRepository,
+  notificationHref,
   toneFromSeverity,
   type AppNotification,
   type NotificationPreference,
 } from "@/entities/notification";
+import { useRealtime, useRealtimeStatus } from "@/shared/lib/use-realtime";
 
 export type BellItem = {
   id: string;
@@ -27,7 +29,7 @@ function toBellItem(n: AppNotification): BellItem {
     body: n.body,
     createdAt: n.createdAt,
     read: n.status !== "open",
-    href: n.hrefHint || undefined,
+    href: notificationHref(n) || undefined,
     tone: toneFromSeverity(n.severity),
     status: n.status,
     kind: n.kind,
@@ -72,18 +74,26 @@ export function useNotifications() {
     };
   }, []);
 
+  useRealtime(() => void refresh(), { types: ["notification"] }, { debounceMs: 300 });
+  const live = useRealtimeStatus() === "open";
+
   useEffect(() => {
     void refresh();
-    const tick = () => {
+    const onVisible = () => {
       if (document.visibilityState === "visible") void refresh();
     };
-    const id = window.setInterval(tick, 45_000);
-    document.addEventListener("visibilitychange", tick);
-    return () => {
-      window.clearInterval(id);
-      document.removeEventListener("visibilitychange", tick);
-    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
   }, [refresh]);
+
+  // Polling is only the fallback while the realtime stream is down.
+  useEffect(() => {
+    if (live) return;
+    const id = window.setInterval(() => {
+      if (document.visibilityState === "visible") void refresh();
+    }, 45_000);
+    return () => window.clearInterval(id);
+  }, [refresh, live]);
 
   const acknowledge = useCallback(
     async (id: string) => {

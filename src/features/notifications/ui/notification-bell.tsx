@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { useNotifications } from "../model/use-notifications";
+import { routes } from "@/shared/config/routes";
 import { Link } from "@/shared/i18n/navigation";
 import { cn } from "@/shared/lib/cn";
 import { Button } from "@/shared/ui/button";
@@ -292,6 +293,17 @@ export function NotificationBell({ surface = "dark" }: Props) {
             )}
           </ul>
         )}
+        {!showPrefs ? (
+          <>
+            <DropdownMenuSeparator className="my-0" />
+            <Link
+              href={routes.notifications}
+              className="block px-4 py-2.5 text-center text-xs font-semibold text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950"
+            >
+              {t("viewAll")}
+            </Link>
+          </>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
+  Bell,
   Building2,
   LayoutDashboard,
   Users,
@@ -55,6 +56,7 @@ type NavLabel =
   | "pipeline"
   | "inbox"
   | "tasks"
+  | "notifications"
   | "customers"
   | "packages"
   | "bookings"
@@ -88,6 +90,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: routes.pipeline, label: "pipeline", icon: Kanban },
   { href: routes.inbox, label: "inbox", icon: MessageSquare },
   { href: routes.tasks, label: "tasks", icon: ListTodo },
+  { href: routes.notifications, label: "notifications", icon: Bell },
   { href: routes.customers, label: "customers", icon: Users },
   { href: routes.packages, label: "packages", icon: Package },
   { href: routes.bookings, label: "bookings", icon: CalendarCheck2 },

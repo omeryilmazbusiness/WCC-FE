@@ -77,6 +77,7 @@ export const ROUTE_PERMISSIONS = {
   [routes.pipeline]: "leads.read",
   [routes.inbox]: "inbox.read",
   [routes.tasks]: "tasks.read",
+  [routes.notifications]: "notifications.read",
   [routes.customers]: "customers.read",
   [routes.packages]: "packages.read",
   [routes.bookings]: "bookings.read",

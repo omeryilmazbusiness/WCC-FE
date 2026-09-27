@@ -97,7 +97,7 @@ function announceViewerRefresh(res: Response) {
  * the same-origin BFF proxy, which reads the HttpOnly cookie and refreshes on 401.
  * A 401 surfacing here means the BFF already ended the session (cookies cleared).
  */
-export const http: HttpClient = new DedupingHttpClient(
+const dedupingHttp = new DedupingHttpClient(
   new FetchHttpClient({
     baseUrl: PROXY_BASE_PATH,
     credentials: "same-origin",
@@ -107,6 +107,13 @@ export const http: HttpClient = new DedupingHttpClient(
   }),
   { ttlMs: 2_000, maxEntries: 64 },
 );
+
+export const http: HttpClient = dedupingHttp;
+
+/** Drops remembered GET responses; used when the server announces a change. */
+export function invalidateCachedReads(): void {
+  dedupingHttp.clear();
+}
 
 /** Same-origin client for `/api/auth/*` BFF routes — 401 there means bad credentials. */
 export const bffHttp: HttpClient = new FetchHttpClient({

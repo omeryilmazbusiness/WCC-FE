@@ -1,3 +1,5 @@
+import { routes } from "@/shared/config/routes";
+
 export type NotificationSeverity = "info" | "warning" | "critical";
 export type NotificationStatus = "open" | "acknowledged" | "resolved";
 
@@ -21,6 +23,26 @@ export type AppNotification = {
   resolvedAt: string | null;
 };
 
+/** Active notifications of one kind for the viewer (grouped center view). */
+export type NotificationGroup = {
+  kind: string;
+  severity: NotificationSeverity;
+  title: string;
+  href: string;
+  open: number;
+  acknowledged: number;
+  occurrences: number;
+  latestAt: string;
+};
+
+export type NotificationListParams = {
+  status?: NotificationStatus;
+  includeResolved?: boolean;
+  kinds?: readonly string[];
+  limit?: number;
+  offset?: number;
+};
+
 export type NotificationPreference = {
   userId: string;
   emailEnabled: boolean;
@@ -39,6 +61,17 @@ export type EscalationRule = {
   defaultHref: string;
   entityType: string;
 };
+
+/** Deep link for a notification: its record when known, else the rule's screen. */
+export function notificationHref(
+  n: Pick<AppNotification, "entityType" | "entityId" | "hrefHint">,
+): string {
+  if (n.entityId) {
+    if (n.entityType === "booking") return routes.booking(n.entityId);
+    if (n.entityType === "customer") return routes.customer(n.entityId);
+  }
+  return n.hrefHint;
+}
 
 export function toneFromSeverity(
   severity: NotificationSeverity,

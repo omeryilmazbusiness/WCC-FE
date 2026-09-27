@@ -3,6 +3,8 @@ import { createRepository } from "@/shared/api/repository";
 import type {
   AppNotification,
   EscalationRule,
+  NotificationGroup,
+  NotificationListParams,
   NotificationPreference,
   NotificationSeverity,
   NotificationStatus,
@@ -39,6 +41,30 @@ function mapNotification(raw: Raw): AppNotification {
   };
 }
 
+function mapGroup(raw: Raw): NotificationGroup {
+  return {
+    kind: str(raw.kind),
+    severity: str(raw.severity ?? "info") as NotificationSeverity,
+    title: str(raw.title),
+    href: str(raw.href),
+    open: Number(raw.open ?? 0),
+    acknowledged: Number(raw.acknowledged ?? 0),
+    occurrences: Number(raw.occurrences ?? 0),
+    latestAt: str(raw.latest_at),
+  };
+}
+
+export function notificationListQuery(params: NotificationListParams = {}): string {
+  const sp = new URLSearchParams();
+  if (params.status) sp.set("status", params.status);
+  if (params.includeResolved) sp.set("include_resolved", "true");
+  if (params.kinds?.length) sp.set("kind", params.kinds.join(","));
+  if (params.limit) sp.set("limit", String(params.limit));
+  if (params.offset) sp.set("offset", String(params.offset));
+  const q = sp.toString();
+  return q ? `?${q}` : "";
+}
+
 function mapPrefs(raw: Raw): NotificationPreference {
   return {
     userId: str(raw.user_id ?? raw.userId),
@@ -69,10 +95,10 @@ function mapRule(raw: Raw): EscalationRule {
 }
 
 export type NotificationRepository = {
-  list(params?: {
-    status?: NotificationStatus;
-    includeResolved?: boolean;
-  }): Promise<{ items: AppNotification[]; total: number }>;
+  list(
+    params?: NotificationListParams,
+  ): Promise<{ items: AppNotification[]; total: number }>;
+  summary(): Promise<NotificationGroup[]>;
   unreadCount(): Promise<number>;
   acknowledge(id: string): Promise<AppNotification>;
   resolve(id: string): Promise<AppNotification>;
@@ -88,17 +114,22 @@ export type NotificationRepository = {
 class ApiRepo implements NotificationRepository {
   constructor(private http: HttpClient) {}
 
-  async list(params?: {
-    status?: NotificationStatus;
-    includeResolved?: boolean;
-  }) {
-    const sp = new URLSearchParams();
-    if (params?.status) sp.set("status", params.status);
-    if (params?.includeResolved) sp.set("include_resolved", "true");
-    const q = sp.toString() ? `?${sp}` : "";
-    const rows = await this.http.request<Raw[]>(`/notifications${q}`);
-    const list = Array.isArray(rows) ? rows : [];
-    return { items: list.map(mapNotification), total: list.length };
+  async list(params?: NotificationListParams) {
+    const res = await this.http.raw(`/notifications${notificationListQuery(params)}`);
+    const payload = (await res.json().catch(() => ({}))) as {
+      data?: Raw[];
+      meta?: { total?: number };
+    };
+    const list = Array.isArray(payload.data) ? payload.data : [];
+    return {
+      items: list.map(mapNotification),
+      total: Number(payload.meta?.total ?? list.length),
+    };
+  }
+
+  async summary() {
+    const rows = await this.http.request<Raw[]>("/notifications/summary");
+    return (Array.isArray(rows) ? rows : []).map(mapGroup);
   }
 
   async unreadCount() {
@@ -221,9 +252,40 @@ class MemoryRepo implements NotificationRepository {
     updatedAt: new Date().toISOString(),
   };
 
-  async list() {
-    const items = this.items.filter((n) => n.status !== "resolved");
-    return { items: [...items], total: items.length };
+  async list(params: NotificationListParams = {}) {
+    const items = this.items.filter(
+      (n) =>
+        (params.status
+          ? n.status === params.status
+          : params.includeResolved || n.status !== "resolved") &&
+        (!params.kinds?.length || params.kinds.includes(n.kind)),
+    );
+    const offset = params.offset ?? 0;
+    const page = items.slice(offset, offset + (params.limit ?? 50));
+    return { items: page.map((n) => ({ ...n })), total: items.length };
+  }
+
+  async summary() {
+    const groups = new Map<string, NotificationGroup>();
+    for (const n of this.items) {
+      if (n.status === "resolved") continue;
+      const g = groups.get(n.kind) ?? {
+        kind: n.kind,
+        severity: n.severity,
+        title: n.title,
+        href: n.hrefHint,
+        open: 0,
+        acknowledged: 0,
+        occurrences: 0,
+        latestAt: n.updatedAt,
+      };
+      if (n.status === "open") g.open++;
+      else g.acknowledged++;
+      g.occurrences += n.occurrenceCount;
+      if (n.updatedAt > g.latestAt) g.latestAt = n.updatedAt;
+      groups.set(n.kind, g);
+    }
+    return [...groups.values()];
   }
 
   async unreadCount() {
@@ -301,6 +363,6 @@ export function createNotificationRepository(): NotificationRepository {
   return createRepository<NotificationRepository>({
     api,
     memory: mem,
-    reads: ["list", "unreadCount", "getPreferences", "listRules"],
+    reads: ["list", "summary", "unreadCount", "getPreferences", "listRules"],
   });
 }

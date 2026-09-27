@@ -25,6 +25,7 @@ export const routes = {
   missingDocs: "/missing-docs",
   tasks: "/tasks",
   inbox: "/inbox",
+  notifications: "/notifications",
   adminUsers: "/admin/users",
   adminRoles: "/admin/roles",
   adminAudit: "/admin/audit",

@@ -27,7 +27,8 @@
     "settings": "Settings",
     "rooming": "Rooming",
     "security": "Security",
-    "fxRates": "FX rates"
+    "fxRates": "FX rates",
+    "notifications": "Notifications"
   },
   "auth": {
     "title": "Sign in",
@@ -810,7 +811,8 @@
     "email": "Email digests",
     "push": "Push alerts",
     "savePrefs": "Save",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "viewAll": "Open notification center"
   },
   "reports": {
     "title": "Reports",
@@ -1437,7 +1439,7 @@
   },
   "adminSettings": {
     "title": "Admin settings",
-    "subtitle": "SLA, escalation, lost reasons, templates, fields, and thresholds",
+    "subtitle": "SLA A/B, escalation rules, thresholds, lost reasons, templates and fields",
     "loadError": "Could not load settings",
     "actionError": "Could not save settings",
     "saved": "Saved",
@@ -1461,12 +1463,26 @@
       "docPolicies": "Doc policies"
     },
     "sla": {
-      "firstResponse": "First response (minutes)",
-      "resolve": "Resolve (minutes)",
-      "businessHours": "Business hours only"
+      "windowsTitle": "First-response windows",
+      "windowsHint": "How fast a new conversation must get its first reply, per channel. The default applies to channels without their own row.",
+      "defaultChannel": "Default (all channels)",
+      "minutes": "minutes",
+      "addChannel": "Add channel:",
+      "abTitle": "SLA A / B thresholds",
+      "abHint": "A warns the owner before the window ends; B marks the conversation as breached and opens a reply task.",
+      "warnPct": "A — warning at % of window",
+      "breachPct": "B — breach at % of window",
+      "abPreview": "With a {window}-minute window: warning after {warn} min, breach after {breach} min.",
+      "warnAboveBreach": "A must be lower than B.",
+      "invalidWindow": "Every window must be at least 1 minute."
     },
     "escalation": {
-      "after": "After"
+      "hint": "Rules the escalation engine runs every 5 minutes. An open alert older than the delay is escalated to the selected roles; turning a rule off stops it for this branch.",
+      "after": "Escalate after",
+      "minutes": "min",
+      "roles": "Escalate to",
+      "overridden": "Branch override",
+      "reset": "Reset to default"
     },
     "lostReasons": {
       "code": "Code",
@@ -1485,14 +1501,47 @@
       }
     },
     "thresholds": {
-      "softCapacity": "Soft capacity %",
-      "hardCapacity": "Hard capacity %",
-      "overdueTask": "Overdue task (hours)",
-      "unpaidBooking": "Unpaid booking (days)",
-      "marginAlert": "Margin alert %"
+      "range": "Allowed range {min}–{max}",
+      "paymentOverdueHours": {
+        "label": "Payment overdue alert (hours)",
+        "hint": "Hours past a schedule's due date before the booking owner gets a payment-overdue alert."
+      },
+      "missingDocHours": {
+        "label": "Missing documents (hours)",
+        "hint": "Hours after confirmation before missing required documents open a task and alert."
+      },
+      "leadNoFollowupHours": {
+        "label": "Idle lead (hours)",
+        "hint": "Hours without activity or an open task before the lead owner is alerted."
+      },
+      "visaFollowUpDays": {
+        "label": "Visa follow-up (days)",
+        "hint": "Days a submitted visa can wait for a decision before a follow-up task opens."
+      },
+      "targetBehindPct": {
+        "label": "Target behind pace (%)",
+        "hint": "How far below the expected pace a revenue target may fall before managers are alerted."
+      },
+      "capacitySoftPct": {
+        "label": "Soft capacity warning (%)",
+        "hint": "Departure fill level that shows the capacity warning."
+      }
     },
     "docPoliciesBody": "Document policies are managed via checklists and missing-docs ops.",
-    "docPoliciesLink": "Open missing docs"
+    "docPoliciesLink": "Open missing docs",
+    "events": {
+      "hint": "Domain events the system publishes. Durable events go through the transactional outbox and are retried until delivered.",
+      "durable": "Durable (outbox)",
+      "inProcess": "In-process",
+      "idempotent": "Idempotent"
+    },
+    "roles": {
+      "manager": "Manager",
+      "gm": "GM",
+      "admin": "Admin",
+      "finance": "Finance",
+      "operations": "Operations"
+    }
   },
   "rooming": {
     "title": "Rooming",
@@ -1941,5 +1990,27 @@
     "base": "Reference currency",
     "perUnit": "in {base} per unit",
     "crossNote": "Cross rates calculated via {local}. Accounting rates are always kept in {local}."
+  },
+  "notificationCenter": {
+    "title": "Notification center",
+    "subtitle": "Grouped alerts — drill into a group, acknowledge or resolve. Updates live.",
+    "live": "Live",
+    "offline": "Reconnecting…",
+    "groups": "Notification groups",
+    "allKinds": "All notifications",
+    "count": "{count, plural, =0 {No notifications} one {# notification} other {# notifications}}",
+    "statusFilter": "Status",
+    "status": {
+      "active": "Active",
+      "open": "Open",
+      "acknowledged": "Acknowledged",
+      "resolved": "Resolved"
+    },
+    "openRecord": "Open",
+    "page": "Page {page} of {pages}",
+    "prev": "Previous",
+    "next": "Next",
+    "settingsHint": "Thresholds, SLA A/B and escalation rules are managed in",
+    "settingsLink": "admin settings"
   }
 }

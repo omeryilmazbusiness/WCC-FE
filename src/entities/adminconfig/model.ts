@@ -1,23 +1,33 @@
-export type SlaSettings = {
-  firstResponseMinutes: number;
-  resolveMinutes: number;
-  businessHoursOnly: boolean;
+/** First-response SLA per channel; `*` is the branch default. */
+export type SlaPolicy = {
+  channel: string;
+  firstResponseSeconds: number;
 };
 
-export type EscalationKind =
-  | "sla_breach"
-  | "unanswered"
-  | "overdue_task"
-  | "payment_due"
-  | string;
+export type NotificationSeverity = "info" | "warning" | "critical";
 
+/** Effective escalation rule for a notification kind (defaults merged with branch overrides). */
 export type EscalationRule = {
-  kind: EscalationKind;
-  afterMinutes: number;
-  notifyRoles: string[];
-  escalateToRole: string;
+  kind: string;
+  severity: NotificationSeverity;
+  escalateAfterSeconds: number;
+  escalateToRoles: string[];
+  groupable: boolean;
+  defaultTitle: string;
+  defaultHref: string;
+  entityType: string;
+  /** A branch override exists; deleting it restores the default. */
+  overridden: boolean;
   enabled: boolean;
 };
+
+export type EscalationInput = {
+  escalateAfterSeconds: number;
+  escalateToRoles: string[];
+  enabled: boolean;
+};
+
+export const ESCALATION_ROLES = ["manager", "gm", "admin", "finance", "operations"] as const;
 
 export type LostReason = {
   id: string;
@@ -56,19 +66,59 @@ export type FieldSettings = {
   fields: CustomFieldDef[];
 };
 
+/** Branch alert knobs the automation engine reads (BE `alert_threshold_settings`). */
 export type ThresholdSettings = {
-  softCapacityPct: number;
-  hardCapacityPct: number;
-  overdueTaskHours: number;
-  unpaidBookingDays: number;
-  marginAlertPct: number;
+  capacitySoftPct: number;
+  paymentOverdueHours: number;
+  missingDocHours: number;
+  leadNoFollowupHours: number;
+  targetBehindPct: number;
+  /** SLA A: warning at this share of the first-response window. */
+  slaWarnPct: number;
+  /** SLA B: breach at this share of the first-response window. */
+  slaBreachPct: number;
+  visaFollowUpDays: number;
 };
 
+export type ThresholdKey = keyof ThresholdSettings;
+
+/** Allowed ranges, mirroring the backend validation. */
+export const THRESHOLD_LIMITS: Record<ThresholdKey, { min: number; max: number }> = {
+  capacitySoftPct: { min: 1, max: 100 },
+  paymentOverdueHours: { min: 1, max: 720 },
+  missingDocHours: { min: 1, max: 720 },
+  leadNoFollowupHours: { min: 1, max: 720 },
+  targetBehindPct: { min: 1, max: 100 },
+  slaWarnPct: { min: 10, max: 100 },
+  slaBreachPct: { min: 50, max: 300 },
+  visaFollowUpDays: { min: 1, max: 90 },
+};
+
+export type ThresholdError = { key: ThresholdKey; reason: "range" | "warnAboveBreach" };
+
+/** First problem found, or null when the backend would accept the settings. */
+export function validateThresholds(t: ThresholdSettings): ThresholdError | null {
+  for (const key of Object.keys(THRESHOLD_LIMITS) as ThresholdKey[]) {
+    const v = t[key];
+    const { min, max } = THRESHOLD_LIMITS[key];
+    if (!Number.isInteger(v) || v < min || v > max) return { key, reason: "range" };
+  }
+  if (t.slaWarnPct >= t.slaBreachPct) return { key: "slaWarnPct", reason: "warnAboveBreach" };
+  return null;
+}
+
+/** Minutes after which a share (`pct` %) of an SLA window (seconds) elapses, rounded. */
+export function slaScaledMinutes(windowSeconds: number, pct: number): number {
+  return Math.round((windowSeconds * pct) / 6000);
+}
+
+/** Canonical domain event (BE `/v1/events/catalog`). */
 export type EventCatalogItem = {
-  code: string;
-  category: string;
+  name: string;
   description: string;
-  severity: string;
+  idempotent: boolean;
+  /** Delivered through the transactional outbox (survives restarts, retried). */
+  durable: boolean;
 };
 
 export type CreateLostReasonInput = {

@@ -107,7 +107,7 @@ export function ManagerDashboardBoard() {
       attention: AttentionItem[];
       target: TargetSnapshot;
     };
-  }, [days]);
+  }, [days], { liveTopics: ["lead", "payment", "document", "task", "target", "conversation"] });
 
   const columns = useMemo<ColumnDef<TeamMemberStat>[]>(
     () => [

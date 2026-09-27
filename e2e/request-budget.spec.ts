@@ -8,6 +8,7 @@
  */
 import fs from "node:fs";
 import { expect, test, type Page, type Request } from "@playwright/test";
+import { trackNetwork } from "./network-settle";
 
 const PASS = process.env.E2E_PASSWORD ?? "ChangeMe123!";
 const SETTLE_MS = Number(process.env.REQUEST_SETTLE_MS ?? 1500);
@@ -22,7 +23,7 @@ const ROLES = [
 ].filter((r) => !process.env.ROLES || process.env.ROLES.split(",").includes(r.role));
 
 /** Background pollers owned by the shell, not by a screen. */
-const SHELL_POLLS = [/^GET \/notifications(\/unread-count)?$/, /^GET \/fx\/live$/];
+const SHELL_POLLS = [/^GET \/notifications(\/unread-count)?$/, /^GET \/fx\/live$/, /^GET \/stream$/];
 
 type ScreenReport = {
   role: string;
@@ -38,13 +39,14 @@ function key(req: Request): string | null {
   return `${req.method()} ${url.pathname.slice("/api/proxy".length)}${url.search}`;
 }
 
-async function login(page: Page, email: string) {
-  await page.goto("/en/login", { waitUntil: "networkidle" });
+async function login(page: Page, email: string, settle: () => Promise<void>) {
+  await page.goto("/en/login");
+  await settle();
   await page.locator('input[type="email"]').fill(email);
   await page.locator('input[type="password"]').fill(PASS);
   await page.getByRole("button", { name: /continue|sign in|submit/i }).click();
   await page.waitForURL((u) => !u.pathname.includes("/login"), { timeout: 60_000 });
-  await page.waitForLoadState("networkidle");
+  await settle();
 }
 
 async function drawerLinks(page: Page): Promise<string[]> {
@@ -68,13 +70,14 @@ function record(report: ScreenReport) {
 for (const { role, email } of ROLES) {
   test(`request budget — ${role}`, async ({ page }) => {
     test.setTimeout(600_000);
+    const settle = trackNetwork(page);
     let calls: string[] = [];
     page.on("request", (req) => {
       const k = key(req);
       if (k) calls.push(k);
     });
 
-    await login(page, email);
+    await login(page, email, settle);
     const links = await drawerLinks(page);
     expect(links.length, "drawer has screens").toBeGreaterThan(0);
 
@@ -83,9 +86,9 @@ for (const { role, email } of ROLES) {
       calls = [];
       await page.locator(`aside nav a[href$="${path}"]`).first().click();
       await page.waitForURL((u) => u.pathname === path, { timeout: 60_000 });
-      await page.waitForLoadState("networkidle");
+      await settle();
       await page.waitForTimeout(SETTLE_MS);
-      await page.waitForLoadState("networkidle");
+      await settle();
       const settled = calls.length;
       await page.waitForTimeout(QUIET_MS);
       const quiet = calls.slice(settled).filter((c) => !SHELL_POLLS.some((re) => re.test(c)));

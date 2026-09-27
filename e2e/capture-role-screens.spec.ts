@@ -13,6 +13,7 @@ import {
   DEMO_ROLE_PERMISSIONS,
   homeFor,
 } from "../src/shared/config/permissions";
+import { trackNetwork } from "./network-settle";
 
 const OUT = path.join(process.cwd(), "docs", "role-screenshots");
 const BASE = "http://127.0.0.1:3000";
@@ -88,6 +89,7 @@ test.describe.configure({ mode: "serial" });
 
 test("capture login + all role screens", async ({ page }) => {
   fs.mkdirSync(OUT, { recursive: true });
+  const settle = trackNetwork(page);
   const manifest: {
     role: string;
     label: string;
@@ -109,7 +111,8 @@ test("capture login + all role screens", async ({ page }) => {
     };
 
     for (const screen of accessibleScreens(role)) {
-      await page.goto(`${BASE}/en${screen.path}`, { waitUntil: "networkidle" });
+      await page.goto(`${BASE}/en${screen.path}`);
+      await settle();
       // Ensure we didn't bounce to login/home unexpectedly for accessible pages
       await expect(page).not.toHaveURL(/\/login/);
       const file = `${role.id}-${screen.key}.png`;

@@ -4,14 +4,15 @@ import type {
   CreateLostReasonInput,
   CreateTemplateInput,
   CustomFieldDef,
-  EscalationKind,
+  EscalationInput,
   EscalationRule,
   EventCatalogItem,
   FieldEntity,
   FieldSettings,
   LostReason,
   MessageTemplate,
-  SlaSettings,
+  NotificationSeverity,
+  SlaPolicy,
   ThresholdSettings,
   UpdateLostReasonInput,
   UpdateTemplateInput,
@@ -24,26 +25,31 @@ function str(v: unknown, fallback = ""): string {
   return String(v);
 }
 
-function mapSla(raw: Raw): SlaSettings {
+function rows(data: Raw[] | { items?: Raw[] } | null | undefined): Raw[] {
+  if (Array.isArray(data)) return data;
+  return data?.items ?? [];
+}
+
+function mapSla(raw: Raw): SlaPolicy {
   return {
-    firstResponseMinutes: Number(
-      raw.first_response_minutes ?? raw.firstResponseMinutes ?? 60,
-    ),
-    resolveMinutes: Number(raw.resolve_minutes ?? raw.resolveMinutes ?? 1440),
-    businessHoursOnly: Boolean(
-      raw.business_hours_only ?? raw.businessHoursOnly ?? true,
-    ),
+    channel: str(raw.channel, "*") || "*",
+    firstResponseSeconds: Number(raw.first_response_seconds ?? 0),
   };
 }
 
 function mapEscalation(raw: Raw): EscalationRule {
-  const roles = raw.notify_roles ?? raw.notifyRoles;
+  const roles = raw.escalate_to_roles;
   return {
-    kind: str(raw.kind, "sla_breach") as EscalationKind,
-    afterMinutes: Number(raw.after_minutes ?? raw.afterMinutes ?? 30),
-    notifyRoles: Array.isArray(roles) ? roles.map(String) : [],
-    escalateToRole: str(raw.escalate_to_role ?? raw.escalateToRole, "manager"),
-    enabled: Boolean(raw.enabled ?? true),
+    kind: str(raw.kind),
+    severity: str(raw.severity, "info") as NotificationSeverity,
+    escalateAfterSeconds: Number(raw.escalate_after_seconds ?? 0),
+    escalateToRoles: Array.isArray(roles) ? roles.map(String) : [],
+    groupable: Boolean(raw.groupable),
+    defaultTitle: str(raw.default_title),
+    defaultHref: str(raw.default_href),
+    entityType: str(raw.entity_type),
+    overridden: Boolean(raw.overridden),
+    enabled: raw.enabled !== false,
   };
 }
 
@@ -98,37 +104,33 @@ function mapFields(raw: Raw, entity: FieldEntity): FieldSettings {
 
 function mapThresholds(raw: Raw): ThresholdSettings {
   return {
-    softCapacityPct: Number(
-      raw.soft_capacity_pct ?? raw.softCapacityPct ?? 80,
-    ),
-    hardCapacityPct: Number(
-      raw.hard_capacity_pct ?? raw.hardCapacityPct ?? 100,
-    ),
-    overdueTaskHours: Number(
-      raw.overdue_task_hours ?? raw.overdueTaskHours ?? 24,
-    ),
-    unpaidBookingDays: Number(
-      raw.unpaid_booking_days ?? raw.unpaidBookingDays ?? 3,
-    ),
-    marginAlertPct: Number(raw.margin_alert_pct ?? raw.marginAlertPct ?? 15),
+    capacitySoftPct: Number(raw.capacity_soft_pct ?? 80),
+    paymentOverdueHours: Number(raw.payment_overdue_hours ?? 12),
+    missingDocHours: Number(raw.missing_doc_hours ?? 24),
+    leadNoFollowupHours: Number(raw.lead_no_followup_hours ?? 24),
+    targetBehindPct: Number(raw.target_behind_pct ?? 15),
+    slaWarnPct: Number(raw.sla_warn_pct ?? 75),
+    slaBreachPct: Number(raw.sla_breach_pct ?? 100),
+    visaFollowUpDays: Number(raw.visa_follow_up_days ?? 7),
   };
 }
 
 function mapEvent(raw: Raw): EventCatalogItem {
   return {
-    code: str(raw.code ?? raw.id),
-    category: str(raw.category ?? "ops"),
-    description: str(raw.description ?? raw.name),
-    severity: str(raw.severity ?? "info"),
+    name: str(raw.name),
+    description: str(raw.description),
+    idempotent: Boolean(raw.idempotent),
+    durable: Boolean(raw.durable),
   };
 }
 
 export interface AdminConfigRepository {
-  getSla(): Promise<SlaSettings>;
-  putSla(input: SlaSettings): Promise<SlaSettings>;
+  getSla(): Promise<SlaPolicy[]>;
+  putSla(policies: SlaPolicy[]): Promise<SlaPolicy[]>;
   listEscalation(): Promise<EscalationRule[]>;
-  putEscalation(kind: string, input: EscalationRule): Promise<EscalationRule>;
-  deleteEscalation(kind: string): Promise<void>;
+  putEscalation(kind: string, input: EscalationInput): Promise<void>;
+  /** Drops the branch override so the default rule applies again. */
+  resetEscalation(kind: string): Promise<void>;
   listLostReasons(): Promise<LostReason[]>;
   createLostReason(input: CreateLostReasonInput): Promise<LostReason>;
   updateLostReason(id: string, input: UpdateLostReasonInput): Promise<LostReason>;
@@ -149,53 +151,41 @@ class ApiRepo implements AdminConfigRepository {
   constructor(private readonly http: HttpClient) {}
 
   async getSla() {
-    return mapSla(await this.http.request<Raw>("/settings/sla"));
+    return rows(await this.http.request<Raw[]>("/settings/sla")).map(mapSla);
   }
 
-  async putSla(input: SlaSettings) {
-    return mapSla(
-      await this.http.request<Raw>("/settings/sla", {
-        method: "PUT",
-        body: JSON.stringify({
-          first_response_minutes: input.firstResponseMinutes,
-          resolve_minutes: input.resolveMinutes,
-          business_hours_only: input.businessHoursOnly,
-        }),
-      }),
-    );
+  async putSla(policies: SlaPolicy[]) {
+    const data = await this.http.request<Raw[]>("/settings/sla", {
+      method: "PUT",
+      body: JSON.stringify(
+        policies.map((p) => ({
+          channel: p.channel,
+          first_response_seconds: p.firstResponseSeconds,
+        })),
+      ),
+    });
+    return rows(data).map(mapSla);
   }
 
   async listEscalation() {
-    const data = await this.http.request<Raw[] | { items?: Raw[] }>(
-      "/settings/escalation",
-    );
-    const rows = Array.isArray(data) ? data : (data.items ?? []);
-    return rows.map(mapEscalation);
+    return rows(await this.http.request<Raw[]>("/settings/escalation")).map(mapEscalation);
   }
 
-  async putEscalation(kind: string, input: EscalationRule) {
-    return mapEscalation(
-      await this.http.request<Raw>(
-        `/settings/escalation/${encodeURIComponent(kind)}`,
-        {
-          method: "PUT",
-          body: JSON.stringify({
-            kind: input.kind,
-            after_minutes: input.afterMinutes,
-            notify_roles: input.notifyRoles,
-            escalate_to_role: input.escalateToRole,
-            enabled: input.enabled,
-          }),
-        },
-      ),
-    );
+  async putEscalation(kind: string, input: EscalationInput) {
+    await this.http.request(`/settings/escalation/${encodeURIComponent(kind)}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        escalate_after_seconds: input.escalateAfterSeconds,
+        escalate_to_roles: input.escalateToRoles,
+        enabled: input.enabled,
+      }),
+    });
   }
 
-  async deleteEscalation(kind: string) {
-    await this.http.request(
-      `/settings/escalation/${encodeURIComponent(kind)}`,
-      { method: "DELETE" },
-    );
+  async resetEscalation(kind: string) {
+    await this.http.request(`/settings/escalation/${encodeURIComponent(kind)}`, {
+      method: "DELETE",
+    });
   }
 
   async listLostReasons() {
@@ -332,37 +322,52 @@ class ApiRepo implements AdminConfigRepository {
       await this.http.request<Raw>("/settings/thresholds", {
         method: "PUT",
         body: JSON.stringify({
-          soft_capacity_pct: input.softCapacityPct,
-          hard_capacity_pct: input.hardCapacityPct,
-          overdue_task_hours: input.overdueTaskHours,
-          unpaid_booking_days: input.unpaidBookingDays,
-          margin_alert_pct: input.marginAlertPct,
+          capacity_soft_pct: input.capacitySoftPct,
+          payment_overdue_hours: input.paymentOverdueHours,
+          missing_doc_hours: input.missingDocHours,
+          lead_no_followup_hours: input.leadNoFollowupHours,
+          target_behind_pct: input.targetBehindPct,
+          sla_warn_pct: input.slaWarnPct,
+          sla_breach_pct: input.slaBreachPct,
+          visa_follow_up_days: input.visaFollowUpDays,
         }),
       }),
     );
   }
 
   async listEventsCatalog() {
-    const data = await this.http.request<Raw[] | { items?: Raw[] }>(
-      "/events/catalog",
-    );
-    const rows = Array.isArray(data) ? data : (data.items ?? []);
-    return rows.map(mapEvent);
+    return rows(await this.http.request<Raw[]>("/events/catalog")).map(mapEvent);
   }
 }
 
 class MemoryRepo implements AdminConfigRepository {
-  private sla: SlaSettings = {
-    firstResponseMinutes: 60,
-    resolveMinutes: 1440,
-    businessHoursOnly: true,
-  };
+  private sla: SlaPolicy[] = [
+    { channel: "*", firstResponseSeconds: 900 },
+    { channel: "whatsapp", firstResponseSeconds: 900 },
+  ];
   private escalation: EscalationRule[] = [
     {
-      kind: "sla_breach",
-      afterMinutes: 30,
-      notifyRoles: ["manager"],
-      escalateToRole: "gm",
+      kind: "message.sla_breached",
+      severity: "critical",
+      escalateAfterSeconds: 900,
+      escalateToRoles: ["manager", "gm"],
+      groupable: true,
+      defaultTitle: "Conversation SLA breached",
+      defaultHref: "/inbox",
+      entityType: "conversation",
+      overridden: false,
+      enabled: true,
+    },
+    {
+      kind: "task.overdue",
+      severity: "warning",
+      escalateAfterSeconds: 7200,
+      escalateToRoles: ["manager"],
+      groupable: true,
+      defaultTitle: "Task overdue",
+      defaultHref: "/tasks",
+      entityType: "task",
+      overridden: false,
       enabled: true,
     },
   ];
@@ -410,46 +415,38 @@ class MemoryRepo implements AdminConfigRepository {
     ],
   };
   private thresholds: ThresholdSettings = {
-    softCapacityPct: 80,
-    hardCapacityPct: 100,
-    overdueTaskHours: 24,
-    unpaidBookingDays: 3,
-    marginAlertPct: 15,
+    capacitySoftPct: 80,
+    paymentOverdueHours: 12,
+    missingDocHours: 24,
+    leadNoFollowupHours: 24,
+    targetBehindPct: 15,
+    slaWarnPct: 75,
+    slaBreachPct: 100,
+    visaFollowUpDays: 7,
   };
   private events: EventCatalogItem[] = [
-    {
-      code: "sla.breached",
-      category: "inbox",
-      description: "Conversation SLA breached",
-      severity: "high",
-    },
-    {
-      code: "booking.unpaid",
-      category: "finance",
-      description: "Booking unpaid past threshold",
-      severity: "medium",
-    },
+    { name: "task.overdue", description: "Task became overdue", idempotent: true, durable: true },
+    { name: "lead.created", description: "Lead created", idempotent: true, durable: false },
   ];
 
   async getSla() {
-    return { ...this.sla };
+    return this.sla.map((p) => ({ ...p }));
   }
-  async putSla(input: SlaSettings) {
-    this.sla = { ...input };
-    return { ...this.sla };
+  async putSla(policies: SlaPolicy[]) {
+    this.sla = policies.map((p) => ({ ...p }));
+    return this.getSla();
   }
   async listEscalation() {
-    return this.escalation.map((e) => ({ ...e, notifyRoles: [...e.notifyRoles] }));
+    return this.escalation.map((e) => ({ ...e, escalateToRoles: [...e.escalateToRoles] }));
   }
-  async putEscalation(kind: string, input: EscalationRule) {
-    const i = this.escalation.findIndex((e) => e.kind === kind);
-    const next = { ...input, kind: kind as EscalationKind };
-    if (i >= 0) this.escalation[i] = next;
-    else this.escalation.push(next);
-    return { ...next, notifyRoles: [...next.notifyRoles] };
+  async putEscalation(kind: string, input: EscalationInput) {
+    const rule = this.escalation.find((e) => e.kind === kind);
+    if (!rule) throw new Error("unknown escalation kind");
+    Object.assign(rule, { ...input, escalateToRoles: [...input.escalateToRoles], overridden: true });
   }
-  async deleteEscalation(kind: string) {
-    this.escalation = this.escalation.filter((e) => e.kind !== kind);
+  async resetEscalation(kind: string) {
+    const rule = this.escalation.find((e) => e.kind === kind);
+    if (rule) Object.assign(rule, { overridden: false, enabled: true });
   }
   async listLostReasons() {
     return this.lostReasons.map((r) => ({ ...r }));

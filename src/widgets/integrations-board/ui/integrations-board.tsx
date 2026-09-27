@@ -58,7 +58,7 @@ export function IntegrationsBoard() {
         : prev,
     );
     return { catalog: cat, items: list };
-  }, [repo]);
+  }, [repo], { liveTopics: ["integration"] });
   const catalog = useMemo<ExtIntCatalogItem[]>(() => query.data?.catalog ?? [], [query.data]);
   const items: ExternalIntegration[] = query.data?.items ?? [];
 

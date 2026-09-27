@@ -51,6 +51,7 @@ export function BookingsListBoard({
         status: status === "all" ? undefined : status,
       }),
     [repository, customerId, departureId, status],
+    { liveTopics: ["payment", "document"] },
   );
   const rows = useMemo<Booking[]>(() => bookings.data ?? [], [bookings.data]);
 

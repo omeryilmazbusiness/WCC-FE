@@ -19,6 +19,7 @@ const FORWARD_RESPONSE_HEADERS = [
   "cache-control",
   "retry-after",
   "x-request-id",
+  "x-accel-buffering",
 ];
 
 /** Streams any upstream body (JSON, CSV, files) through unchanged, with its download headers. */
@@ -87,8 +88,16 @@ export async function proxyRequest(req: NextRequest, segments: string[]): Promis
   }
   const body = isSafeMethod(req.method) ? undefined : await req.arrayBuffer();
   const target = `${path}${req.nextUrl.search}`;
+  // The upstream call ends with the browser request, so a closed tab also closes a stream.
   const forward = (token: string) =>
-    backendFetch(target, { method: req.method, headers, body, accessToken: token, meta });
+    backendFetch(target, {
+      method: req.method,
+      headers,
+      body,
+      accessToken: token,
+      meta,
+      signal: req.signal,
+    });
 
   let rotated: TokenSet | null = null;
   let reloadViewer = false;

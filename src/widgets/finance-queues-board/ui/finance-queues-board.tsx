@@ -32,7 +32,9 @@ export function FinanceQueuesBoard() {
   const canApprove = useCan("payments.approve");
   const repo = useMemo(() => createPaymentRepository(), []);
   const [kind, setKind] = useState<FinanceQueueKind>("overdue");
-  const queue = useApiQuery(() => repo.queue(kind), [repo, kind]);
+  const queue = useApiQuery(() => repo.queue(kind), [repo, kind], {
+    liveTopics: ["payment", "booking"],
+  });
   const items = queue.data ?? [];
 
   async function exportCsv() {

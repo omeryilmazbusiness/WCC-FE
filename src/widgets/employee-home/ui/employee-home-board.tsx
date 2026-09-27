@@ -60,7 +60,7 @@ export function EmployeeHomeBoard({
       target,
       workOrder: work.filter((i) => i.source === "task").map((i) => i.id),
     };
-  }, [taskRepository, user.id, canLeads, canTargets]);
+  }, [taskRepository, user.id, canLeads, canTargets], { liveTopics: ["task", "lead", "conversation", "target"] });
   const setHome = home.setData;
   const tasks = home.data?.tasks;
   const leads = home.data?.leads;

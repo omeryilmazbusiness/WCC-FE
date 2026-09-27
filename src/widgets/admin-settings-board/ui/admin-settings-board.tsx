@@ -16,22 +16,16 @@ import {
 import {
   createAdminConfigRepository,
   type CustomFieldDef,
-  type EscalationRule,
-  type EventCatalogItem,
   type FieldEntity,
   type LostReason,
   type MessageTemplate,
-  type SlaSettings,
-  type ThresholdSettings,
 } from "@/entities/adminconfig";
 import { useCan } from "@/entities/viewer";
 import { routes } from "@/shared/config/routes";
 import { Link } from "@/shared/i18n/navigation";
 import {
-  Badge,
   Button,
   Input,
-  Label,
   PageHeader,
   QueryState,
   Screen,
@@ -42,6 +36,10 @@ import {
   Textarea,
   useMutationFeedback,
 } from "@/shared/ui";
+import { EscalationSection } from "./escalation-section";
+import { EventsSection } from "./events-section";
+import { SlaSection } from "./sla-section";
+import { ThresholdsSection } from "./thresholds-section";
 
 type Section =
   | "sla"
@@ -63,14 +61,10 @@ export function AdminSettingsBoard() {
   const [tab, setTab] = useState<Section>("sla");
   const [busy, setBusy] = useState(false);
 
-  const [sla, setSla] = useState<SlaSettings | null>(null);
-  const [escalation, setEscalation] = useState<EscalationRule[]>([]);
   const [lostReasons, setLostReasons] = useState<LostReason[]>([]);
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
   const [fieldEntity, setFieldEntity] = useState<FieldEntity>("lead");
   const [fields, setFields] = useState<CustomFieldDef[]>([]);
-  const [thresholds, setThresholds] = useState<ThresholdSettings | null>(null);
-  const [events, setEvents] = useState<EventCatalogItem[]>([]);
 
   const [newReasonCode, setNewReasonCode] = useState("");
   const [newReasonLabel, setNewReasonLabel] = useState("");
@@ -78,22 +72,14 @@ export function AdminSettingsBoard() {
   const [newTplBody, setNewTplBody] = useState("");
 
   const refresh = useCallback(async () => {
-    const [s, e, lr, tpl, fld, th, ev] = await Promise.all([
-      repo.getSla(),
-      repo.listEscalation(),
+    const [lr, tpl, fld] = await Promise.all([
       repo.listLostReasons(),
       repo.listTemplates(),
       repo.getFields(fieldEntity),
-      repo.getThresholds(),
-      repo.listEventsCatalog(),
     ]);
-    setSla(s);
-    setEscalation(e);
     setLostReasons(lr);
     setTemplates(tpl);
     setFields(fld.fields);
-    setThresholds(th);
-    setEvents(ev);
   }, [repo, fieldEntity]);
 
   const load = useCallback(async () => {
@@ -183,111 +169,11 @@ export function AdminSettingsBoard() {
         </TabsList>
 
         <TabsContent value="sla" className="mt-0">
-          {sla ? (
-            <div className="space-y-3 rounded-2xl border border-zinc-200/80 bg-white p-5">
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div>
-                  <Label>{t("sla.firstResponse")}</Label>
-                  <Input
-                    type="number"
-                    className="mt-1.5"
-                    value={sla.firstResponseMinutes}
-                    onChange={(e) =>
-                      setSla({
-                        ...sla,
-                        firstResponseMinutes: Number(e.target.value) || 0,
-                      })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label>{t("sla.resolve")}</Label>
-                  <Input
-                    type="number"
-                    className="mt-1.5"
-                    value={sla.resolveMinutes}
-                    onChange={(e) =>
-                      setSla({
-                        ...sla,
-                        resolveMinutes: Number(e.target.value) || 0,
-                      })
-                    }
-                  />
-                </div>
-                <div className="flex items-end">
-                  <label className="flex items-center gap-2 text-sm font-medium text-zinc-700">
-                    <input
-                      type="checkbox"
-                      checked={sla.businessHoursOnly}
-                      onChange={(e) =>
-                        setSla({
-                          ...sla,
-                          businessHoursOnly: e.target.checked,
-                        })
-                      }
-                    />
-                    {t("sla.businessHours")}
-                  </label>
-                </div>
-              </div>
-              <Button
-                size="sm"
-                disabled={!canWrite || busy}
-                onClick={() => void run(() => repo.putSla(sla))}
-              >
-                {t("save")}
-              </Button>
-            </div>
-          ) : null}
+          <SlaSection repo={repo} canWrite={canWrite} />
         </TabsContent>
 
         <TabsContent value="escalation" className="mt-0">
-          <div className="space-y-2 rounded-2xl border border-zinc-200/80 bg-white p-5">
-            {escalation.length === 0 ? (
-              <p className="text-sm text-zinc-500">{t("empty")}</p>
-            ) : (
-              escalation.map((rule) => (
-                <div
-                  key={rule.kind}
-                  className="flex flex-wrap items-center gap-2 border-b border-zinc-100 py-2 last:border-0"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-zinc-900">
-                      {rule.kind}
-                    </p>
-                    <p className="text-xs text-zinc-500">
-                      {t("escalation.after")}: {rule.afterMinutes}m ·{" "}
-                      {rule.escalateToRole}
-                    </p>
-                  </div>
-                  <Badge
-                    className={
-                      rule.enabled
-                        ? "bg-emerald-50 text-emerald-800"
-                        : "bg-zinc-100 text-zinc-500"
-                    }
-                  >
-                    {rule.enabled ? t("enabled") : t("disabled")}
-                  </Badge>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={!canWrite || busy}
-                    onClick={() =>
-                      void run(() =>
-                        repo.putEscalation(rule.kind, {
-                          ...rule,
-                          enabled: !rule.enabled,
-                        }),
-                      )
-                    }
-                  >
-                    {rule.enabled ? t("disable") : t("enable")}
-                  </Button>
-                </div>
-              ))
-            )}
-          </div>
+          <EscalationSection repo={repo} canWrite={canWrite} />
         </TabsContent>
 
         <TabsContent value="lostReasons" className="mt-0">
@@ -461,67 +347,11 @@ export function AdminSettingsBoard() {
         </TabsContent>
 
         <TabsContent value="thresholds" className="mt-0">
-          {thresholds ? (
-            <div className="space-y-3 rounded-2xl border border-zinc-200/80 bg-white p-5">
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {(
-                  [
-                    ["softCapacityPct", t("thresholds.softCapacity")],
-                    ["hardCapacityPct", t("thresholds.hardCapacity")],
-                    ["overdueTaskHours", t("thresholds.overdueTask")],
-                    ["unpaidBookingDays", t("thresholds.unpaidBooking")],
-                    ["marginAlertPct", t("thresholds.marginAlert")],
-                  ] as const
-                ).map(([key, label]) => (
-                  <div key={key}>
-                    <Label>{label}</Label>
-                    <Input
-                      type="number"
-                      className="mt-1.5"
-                      value={thresholds[key]}
-                      onChange={(e) =>
-                        setThresholds({
-                          ...thresholds,
-                          [key]: Number(e.target.value) || 0,
-                        })
-                      }
-                    />
-                  </div>
-                ))}
-              </div>
-              <Button
-                size="sm"
-                disabled={!canWrite || busy}
-                onClick={() => void run(() => repo.putThresholds(thresholds))}
-              >
-                {t("save")}
-              </Button>
-            </div>
-          ) : null}
+          <ThresholdsSection repo={repo} canWrite={canWrite} />
         </TabsContent>
 
         <TabsContent value="events" className="mt-0">
-          <div className="rounded-2xl border border-zinc-200/80 bg-white p-5">
-            {events.length === 0 ? (
-              <p className="text-sm text-zinc-500">{t("empty")}</p>
-            ) : (
-              <ul className="divide-y divide-zinc-100">
-                {events.map((ev) => (
-                  <li key={ev.code} className="flex gap-3 py-2.5 text-sm">
-                    <Badge className="bg-zinc-100 text-zinc-700">
-                      {ev.severity}
-                    </Badge>
-                    <div>
-                      <p className="font-medium text-zinc-900">{ev.code}</p>
-                      <p className="text-xs text-zinc-500">
-                        {ev.category} · {ev.description}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          <EventsSection repo={repo} />
         </TabsContent>
 
         <TabsContent value="docPolicies" className="mt-0">
