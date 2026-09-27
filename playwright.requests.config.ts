@@ -3,7 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 /** Live suites against an already running app + real backend (no demo mode). */
 export default defineConfig({
   testDir: "./e2e",
-  testMatch: /(request-budget|epic22-live)\.spec\.ts$/,
+  testMatch: /(request-budget|epic22-live|manager-dashboard-live)\.spec\.ts$/,
   workers: 1,
   timeout: 600_000,
   reporter: [["list"]],

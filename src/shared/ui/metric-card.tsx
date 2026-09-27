@@ -1,16 +1,9 @@
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/shared/lib/cn";
+import { TONES, type Tone } from "./tone";
 
-const ACCENTS = {
-  sky: "bg-sky-50 text-sky-700",
-  amber: "bg-amber-50 text-amber-700",
-  rose: "bg-rose-50 text-rose-700",
-  violet: "bg-violet-50 text-violet-700",
-  emerald: "bg-emerald-50 text-emerald-700",
-  zinc: "bg-zinc-100 text-zinc-600",
-} as const;
 
-export type MetricAccent = keyof typeof ACCENTS;
+export type MetricAccent = Tone;
 
 type MetricCardProps = {
   label: string;
@@ -49,7 +42,7 @@ export function MetricCard({
       <span
         className={cn(
           "inline-flex h-12 w-12 items-center justify-center rounded-2xl",
-          ACCENTS[accent],
+          TONES[accent].soft,
         )}
       >
         <Icon className="h-6 w-6" strokeWidth={1.6} />

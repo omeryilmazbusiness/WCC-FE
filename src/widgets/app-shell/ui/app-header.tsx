@@ -5,7 +5,6 @@ import { LogOut } from "lucide-react";
 import { NotificationBell } from "@/features/notifications";
 import { LocaleSwitcher } from "@/features/switch-locale";
 import { BranchScopeSelect } from "@/features/branch-scope";
-import { GlobalSearch } from "@/features/global-search";
 import { logout as endSession } from "@/features/auth-by-credentials";
 import { useCan } from "@/entities/viewer";
 import { routes } from "@/shared/config/routes";
@@ -18,13 +17,12 @@ type Props = {
 };
 
 /**
- * Slim utility bar — branch scope / search / live FX / notifications / locale / logout.
+ * Slim utility bar — branch scope / live FX / notifications / locale / logout.
  */
 export function AppHeader({ className }: Props) {
   const tNav = useTranslations("nav");
   const tAuth = useTranslations("auth");
   const locale = useLocale();
-  const canSearch = useCan("dashboard.read");
   const canNotify = useCan("notifications.read");
 
   async function logout() {
@@ -42,7 +40,6 @@ export function AppHeader({ className }: Props) {
     >
       <div className="me-auto flex min-w-0 flex-1 items-center gap-3">
         <BranchScopeSelect />
-        {canSearch ? <GlobalSearch /> : null}
       </div>
       <FxLiveIndicator />
       {canNotify ? <NotificationBell surface="light" /> : null}

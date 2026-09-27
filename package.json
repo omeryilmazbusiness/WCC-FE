@@ -19,6 +19,8 @@
     "test:http": "node --experimental-strip-types scripts/selftest-http-dedupe.ts",
     "test:realtime": "node --experimental-strip-types scripts/selftest-realtime.ts",
     "test:adminconfig": "node --experimental-strip-types scripts/selftest-adminconfig.ts",
+    "test:pagination": "node --experimental-strip-types scripts/selftest-pagination.ts",
+    "test:filters": "node --experimental-strip-types scripts/selftest-filters.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },

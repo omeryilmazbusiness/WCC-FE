@@ -1,19 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
-import type { ColumnDef } from "@tanstack/react-table";
-import {
-  AlertTriangle,
-  ClipboardList,
-  FileWarning,
-  Package,
-  Plus,
-  Target,
-  TrendingUp,
-  Users,
-  Wallet,
-} from "lucide-react";
+import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { AlarmClock, FileWarning, Kanban, Wallet } from "lucide-react";
 import {
   createDashboardRepository,
   type AttentionItem,
@@ -22,107 +11,81 @@ import {
   type TeamMemberStat,
 } from "@/entities/dashboard";
 import { useCan } from "@/entities/viewer";
-import { routes } from "@/shared/config/routes";
-import { Link } from "@/shared/i18n/navigation";
-import { useApiQuery } from "@/shared/lib/use-api-query";
-import {
-  Badge,
-  Button,
-  DataTable,
-  ListScreen,
-  MetricCard,
-  QueryState,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  SurfacePanel,
-} from "@/shared/ui";
-import { AIExecutiveSummaryCard } from "./ai-executive-summary-card";
 import { BranchSetupHost } from "@/features/branch-setup";
+import { routes } from "@/shared/config/routes";
+import { useApiQuery } from "@/shared/lib/use-api-query";
+import { ListScreen, QueryState, SegmentedControl, StatTile } from "@/shared/ui";
+import { AIExecutiveSummaryCard } from "./ai-executive-summary-card";
+import { AttentionWidget } from "./attention-widget";
+import { CommandBar } from "./command-bar";
+import { RevenueWidget } from "./revenue-widget";
+import { TargetWidget } from "./target-widget";
+import { TeamWidget } from "./team-widget";
 
 const repo = createDashboardRepository();
 
-function periodDays(days: number): { from: Date; to: Date } {
+/** The attention endpoint caps at 50; the card pages through them. */
+const ATTENTION_LIMIT = 50;
+
+type Period = "7" | "30" | "90";
+
+type DashboardData = {
+  kpi: DashboardKPI;
+  team: TeamMemberStat[];
+  attention: AttentionItem[];
+  target: TargetSnapshot;
+};
+
+function periodRange(days: number): { from: Date; to: Date } {
   const to = new Date();
   const from = new Date(to);
   from.setUTCDate(from.getUTCDate() - days);
   return { from, to };
 }
 
-function hrefForAttention(item: AttentionItem): string {
-  switch (item.hrefHint) {
-    case "bookings":
-      return routes.bookings;
-    case "packages":
-      return routes.packages;
-    case "pipeline":
-      return routes.pipeline;
-    case "tasks":
-    default:
-      return routes.tasks;
-  }
-}
-
-const ATTENTION_KINDS = new Set([
-  "overdue_task",
-  "unpaid_booking",
-  "missing_doc",
-  "capacity",
-  "escalated_task",
-]);
-
-function attentionKindLabel(
-  t: ReturnType<typeof useTranslations<"manager">>,
-  kind: string,
-): string {
-  if (ATTENTION_KINDS.has(kind)) {
-    return t(`attentionKinds.${kind}` as "attentionKinds.overdue_task");
-  }
-  return kind;
-}
-
 export function ManagerDashboardBoard() {
   const t = useTranslations("manager");
   const tc = useTranslations("common");
-  const [days, setDays] = useState("30");
-  const canCreateLead = useCan("leads.write");
-  const canCreateBooking = useCan("bookings.write");
-  const canTasks = useCan("tasks.read");
-  const canPackages = useCan("packages.read");
-  const canCustomers = useCan("customers.read");
+  const locale = useLocale();
   const canAI = useCan("ai.read");
-  const dashboard = useApiQuery(async () => {
-    const { from, to } = periodDays(Number(days) || 30);
-    const [kpi, team, attention, target] = await Promise.all([
-      repo.getKPIs(from, to),
-      repo.getTeamStats(from, to),
-      repo.getAttention(12),
-      repo.getTarget("branch"),
-    ]);
-    return { kpi, team, attention, target } satisfies {
-      kpi: DashboardKPI;
-      team: TeamMemberStat[];
-      attention: AttentionItem[];
-      target: TargetSnapshot;
-    };
-  }, [days], { liveTopics: ["lead", "payment", "document", "task", "target", "conversation"] });
+  const [period, setPeriod] = useState<Period>("30");
 
-  const columns = useMemo<ColumnDef<TeamMemberStat>[]>(
-    () => [
-      { accessorKey: "name", header: t("team.name") },
-      { accessorKey: "leadsHandled", header: t("team.leads") },
-      { accessorKey: "openTasks", header: t("team.openTasks") },
-      { accessorKey: "overdueTasks", header: t("team.overdue") },
-      { accessorKey: "revenueShare", header: t("team.wins") },
-    ],
-    [t],
+  const dashboard = useApiQuery(
+    async (): Promise<DashboardData> => {
+      const { from, to } = periodRange(Number(period));
+      const [kpi, team, attention, target] = await Promise.all([
+        repo.getKPIs(from, to),
+        repo.getTeamStats(from, to),
+        repo.getAttention(ATTENTION_LIMIT),
+        repo.getTarget("branch"),
+      ]);
+      return { kpi, team, attention, target };
+    },
+    [period],
+    { liveTopics: ["lead", "payment", "document", "task", "target", "conversation"] },
   );
 
-  if (!dashboard.data) {
-    return (
-      <ListScreen title={t("title")} description={t("subtitle")}>
+  const periodControl = (
+    <SegmentedControl<Period>
+      value={period}
+      onChange={setPeriod}
+      aria-label={t("period")}
+      options={[
+        { value: "7", label: t("periodShort.d7") },
+        { value: "30", label: t("periodShort.d30") },
+        { value: "90", label: t("periodShort.d90") },
+      ]}
+    />
+  );
+
+  return (
+    <ListScreen title={t("title")} description={t("subtitle")} actions={periodControl}>
+      <BranchSetupHost />
+      <CommandBar />
+
+      {dashboard.data ? (
+        <DashboardGrid data={dashboard.data} locale={locale} />
+      ) : (
         <QueryState
           loading={dashboard.loading}
           loadingLabel={tc("loading")}
@@ -131,244 +94,41 @@ export function ManagerDashboardBoard() {
         >
           {null}
         </QueryState>
-      </ListScreen>
-    );
-  }
-
-  const { kpi, team, attention, target } = dashboard.data;
-
-  const progressPct =
-    target.targetAmount > 0
-      ? Math.round((target.actualAmount / target.targetAmount) * 100)
-      : 0;
-
-  const teamCollected = team.reduce((s, m) => s + (m.collectedAmt ?? 0), 0);
-  const bookedAmt = kpi.bookedAmt ?? 0;
-  const collectedAmt = kpi.collectedAmt || teamCollected || 0;
-  const marginAmt = kpi.marginAmt ?? 0;
-
-  function moneyLabel(minor: number): string {
-    if (!minor) return "—";
-    return (minor / 100).toLocaleString(undefined, {
-      maximumFractionDigits: 0,
-    });
-  }
-
-  return (
-    <ListScreen
-      title={t("title")}
-      description={t("subtitle")}
-      actions={
-        <div className="flex flex-wrap items-center gap-2" data-testid="manager-quick-actions">
-          <Select value={days} onValueChange={setDays}>
-            <SelectTrigger className="w-[140px]" aria-label={t("period")}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7">{t("period7")}</SelectItem>
-              <SelectItem value="30">{t("period30")}</SelectItem>
-              <SelectItem value="90">{t("period90")}</SelectItem>
-            </SelectContent>
-          </Select>
-          {canCreateLead ? (
-            <Button asChild size="sm" variant="outline">
-              <Link href={routes.pipeline}>
-                <Plus className="h-4 w-4" />
-                {t("quick.lead")}
-              </Link>
-            </Button>
-          ) : null}
-          {canCreateBooking ? (
-            <Button asChild size="sm" variant="outline">
-              <Link href={routes.bookings}>
-                <Plus className="h-4 w-4" />
-                {t("quick.booking")}
-              </Link>
-            </Button>
-          ) : null}
-          {canTasks ? (
-            <Button asChild size="sm" variant="outline">
-              <Link href={routes.tasks}>
-                <ClipboardList className="h-4 w-4" />
-                {t("quick.tasks")}
-              </Link>
-            </Button>
-          ) : null}
-          {canPackages ? (
-            <Button asChild size="sm" variant="outline">
-              <Link href={routes.packages}>
-                <Package className="h-4 w-4" />
-                {t("quick.package")}
-              </Link>
-            </Button>
-          ) : null}
-          {canCustomers ? (
-            <Button asChild size="sm" variant="outline">
-              <Link href={routes.customers}>
-                <Users className="h-4 w-4" />
-                {t("quick.customers")}
-              </Link>
-            </Button>
-          ) : null}
-        </div>
-      }
-    >
-      <BranchSetupHost />
-
-      <SurfacePanel
-        title={target.label}
-        description={t("targetHeroBody", { pct: progressPct })}
-        icon={Target}
-        accent="emerald"
-        className="mb-5"
-        data-testid="manager-target-hero"
-      >
-        <div className="flex flex-wrap items-end gap-6">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-              {t("targetActual")}
-            </p>
-            <p className="mt-1 text-2xl font-semibold tabular-nums text-zinc-950">
-              {(target.actualAmount / 100).toLocaleString()} {target.currency}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-              {t("targetGoal")}
-            </p>
-            <p className="mt-1 text-lg font-semibold tabular-nums text-zinc-700">
-              {(target.targetAmount / 100).toLocaleString()} {target.currency}
-            </p>
-          </div>
-          <Badge className="bg-emerald-50 text-emerald-800">
-            {t(`targetStatus.${target.status}`)}
-          </Badge>
-        </div>
-      </SurfacePanel>
+      )}
 
       {canAI ? <AIExecutiveSummaryCard /> : null}
-
-      <div
-        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
-        data-testid="manager-kpis"
-      >
-        <Link href={routes.pipeline} className="block">
-          <MetricCard
-            label={t("kpi.leadsOpen")}
-            value={kpi.leadsOpen}
-            icon={ClipboardList}
-            accent="sky"
-          />
-        </Link>
-        <Link href={`${routes.tasks}`} className="block">
-          <MetricCard
-            label={t("kpi.tasksOverdue")}
-            value={kpi.tasksOverdue}
-            icon={AlertTriangle}
-            accent="amber"
-          />
-        </Link>
-        <Link href={routes.bookings} className="block">
-          <MetricCard
-            label={t("kpi.bookingsUnpaid")}
-            value={kpi.bookingsUnpaid}
-            icon={Wallet}
-            accent="rose"
-          />
-        </Link>
-        <Link href={routes.tasks} className="block">
-          <MetricCard
-            label={t("kpi.missingDocs")}
-            value={kpi.missingDocs}
-            icon={FileWarning}
-            accent="violet"
-          />
-        </Link>
-      </div>
-
-      <div
-        className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3"
-        data-testid="manager-money-kpis"
-      >
-        <MetricCard
-          label={t("kpi.booked")}
-          value={moneyLabel(bookedAmt)}
-          icon={Package}
-          accent="sky"
-          hint={t("kpi.bookedHint")}
-        />
-        <MetricCard
-          label={t("kpi.collected")}
-          value={moneyLabel(collectedAmt)}
-          icon={Wallet}
-          accent="emerald"
-          hint={t("kpi.collectedHint")}
-        />
-        <MetricCard
-          label={t("kpi.margin")}
-          value={moneyLabel(marginAmt)}
-          icon={TrendingUp}
-          accent="violet"
-          hint={t("kpi.marginHint")}
-        />
-      </div>
-
-      <div className="mt-5 grid gap-5 lg:grid-cols-2">
-        <SurfacePanel
-          title={t("attentionTitle")}
-          description={t("attentionBody")}
-          icon={AlertTriangle}
-          accent="amber"
-          data-testid="manager-attention"
-        >
-          {attention.length === 0 ? (
-            <p className="text-sm text-zinc-500">{t("attentionEmpty")}</p>
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {attention.map((item) => (
-                <li key={`${item.kind}-${item.id}`}>
-                  <Link
-                    href={hrefForAttention(item)}
-                    className="flex items-start justify-between gap-3 rounded-2xl border border-zinc-200/80 bg-white px-3 py-2.5 hover:border-zinc-300"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-zinc-950">
-                        {item.title}
-                      </p>
-                      <p className="text-xs text-zinc-500">
-                        {attentionKindLabel(t, item.kind)} · {item.ageHours}h
-                      </p>
-                    </div>
-                    <Badge
-                      className={
-                        item.severity === "high"
-                          ? "bg-rose-50 text-rose-800"
-                          : "bg-amber-50 text-amber-900"
-                      }
-                    >
-                      {item.severity}
-                    </Badge>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </SurfacePanel>
-
-        <SurfacePanel
-          title={t("teamTitle")}
-          description={t("teamBody")}
-          icon={Users}
-          accent="zinc"
-          data-testid="manager-team"
-        >
-          <DataTable
-            columns={columns}
-            data={team}
-            emptyMessage={t("teamEmpty")}
-          />
-        </SurfacePanel>
-      </div>
     </ListScreen>
+  );
+}
+
+function DashboardGrid({ data, locale }: { data: DashboardData; locale: string }) {
+  const t = useTranslations("manager");
+  const { kpi, team, attention, target } = data;
+  const teamCollected = team.reduce((sum, m) => sum + (m.collectedAmt ?? 0), 0);
+
+  return (
+    <>
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4" data-testid="manager-kpis">
+        <StatTile href={routes.pipeline} label={t("kpi.leadsOpen")} value={kpi.leadsOpen} icon={Kanban} tone="sky" />
+        <StatTile href={routes.tasks} label={t("kpi.tasksOverdue")} value={kpi.tasksOverdue} icon={AlarmClock} tone="amber" />
+        <StatTile href={routes.bookings} label={t("kpi.bookingsUnpaid")} value={kpi.bookingsUnpaid} icon={Wallet} tone="rose" />
+        <StatTile href={routes.tasks} label={t("kpi.missingDocs")} value={kpi.missingDocs} icon={FileWarning} tone="violet" />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <TargetWidget target={target} locale={locale} />
+        <RevenueWidget
+          bookedMinor={kpi.bookedAmt ?? 0}
+          collectedMinor={kpi.collectedAmt || teamCollected}
+          marginMinor={kpi.marginAmt ?? 0}
+          locale={locale}
+        />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <AttentionWidget items={attention} />
+        <TeamWidget members={team} />
+      </div>
+    </>
   );
 }

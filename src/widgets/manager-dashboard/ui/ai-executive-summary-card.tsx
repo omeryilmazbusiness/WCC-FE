@@ -7,7 +7,7 @@ import { createAIRepository, type DailySummary } from "@/entities/ai";
 import { routes } from "@/shared/config/routes";
 import { Link } from "@/shared/i18n/navigation";
 import { useCan } from "@/entities/viewer";
-import { Button, QueryState, SurfacePanel } from "@/shared/ui";
+import { Button, QueryState, WidgetCard } from "@/shared/ui";
 
 export function AIExecutiveSummaryCard() {
   const t = useTranslations("ai");
@@ -39,12 +39,10 @@ export function AIExecutiveSummaryCard() {
   }, [load]);
 
   return (
-    <SurfacePanel
+    <WidgetCard
       title={t("execTitle")}
-      description={t("execSubtitle")}
       icon={Sparkles}
-      accent="zinc"
-      className="mb-5"
+      tone="violet"
       data-testid="ai-executive-summary"
       actions={
         <div className="flex gap-2">
@@ -96,6 +94,6 @@ export function AIExecutiveSummaryCard() {
       <p className="mt-3 text-[11px] font-medium uppercase tracking-wide text-zinc-400">
         {summary?.source === "ai" ? t("sourceAi") : t("sourceRules")}
       </p>
-    </SurfacePanel>
+    </WidgetCard>
   );
 }

@@ -17,12 +17,14 @@ import { routes } from "@/shared/config/routes";
 import { Link, usePathname, useRouter } from "@/shared/i18n/navigation";
 import { cn } from "@/shared/lib/cn";
 import { formatRelativeTime } from "@/shared/lib/format";
+import { pageCountOf } from "@/shared/lib/pagination";
 import { useApiQuery } from "@/shared/lib/use-api-query";
 import { useRealtime, useRealtimeStatus } from "@/shared/lib/use-realtime";
 import {
   Badge,
   Button,
   PageHeader,
+  Pager,
   QueryState,
   Screen,
   SegmentedControl,
@@ -124,7 +126,7 @@ export function NotificationCenterBoard() {
   );
   const items = list.data?.items ?? [];
   const total = list.data?.total ?? 0;
-  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const pages = pageCountOf(total, PAGE_SIZE);
   const selected = groupRows.find((g) => g.kind === kind);
 
   return (
@@ -236,24 +238,7 @@ export function NotificationCenterBoard() {
                 />
               ))}
             </ul>
-            {pages > 1 ? (
-              <div className="flex items-center justify-end gap-2 pt-1">
-                <span className="text-xs text-zinc-500">
-                  {t("page", { page: page + 1, pages })}
-                </span>
-                <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(page - 1)}>
-                  {t("prev")}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={page + 1 >= pages}
-                  onClick={() => setPage(page + 1)}
-                >
-                  {t("next")}
-                </Button>
-              </div>
-            ) : null}
+            <Pager page={page} pageCount={pages} onPageChange={setPage} className="pt-1" />
           </QueryState>
           <p className="text-xs text-zinc-400">
             {t("settingsHint")}{" "}

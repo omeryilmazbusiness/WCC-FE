@@ -1,13 +1,13 @@
 import { http, type HttpClient } from "@/shared/api/http-client";
 import { createRepository } from "@/shared/api/repository";
-import type { SearchHit, SearchResult } from "./model";
+import { searchQueryString, type SearchHit, type SearchOptions, type SearchResult } from "./model";
 
 type Raw = Record<string, unknown>;
 
 function mapHit(raw: Raw): SearchHit {
   return {
     id: String(raw.id ?? ""),
-    entityType: String(raw.entity_type ?? raw.entityType ?? "customer"),
+    entityType: String(raw.kind ?? raw.entity_type ?? raw.entityType ?? ""),
     title: String(raw.title ?? raw.name ?? ""),
     subtitle: String(raw.subtitle ?? raw.description ?? ""),
     hrefHint: String(raw.href_hint ?? raw.hrefHint ?? ""),
@@ -16,16 +16,16 @@ function mapHit(raw: Raw): SearchHit {
 }
 
 export interface SearchRepository {
-  search(q: string): Promise<SearchResult>;
+  search(q: string, options?: SearchOptions): Promise<SearchResult>;
 }
 
 class ApiRepo implements SearchRepository {
   constructor(private readonly http: HttpClient) {}
 
-  async search(q: string): Promise<SearchResult> {
+  async search(q: string, options?: SearchOptions): Promise<SearchResult> {
     const data = await this.http.request<
       Raw[] | { items?: Raw[]; hits?: Raw[]; query?: string }
-    >(`/search?q=${encodeURIComponent(q)}`);
+    >(`/search?${searchQueryString(q, options)}`);
     const rows = Array.isArray(data)
       ? data
       : (data.hits ?? data.items ?? []);
@@ -37,7 +37,7 @@ class ApiRepo implements SearchRepository {
 }
 
 class MemoryRepo implements SearchRepository {
-  async search(q: string): Promise<SearchResult> {
+  async search(q: string, options?: SearchOptions): Promise<SearchResult> {
     const needle = q.trim().toLowerCase();
     if (!needle) return { query: q, hits: [] };
     const seed: SearchHit[] = [
@@ -70,9 +70,10 @@ class MemoryRepo implements SearchRepository {
       query: q,
       hits: seed.filter(
         (h) =>
-          h.title.toLowerCase().includes(needle) ||
-          h.subtitle.toLowerCase().includes(needle) ||
-          h.entityType.toLowerCase().includes(needle),
+          (!options?.kinds?.length || options.kinds.some((k) => k === h.entityType)) &&
+          (h.title.toLowerCase().includes(needle) ||
+            h.subtitle.toLowerCase().includes(needle) ||
+            h.entityType.toLowerCase().includes(needle)),
       ),
     };
   }

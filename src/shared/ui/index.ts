@@ -28,6 +28,14 @@ export {
 export { CapacityBadge } from "./capacity-badge";
 export { MetricCard, type MetricAccent } from "./metric-card";
 export { SurfacePanel, type SurfaceAccent } from "./surface-panel";
+export { TONES, type Tone } from "./tone";
+export { WidgetCard } from "./widget-card";
+export { StatTile } from "./stat-tile";
+export { ActionTile } from "./action-tile";
+export { ProgressRing } from "./progress-ring";
+export { ListRow } from "./list-row";
+export { Pager } from "./pager";
+export { PagedList } from "./paged-list";
 export { SegmentedControl } from "./segmented-control";
 export {
   Select,
@@ -73,7 +81,13 @@ export {
 } from "./table";
 export { DataTable } from "./data-table";
 export { SearchField } from "./search-field";
-export { SearchFilterBar, FilterEditIcon } from "./search-filter-bar";
+export {
+  SearchFilterBar,
+  ActiveFilterChips,
+  FilterEditIcon,
+  type FilterSection,
+  type FilterSectionOption,
+} from "./search-filter-bar";
 export {
   FilterBar,
   FilterChip,

@@ -1,18 +1,11 @@
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/shared/lib/cn";
+import { TONES, type Tone } from "./tone";
 import { Link } from "@/shared/i18n/navigation";
 
-const ACCENTS = {
-  sky: "bg-sky-50 text-sky-700",
-  amber: "bg-amber-50 text-amber-700",
-  rose: "bg-rose-50 text-rose-700",
-  violet: "bg-violet-50 text-violet-700",
-  emerald: "bg-emerald-50 text-emerald-700",
-  zinc: "bg-zinc-100 text-zinc-600",
-} as const;
 
-export type SurfaceAccent = keyof typeof ACCENTS;
+export type SurfaceAccent = Tone;
 
 type SurfacePanelProps = {
   title: string;
@@ -46,7 +39,7 @@ export function SurfacePanel({
         <span
           className={cn(
             "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl",
-            ACCENTS[accent],
+            TONES[accent].soft,
           )}
         >
           <Icon className="h-6 w-6" strokeWidth={1.6} />

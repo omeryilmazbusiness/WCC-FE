@@ -111,12 +111,8 @@
   },
   "manager": {
     "title": "لوحة المدير",
-    "subtitle": "الاستثناءات أولاً — أداء الفريق والإجراءات السريعة",
+    "subtitle": "نظرة سريعة على اليوم",
     "period": "الفترة",
-    "period7": "آخر 7 أيام",
-    "period30": "آخر 30 يوماً",
-    "period90": "آخر 90 يوماً",
-    "targetHeroBody": "وتيرة الفرع عند {pct}% من هدف الموسم",
     "targetActual": "المحصّل",
     "targetGoal": "الهدف",
     "targetStatus": {
@@ -132,10 +128,7 @@
       "missingDocs": "مستندات ناقصة",
       "booked": "محجوز",
       "collected": "محصّل",
-      "margin": "الهامش",
-      "bookedHint": "مبلغ الحجوزات (وحدات صغرى)",
-      "collectedHint": "المحصّل (وحدات صغرى)",
-      "marginHint": "الهامش (وحدات صغرى)"
+      "margin": "الهامش"
     },
     "quick": {
       "lead": "عميل محتمل جديد",
@@ -145,7 +138,6 @@
       "customers": "العملاء"
     },
     "attentionTitle": "يحتاج انتباهاً",
-    "attentionBody": "المتأخر وغير المدفوع والسعة والتصعيد — تصرف من هنا",
     "attentionEmpty": "لا استثناءات الآن",
     "attentionKinds": {
       "overdue_task": "مهمة متأخرة",
@@ -154,8 +146,7 @@
       "capacity": "مخاطر السعة",
       "escalated_task": "مصعّد"
     },
-    "teamTitle": "أداء الفريق",
-    "teamBody": "العملاء المحتملون والمهام المفتوحة والمتأخرة حسب المالك",
+    "teamTitle": "الفريق",
     "teamEmpty": "لا يوجد نشاط للفريق بعد",
     "team": {
       "name": "الموظف",
@@ -163,7 +154,18 @@
       "openTasks": "مهام مفتوحة",
       "overdue": "متأخر",
       "wins": "صفقات"
-    }
+    },
+    "periodShort": {
+      "d7": "٧ أيام",
+      "d30": "٣٠ يومًا",
+      "d90": "٩٠ يومًا"
+    },
+    "revenueTitle": "الإيرادات",
+    "seeAll": "عرض الكل",
+    "targetOf": "من {goal}",
+    "ageHours": "{count} س",
+    "ageDays": "{count} ي",
+    "targetEmpty": "لا يوجد هدف لهذه الفترة"
   },
   "inbox": {
     "title": "الوارد الموحد",
@@ -929,7 +931,6 @@
   },
   "ai": {
     "execTitle": "الملخص التنفيذي",
-    "execSubtitle": "إحاطة يومية لهذا الفرع",
     "configure": "إعداد الذكاء الاصطناعي",
     "refresh": "تحديث",
     "loading": "جارٍ الإنشاء…",
@@ -966,7 +967,14 @@
     "retry": "إعادة المحاولة",
     "permissionDenied": "تم رفض الوصول",
     "permissionDeniedHint": "ليس لديك صلاحية لعرض هذه الشاشة.",
-    "loadingPanel": "جارٍ التحميل…"
+    "loadingPanel": "جارٍ التحميل…",
+    "pager": {
+      "label": "التنقل بين الصفحات",
+      "prev": "الصفحة السابقة",
+      "next": "الصفحة التالية",
+      "page": "الصفحة {page} من {pages}"
+    },
+    "removeFilter": "إزالة عامل التصفية {filter}"
   },
   "finance": {
     "queuesTitle": "طوابير المالية",
@@ -1567,7 +1575,7 @@
     "saved": "تم الحفظ"
   },
   "search": {
-    "placeholder": "بحث…",
+    "placeholder": "ابحث في العملاء والفرص والحجوزات والجوازات…",
     "clear": "مسح البحث",
     "searching": "جارٍ البحث…",
     "empty": "لا توجد نتائج",
@@ -1579,7 +1587,18 @@
       "task": "مهمة",
       "package": "باقة",
       "departure": "مغادرة",
-      "supplier": "مورد"
+      "supplier": "مورد",
+      "passport": "جواز سفر"
+    },
+    "filterType": "النوع",
+    "all": "الكل",
+    "hint": "اكتب حرفين على الأقل",
+    "results": "{count, plural, =0 {لا توجد نتائج} one {نتيجة واحدة} two {نتيجتان} few {# نتائج} many {# نتيجة} other {# نتيجة}}",
+    "kinds": {
+      "customer": "العملاء",
+      "lead": "الفرص",
+      "booking": "الحجوزات",
+      "passport": "الجوازات"
     }
   },
   "nextTask": {
@@ -2007,9 +2026,6 @@
       "resolved": "مغلقة"
     },
     "openRecord": "فتح",
-    "page": "صفحة {page} من {pages}",
-    "prev": "السابق",
-    "next": "التالي",
     "settingsHint": "العتبات وSLA أ/ب وقواعد التصعيد تُدار في",
     "settingsLink": "إعدادات النظام"
   }

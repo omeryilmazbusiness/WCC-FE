@@ -111,12 +111,8 @@
   },
   "manager": {
     "title": "Manager dashboard",
-    "subtitle": "Exceptions first — team pace and quick actions",
+    "subtitle": "Today at a glance",
     "period": "Period",
-    "period7": "Last 7 days",
-    "period30": "Last 30 days",
-    "period90": "Last 90 days",
-    "targetHeroBody": "Branch pace at {pct}% of season target",
     "targetActual": "Collected",
     "targetGoal": "Target",
     "targetStatus": {
@@ -132,10 +128,7 @@
       "missingDocs": "Missing docs",
       "booked": "Booked",
       "collected": "Collected",
-      "margin": "Margin",
-      "bookedHint": "Booked amount (minor units)",
-      "collectedHint": "Collected amount (minor units)",
-      "marginHint": "Margin amount (minor units)"
+      "margin": "Margin"
     },
     "quick": {
       "lead": "New lead",
@@ -145,7 +138,6 @@
       "customers": "Customers"
     },
     "attentionTitle": "Needs attention",
-    "attentionBody": "Overdue, unpaid, capacity, and escalations — act from here",
     "attentionEmpty": "No exceptions right now",
     "attentionKinds": {
       "overdue_task": "Overdue task",
@@ -154,8 +146,7 @@
       "capacity": "Capacity risk",
       "escalated_task": "Escalated"
     },
-    "teamTitle": "Team performance",
-    "teamBody": "Leads handled, open work, and overdue items by owner",
+    "teamTitle": "Team",
     "teamEmpty": "No team activity yet",
     "team": {
       "name": "Employee",
@@ -163,7 +154,18 @@
       "openTasks": "Open tasks",
       "overdue": "Overdue",
       "wins": "Wins"
-    }
+    },
+    "periodShort": {
+      "d7": "7d",
+      "d30": "30d",
+      "d90": "90d"
+    },
+    "revenueTitle": "Revenue",
+    "seeAll": "See all",
+    "targetOf": "of {goal}",
+    "ageHours": "{count}h",
+    "ageDays": "{count}d",
+    "targetEmpty": "No target set for this period"
   },
   "inbox": {
     "title": "Unified inbox",
@@ -929,7 +931,6 @@
   },
   "ai": {
     "execTitle": "AI executive summary",
-    "execSubtitle": "Daily briefing for this branch",
     "configure": "Configure AI",
     "refresh": "Refresh",
     "loading": "Generating…",
@@ -966,7 +967,14 @@
     "retry": "Retry",
     "permissionDenied": "Access denied",
     "permissionDeniedHint": "You do not have permission to view this screen.",
-    "loadingPanel": "Loading…"
+    "loadingPanel": "Loading…",
+    "pager": {
+      "label": "Pagination",
+      "prev": "Previous page",
+      "next": "Next page",
+      "page": "Page {page} of {pages}"
+    },
+    "removeFilter": "Remove filter {filter}"
   },
   "finance": {
     "queuesTitle": "Finance queues",
@@ -1567,7 +1575,7 @@
     "saved": "Saved"
   },
   "search": {
-    "placeholder": "Search…",
+    "placeholder": "Search customers, leads, bookings, passports…",
     "clear": "Clear search",
     "searching": "Searching…",
     "empty": "No results",
@@ -1579,7 +1587,18 @@
       "task": "Task",
       "package": "Package",
       "departure": "Departure",
-      "supplier": "Supplier"
+      "supplier": "Supplier",
+      "passport": "Passport"
+    },
+    "filterType": "Type",
+    "all": "All",
+    "hint": "Type at least 2 characters",
+    "results": "{count, plural, =0 {No results} one {# result} other {# results}}",
+    "kinds": {
+      "customer": "Customers",
+      "lead": "Leads",
+      "booking": "Bookings",
+      "passport": "Passports"
     }
   },
   "nextTask": {
@@ -2007,9 +2026,6 @@
       "resolved": "Resolved"
     },
     "openRecord": "Open",
-    "page": "Page {page} of {pages}",
-    "prev": "Previous",
-    "next": "Next",
     "settingsHint": "Thresholds, SLA A/B and escalation rules are managed in",
     "settingsLink": "admin settings"
   }
