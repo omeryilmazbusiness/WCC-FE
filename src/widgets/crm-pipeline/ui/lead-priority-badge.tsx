@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { createAIRepository, type LeadScore } from "@/entities/ai";
 import { useCan } from "@/entities/viewer";
 import { cn } from "@/shared/lib/cn";
@@ -12,8 +12,9 @@ const bandClass: Record<string, string> = {
   low: "bg-zinc-50 text-zinc-400",
 };
 
+const repo = createAIRepository();
+
 export function LeadPriorityBadge({ leadId }: { leadId: string }) {
-  const repo = useMemo(() => createAIRepository(), []);
   const canScore = useCan("ai.write");
   const [score, setScore] = useState<LeadScore | null>(null);
 
@@ -31,7 +32,7 @@ export function LeadPriorityBadge({ leadId }: { leadId: string }) {
     return () => {
       cancelled = true;
     };
-  }, [leadId, repo, canScore]);
+  }, [leadId, canScore]);
 
   if (!score) return null;
 

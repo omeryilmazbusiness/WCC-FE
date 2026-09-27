@@ -45,14 +45,12 @@ export function useNotifications() {
 
   const refresh = useCallback(async () => {
     try {
-      const [{ items: list }, count, preferences] = await Promise.all([
+      const [{ items: list }, count] = await Promise.all([
         repo.list(),
         repo.unreadCount(),
-        repo.getPreferences(),
       ]);
       setItems(list.map(toBellItem));
       setUnread(count);
-      setPrefs(preferences);
       setError(null);
     } catch (err) {
       setError(err);
@@ -62,9 +60,29 @@ export function useNotifications() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    repo
+      .getPreferences()
+      .then((p) => {
+        if (!cancelled) setPrefs(p);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     void refresh();
-    const id = window.setInterval(() => void refresh(), 45_000);
-    return () => window.clearInterval(id);
+    const tick = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+    const id = window.setInterval(tick, 45_000);
+    document.addEventListener("visibilitychange", tick);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", tick);
+    };
   }, [refresh]);
 
   const acknowledge = useCallback(

@@ -4,7 +4,8 @@
   "private": true,
   "description": "WODI Command Center Frontend (WCC-FE)",
   "scripts": {
-    "dev": "next dev --port 3000",
+    "dev": "next dev --turbopack --port 3000",
+    "dev:webpack": "next dev --port 3000",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -15,6 +16,7 @@
     "test:privacy": "node --experimental-strip-types scripts/selftest-privacy.ts",
     "test:booking-finance": "node --experimental-strip-types scripts/selftest-booking-finance.ts",
     "test:fx-live": "node --experimental-strip-types scripts/selftest-fx-live.ts",
+    "test:http": "node --experimental-strip-types scripts/selftest-http-dedupe.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Truck } from "lucide-react";
 import {
@@ -62,6 +62,9 @@ export function SuppliersBoard({ repository }: Props) {
   const [unitCost, setUnitCost] = useState("0");
   const [confirmRef, setConfirmRef] = useState("");
 
+  const selectedRef = useRef(selectedId);
+  selectedRef.current = selectedId;
+
   const refresh = useCallback(async () => {
     const [list, unc, over] = await Promise.all([
       repo.list(),
@@ -71,11 +74,15 @@ export function SuppliersBoard({ repository }: Props) {
     setSuppliers(list);
     setUnconfirmed(unc);
     setOversold(over);
-    const sid = selectedId || list[0]?.id || "";
-    if (sid && sid !== selectedId) setSelectedId(sid);
+    const current = selectedRef.current;
+    const sid = current || list[0]?.id || "";
+    if (sid !== current) {
+      setSelectedId(sid);
+      if (!sid) setLinks([]);
+      return;
+    }
     if (sid) setLinks(await repo.listLinks(sid));
-    else setLinks([]);
-  }, [repo, selectedId]);
+  }, [repo]);
 
   const load = useCallback(async () => {
     setLoadError(null);

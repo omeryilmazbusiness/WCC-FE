@@ -108,10 +108,11 @@ class ApiRepo implements AIRepository {
   }
 
   async scoreLead(id: string, explain = true) {
-    const raw = await this.http.request<Raw>(
-      `/ai/leads/${id}/score?explain=${explain ? "true" : "false"}`,
-      { method: "POST" },
-    );
+    const raw = explain
+      ? await this.http.request<Raw>(`/ai/leads/${id}/score?explain=true`, {
+          method: "POST",
+        })
+      : await this.http.request<Raw>(`/ai/leads/${id}/score`);
     return {
       leadId: str(raw.lead_id ?? raw.leadId ?? id),
       name: str(raw.name),

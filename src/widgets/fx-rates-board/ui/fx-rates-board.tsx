@@ -47,12 +47,15 @@ export function FxRatesBoard() {
   const [dialog, setDialog] = useState<{ rate?: FxRate } | null>(null);
 
   useEffect(() => {
+    const base = normalizeCurrency(baseInput);
+    const quote = normalizeCurrency(quoteInput);
+    if (base === pair.base && quote === pair.quote) return;
     const timer = window.setTimeout(() => {
-      setPair({ base: normalizeCurrency(baseInput), quote: normalizeCurrency(quoteInput) });
+      setPair({ base, quote });
       setOffset(0);
     }, FILTER_DEBOUNCE_MS);
     return () => window.clearTimeout(timer);
-  }, [baseInput, quoteInput]);
+  }, [baseInput, quoteInput, pair.base, pair.quote]);
 
   const filters = useMemo<FxFilters>(
     () => ({
@@ -61,7 +64,7 @@ export function FxRatesBoard() {
       from: fromDay || undefined,
       to: toDay || undefined,
     }),
-    [pair, fromDay, toDay],
+    [pair.base, pair.quote, fromDay, toDay],
   );
   const rates = useApiQuery(() => repo.list(filters, { limit: FX_PAGE_SIZE, offset }), [repo, filters, offset]);
   const page = rates.data;

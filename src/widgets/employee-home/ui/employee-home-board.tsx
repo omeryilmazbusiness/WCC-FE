@@ -31,13 +31,15 @@ import {
 import { TaskQueueList } from "@/widgets/tasks-board";
 
 const dashRepo = createDashboardRepository();
+const defaultTaskRepository = createTaskRepository();
+const leadRepo = createLeadRepository();
 
 type Props = {
   taskRepository?: TaskRepository;
 };
 
 export function EmployeeHomeBoard({
-  taskRepository = createTaskRepository(),
+  taskRepository = defaultTaskRepository,
 }: Props) {
   const t = useTranslations("workspace");
   const tp = useTranslations("pipeline");
@@ -48,7 +50,7 @@ export function EmployeeHomeBoard({
   const home = useApiQuery(async () => {
     const [tasks, leads, target, work] = await Promise.all([
       taskRepository.listToday(user.id),
-      canLeads ? createLeadRepository().list() : Promise.resolve<Lead[]>([]),
+      canLeads ? leadRepo.list() : Promise.resolve<Lead[]>([]),
       canTargets ? dashRepo.getTarget("personal") : Promise.resolve<TargetSnapshot | null>(null),
       dashRepo.getMyWork(30),
     ]);

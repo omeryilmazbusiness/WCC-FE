@@ -16,11 +16,10 @@ export function TasksView() {
   const canWrite = useCan("tasks.write");
   const managerMode = scope !== "own" && canWrite;
 
-  const query = useApiQuery(async () => {
-    if (!managerMode) return repo.listMine(user.id);
-    await repo.escalateOverdue().catch(() => undefined);
-    return repo.list();
-  }, [user.id, managerMode]);
+  const query = useApiQuery(
+    () => (managerMode ? repo.list() : repo.listMine(user.id)),
+    [user.id, managerMode],
+  );
   const tasks = query.data;
 
   if (!tasks) {

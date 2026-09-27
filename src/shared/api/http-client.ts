@@ -4,6 +4,7 @@ import {
   networkError,
 } from "./api-error";
 import { VIEWER_REFRESHED_HEADER } from "./auth-contract";
+import { DedupingHttpClient } from "./deduping-http-client";
 import { loginHref, sessionEndReason } from "./session-end";
 
 export { ApiError } from "./api-error";
@@ -96,13 +97,16 @@ function announceViewerRefresh(res: Response) {
  * the same-origin BFF proxy, which reads the HttpOnly cookie and refreshes on 401.
  * A 401 surfacing here means the BFF already ended the session (cookies cleared).
  */
-export const http: HttpClient = new FetchHttpClient({
-  baseUrl: PROXY_BASE_PATH,
-  credentials: "same-origin",
-  headers: () => ({ [CSRF_HEADER]: CSRF_HEADER_VALUE }),
-  onUnauthorized: redirectToLogin,
-  onResponse: announceViewerRefresh,
-});
+export const http: HttpClient = new DedupingHttpClient(
+  new FetchHttpClient({
+    baseUrl: PROXY_BASE_PATH,
+    credentials: "same-origin",
+    headers: () => ({ [CSRF_HEADER]: CSRF_HEADER_VALUE }),
+    onUnauthorized: redirectToLogin,
+    onResponse: announceViewerRefresh,
+  }),
+  { ttlMs: 2_000, maxEntries: 64 },
+);
 
 /** Same-origin client for `/api/auth/*` BFF routes — 401 there means bad credentials. */
 export const bffHttp: HttpClient = new FetchHttpClient({
