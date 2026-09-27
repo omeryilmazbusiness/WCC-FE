@@ -27,6 +27,11 @@ export function formatDate(
   return new Intl.DateTimeFormat(toIntlLocale(locale), options).format(d);
 }
 
+/** Calendar day `YYYY-MM-DD` (no time zone) → localized date, without a UTC day shift. */
+export function formatDay(day: string, locale: string): string {
+  return /^\d{4}-\d{2}-\d{2}$/.test(day) ? formatDate(`${day}T00:00:00`, locale) : formatDate(day, locale);
+}
+
 /** Format date+time. */
 export function formatDateTime(
   value: string | number | Date,
@@ -90,6 +95,16 @@ export function formatCurrency(
     maximumFractionDigits: 2,
     ...options,
   }).format(value);
+}
+
+/** Integer minor units (API money) → localized currency string. */
+export function formatMoney(minor: number, locale: string, currency: string): string {
+  if (!Number.isFinite(minor)) return "—";
+  try {
+    return formatCurrency(minor / 100, locale, currency);
+  } catch {
+    return `${formatNumber(minor / 100, locale, { maximumFractionDigits: 2 })} ${currency}`;
+  }
 }
 
 /** Compact percent e.g. 42.5% */

@@ -9,12 +9,12 @@ import {
   type Customer,
   type TimelineItem,
 } from "@/entities/customer";
-import { createBookingRepository, type Booking } from "@/entities/booking";
+import { BookingStatusChip, createBookingRepository, type Booking } from "@/entities/booking";
 import { useCan } from "@/entities/viewer";
 import { EditCustomerDialog } from "@/features/edit-customer";
 import { MergeCustomerDialog } from "@/features/merge-customer";
 import { LinkCompanionDialog } from "@/features/link-companion";
-import { formatDate, formatDateTime } from "@/shared/lib/format";
+import { formatDate, formatDateTime, formatMoney } from "@/shared/lib/format";
 import { Link } from "@/shared/i18n/navigation";
 import { routes } from "@/shared/config/routes";
 import {
@@ -177,17 +177,17 @@ export function Customer360View({ customerId }: Props) {
       {
         accessorKey: "status",
         header: tb("fields.status"),
-        cell: ({ row }) => <Badge>{tb(`status.${row.original.status}`)}</Badge>,
+        cell: ({ row }) => <BookingStatusChip status={row.original.status} />,
       },
       { accessorKey: "paxCount", header: tb("fields.pax") },
       {
         id: "balance",
         header: tb("fields.balance"),
         cell: ({ row }) =>
-          `${(row.original.balanceAmt / 100).toFixed(0)} ${row.original.currency}`,
+          formatMoney(row.original.balanceAmt, locale, row.original.currency),
       },
     ],
-    [tb],
+    [tb, locale],
   );
 
   if (error) {

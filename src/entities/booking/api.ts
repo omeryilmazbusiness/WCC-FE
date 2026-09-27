@@ -1,17 +1,22 @@
 import { http, type HttpClient } from "@/shared/api/http-client";
 import { createRepository } from "@/shared/api/repository";
 import { maskedLast4, passportPatchValue, toMaskedSecret } from "@/shared/lib/pii";
-import type {
-  Booking,
-  BookingChecklistItem,
-  BookingCreateInput,
-  BookingLineItem,
-  BookingParticipant,
-  BookingReadiness,
-  BookingStatus,
-  BookingUpdateInput,
-  LineItemInput,
-  ParticipantInput,
+import {
+  isBookingStatus,
+  toLineCategory,
+  toLineKind,
+  type AllowedTransition,
+  type Booking,
+  type BookingChecklistItem,
+  type BookingCreateInput,
+  type BookingLineItem,
+  type BookingParticipant,
+  type BookingReadiness,
+  type BookingStatus,
+  type BookingUpdateInput,
+  type ChangeStatusInput,
+  type LineItemInput,
+  type ParticipantInput,
 } from "./model";
 
 export interface BookingRepository {
@@ -25,8 +30,8 @@ export interface BookingRepository {
   getById(id: string): Promise<Booking>;
   create(input: BookingCreateInput): Promise<Booking>;
   update(id: string, input: BookingUpdateInput): Promise<Booking>;
-  confirm(id: string): Promise<Booking>;
-  changeStatus(id: string, status: BookingStatus): Promise<Booking>;
+  /** `POST /bookings/{id}/status`; 409 `invalid_transition`, 422 `guard_failed` (`details.guards`). */
+  changeStatus(id: string, input: ChangeStatusInput): Promise<Booking>;
   readiness(id: string): Promise<BookingReadiness>;
   overrideReadiness(id: string, reason: string): Promise<void>;
   listParticipants(id: string): Promise<BookingParticipant[]>;
@@ -54,6 +59,25 @@ export interface BookingRepository {
 
 type Raw = Record<string, unknown>;
 
+function mapTransitions(value: unknown): AllowedTransition[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item): AllowedTransition[] => {
+    const r = (item ?? {}) as Raw;
+    if (!isBookingStatus(r.status)) return [];
+    return [
+      {
+        status: r.status,
+        requiresReason: Boolean(r.requires_reason ?? r.requiresReason),
+        requiresOverride: Boolean(r.requires_override ?? r.requiresOverride),
+      },
+    ];
+  });
+}
+
+function strOrNull(value: unknown): string | null {
+  return typeof value === "string" && value ? value : null;
+}
+
 function mapBooking(raw: Raw): Booking {
   return {
     id: String(raw.id),
@@ -74,6 +98,10 @@ function mapBooking(raw: Raw): Booking {
     ownerId: String(raw.ownerId ?? raw.owner_id ?? ""),
     createdAt: String(raw.createdAt ?? raw.created_at ?? ""),
     updatedAt: String(raw.updatedAt ?? raw.updated_at ?? ""),
+    holdExpiresAt: strOrNull(raw.hold_expires_at ?? raw.holdExpiresAt),
+    statusChangedAt: strOrNull(raw.status_changed_at ?? raw.statusChangedAt),
+    statusReason: String(raw.status_reason ?? raw.statusReason ?? ""),
+    allowedTransitions: mapTransitions(raw.allowed_transitions ?? raw.allowedTransitions),
   };
 }
 
@@ -101,7 +129,8 @@ function mapLine(raw: Raw): BookingLineItem {
   return {
     id: String(raw.id),
     bookingId: String(raw.bookingId ?? raw.booking_id ?? ""),
-    kind: String(raw.kind ?? "extras"),
+    kind: toLineKind(raw.kind),
+    category: toLineCategory(raw.kind, raw.category),
     label: String(raw.label ?? ""),
     quantity: qty,
     unitPrice,
@@ -207,15 +236,16 @@ export class ApiBookingRepository implements BookingRepository {
     return mapBooking(raw);
   }
 
-  async confirm(id: string): Promise<Booking> {
-    return mapBooking(await this.http.request<Raw>(`/bookings/${id}/confirm`, { method: "POST" }));
-  }
-
-  async changeStatus(id: string, status: BookingStatus): Promise<Booking> {
+  async changeStatus(id: string, input: ChangeStatusInput): Promise<Booking> {
     return mapBooking(
       await this.http.request<Raw>(`/bookings/${id}/status`, {
         method: "POST",
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({
+          status: input.status,
+          ...(input.reason ? { reason: input.reason } : {}),
+          ...(input.holdExpiresAt ? { hold_expires_at: input.holdExpiresAt } : {}),
+          ...(input.override ? { override: true } : {}),
+        }),
       }),
     );
   }
@@ -296,6 +326,7 @@ export class ApiBookingRepository implements BookingRepository {
       body: JSON.stringify({
         items: items.map((it) => ({
           kind: it.kind,
+          ...(it.kind === "item" ? { category: it.category ?? "extras" } : {}),
           label: it.label,
           quantity: it.quantity,
           unit_price: it.unitPrice,
@@ -358,29 +389,91 @@ function seedChecklist(bookingId: string): BookingChecklistItem[] {
   }));
 }
 
-function ensureDemo() {
-  if (store.length > 0) return;
-  const id = "bk-demo";
-  store.push({
+const allow = (
+  status: BookingStatus,
+  flags: { reason?: boolean; override?: boolean } = {},
+): AllowedTransition => ({
+  status,
+  requiresReason: Boolean(flags.reason),
+  requiresOverride: Boolean(flags.override),
+});
+
+/** Demo stand-in for the server-computed `allowed_transitions` (as a manager would see them). */
+const DEMO_TRANSITIONS: Record<BookingStatus, AllowedTransition[]> = {
+  draft: [allow("quoted"), allow("option_hold"), allow("confirmed"), allow("cancelled", { reason: true })],
+  quoted: [allow("option_hold"), allow("confirmed"), allow("draft"), allow("cancelled", { reason: true })],
+  option_hold: [allow("confirmed"), allow("quoted", { reason: true }), allow("cancelled", { reason: true })],
+  confirmed: [allow("ready", { override: true }), allow("cancelled", { reason: true })],
+  partially_paid: [allow("ready", { override: true }), allow("cancelled", { reason: true, override: true })],
+  ready: [allow("travelled", { override: true }), allow("cancelled", { reason: true, override: true })],
+  travelled: [allow("completed")],
+  completed: [],
+  cancelled: [],
+};
+
+function demoBooking(
+  id: string,
+  status: BookingStatus,
+  amounts: { total: number; cost: number; collected: number; discount?: number },
+  extra: Partial<Booking> = {},
+): Booking {
+  const now = new Date().toISOString();
+  const discount = amounts.discount ?? 0;
+  return {
     id,
     branchId: "br-1",
     customerId: "cust-1",
     departureId: "dep-1",
     leadId: null,
-    status: "draft",
+    status,
     paxCount: 2,
-    totalAmount: 300000,
-    discountAmt: 0,
-    costAmt: 220000,
-    margin: 80000,
-    collectedAmt: 0,
-    balanceAmt: 300000,
+    totalAmount: amounts.total,
+    discountAmt: discount,
+    costAmt: amounts.cost,
+    margin: amounts.total - amounts.cost,
+    collectedAmt: amounts.collected,
+    balanceAmt: Math.max(0, amounts.total - amounts.collected),
     currency: "USD",
-    notes: "Demo draft booking",
+    notes: `Demo ${status.replace("_", " ")} booking`,
     ownerId: "u-sales",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
+    createdAt: now,
+    updatedAt: now,
+    holdExpiresAt: null,
+    statusChangedAt: now,
+    statusReason: "",
+    allowedTransitions: DEMO_TRANSITIONS[status],
+    ...extra,
+  };
+}
+
+function ensureDemo() {
+  if (store.length > 0) return;
+  const id = "bk-demo";
+  const hour = 3600_000;
+  store.push(
+    demoBooking(id, "draft", { total: 300000, cost: 220000, collected: 0 }),
+    demoBooking("bk-demo-quoted", "quoted", { total: 450000, cost: 330000, collected: 0 }),
+    demoBooking(
+      "bk-demo-hold",
+      "option_hold",
+      { total: 520000, cost: 390000, collected: 0 },
+      { holdExpiresAt: new Date(Date.now() + 20 * hour).toISOString() },
+    ),
+    demoBooking("bk-demo-confirmed", "confirmed", { total: 610000, cost: 450000, collected: 0 }),
+    demoBooking("bk-demo-partial", "partially_paid", {
+      total: 380000,
+      cost: 280000,
+      collected: 150000,
+      discount: 20000,
+    }),
+    demoBooking("bk-demo-ready", "ready", { total: 290000, cost: 210000, collected: 290000 }),
+    demoBooking(
+      "bk-demo-cancelled",
+      "cancelled",
+      { total: 200000, cost: 0, collected: 0 },
+      { statusReason: "Customer withdrew before deposit" },
+    ),
+  );
   parts[id] = [
     {
       id: "bp-1",
@@ -397,7 +490,8 @@ function ensureDemo() {
     {
       id: "bl-1",
       bookingId: id,
-      kind: "package",
+      kind: "item",
+      category: "package",
       label: "Umrah package",
       quantity: 2,
       unitPrice: 150000,
@@ -407,7 +501,11 @@ function ensureDemo() {
       sortOrder: 0,
     },
   ];
-  checks[id] = seedChecklist(id);
+  for (const b of store) {
+    parts[b.id] ??= [];
+    lines[b.id] ??= [];
+    checks[b.id] = seedChecklist(b.id);
+  }
 }
 
 export class MemoryBookingRepository implements BookingRepository {
@@ -440,27 +538,25 @@ export class MemoryBookingRepository implements BookingRepository {
   async create(input: BookingCreateInput): Promise<Booking> {
     ensureDemo();
     const id = crypto.randomUUID();
-    const now = new Date().toISOString();
-    const b: Booking = {
+    const b = demoBooking(
       id,
-      branchId: "br-1",
-      customerId: input.customerId,
-      departureId: input.departureId,
-      leadId: input.leadId ?? null,
-      status: "draft",
-      paxCount: input.paxCount,
-      totalAmount: input.totalAmount ?? 0,
-      discountAmt: input.discountAmt ?? 0,
-      costAmt: 0,
-      margin: (input.totalAmount ?? 0) - (input.discountAmt ?? 0),
-      collectedAmt: 0,
-      balanceAmt: input.totalAmount ?? 0,
-      currency: input.currency ?? "USD",
-      notes: input.notes ?? "",
-      ownerId: "u-local",
-      createdAt: now,
-      updatedAt: now,
-    };
+      "draft",
+      {
+        total: input.totalAmount ?? 0,
+        cost: 0,
+        collected: 0,
+        discount: input.discountAmt ?? 0,
+      },
+      {
+        customerId: input.customerId,
+        departureId: input.departureId,
+        leadId: input.leadId ?? null,
+        paxCount: input.paxCount,
+        currency: input.currency ?? "USD",
+        notes: input.notes ?? "",
+        ownerId: "u-local",
+      },
+    );
     store.unshift(b);
     parts[id] = [];
     lines[id] = [];
@@ -484,18 +580,18 @@ export class MemoryBookingRepository implements BookingRepository {
     return { ...b };
   }
 
-  async confirm(id: string): Promise<Booking> {
-    const ready = await this.readiness(id);
-    if (!ready.can_confirm) {
-      throw new Error(ready.blocking.join("; ") || "not ready");
-    }
-    return this.changeStatus(id, "confirmed");
-  }
-
-  async changeStatus(id: string, status: BookingStatus): Promise<Booking> {
+  async changeStatus(id: string, input: ChangeStatusInput): Promise<Booking> {
     const b = await this.getById(id);
-    b.status = status;
-    b.updatedAt = new Date().toISOString();
+    if (!b.allowedTransitions.some((tr) => tr.status === input.status)) {
+      throw new Error("invalid transition");
+    }
+    const now = new Date().toISOString();
+    b.status = input.status;
+    b.holdExpiresAt = input.status === "option_hold" ? (input.holdExpiresAt ?? null) : null;
+    b.statusReason = input.reason ?? "";
+    b.statusChangedAt = now;
+    b.allowedTransitions = DEMO_TRANSITIONS[input.status];
+    b.updatedAt = now;
     const i = store.findIndex((x) => x.id === id);
     store[i] = b;
     return { ...b };
@@ -622,6 +718,7 @@ export class MemoryBookingRepository implements BookingRepository {
       id: crypto.randomUUID(),
       bookingId: id,
       kind: it.kind,
+      category: it.category,
       label: it.label,
       quantity: it.quantity,
       unitPrice: it.unitPrice,

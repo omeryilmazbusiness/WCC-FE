@@ -116,6 +116,7 @@ export {
   DropdownMenuRadioGroup,
   DropdownMenuShortcut,
 } from "./dropdown-menu";
+export { Popover, PopoverTrigger, PopoverContent } from "./popover";
 export { ToastProvider, useToast, type ToastTone } from "./toast";
 export {
   useDescribeError,

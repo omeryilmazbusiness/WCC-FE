@@ -1,14 +1,21 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import type { ColumnDef } from "@tanstack/react-table";
-import type { Booking, BookingRepository, BookingStatus } from "@/entities/booking";
+import {
+  BOOKING_STATUSES,
+  BookingStatusChip,
+  HoldCountdownBadge,
+  type Booking,
+  type BookingRepository,
+  type BookingStatus,
+} from "@/entities/booking";
 import { CreateBookingDialog } from "@/features/create-booking";
 import { Link } from "@/shared/i18n/navigation";
 import { routes } from "@/shared/config/routes";
+import { formatMoney } from "@/shared/lib/format";
 import {
-  Badge,
   DataTable,
   EmptyState,
   ListScreen,
@@ -23,25 +30,7 @@ type Props = {
   departureId?: string;
 };
 
-function money(amount: number, currency: string) {
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency,
-      maximumFractionDigits: 0,
-    }).format(amount / 100);
-  } catch {
-    return `${(amount / 100).toFixed(0)} ${currency}`;
-  }
-}
-
-const STATUSES: Array<BookingStatus | "all"> = [
-  "all",
-  "draft",
-  "confirmed",
-  "cancelled",
-  "completed",
-];
+const STATUSES: Array<BookingStatus | "all"> = ["all", ...BOOKING_STATUSES];
 
 export function BookingsListBoard({
   repository,
@@ -50,6 +39,8 @@ export function BookingsListBoard({
 }: Props) {
   const t = useTranslations("bookings");
   const tc = useTranslations("common");
+  const locale = useLocale();
+  const money = (amount: number, currency: string) => formatMoney(amount, locale, currency);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<BookingStatus | "all">("all");
   const bookings = useApiQuery(
@@ -91,9 +82,12 @@ export function BookingsListBoard({
       accessorKey: "status",
       header: t("fields.status"),
       cell: ({ row }) => (
-        <Badge className={statusTone(row.original.status)}>
-          {t(`status.${row.original.status}`)}
-        </Badge>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <BookingStatusChip status={row.original.status} />
+          {row.original.status === "option_hold" && row.original.holdExpiresAt ? (
+            <HoldCountdownBadge expiresAt={row.original.holdExpiresAt} />
+          ) : null}
+        </div>
       ),
     },
     { accessorKey: "paxCount", header: t("fields.pax") },
@@ -165,17 +159,4 @@ export function BookingsListBoard({
       </QueryState>
     </ListScreen>
   );
-}
-
-function statusTone(status: BookingStatus) {
-  switch (status) {
-    case "confirmed":
-      return "bg-emerald-50 text-emerald-800";
-    case "cancelled":
-      return "bg-rose-50 text-rose-800";
-    case "completed":
-      return "bg-sky-50 text-sky-800";
-    default:
-      return "bg-amber-50 text-amber-900";
-  }
 }

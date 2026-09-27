@@ -16,9 +16,12 @@ export const PERMISSIONS = [
   "leads.write",
   "bookings.read",
   "bookings.write",
+  "bookings.override",
+  "bookings.discount",
   "payments.read",
   "payments.write",
   "payments.approve",
+  "fx.manage",
   "documents.read",
   "documents.write",
   "documents.review",
@@ -78,6 +81,7 @@ export const ROUTE_PERMISSIONS = {
   [routes.packages]: "packages.read",
   [routes.bookings]: "bookings.read",
   [routes.finance]: "payments.read",
+  [routes.financeFx]: "payments.read",
   [routes.targets]: "targets.read",
   [routes.importExport]: "imports.read",
   [routes.reports]: "reports.read",
@@ -155,7 +159,11 @@ export const DEMO_ROLE_PERMISSIONS: Record<AppRole, readonly Permission[]> = {
   ],
   manager: PERMISSIONS.filter(
     (p) =>
-      p !== "users.write" && p !== "users.unlock" && p !== "ops.read" && p !== "privacy.manage",
+      p !== "users.write" &&
+      p !== "users.unlock" &&
+      p !== "ops.read" &&
+      p !== "privacy.manage" &&
+      p !== "fx.manage",
   ),
   employee: [
     "branches.read", "customers.read", "customers.write", "leads.read", "leads.write",
@@ -167,7 +175,7 @@ export const DEMO_ROLE_PERMISSIONS: Record<AppRole, readonly Permission[]> = {
   ],
   finance: [
     "branches.read", "customers.read", "payments.read", "payments.write", "payments.approve",
-    "bookings.read", "bookings.write", "audit.read", "documents.read", "suppliers.read",
+    "fx.manage", "bookings.read", "bookings.write", "audit.read", "documents.read", "suppliers.read",
     "tasks.read", "targets.read", "imports.read", "imports.write",
     "notifications.read", "notifications.write", "reports.read", "reports.export",
     "ai.read", "filesync.read", "settings.read",

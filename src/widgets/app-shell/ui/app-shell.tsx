@@ -26,6 +26,7 @@ import {
   Settings,
   BedDouble,
   ShieldCheck,
+  ArrowLeftRight,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { ViewerSession } from "@/shared/api/session";
@@ -58,6 +59,7 @@ type NavLabel =
   | "packages"
   | "bookings"
   | "finance"
+  | "fxRates"
   | "targets"
   | "importExport"
   | "reports"
@@ -90,6 +92,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: routes.packages, label: "packages", icon: Package },
   { href: routes.bookings, label: "bookings", icon: CalendarCheck2 },
   { href: routes.finance, label: "finance", icon: Wallet },
+  { href: routes.financeFx, label: "fxRates", icon: ArrowLeftRight },
   { href: routes.targets, label: "targets", icon: Target },
   { href: routes.importExport, label: "importExport", icon: FileSpreadsheet },
   { href: routes.reports, label: "reports", icon: FileBarChart2 },
@@ -135,6 +138,10 @@ function ShellFrame({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, permissions } = useViewer();
   const items = visibleNav(permissions);
+  const activeHref = items
+    .map((item) => item.href)
+    .filter((href) => pathname === href || pathname.startsWith(`${href}/`))
+    .sort((a, b) => b.length - a.length)[0];
   const securityActive = pathname === routes.security;
 
   return (
@@ -156,8 +163,7 @@ function ShellFrame({ children }: { children: React.ReactNode }) {
 
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2.5 py-3">
           {items.map((item) => {
-            const active =
-              pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const active = item.href === activeHref;
             const Icon = item.icon;
             return (
               <Link

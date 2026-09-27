@@ -19,6 +19,15 @@ export type Payment = {
   note: string;
   reversesPaymentId: string | null;
   createdAt: string;
+  /** Minor units in `reportingCurrency`; `null` when no FX rate was available. */
+  amountReporting: number | null;
+  reportingCurrency: string;
+  fxRate: string;
+  fxEffectiveDate: string;
+  /** `YYYY-MM-DD` the money was received. */
+  receivedAt: string;
+  /** Record response only: the payment was stored without a reporting amount. */
+  fxMissing: boolean;
 };
 
 export type PaymentSchedule = {
@@ -32,19 +41,60 @@ export type PaymentSchedule = {
   createdAt: string;
 };
 
-export type FinancialSummary = {
-  bookingId: string;
+export type ReportingSummary = {
   currency: string;
-  reportingCurrency: string;
-  booked: number;
+  total: number;
   collected: number;
-  recognized: number;
-  margin: number;
   balance: number;
-  credit: number;
-  unverifiedAmt: number;
-  pendingRefundAmt: number;
-  scheduleOpenAmt: number;
+  rate: string;
+  effectiveDate: string;
+};
+
+export type PromisesSummary = {
+  openCount: number;
+  openAmount: number;
+  nextPromisedOn: string | null;
+};
+
+/** All amounts in minor units of `currency`. `cost` / `margin` are omitted without financial access. */
+export type FinancialSummary = {
+  currency: string;
+  subtotal: number;
+  discount: number;
+  tax: number;
+  fees: number;
+  total: number;
+  cost: number | null;
+  margin: number | null;
+  collected: number;
+  pending: number;
+  balance: number;
+  reporting: ReportingSummary | null;
+  promises: PromisesSummary;
+};
+
+export type PaymentPromiseStatus = "open" | "kept" | "broken" | "cancelled";
+
+export type PaymentPromise = {
+  id: string;
+  bookingId: string;
+  amount: number;
+  currency: string;
+  /** `YYYY-MM-DD` */
+  promisedOn: string;
+  note: string;
+  status: PaymentPromiseStatus;
+  taskId: string | null;
+  createdBy: string;
+  createdAt: string;
+  resolvedAt: string | null;
+};
+
+export type PaymentPromiseInput = {
+  amount: number;
+  currency: string;
+  promisedOn: string;
+  note?: string;
 };
 
 export type FinanceQueueKind = "overdue" | "unverified" | "refunds" | "credit";
@@ -58,6 +108,8 @@ export type FinanceQueueItem = {
   scheduleId?: string;
   amount: number;
   currency: string;
+  amountReporting: number | null;
+  reportingCurrency: string;
   dueAt?: string;
   status: string;
   note?: string;
@@ -69,3 +121,6 @@ export const FINANCE_QUEUES: FinanceQueueKind[] = [
   "refunds",
   "credit",
 ];
+
+export const SOD_VIOLATION_CODE = "sod_violation";
+export const FORBIDDEN_AUTO_VERIFY_CODE = "forbidden_auto_verify";

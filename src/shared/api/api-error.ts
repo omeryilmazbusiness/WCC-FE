@@ -7,6 +7,7 @@ export type ApiErrorInit = {
   fieldErrors?: FieldErrors;
   retryAfter?: number;
   reason?: string;
+  details?: Record<string, unknown>;
 };
 
 export const NETWORK_ERROR_CODE = "network_error";
@@ -26,6 +27,8 @@ export class ApiError extends Error {
   readonly retryAfter?: number;
   /** Machine-readable sub-cause, e.g. why a `session_expired` session ended. */
   readonly reason?: string;
+  /** Raw `error.details` object, e.g. `{ guards: [...] }` on 422 `guard_failed`. */
+  readonly details?: Record<string, unknown>;
 
   constructor(init: ApiErrorInit) {
     super(init.message);
@@ -35,10 +38,17 @@ export class ApiError extends Error {
     this.fieldErrors = init.fieldErrors;
     this.retryAfter = init.retryAfter;
     this.reason = init.reason;
+    this.details = init.details;
   }
 
   get isNetwork(): boolean {
     return this.status === 0 || this.code === UPSTREAM_UNAVAILABLE_CODE;
+  }
+
+  /** String entries of `error.details[key]` (empty when absent or not a list). */
+  detailList(key: string): string[] {
+    const value = this.details?.[key];
+    return Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
   }
 }
 
@@ -124,6 +134,10 @@ export function apiErrorFromPayload(
       err.retry_after ?? body.retry_after,
     ),
     reason: typeof err.reason === "string" && err.reason ? err.reason : undefined,
+    details:
+      err.details && typeof err.details === "object" && !Array.isArray(err.details)
+        ? (err.details as Record<string, unknown>)
+        : undefined,
   });
 }
 

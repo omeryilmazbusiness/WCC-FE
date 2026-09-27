@@ -26,7 +26,8 @@
     "logout": "Sign out",
     "settings": "Settings",
     "rooming": "Rooming",
-    "security": "Security"
+    "security": "Security",
+    "fxRates": "FX rates"
   },
   "auth": {
     "title": "Sign in",
@@ -699,9 +700,6 @@
     "detailSubtitle": "Participants, commercial lines, checklist, and confirm gates",
     "backToList": "All bookings",
     "openCustomer": "Customer 360",
-    "confirm": "Confirm booking",
-    "confirmedTitle": "Booking confirmed",
-    "confirmError": "Confirm blocked — resolve readiness items",
     "readiness": "Confirm readiness",
     "readyToConfirm": "Ready to confirm",
     "notReady": "Not ready — resolve blocking items below",
@@ -725,9 +723,14 @@
     "markDone": "Mark done",
     "status": {
       "draft": "Draft",
+      "quoted": "Quoted",
+      "option_hold": "Option hold",
       "confirmed": "Confirmed",
-      "cancelled": "Cancelled",
-      "completed": "Completed"
+      "partially_paid": "Partially paid",
+      "ready": "Ready to travel",
+      "travelled": "Travelled",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
     },
     "tabs": {
       "overview": "Overview",
@@ -738,13 +741,15 @@
       "lines": "Line items",
       "checklist": "Checklist"
     },
-    "lineKinds": {
+    "lineTypes": {
       "package": "Package",
       "hotel": "Hotel",
       "room": "Room",
       "transport": "Transport",
       "flight": "Flight",
-      "extras": "Extras"
+      "extras": "Extras",
+      "tax": "Tax",
+      "fee": "Fee"
     },
     "fields": {
       "id": "Booking",
@@ -763,7 +768,32 @@
       "label": "Label",
       "qty": "Qty",
       "unitPrice": "Unit price",
-      "unitCost": "Unit cost"
+      "unitCost": "Unit cost",
+      "kind": "Line type"
+    },
+    "lineDefaultLabel": "Package",
+    "invalidAmount": "Enter amounts as numbers with at most two decimals",
+    "statusReason": "Reason: {reason}",
+    "statusActions": "Booking status",
+    "statusChangedAt": "Last changed {at}",
+    "noTransitions": "No status changes available to you",
+    "hold": {
+      "expired": "Hold expired",
+      "days": "Expires in {days}d {hours}h",
+      "hours": "Expires in {hours}h {minutes}m",
+      "minutes": "Expires in {minutes}m",
+      "expiresAt": "Hold expires {at}"
+    },
+    "discount": {
+      "edit": "Edit discount",
+      "title": "Edit discount",
+      "description": "Current discount: {current}. The change is audit-logged.",
+      "amountIn": "Discount ({currency})",
+      "invalid": "Enter a non-negative amount with at most two decimals",
+      "save": "Save discount",
+      "cancel": "Cancel",
+      "saved": "Discount updated",
+      "saveError": "Could not update the discount"
     }
   },
   "notifications": {
@@ -954,14 +984,6 @@
       "refunds": "Refunds",
       "credit": "Credit"
     },
-    "metrics": {
-      "booked": "Booked",
-      "collected": "Collected",
-      "recognized": "Recognized",
-      "margin": "Margin",
-      "balance": "Balance",
-      "credit": "Credit"
-    },
     "recordTitle": "Record payment",
     "ledgerTitle": "Ledger",
     "ledgerEmpty": "No ledger entries yet",
@@ -976,9 +998,90 @@
     "reverse": "Reverse",
     "approve": "Approve",
     "reject": "Reject",
-    "addSchedule": "Add promise",
+    "addSchedule": "Add instalment",
     "cancel": "Cancel",
-    "requestRefund": "Request refund"
+    "requestRefund": "Request refund",
+    "recorded": "Payment recorded",
+    "fxMissingTitle": "FX rate missing",
+    "fxMissingRecorded": "Saved without a reporting-currency amount. Add the FX rate so reports can convert it.",
+    "amountIn": "Amount ({currency})",
+    "reference": "Reference",
+    "receivedAt": "Received on",
+    "autoVerify": "Mark as verified",
+    "receivedAtFuture": "The received date cannot be in the future",
+    "receivedOn": "received {date}",
+    "eventTypes": {
+      "charge": "Payment",
+      "reverse": "Reversal",
+      "adjust": "Adjustment",
+      "refund": "Refund"
+    },
+    "paymentStatus": {
+      "unverified": "Unverified",
+      "verified": "Verified",
+      "pending_approval": "Pending approval",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "scheduleStatus": {
+      "open": "Open",
+      "paid": "Paid",
+      "cancelled": "Cancelled",
+      "overdue": "Overdue"
+    },
+    "errors": {
+      "sodViolationTitle": "Another approver is required",
+      "sodViolation": "You requested this refund, so you cannot approve it. Ask another finance approver.",
+      "forbiddenAutoVerifyTitle": "Cannot verify on record",
+      "forbiddenAutoVerify": "Only payment approvers can record a payment as verified. Record it unverified instead."
+    },
+    "promises": {
+      "title": "Payment promises",
+      "summary": "{count, plural, one {# open promise} other {# open promises}} · {amount} · next {date}",
+      "none": "No open promises",
+      "due": "due {date}",
+      "add": "Add promise",
+      "createTitle": "Add payment promise",
+      "createDescription": "A follow-up task is created for the promised date.",
+      "amountIn": "Amount ({currency})",
+      "promisedOn": "Promised on",
+      "note": "Note",
+      "notePlaceholder": "e.g. paying after salary",
+      "cancel": "Cancel",
+      "save": "Save promise",
+      "created": "Promise added",
+      "createError": "Could not add the promise",
+      "cancelPromise": "Cancel promise",
+      "cancelTitle": "Cancel this promise?",
+      "cancelDescription": "Its follow-up task is closed as well.",
+      "keep": "Keep",
+      "cancelled": "Promise cancelled",
+      "cancelError": "Could not cancel the promise",
+      "status": {
+        "open": "Open",
+        "kept": "Kept",
+        "broken": "Broken",
+        "cancelled": "Cancelled"
+      }
+    },
+    "breakdown": {
+      "pricingTitle": "Price",
+      "collectionTitle": "Collection",
+      "reportingTitle": "Reporting currency",
+      "subtotal": "Subtotal",
+      "discount": "Discount",
+      "tax": "Tax",
+      "fees": "Fees",
+      "total": "Total",
+      "cost": "Cost",
+      "margin": "Margin",
+      "collected": "Collected",
+      "pending": "Pending verification",
+      "balance": "Balance",
+      "reportingRate": "{pair} {rate} · effective {date}",
+      "reportingNone": "No FX rate for the reporting currency yet.",
+      "mismatch": "Components don't add up to the total — check line items."
+    }
   },
   "targets": {
     "title": "Revenue targets",
@@ -1637,5 +1740,206 @@
       "next": "Next",
       "page": "Page {page} of {pages}"
     }
+  },
+  "bookingStatus": {
+    "changed": "Status changed to {status}",
+    "invalidTransition": "This status change is no longer allowed — the booking was reloaded",
+    "changeError": "Could not change the status",
+    "guardFailed": "The change is blocked by:",
+    "useOverride": "Continue with manager override",
+    "overrideManagerOnly": "Only a manager can override these checks.",
+    "overrideBypasses": "This override bypasses:",
+    "overrideNoGuards": "This change needs a manager override. It is audit-logged with your reason.",
+    "holdExpiresAt": "Hold expires at",
+    "holdHint": "Default is 3 days; at most {days} days ahead.",
+    "holdError": {
+      "required": "Choose when the hold expires",
+      "past": "The expiry must be in the future",
+      "tooFar": "The hold can last at most {days} days"
+    },
+    "reasonLabel": "Reason",
+    "reasonOptionalLabel": "Note (optional)",
+    "reasonPlaceholder": "Why is the status changing?",
+    "reasonHint": "At least {min} characters. Saved in the booking history.",
+    "cancel": "Cancel",
+    "submit": "Change to {status}",
+    "submitOverride": "Override and change to {status}",
+    "systemDrivenHint": "Usually set automatically by the system",
+    "dialog": {
+      "overrideTitle": "Manager override: {status}",
+      "overrideDescription": "Move the booking to {status} even though checks fail.",
+      "holdTitle": "Place option hold",
+      "holdDescription": "Seats are held until the expiry, then released automatically.",
+      "reasonTitle": "Change status to {status}",
+      "reasonDescription": "This change needs a reason.",
+      "confirmTitle": "Change status to {status}?",
+      "confirmDescription": "The booking moves to {status}."
+    },
+    "actions": {
+      "draft": "Back to draft",
+      "quoted": "Mark as quoted",
+      "option_hold": "Place option hold",
+      "confirmed": "Confirm booking",
+      "partially_paid": "Mark partially paid",
+      "ready": "Mark ready to travel",
+      "travelled": "Mark travelled",
+      "completed": "Complete booking",
+      "cancelled": "Cancel booking"
+    },
+    "guards": {
+      "customer_required": "A customer is required",
+      "departure_required": "A departure is required",
+      "sales_closed": "Sales are closed for this departure",
+      "no_capacity": "No seats left on the departure",
+      "hold_expiry_required": "A hold expiry date is required",
+      "hold_expiry_in_past": "The hold expiry must be in the future",
+      "hold_expiry_too_far": "The hold can last at most 14 days",
+      "reason_required": "A reason is required",
+      "override_reason_too_short": "The override reason must be at least 10 characters",
+      "readiness_incomplete": "Documents, participants or checklist items are incomplete",
+      "balance_outstanding": "An outstanding balance is still due",
+      "hold_not_expired": "The option hold has not expired yet",
+      "departure_not_reached": "The departure date has not been reached yet",
+      "status_not_derived": "This status is set automatically from payments and readiness"
+    }
+  },
+  "fx": {
+    "title": "FX rates",
+    "subtitle": "Daily exchange rates used for reporting-currency amounts",
+    "add": "Add rate",
+    "edit": "Edit rate",
+    "delete": "Delete rate",
+    "created": "Rate added",
+    "updated": "Rate updated",
+    "deleted": "Rate deleted",
+    "saveError": "Could not save the rate",
+    "deleteError": "Could not delete the rate",
+    "loadError": "Could not load FX rates",
+    "empty": "No FX rates yet",
+    "emptyFiltered": "No rates match these filters",
+    "createTitle": "Add FX rate",
+    "editTitle": "Edit {pair} rate",
+    "dialogDescription": "1 unit of the base currency equals the rate in the quote currency.",
+    "exists": "A rate for this pair and date already exists — edit it instead.",
+    "rateHint": "Positive number, up to {max} decimals",
+    "sourcePlaceholder": "e.g. SAMA, ECB, manual",
+    "save": "Save",
+    "cancel": "Cancel",
+    "deleteTitle": "Delete {pair} rate for {date}?",
+    "deleteDescription": "Payments already converted keep their stored reporting amount.",
+    "missing": "FX rate missing",
+    "missingHint": "No {from}/{to} rate for this date — the reporting amount is empty",
+    "fields": {
+      "base": "Base",
+      "quote": "Quote",
+      "rate": "Rate",
+      "effectiveDate": "Effective date",
+      "source": "Source"
+    },
+    "errors": {
+      "required": "Enter a rate",
+      "format": "Use digits and a dot, e.g. 3.75",
+      "precision": "At most {max} decimals",
+      "positive": "The rate must be greater than 0",
+      "currency": "Use 3-letter currency codes, e.g. USD",
+      "samePair": "Base and quote must differ"
+    },
+    "filters": {
+      "base": "Base currency",
+      "quote": "Quote currency",
+      "from": "From",
+      "to": "To",
+      "reset": "Reset filters"
+    },
+    "columns": {
+      "pair": "Pair",
+      "rate": "Rate",
+      "effectiveDate": "Effective",
+      "source": "Source",
+      "createdBy": "Created by",
+      "createdAt": "Created",
+      "actions": "Actions"
+    },
+    "pagination": {
+      "summary": "{from}–{to} of {total}",
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {page} of {pages}"
+    },
+    "converter": {
+      "title": "Converter",
+      "hint": "Uses the latest rate on or before the chosen date.",
+      "amount": "Amount",
+      "from": "From",
+      "to": "To",
+      "on": "On date",
+      "convert": "Convert",
+      "notFound": "No {from}/{to} rate for that date.",
+      "rateLine": "Rate {rate} · effective {date}",
+      "error": "Could not convert"
+    }
+  },
+  "fxLive": {
+    "title": "Exchange rates",
+    "trigger": "Exchange rates",
+    "triggerLabel": "Exchange rates. US dollar market rate {rate} {currency}",
+    "triggerLabelStale": "Exchange rates. US dollar market rate {rate} {currency}, may be outdated",
+    "updated": "Updated {time}",
+    "neverUpdated": "Not updated yet",
+    "loading": "Loading rates…",
+    "refresh": "Refresh rates",
+    "refreshError": "Could not refresh rates",
+    "kindLabel": "Rate type",
+    "kind": {
+      "market": "Market",
+      "official": "Central Bank"
+    },
+    "kindShort": {
+      "market": "market",
+      "official": "official"
+    },
+    "columns": {
+      "currency": "Currency",
+      "buy": "Buy",
+      "sell": "Sell",
+      "mid": "Mid",
+      "actions": "Actions"
+    },
+    "pinned": "Main currencies",
+    "others": "Other currencies ({count})",
+    "derived": "derived",
+    "derivedHint": "Calculated via the US dollar cross rate, not quoted directly",
+    "stale": "stale",
+    "staleHint": "Last observed {date}",
+    "notAvailable": "Not available",
+    "staleBanner": "Live source unavailable — showing last known rates",
+    "loadError": "Could not load exchange rates",
+    "updateError": "Could not update — showing the last loaded rates",
+    "retry": "Retry",
+    "empty": "No rates available",
+    "sources": "Sources",
+    "sourceUnavailable": "unavailable",
+    "disclaimer": "About these rates",
+    "disclaimerFallback": "Indicative rates for information only; not an offer to buy or sell.",
+    "manage": "Manage accounting rates",
+    "adoptLabel": "Use the {currency} {kind} mid rate for accounting",
+    "adoptConfirm": "Click again to save the {currency} {kind} mid rate as today's accounting rate",
+    "adopted": "{currency} {kind} rate saved as today's accounting rate",
+    "adoptExists": "An accounting rate for {currency} already exists for today",
+    "adoptUnavailable": "No live {kind} quote for {currency} right now",
+    "adoptError": "Could not save the accounting rate",
+    "converter": {
+      "title": "Quick convert",
+      "amount": "Amount in {currency}",
+      "currency": "Currency",
+      "swap": "Swap conversion direction",
+      "invalid": "Enter a positive amount",
+      "unavailable": "No rate available for this currency",
+      "hint": "Indicative, at the {kind} mid rate"
+    },
+    "location": "Damascus",
+    "base": "Reference currency",
+    "perUnit": "in {base} per unit",
+    "crossNote": "Cross rates calculated via {local}. Accounting rates are always kept in {local}."
   }
 }

@@ -3,20 +3,27 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
+  BookingStatusChip,
   createBookingRepository,
-  LINE_KINDS,
+  HoldCountdownBadge,
+  LINE_TYPES,
+  fromLineType,
+  toLineType,
   type Booking,
   type BookingChecklistItem,
   type BookingLineItem,
   type BookingParticipant,
   type BookingReadiness,
   type BookingRepository,
+  type LineType,
 } from "@/entities/booking";
 import { useCan } from "@/entities/viewer";
+import { BookingStatusActions } from "@/features/change-booking-status";
 import { ConfirmBookingTasksButton } from "@/features/confirm-booking-tasks";
 import { BookingFinancePanel } from "@/widgets/booking-finance-panel";
 import { BookingOpsPanel } from "@/widgets/booking-ops-panel";
-import { formatDateTime } from "@/shared/lib/format";
+import { formatDateTime, formatMoney } from "@/shared/lib/format";
+import { minorToInput, parseMoneyInput } from "@/shared/lib/money";
 import { Link } from "@/shared/i18n/navigation";
 import { routes } from "@/shared/config/routes";
 import {
@@ -43,6 +50,7 @@ import {
   TabsList,
   TabsTrigger,
   useMutationFeedback,
+  useToast,
 } from "@/shared/ui";
 
 type Props = {
@@ -50,24 +58,30 @@ type Props = {
   repository?: BookingRepository;
 };
 
-function money(amount: number, currency: string) {
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency,
-      maximumFractionDigits: 0,
-    }).format(amount / 100);
-  } catch {
-    return `${(amount / 100).toFixed(0)} ${currency}`;
-  }
-}
+type DraftLine = {
+  type: LineType;
+  label: string;
+  quantity: string;
+  unitPrice: string;
+  unitCost: string;
+};
+
+const EMPTY_LINE: DraftLine = {
+  type: "package",
+  label: "",
+  quantity: "1",
+  unitPrice: "0",
+  unitCost: "0",
+};
 
 export function BookingDetailBoard({ bookingId, repository }: Props) {
-  const repo = repository ?? createBookingRepository();
+  const [repo] = useState(() => repository ?? createBookingRepository());
   const t = useTranslations("bookings");
   const tc = useTranslations("common");
   const locale = useLocale();
+  const money = (amount: number, currency: string) => formatMoney(amount, locale, currency);
   const feedback = useMutationFeedback();
+  const toast = useToast();
   const canWrite = useCan("bookings.write");
   const canCreateTasks = useCan("tasks.write");
   const canRevealPii = useCan("pii.read");
@@ -84,9 +98,7 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
 
   const [paxName, setPaxName] = useState("");
   const [paxPassport, setPaxPassport] = useState("");
-  const [draftLines, setDraftLines] = useState<
-    { kind: string; label: string; quantity: string; unitPrice: string; unitCost: string }[]
-  >([]);
+  const [draftLines, setDraftLines] = useState<DraftLine[]>([]);
 
   const refresh = useCallback(async () => {
     try {
@@ -106,26 +118,18 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
       setDraftLines(
         l.length
           ? l.map((x) => ({
-              kind: x.kind,
+              type: toLineType(x.kind, x.category),
               label: x.label,
               quantity: String(x.quantity),
-              unitPrice: String(x.unitPrice / 100),
-              unitCost: String(x.unitCost / 100),
+              unitPrice: minorToInput(x.unitPrice),
+              unitCost: minorToInput(x.unitCost),
             }))
-          : [
-              {
-                kind: "package",
-                label: "Package",
-                quantity: "1",
-                unitPrice: "0",
-                unitCost: "0",
-              },
-            ],
+          : [{ ...EMPTY_LINE, label: t("lineDefaultLabel") }],
       );
     } catch (err) {
       setError(err);
     }
-  }, [bookingId, repo]);
+  }, [bookingId, repo, t]);
 
   useEffect(() => {
     void refresh();
@@ -149,16 +153,21 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
 
   async function saveLines() {
     if (!booking) return;
+    const items = draftLines.map((l) => ({
+      ...fromLineType(l.type),
+      label: l.label.trim() || t(`lineTypes.${l.type}`),
+      quantity: Math.max(1, Math.trunc(Number(l.quantity)) || 1),
+      unitPrice: parseMoneyInput(l.unitPrice),
+      unitCost: parseMoneyInput(l.unitCost),
+    }));
+    if (items.some((it) => it.unitPrice === null || it.unitCost === null)) {
+      toast.push({ title: t("invalidAmount"), tone: "error" });
+      return;
+    }
     try {
       const res = await repo.setLineItems(
         booking.id,
-        draftLines.map((l) => ({
-          kind: l.kind,
-          label: l.label || l.kind,
-          quantity: Math.max(1, Number(l.quantity) || 1),
-          unitPrice: Math.round((Number(l.unitPrice) || 0) * 100),
-          unitCost: Math.round((Number(l.unitCost) || 0) * 100),
-        })),
+        items.map((it) => ({ ...it, unitPrice: it.unitPrice ?? 0, unitCost: it.unitCost ?? 0 })),
       );
       setBooking(res.booking);
       setLineItems(res.items);
@@ -175,18 +184,6 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
       await refresh();
     } catch (err) {
       feedback.error(err, t("saveError"));
-    }
-  }
-
-  async function confirmBooking() {
-    if (!booking) return;
-    try {
-      const updated = await repo.confirm(booking.id);
-      setBooking(updated);
-      feedback.success(t("confirmedTitle"));
-      await refresh();
-    } catch (err) {
-      feedback.error(err, t("confirmError"));
     }
   }
 
@@ -240,15 +237,6 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
             <Button asChild variant="outline" size="sm">
               <Link href={routes.customer(booking.customerId)}>{t("openCustomer")}</Link>
             </Button>
-            {draft ? (
-              <Button
-                size="sm"
-                disabled={!ready?.can_confirm}
-                onClick={() => void confirmBooking()}
-              >
-                {t("confirm")}
-              </Button>
-            ) : null}
             {canCreateTasks && booking.status === "confirmed" ? (
               <ConfirmBookingTasksButton
                 bookingId={booking.id}
@@ -262,7 +250,17 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
 
       <div className="mb-6 grid gap-3 rounded-[24px] border border-zinc-200/80 bg-white p-5 sm:grid-cols-2 lg:grid-cols-4">
         <Metric label={t("fields.status")}>
-          <Badge>{t(`status.${booking.status}`)}</Badge>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <BookingStatusChip status={booking.status} />
+            {booking.status === "option_hold" && booking.holdExpiresAt ? (
+              <HoldCountdownBadge expiresAt={booking.holdExpiresAt} />
+            ) : null}
+          </div>
+          {booking.statusReason ? (
+            <p className="mt-1 text-xs font-medium text-zinc-500">
+              {t("statusReason", { reason: booking.statusReason })}
+            </p>
+          ) : null}
         </Metric>
         <Metric label={t("fields.pax")}>{booking.paxCount}</Metric>
         <Metric label={t("fields.total")}>
@@ -271,6 +269,29 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
         <Metric label={t("fields.margin")}>
           {money(booking.margin, booking.currency)}
         </Metric>
+      </div>
+
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-zinc-200/80 bg-white p-5">
+        <div>
+          <p className="text-sm font-semibold text-zinc-950">{t("statusActions")}</p>
+          {booking.statusChangedAt ? (
+            <p className="mt-1 text-xs text-zinc-500">
+              {t("statusChangedAt", { at: formatDateTime(booking.statusChangedAt, locale) })}
+            </p>
+          ) : null}
+        </div>
+        {booking.allowedTransitions.length > 0 ? (
+          <BookingStatusActions
+            booking={booking}
+            repository={repo}
+            onChanged={(updated) => {
+              if (updated) setBooking(updated);
+              void refresh();
+            }}
+          />
+        ) : (
+          <p className="text-sm text-zinc-500">{t("noTransitions")}</p>
+        )}
       </div>
 
       {ready ? (
@@ -398,8 +419,8 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
 
         <TabsContent value="finance" className="mt-4">
           <BookingFinancePanel
-            bookingId={booking.id}
-            currency={booking.currency}
+            booking={booking}
+            bookingRepository={repo}
             onChanged={() => void refresh()}
           />
         </TabsContent>
@@ -491,21 +512,23 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
               className="grid gap-2 rounded-[20px] border border-zinc-200/80 bg-white p-4 sm:grid-cols-5"
             >
               <Select
-                value={line.kind}
+                value={line.type}
                 onValueChange={(v) => {
+                  const type = LINE_TYPES.find((x) => x === v);
+                  if (!type) return;
                   const next = [...draftLines];
-                  next[idx] = { ...next[idx], kind: v };
+                  next[idx] = { ...next[idx], type };
                   setDraftLines(next);
                 }}
                 disabled={!draft}
               >
-                <SelectTrigger>
+                <SelectTrigger aria-label={t("fields.kind")} data-testid="line-kind">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {LINE_KINDS.map((k) => (
+                  {LINE_TYPES.map((k) => (
                     <SelectItem key={k} value={k}>
-                      {t(`lineKinds.${k}`)}
+                      {t(`lineTypes.${k}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -558,16 +581,7 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
                 type="button"
                 variant="outline"
                 onClick={() =>
-                  setDraftLines([
-                    ...draftLines,
-                    {
-                      kind: "extras",
-                      label: "",
-                      quantity: "1",
-                      unitPrice: "0",
-                      unitCost: "0",
-                    },
-                  ])
+                  setDraftLines([...draftLines, { ...EMPTY_LINE }])
                 }
               >
                 {t("addLine")}

@@ -26,7 +26,8 @@
     "logout": "تسجيل الخروج",
     "settings": "الإعدادات",
     "rooming": "توزيع الغرف",
-    "security": "الأمان"
+    "security": "الأمان",
+    "fxRates": "أسعار الصرف"
   },
   "auth": {
     "title": "تسجيل الدخول",
@@ -699,9 +700,6 @@
     "detailSubtitle": "الركاب والبنود التجارية وقائمة التحقق وبوابات التأكيد",
     "backToList": "كل الحجوزات",
     "openCustomer": "ملف العميل 360",
-    "confirm": "تأكيد الحجز",
-    "confirmedTitle": "تم تأكيد الحجز",
-    "confirmError": "التأكيد محظور — عالج عناصر الجاهزية",
     "readiness": "جاهزية التأكيد",
     "readyToConfirm": "جاهز للتأكيد",
     "notReady": "غير جاهز — عالج العناصر أدناه",
@@ -725,9 +723,14 @@
     "markDone": "تعليم كمكتمل",
     "status": {
       "draft": "مسودة",
+      "quoted": "عرض سعر",
+      "option_hold": "حجز مبدئي",
       "confirmed": "مؤكد",
-      "cancelled": "ملغى",
-      "completed": "مكتمل"
+      "partially_paid": "مدفوع جزئيًا",
+      "ready": "جاهز للسفر",
+      "travelled": "سافر",
+      "completed": "مكتمل",
+      "cancelled": "ملغى"
     },
     "tabs": {
       "overview": "نظرة عامة",
@@ -738,13 +741,15 @@
       "lines": "البنود",
       "checklist": "قائمة التحقق"
     },
-    "lineKinds": {
+    "lineTypes": {
       "package": "باقة",
       "hotel": "فندق",
       "room": "غرفة",
       "transport": "نقل",
       "flight": "طيران",
-      "extras": "إضافات"
+      "extras": "إضافات",
+      "tax": "ضريبة",
+      "fee": "رسوم"
     },
     "fields": {
       "id": "الحجز",
@@ -763,7 +768,32 @@
       "label": "التسمية",
       "qty": "الكمية",
       "unitPrice": "سعر الوحدة",
-      "unitCost": "تكلفة الوحدة"
+      "unitCost": "تكلفة الوحدة",
+      "kind": "نوع البند"
+    },
+    "lineDefaultLabel": "باقة",
+    "invalidAmount": "أدخل المبالغ كأرقام بحد أقصى منزلتين عشريتين",
+    "statusReason": "السبب: {reason}",
+    "statusActions": "حالة الحجز",
+    "statusChangedAt": "آخر تغيير {at}",
+    "noTransitions": "لا توجد تغييرات حالة متاحة لك",
+    "hold": {
+      "expired": "انتهى الحجز المبدئي",
+      "days": "ينتهي خلال {days} ي {hours} س",
+      "hours": "ينتهي خلال {hours} س {minutes} د",
+      "minutes": "ينتهي خلال {minutes} د",
+      "expiresAt": "ينتهي الحجز المبدئي في {at}"
+    },
+    "discount": {
+      "edit": "تعديل الخصم",
+      "title": "تعديل الخصم",
+      "description": "الخصم الحالي: {current}. يُسجَّل التغيير في سجل التدقيق.",
+      "amountIn": "الخصم ({currency})",
+      "invalid": "أدخل مبلغًا غير سالب بحد أقصى منزلتين عشريتين",
+      "save": "حفظ الخصم",
+      "cancel": "إلغاء",
+      "saved": "تم تحديث الخصم",
+      "saveError": "تعذر تحديث الخصم"
     }
   },
   "notifications": {
@@ -954,14 +984,6 @@
       "refunds": "استرداد",
       "credit": "رصيد دائن"
     },
-    "metrics": {
-      "booked": "محجوز",
-      "collected": "محصّل",
-      "recognized": "معترف",
-      "margin": "الهامش",
-      "balance": "المتبقي",
-      "credit": "دائن"
-    },
     "recordTitle": "تسجيل دفعة",
     "ledgerTitle": "دفتر الأستاذ",
     "ledgerEmpty": "لا توجد قيود بعد",
@@ -976,9 +998,90 @@
     "reverse": "عكس",
     "approve": "موافقة",
     "reject": "رفض",
-    "addSchedule": "إضافة وعد",
+    "addSchedule": "إضافة قسط",
     "cancel": "إلغاء",
-    "requestRefund": "طلب استرداد"
+    "requestRefund": "طلب استرداد",
+    "recorded": "تم تسجيل الدفعة",
+    "fxMissingTitle": "سعر الصرف غير متوفر",
+    "fxMissingRecorded": "حُفظت الدفعة دون مبلغ بعملة التقارير. أضف سعر الصرف لتتمكن التقارير من تحويلها.",
+    "amountIn": "المبلغ ({currency})",
+    "reference": "المرجع",
+    "receivedAt": "تاريخ الاستلام",
+    "autoVerify": "تحديد كموثّقة",
+    "receivedAtFuture": "لا يمكن أن يكون تاريخ الاستلام في المستقبل",
+    "receivedOn": "استُلمت في {date}",
+    "eventTypes": {
+      "charge": "دفعة",
+      "reverse": "عكس",
+      "adjust": "تسوية",
+      "refund": "استرداد"
+    },
+    "paymentStatus": {
+      "unverified": "غير موثّقة",
+      "verified": "موثّقة",
+      "pending_approval": "بانتظار الموافقة",
+      "approved": "معتمدة",
+      "rejected": "مرفوضة"
+    },
+    "scheduleStatus": {
+      "open": "مفتوح",
+      "paid": "مدفوع",
+      "cancelled": "ملغى",
+      "overdue": "متأخر"
+    },
+    "errors": {
+      "sodViolationTitle": "مطلوب معتمد آخر",
+      "sodViolation": "أنت من طلب هذا الاسترداد، لذا لا يمكنك اعتماده. اطلب من معتمد مالي آخر.",
+      "forbiddenAutoVerifyTitle": "لا يمكن التوثيق عند التسجيل",
+      "forbiddenAutoVerify": "يمكن لمعتمدي المدفوعات فقط تسجيل دفعة كموثّقة. سجّلها غير موثّقة بدلًا من ذلك."
+    },
+    "promises": {
+      "title": "وعود الدفع",
+      "summary": "{count, plural, zero {لا وعود مفتوحة} one {وعد مفتوح واحد} two {وعدان مفتوحان} few {# وعود مفتوحة} many {# وعدًا مفتوحًا} other {# وعد مفتوح}} · {amount} · التالي {date}",
+      "none": "لا توجد وعود مفتوحة",
+      "due": "مستحق في {date}",
+      "add": "إضافة وعد",
+      "createTitle": "إضافة وعد بالدفع",
+      "createDescription": "تُنشأ مهمة متابعة في التاريخ الموعود.",
+      "amountIn": "المبلغ ({currency})",
+      "promisedOn": "تاريخ الوعد",
+      "note": "ملاحظة",
+      "notePlaceholder": "مثل: الدفع بعد الراتب",
+      "cancel": "إلغاء",
+      "save": "حفظ الوعد",
+      "created": "تمت إضافة الوعد",
+      "createError": "تعذرت إضافة الوعد",
+      "cancelPromise": "إلغاء الوعد",
+      "cancelTitle": "إلغاء هذا الوعد؟",
+      "cancelDescription": "ستُغلق مهمة المتابعة المرتبطة به أيضًا.",
+      "keep": "الإبقاء",
+      "cancelled": "تم إلغاء الوعد",
+      "cancelError": "تعذر إلغاء الوعد",
+      "status": {
+        "open": "مفتوح",
+        "kept": "تم الوفاء",
+        "broken": "لم يُوفَ",
+        "cancelled": "ملغى"
+      }
+    },
+    "breakdown": {
+      "pricingTitle": "السعر",
+      "collectionTitle": "التحصيل",
+      "reportingTitle": "عملة التقارير",
+      "subtotal": "المجموع الفرعي",
+      "discount": "الخصم",
+      "tax": "الضريبة",
+      "fees": "الرسوم",
+      "total": "الإجمالي",
+      "cost": "التكلفة",
+      "margin": "الهامش",
+      "collected": "المحصَّل",
+      "pending": "بانتظار التوثيق",
+      "balance": "الرصيد",
+      "reportingRate": "{pair} {rate} · ساري من {date}",
+      "reportingNone": "لا يوجد سعر صرف لعملة التقارير بعد.",
+      "mismatch": "المكونات لا تساوي الإجمالي — راجع البنود."
+    }
   },
   "targets": {
     "title": "أهداف الإيرادات",
@@ -1637,5 +1740,206 @@
       "next": "التالي",
       "page": "صفحة {page} من {pages}"
     }
+  },
+  "bookingStatus": {
+    "changed": "تم تغيير الحالة إلى {status}",
+    "invalidTransition": "لم يعد تغيير الحالة هذا مسموحًا — تمت إعادة تحميل الحجز",
+    "changeError": "تعذر تغيير الحالة",
+    "guardFailed": "التغيير محظور بسبب:",
+    "useOverride": "المتابعة بتجاوز المدير",
+    "overrideManagerOnly": "لا يمكن تجاوز هذه الفحوصات إلا للمدير.",
+    "overrideBypasses": "يتجاوز هذا الإجراء:",
+    "overrideNoGuards": "يتطلب هذا التغيير تجاوزًا من المدير، ويُسجَّل مع السبب في سجل التدقيق.",
+    "holdExpiresAt": "ينتهي الحجز المبدئي في",
+    "holdHint": "المدة الافتراضية 3 أيام، وبحد أقصى {days} يومًا.",
+    "holdError": {
+      "required": "اختر موعد انتهاء الحجز المبدئي",
+      "past": "يجب أن يكون موعد الانتهاء في المستقبل",
+      "tooFar": "لا يمكن أن يتجاوز الحجز المبدئي {days} يومًا"
+    },
+    "reasonLabel": "السبب",
+    "reasonOptionalLabel": "ملاحظة (اختياري)",
+    "reasonPlaceholder": "لماذا تتغير الحالة؟",
+    "reasonHint": "{min} أحرف على الأقل. يُحفظ في سجل الحجز.",
+    "cancel": "إلغاء",
+    "submit": "تغيير إلى {status}",
+    "submitOverride": "تجاوز وتغيير إلى {status}",
+    "systemDrivenHint": "يضبطها النظام تلقائيًا عادةً",
+    "dialog": {
+      "overrideTitle": "تجاوز المدير: {status}",
+      "overrideDescription": "نقل الحجز إلى {status} رغم فشل الفحوصات.",
+      "holdTitle": "وضع حجز مبدئي",
+      "holdDescription": "تُحجز المقاعد حتى موعد الانتهاء ثم تُحرَّر تلقائيًا.",
+      "reasonTitle": "تغيير الحالة إلى {status}",
+      "reasonDescription": "يتطلب هذا التغيير ذكر السبب.",
+      "confirmTitle": "تغيير الحالة إلى {status}؟",
+      "confirmDescription": "سينتقل الحجز إلى {status}."
+    },
+    "actions": {
+      "draft": "إعادة إلى المسودة",
+      "quoted": "تحديد كعرض سعر",
+      "option_hold": "وضع حجز مبدئي",
+      "confirmed": "تأكيد الحجز",
+      "partially_paid": "تحديد كمدفوع جزئيًا",
+      "ready": "تحديد كجاهز للسفر",
+      "travelled": "تحديد كمُسافر",
+      "completed": "إكمال الحجز",
+      "cancelled": "إلغاء الحجز"
+    },
+    "guards": {
+      "customer_required": "يجب تحديد العميل",
+      "departure_required": "يجب تحديد الرحلة",
+      "sales_closed": "المبيعات مغلقة لهذه الرحلة",
+      "no_capacity": "لا توجد مقاعد متاحة في هذه الرحلة",
+      "hold_expiry_required": "يجب تحديد تاريخ انتهاء الحجز المبدئي",
+      "hold_expiry_in_past": "يجب أن يكون تاريخ انتهاء الحجز المبدئي في المستقبل",
+      "hold_expiry_too_far": "لا يمكن أن يتجاوز الحجز المبدئي 14 يومًا",
+      "reason_required": "يجب ذكر السبب",
+      "override_reason_too_short": "يجب ألا يقل سبب التجاوز عن 10 أحرف",
+      "readiness_incomplete": "المستندات أو بيانات المشاركين أو بنود قائمة التحقق غير مكتملة",
+      "balance_outstanding": "لا يزال هناك رصيد مستحق",
+      "hold_not_expired": "لم تنتهِ مدة الحجز المبدئي بعد",
+      "departure_not_reached": "لم يحن تاريخ المغادرة بعد",
+      "status_not_derived": "تُحدَّد هذه الحالة تلقائيًا بناءً على المدفوعات والجاهزية"
+    }
+  },
+  "fx": {
+    "title": "أسعار الصرف",
+    "subtitle": "أسعار الصرف اليومية المستخدمة لمبالغ عملة التقارير",
+    "add": "إضافة سعر",
+    "edit": "تعديل السعر",
+    "delete": "حذف السعر",
+    "created": "تمت إضافة السعر",
+    "updated": "تم تحديث السعر",
+    "deleted": "تم حذف السعر",
+    "saveError": "تعذر حفظ السعر",
+    "deleteError": "تعذر حذف السعر",
+    "loadError": "تعذر تحميل أسعار الصرف",
+    "empty": "لا توجد أسعار صرف بعد",
+    "emptyFiltered": "لا توجد أسعار مطابقة لهذه الفلاتر",
+    "createTitle": "إضافة سعر صرف",
+    "editTitle": "تعديل سعر {pair}",
+    "dialogDescription": "وحدة واحدة من العملة الأساسية تساوي السعر بعملة التسعير.",
+    "exists": "يوجد سعر لهذا الزوج وهذا التاريخ بالفعل — عدّله بدلًا من ذلك.",
+    "rateHint": "رقم موجب بحد أقصى {max} منازل عشرية",
+    "sourcePlaceholder": "مثل: ساما، البنك المركزي الأوروبي، يدوي",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "deleteTitle": "حذف سعر {pair} بتاريخ {date}؟",
+    "deleteDescription": "تحتفظ المدفوعات المحوّلة سابقًا بمبلغ عملة التقارير المخزّن.",
+    "missing": "سعر الصرف غير متوفر",
+    "missingHint": "لا يوجد سعر {from}/{to} لهذا التاريخ — مبلغ عملة التقارير فارغ",
+    "fields": {
+      "base": "العملة الأساسية",
+      "quote": "عملة التسعير",
+      "rate": "السعر",
+      "effectiveDate": "تاريخ السريان",
+      "source": "المصدر"
+    },
+    "errors": {
+      "required": "أدخل السعر",
+      "format": "استخدم أرقامًا ونقطة، مثل 3.75",
+      "precision": "بحد أقصى {max} منازل عشرية",
+      "positive": "يجب أن يكون السعر أكبر من 0",
+      "currency": "استخدم رموز عملات من 3 أحرف، مثل USD",
+      "samePair": "يجب أن تختلف العملة الأساسية عن عملة التسعير"
+    },
+    "filters": {
+      "base": "العملة الأساسية",
+      "quote": "عملة التسعير",
+      "from": "من",
+      "to": "إلى",
+      "reset": "إعادة ضبط الفلاتر"
+    },
+    "columns": {
+      "pair": "الزوج",
+      "rate": "السعر",
+      "effectiveDate": "السريان",
+      "source": "المصدر",
+      "createdBy": "أنشأه",
+      "createdAt": "تاريخ الإنشاء",
+      "actions": "الإجراءات"
+    },
+    "pagination": {
+      "summary": "{from}–{to} من {total}",
+      "previous": "السابق",
+      "next": "التالي",
+      "page": "الصفحة {page} من {pages}"
+    },
+    "converter": {
+      "title": "محوّل العملات",
+      "hint": "يستخدم أحدث سعر في التاريخ المحدد أو قبله.",
+      "amount": "المبلغ",
+      "from": "من",
+      "to": "إلى",
+      "on": "بتاريخ",
+      "convert": "تحويل",
+      "notFound": "لا يوجد سعر {from}/{to} لذلك التاريخ.",
+      "rateLine": "السعر {rate} · ساري من {date}",
+      "error": "تعذر التحويل"
+    }
+  },
+  "fxLive": {
+    "title": "أسعار الصرف",
+    "trigger": "أسعار الصرف",
+    "triggerLabel": "أسعار الصرف. سعر الدولار الأمريكي في السوق {rate} {currency}",
+    "triggerLabelStale": "أسعار الصرف. سعر الدولار الأمريكي في السوق {rate} {currency}، وقد لا يكون محدّثاً",
+    "updated": "آخر تحديث {time}",
+    "neverUpdated": "لم يتم التحديث بعد",
+    "loading": "جارٍ تحميل الأسعار…",
+    "refresh": "تحديث الأسعار",
+    "refreshError": "تعذّر تحديث الأسعار",
+    "kindLabel": "نوع السعر",
+    "kind": {
+      "market": "السوق الموازية",
+      "official": "المصرف المركزي"
+    },
+    "kindShort": {
+      "market": "السوق",
+      "official": "الرسمي"
+    },
+    "columns": {
+      "currency": "العملة",
+      "buy": "شراء",
+      "sell": "مبيع",
+      "mid": "الوسطي",
+      "actions": "إجراءات"
+    },
+    "pinned": "العملات الرئيسية",
+    "others": "عملات أخرى ({count})",
+    "derived": "محسوب",
+    "derivedHint": "محسوب عبر سعر التقاطع مع الدولار الأمريكي، وليس سعراً معلناً مباشرة",
+    "stale": "قديم",
+    "staleHint": "آخر رصد في {date}",
+    "notAvailable": "غير متوفر",
+    "staleBanner": "المصدر المباشر غير متاح — تُعرض آخر الأسعار المعروفة",
+    "loadError": "تعذّر تحميل أسعار الصرف",
+    "updateError": "تعذّر التحديث — تُعرض آخر الأسعار المحمّلة",
+    "retry": "إعادة المحاولة",
+    "empty": "لا تتوفر أسعار",
+    "sources": "المصادر",
+    "sourceUnavailable": "غير متاح",
+    "disclaimer": "حول هذه الأسعار",
+    "disclaimerFallback": "أسعار استرشادية للعلم فقط، وليست عرضاً للبيع أو الشراء.",
+    "manage": "إدارة الأسعار المحاسبية",
+    "adoptLabel": "اعتماد السعر الوسطي ({kind}) لعملة {currency} في المحاسبة",
+    "adoptConfirm": "انقر مجدداً لحفظ السعر الوسطي ({kind}) لعملة {currency} كسعر محاسبي لليوم",
+    "adopted": "تم حفظ سعر {currency} ({kind}) كسعر محاسبي لليوم",
+    "adoptExists": "يوجد سعر محاسبي لعملة {currency} لهذا اليوم مسبقاً",
+    "adoptUnavailable": "لا يتوفر حالياً سعر مباشر ({kind}) لعملة {currency}",
+    "adoptError": "تعذّر حفظ السعر المحاسبي",
+    "converter": {
+      "title": "تحويل سريع",
+      "amount": "المبلغ بعملة {currency}",
+      "currency": "العملة",
+      "swap": "عكس اتجاه التحويل",
+      "invalid": "أدخل مبلغاً موجباً",
+      "unavailable": "لا يتوفر سعر لهذه العملة",
+      "hint": "قيمة استرشادية وفق السعر الوسطي ({kind})"
+    },
+    "location": "دمشق",
+    "base": "العملة المرجعية",
+    "perUnit": "بـ{base} لكل وحدة",
+    "crossNote": "أسعار متقاطعة محسوبة عبر {local}. تُحفظ أسعار المحاسبة دائمًا بـ{local}."
   }
 }

@@ -392,6 +392,102 @@ Demo mode serves only the audit list / actions from memory; reveal, export and a
 Tests: `npm run test:privacy` (diff, masking / no-resend, audit query, anonymize rules);
 `npm run test:i18n` now checks full en/ar key parity.
 
+## Epic 21 Booking lifecycle & finance
+
+| Task | Status |
+|------|--------|
+| T-270 Nine booking statuses, shared status chip, server-driven transitions, option hold, reason / override dialogs | Done |
+| T-273 FX rates screen (`/finance/fx`), converter, dual-currency payments, "FX rate missing" badge | Done |
+| T-275 Finance panel: component breakdown, reporting block, discount edit, payment promises, `received_at`, SoD errors | Done |
+
+**Statuses.** `draft → quoted → option_hold → confirmed → partially_paid → ready → travelled → completed`, plus
+`cancelled` (`BOOKING_STATUSES` in `entities/booking`). `BookingStatusChip` (distinct colour + dot per status,
+en/ar labels from `bookings.status.*`) is used in the bookings list, Customer 360 and booking detail; the list
+filter offers all nine. `partially_paid` / `ready` / `travelled` are normally set by the system and render as
+secondary buttons.
+
+**Transitions** (`features/change-booking-status`). Buttons come **only** from the booking's server-computed
+`allowed_transitions` — there is no client-side state machine. Each opens one dialog:
+- `option_hold` → `datetime-local` picker, default now + 3 days, max 14 days, sent as RFC 3339 `hold_expires_at`;
+- `requires_reason` → reason (≥ 10 characters);
+- `requires_override` → manager override dialog (reason required; lists the guards from an earlier failed attempt);
+- otherwise a confirmation with an optional note.
+
+`POST /v1/bookings/{id}/status {status, reason?, hold_expires_at?, override?}`. 422 `guard_failed` shows the
+translated `error.details.guards` (`bookingStatus.guards.*`, unknown codes verbatim) and, with
+`bookings.override`, offers "Continue with manager override". 409 `invalid_transition` toasts and reloads the
+booking. `ApiError` now exposes `details` (raw `error.details`) and `detailList(key)`.
+Option holds show `HoldCountdownBadge` ("Expires in 2d 4h", red under 24 h) via `useCountdown`.
+
+**Line items** carry `kind: item | tax | fee` (older categories such as `package` / `hotel` read as `item`).
+Amount inputs are parsed with `parseMoneyInput()` (`@/shared/lib/money`, string arithmetic → integer minor units)
+and displayed with `formatMoney()` (`@/shared/lib/format`).
+
+**FX** (`entities/fx`, `features/manage-fx-rates`, `features/convert-currency`, `widgets/fx-rates-board`).
+`/finance/fx` (nav "FX rates", `payments.read`): filters by pair and effective-date range, paginated from `meta`,
+converter widget. Add / edit / delete only with `fx.manage`; the rate is a decimal **string** (> 0, ≤ 8 decimals,
+`fxRateError()` / `normalizeFxRate()`), never a float; 409 `fx_rate_exists` is shown inline. Payments (booking
+ledger, finance queues) render `PaymentAmount`: original amount, `≈ reporting amount` when `amount_reporting` is
+set, or an "FX rate missing" badge when it is `null` and the currencies differ. A record response with
+`fx_missing: true` shows an info toast.
+
+**Finance panel** (`widgets/booking-finance-panel`). `GET /v1/bookings/{id}/financial-summary` → price
+(subtotal, −discount, tax, fees, total), collection (collected, pending, balance), cost / margin when present,
+reporting-currency block (`financeBreakdown()`, which also flags totals that don't reconcile). Discount edit
+(`features/edit-booking-discount`, PATCH `discount_amt`) needs `bookings.discount`. Payment promises
+(`features/manage-payment-promises`): list, create (`payments.write`), cancel. `features/record-payment` adds
+`received_at` (not in the future), "Mark as verified" only with `payments.approve`, and explicit copy for 403
+`forbidden_auto_verify` and `sod_violation` (refund approved by its requester) via `usePaymentErrorFeedback()`.
+
+**Permissions.** New: `bookings.override`, `bookings.discount` (demo: manager, gm) and `fx.manage` (demo: gm,
+finance).
+
+Endpoints: `POST /v1/bookings/{id}/status`; `GET|POST /v1/fx-rates`, `PUT|DELETE /v1/fx-rates/{id}`,
+`GET /v1/fx-rates/convert`; `GET /v1/bookings/{id}/financial-summary`;
+`GET|POST /v1/bookings/{id}/payment-promises`, `POST /v1/payment-promises/{id}/cancel`.
+Demo mode serves booking / payment / promise / FX reads (list, convert) from memory with bookings in every
+status; all writes need the backend.
+
+Tests: `npm run test:booking-finance` (status chip mapping + en/ar labels, hold countdown and expiry limits,
+status error classification, FX validation / formatting, money parsing, finance breakdown).
+
+## Live exchange rates (header)
+
+Damascus board for **new SYP** (1 new = 100 old since 2026-01-01): Central Bank **official** and parallel
+**market** rates, SYP per 1 unit. Separate from the accounting rates in `entities/fx`.
+
+**Slices.** `entities/fx-live` (model + tolerant mapper, exact decimal math in `lib/decimal.ts`,
+`useLiveFxBoard()`, `LiveFxQuoteTable`), `features/refresh-live-fx` (`fx.manage`),
+`features/adopt-live-fx-rate` (`fx.manage`, `FxRepository.adoptLive`), `features/convert-currency`
+(`LiveFxConverter`), composed in `widgets/app-shell` (`FxLiveIndicator` + `FxLivePanel`). `shared/ui/popover`
+is a small non-modal popover (Tab moves through the content; Escape / outside press closes) because
+`DropdownMenu` traps Tab and typeahead, which breaks the converter input.
+
+**Header.** Coins button next to notifications; on ≥ sm it shows the USD market mid (`$ 137.63`); an amber dot
+marks stale data (board `stale`, a failed source, or a stale USD quote). The popover has Market | Official
+(Central Bank) — default Market, kept in React state while the shell is mounted — pinned USD / EUR / SAR, a
+collapsible "Other currencies" list, "derived" (via USD cross) and "stale" (observed date) badges, `—` for
+missing quotes, a converter (amount ↔ SYP at the selected kind's mid, 2 decimals, half away from zero, BigInt
+only; accepts Arabic-Indic digits), sources with the licence-required **"Rates By Exchange Rate API"** link
+(always shown), LiraScope, the disclaimer behind an info toggle and a "Live source unavailable" banner.
+"Manage accounting rates" (→ `/finance/fx`) needs `payments.read`; the per-row "Use for accounting" button
+(`fx.manage`, click twice to confirm) adopts the mid; 409 `fx_rate_exists` / 422 `live_quote_unavailable` get
+their own toast.
+
+**Fetching.** Loaded when the shell mounts, re-polled every 5 min only while the tab is visible (on return it
+reloads if older than 5 min), re-fetched on open when older than 60 s; one GET in flight at a time and a manual
+refresh supersedes it. Errors stay inside the popover (retry button), never as toasts.
+
+**Formatting.** `formatRate()`: ≥ 1 → 2 decimals, < 1 → 4 significant digits (LBP `0.0015`), digits via
+`Intl.NumberFormat(toIntlLocale(locale))` — Arabic-Indic in `ar`; currency names via `Intl.DisplayNames`.
+
+Endpoints: `GET /v1/fx/live`, `POST /v1/fx/live/refresh`, `POST /v1/fx-rates/adopt {currency, kind, side}`.
+Demo mode serves `GET /v1/fx/live` from memory with today's Damascus sample (USD market 137.25 / 138.00, EUR,
+SAR, TRY, AED, EGP without an official quote, LBP, stale derived GBP / JOD); refresh and adopt need the backend.
+
+Tests: `npm run test:fx-live` (decimal multiply / divide / rounding, significant digits and Arabic digits,
+pinned-first ordering, derived / stale badges, board health, attribution, mapper tolerance, adopt errors, keys).
+
 ## Demo login
 
 Demo mode only (`NEXT_PUBLIC_DEMO_MODE=true` with the backend unreachable); otherwise log in against `wodi-crm-be`:

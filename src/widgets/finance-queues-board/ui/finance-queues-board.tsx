@@ -1,16 +1,19 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
   createPaymentRepository,
   FINANCE_QUEUES,
+  PaymentAmount,
+  usePaymentErrorFeedback,
   type FinanceQueueKind,
 } from "@/entities/payment";
 import { useCan } from "@/entities/viewer";
 import { useApiQuery } from "@/shared/lib/use-api-query";
 import { Link } from "@/shared/i18n/navigation";
 import { routes } from "@/shared/config/routes";
+import { formatDateTime } from "@/shared/lib/format";
 import {
   Button,
   PageHeader,
@@ -20,24 +23,12 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-  useMutationFeedback,
 } from "@/shared/ui";
-
-function money(amount: number, currency: string) {
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency,
-      maximumFractionDigits: 0,
-    }).format(amount / 100);
-  } catch {
-    return `${(amount / 100).toFixed(0)} ${currency}`;
-  }
-}
 
 export function FinanceQueuesBoard() {
   const t = useTranslations("finance");
-  const feedback = useMutationFeedback();
+  const locale = useLocale();
+  const feedback = usePaymentErrorFeedback();
   const canApprove = useCan("payments.approve");
   const repo = useMemo(() => createPaymentRepository(), []);
   const [kind, setKind] = useState<FinanceQueueKind>("overdue");
@@ -112,13 +103,18 @@ export function FinanceQueuesBoard() {
                   >
                     <div>
                       <p className="text-[15px] font-semibold text-zinc-900">
-                        {money(it.amount, it.currency)}
+                        <PaymentAmount
+                          amount={it.amount}
+                          currency={it.currency}
+                          amountReporting={it.amountReporting}
+                          reportingCurrency={it.reportingCurrency}
+                        />
                         {it.customerName ? ` · ${it.customerName}` : ""}
                       </p>
                       <p className="text-sm text-zinc-500">
                         {it.status}
                         {it.dueAt
-                          ? ` · ${new Date(it.dueAt).toLocaleString()}`
+                          ? ` · ${formatDateTime(it.dueAt, locale)}`
                           : ""}
                       </p>
                     </div>

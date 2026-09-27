@@ -15,6 +15,7 @@ export const routes = {
   bookings: "/bookings",
   booking: (id: string) => `/bookings/${id}`,
   finance: "/finance",
+  financeFx: "/finance/fx",
   targets: "/targets",
   importExport: "/import-export",
   reports: "/reports",
