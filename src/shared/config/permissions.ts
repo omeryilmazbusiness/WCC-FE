@@ -55,11 +55,14 @@ export const PERMISSIONS = [
   "filesync.write",
   "settings.read",
   "settings.write",
+  "setup.manage",
+  "branches.manage",
+  "companies.manage",
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
 
-export type AccessScope = "own" | "team" | "branch" | "global";
+export type AccessScope = "own" | "team" | "branch" | "company" | "global";
 
 const PERMISSION_SET = new Set<string>(PERMISSIONS);
 
@@ -86,6 +89,7 @@ export const ROUTE_PERMISSIONS = {
   [routes.targets]: "targets.read",
   [routes.importExport]: "imports.read",
   [routes.reports]: "reports.read",
+  [routes.setup]: "setup.manage",
   [routes.aiSetup]: "ai.setup",
   [routes.suppliers]: "suppliers.read",
   [routes.rooming]: "packages.read",
@@ -95,6 +99,7 @@ export const ROUTE_PERMISSIONS = {
   [routes.adminRoles]: "roles.read",
   [routes.adminAudit]: "audit.read",
   [routes.adminSettings]: "settings.read",
+  [routes.adminCompanies]: "companies.manage",
 } as const satisfies Record<string, Permission>;
 
 export type GuardedRoute = keyof typeof ROUTE_PERMISSIONS;
@@ -150,13 +155,14 @@ export function homeFor(role: AppRole, granted: readonly string[]): string {
  * and the backend is unreachable. Never consulted for a real session.
  */
 export const DEMO_ROLE_PERMISSIONS: Record<AppRole, readonly Permission[]> = {
-  gm: PERMISSIONS,
+  gm: PERMISSIONS.filter((p) => p !== "companies.manage"),
   admin: [
     "users.read", "users.write", "users.unlock", "roles.read", "audit.read", "branches.read", "ops.read",
     "privacy.manage", "integrations.read", "integrations.write",
     "notifications.read", "notifications.write", "notifications.manage",
     "reports.read", "reports.export", "ai.read", "ai.write", "ai.setup",
     "filesync.read", "filesync.write", "settings.read", "settings.write",
+    "branches.manage", "companies.manage",
   ],
   manager: PERMISSIONS.filter(
     (p) =>
@@ -164,7 +170,10 @@ export const DEMO_ROLE_PERMISSIONS: Record<AppRole, readonly Permission[]> = {
       p !== "users.unlock" &&
       p !== "ops.read" &&
       p !== "privacy.manage" &&
-      p !== "fx.manage",
+      p !== "fx.manage" &&
+      p !== "setup.manage" &&
+      p !== "branches.manage" &&
+      p !== "companies.manage",
   ),
   employee: [
     "branches.read", "customers.read", "customers.write", "leads.read", "leads.write",
@@ -193,7 +202,7 @@ export const DEMO_ROLE_PERMISSIONS: Record<AppRole, readonly Permission[]> = {
 };
 
 export const DEMO_ROLE_SCOPE: Record<AppRole, AccessScope> = {
-  gm: "global",
+  gm: "company",
   admin: "global",
   manager: "branch",
   finance: "branch",

@@ -28,6 +28,7 @@ import {
   BedDouble,
   ShieldCheck,
   ArrowLeftRight,
+  Rocket,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { ViewerSession } from "@/shared/api/session";
@@ -38,7 +39,8 @@ import {
   type Permission,
 } from "@/shared/config/permissions";
 import { routes } from "@/shared/config/routes";
-import { Link, usePathname } from "@/shared/i18n/navigation";
+import { Link, usePathname, WorkspaceRefProvider } from "@/shared/i18n/navigation";
+import type { WorkspaceRef } from "@/shared/lib/workspace-path";
 import { cn } from "@/shared/lib/cn";
 import { ToastProvider } from "@/shared/ui";
 import { ViewerProvider, useViewer } from "@/entities/viewer";
@@ -47,6 +49,8 @@ import { AppHeader } from "./app-header";
 
 type Props = {
   viewer: ViewerSession;
+  /** Workspace of the request, so SSR markup matches the client (see `WorkspaceRefProvider`). */
+  workspace?: WorkspaceRef | null;
   children: React.ReactNode;
 };
 
@@ -65,6 +69,7 @@ type NavLabel =
   | "targets"
   | "importExport"
   | "reports"
+  | "setup"
   | "aiSetup"
   | "suppliers"
   | "rooming"
@@ -73,7 +78,8 @@ type NavLabel =
   | "users"
   | "roles"
   | "audit"
-  | "settings";
+  | "settings"
+  | "companies";
 
 type NavItem = {
   href: GuardedRoute;
@@ -99,11 +105,13 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: routes.targets, label: "targets", icon: Target },
   { href: routes.importExport, label: "importExport", icon: FileSpreadsheet },
   { href: routes.reports, label: "reports", icon: FileBarChart2 },
+  { href: routes.setup, label: "setup", icon: Rocket },
   { href: routes.aiSetup, label: "aiSetup", icon: Sparkles },
   { href: routes.suppliers, label: "suppliers", icon: Truck },
   { href: routes.rooming, label: "rooming", icon: BedDouble },
   { href: routes.missingDocs, label: "missingDocs", icon: FileWarning },
   { href: routes.integrations, label: "integrations", icon: Plug },
+  { href: routes.adminCompanies, label: "companies", icon: Building2 },
   { href: routes.adminUsers, label: "users", icon: Shield },
   { href: routes.adminRoles, label: "roles", icon: KeyRound },
   { href: routes.adminAudit, label: "audit", icon: ScrollText },
@@ -118,7 +126,8 @@ function visibleNav(permissions: readonly string[]): NavItem[] {
   );
 }
 
-export function AppShell({ viewer, children }: Props) {
+/** Session, permission and toast context shared by every signed-in surface. */
+export function ShellProviders({ viewer, workspace = null, children }: Props) {
   const locale = useLocale();
   const onSessionExpired = useCallback(
     (err: unknown) => window.location.assign(loginHref(locale, sessionEndReason(err))),
@@ -126,12 +135,22 @@ export function AppShell({ viewer, children }: Props) {
   );
 
   return (
-    <ViewerProvider initialViewer={viewer} onSessionExpired={onSessionExpired}>
-      <ToastProvider>
-        <SessionExpiryWatcher />
-        <ShellFrame>{children}</ShellFrame>
-      </ToastProvider>
-    </ViewerProvider>
+    <WorkspaceRefProvider value={workspace}>
+      <ViewerProvider initialViewer={viewer} onSessionExpired={onSessionExpired}>
+        <ToastProvider>
+          <SessionExpiryWatcher />
+          {children}
+        </ToastProvider>
+      </ViewerProvider>
+    </WorkspaceRefProvider>
+  );
+}
+
+export function AppShell({ viewer, workspace, children }: Props) {
+  return (
+    <ShellProviders viewer={viewer} workspace={workspace}>
+      <ShellFrame>{children}</ShellFrame>
+    </ShellProviders>
   );
 }
 

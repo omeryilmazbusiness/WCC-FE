@@ -1,6 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { redirect } from "@/shared/i18n/navigation";
-import { getServerSession } from "@/shared/api/get-server-session";
+import { getServerSession, getServerWorkspace } from "@/shared/api/get-server-session";
 import { routes } from "@/shared/config/routes";
 import { AppShell } from "@/widgets/app-shell";
 
@@ -18,5 +18,9 @@ export default async function ShellLayout({ children, params }: Props) {
     return null;
   }
 
-  return <AppShell viewer={session}>{children}</AppShell>;
+  return (
+    <AppShell viewer={session} workspace={await getServerWorkspace()}>
+      {children}
+    </AppShell>
+  );
 }

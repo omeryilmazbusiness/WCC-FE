@@ -23,8 +23,3 @@ export function isAdminRole(role: AppRole): boolean {
 export function canConfigureAI(role: AppRole): boolean {
   return role === "gm" || role === "manager" || role === "admin";
 }
-
-/** First-run branch setup wizard (company + staff + AI + channels). */
-export function canSeeBranchSetup(role: AppRole): boolean {
-  return role === "gm";
-}

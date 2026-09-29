@@ -95,9 +95,23 @@ export type BackendLoginResponse = Partial<BackendTokenPair> & {
   user?: BackendUser;
 };
 
+export type BackendWorkspaceBranch = {
+  id: string;
+  slug: string;
+  code: string;
+  name_en: string;
+  name_ar: string;
+  kind: "main_center" | "branch";
+  is_active?: boolean;
+};
+
 export type BackendMeResponse = BackendUser & {
   permissions: string[];
   scope: AccessScope;
+  company?: { id: string; slug: string; name_en: string; name_ar: string };
+  home_branch_id?: string;
+  active_branch_id?: string;
+  branches?: BackendWorkspaceBranch[];
 };
 
 export type MfaVerifyRequest = { challenge: string; code: string };

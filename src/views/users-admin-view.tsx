@@ -13,9 +13,8 @@ import {
   type ApiUser,
 } from "@/entities/identity";
 import { useCan } from "@/entities/viewer";
-import { getScopedBranchId } from "@/features/branch-scope";
+import { useActiveBranchId } from "@/features/branch-scope";
 import { RevokeUserSessionsButton } from "@/features/revoke-user-sessions";
-import { useSessionUser } from "@/shared/api/session-context";
 import { formatDateTime } from "@/shared/lib/format";
 import { useApiQuery } from "@/shared/lib/use-api-query";
 import {
@@ -49,7 +48,7 @@ export function UsersAdminView() {
   const t = useTranslations("admin");
   const tc = useTranslations("common");
   const locale = useLocale();
-  const user = useSessionUser();
+  const branchId = useActiveBranchId();
   const feedback = useMutationFeedback();
   const canWrite = useCan("users.write");
   const canUnlock = useCan("users.unlock");
@@ -63,9 +62,9 @@ export function UsersAdminView() {
       listUsers({
         q: query || undefined,
         role: role === "all" ? undefined : role,
-        branchId: getScopedBranchId(user.branchId),
+        branchId,
       }),
-    [query, role, user.branchId],
+    [query, role, branchId],
   );
   const rows = useMemo(() => users.data ?? [], [users.data]);
   const reload = users.reload;
@@ -174,7 +173,7 @@ export function UsersAdminView() {
               try {
                 await createUser({
                   ...form,
-                  branch_id: getScopedBranchId(user.branchId),
+                  branch_id: branchId,
                 });
                 feedback.success(t("created"));
                 setForm(EMPTY_FORM);

@@ -19,6 +19,7 @@ export const routes = {
   targets: "/targets",
   importExport: "/import-export",
   reports: "/reports",
+  setup: "/setup",
   aiSetup: "/setup/ai",
   suppliers: "/suppliers",
   integrations: "/integrations",
@@ -30,6 +31,7 @@ export const routes = {
   adminRoles: "/admin/roles",
   adminAudit: "/admin/audit",
   adminSettings: "/admin/settings",
+  adminCompanies: "/admin/companies",
   rooming: "/rooming",
 } as const;
 

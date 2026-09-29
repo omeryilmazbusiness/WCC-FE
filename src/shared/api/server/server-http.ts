@@ -1,7 +1,7 @@
 import { cookies, headers } from "next/headers";
 import { ApiError, SESSION_EXPIRED_CODE } from "../api-error";
 import { FetchHttpClient, type HttpClient } from "../http-client";
-import { ACCESS_COOKIE } from "../session";
+import { ACCESS_COOKIE, ACTIVE_BRANCH_HEADER, BACKEND_BRANCH_HEADER } from "../session";
 import { serverEnv } from "./server-env";
 import { sessionEndReasonFor } from "./unauthorized-policy";
 
@@ -22,6 +22,9 @@ export async function createServerHttpClient(): Promise<HttpClient> {
       if (token) out.Authorization = `Bearer ${token}`;
       const forwardedFor = incoming.get("x-forwarded-for");
       if (forwardedFor) out["X-Forwarded-For"] = forwardedFor;
+      // Set by the middleware from the workspace URL of the page being rendered.
+      const branchId = incoming.get(ACTIVE_BRANCH_HEADER);
+      if (branchId) out[BACKEND_BRANCH_HEADER] = branchId;
       return out;
     },
     onUnauthorized: (err) =>

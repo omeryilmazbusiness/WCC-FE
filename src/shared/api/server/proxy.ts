@@ -2,7 +2,15 @@ import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/shared/config/env";
 import { ApiError, apiErrorFromResponse } from "../api-error";
 import { PROXY_BLOCKED_PATHS, VIEWER_REFRESHED_HEADER } from "../auth-contract";
-import { ACCESS_COOKIE, REFRESH_COOKIE, SESSION_COOKIE, type ViewerSession } from "../session";
+import {
+  ACCESS_COOKIE,
+  BACKEND_BRANCH_HEADER,
+  BRANCH_COOKIE,
+  BRANCH_SLUG_HEADER,
+  REFRESH_COOKIE,
+  SESSION_COOKIE,
+  type ViewerSession,
+} from "../session";
 import { isDemoToken, loadViewer, refreshTokens } from "./auth-service";
 import { backendFetch, clientMetaFrom, upstreamUnavailable, type ClientMeta } from "./backend";
 import { errorResponse, sessionEnded, sessionFailureResponse } from "./bff-handlers";
@@ -59,6 +67,23 @@ async function nextSnapshot(
 }
 
 /**
+ * Branch a company-wide viewer acts on: the page URL's branch (sent by the browser
+ * client), else the remembered one (EventSource cannot set headers). Only branches of
+ * the viewer's own workspace are forwarded; the backend re-checks membership anyway.
+ */
+export function activeBranchId(
+  viewer: ViewerSession | null,
+  slug: string | null,
+  rememberedId: string | undefined,
+): string | undefined {
+  const branches = viewer?.workspace?.branches;
+  if (!branches?.length) return undefined;
+  const bySlug = slug ? branches.find((b) => b.slug === slug) : undefined;
+  if (bySlug) return bySlug.id;
+  return branches.find((b) => b.id === rememberedId)?.id;
+}
+
+/**
  * `/api/proxy/[...path]` → `${API_BASE_URL}/[...path]`. Attaches the HttpOnly access
  * token and performs at most one refresh per request (see `decideOnUnauthorized`).
  */
@@ -86,6 +111,13 @@ export async function proxyRequest(req: NextRequest, segments: string[]): Promis
     const value = req.headers.get(name);
     if (value) headers.set(name, value);
   }
+  const current = await verifySession(req.cookies.get(SESSION_COOKIE)?.value);
+  const branchId = activeBranchId(
+    current,
+    req.headers.get(BRANCH_SLUG_HEADER),
+    req.cookies.get(BRANCH_COOKIE)?.value,
+  );
+  if (branchId) headers.set(BACKEND_BRANCH_HEADER, branchId);
   const body = isSafeMethod(req.method) ? undefined : await req.arrayBuffer();
   const target = `${path}${req.nextUrl.search}`;
   // The upstream call ends with the browser request, so a closed tab also closes a stream.
@@ -125,7 +157,6 @@ export async function proxyRequest(req: NextRequest, segments: string[]): Promis
     const res = toResponse(upstream);
     if (rotated) {
       setTokenCookies(res, rotated);
-      const current = await verifySession(req.cookies.get(SESSION_COOKIE)?.value);
       const snapshot = await nextSnapshot(current, rotated.accessToken, reloadViewer, meta);
       if (snapshot) setSessionCookie(res, await signSession(snapshot.viewer));
       if (reloadViewer) res.headers.set(VIEWER_REFRESHED_HEADER, snapshot?.reloaded ? "1" : "0");

@@ -4,12 +4,26 @@ import { withDemoFallback } from "@/shared/api/repository";
 import { DEMO_ROLE_PERMISSIONS } from "@/shared/config/permissions";
 import { APP_ROLES, type AppRole } from "@/shared/config/routes";
 
+export type BranchKind = "main_center" | "branch";
+
 export type Branch = {
   id: string;
   code: string;
+  slug: string;
+  kind: BranchKind;
   name_en: string;
   name_ar: string;
+  timezone?: string;
   is_active: boolean;
+};
+
+export type BranchInput = {
+  name_en: string;
+  name_ar?: string;
+  kind?: BranchKind;
+  code?: string;
+  slug?: string;
+  timezone?: string;
 };
 
 export type Team = {
@@ -38,6 +52,8 @@ export type ApiUser = {
 const DEMO_BRANCH: Branch = {
   id: "11111111-1111-1111-1111-111111111111",
   code: "HQ",
+  slug: "main",
+  kind: "main_center",
   name_en: "Head Office",
   name_ar: "المكتب الرئيسي",
   is_active: true,
@@ -59,8 +75,11 @@ function mapBranch(raw: unknown): Branch | null {
   return {
     id,
     code: pickString(r, "code", "Code") || "—",
+    slug: pickString(r, "slug"),
+    kind: r.kind === "main_center" ? "main_center" : "branch",
     name_en: pickString(r, "name_en", "NameEN") || id,
     name_ar: pickString(r, "name_ar", "NameAR"),
+    timezone: pickString(r, "timezone") || undefined,
     is_active: Boolean(r.is_active ?? r.IsActive ?? true),
   };
 }
@@ -129,17 +148,20 @@ export async function listBranches(): Promise<Branch[]> {
   );
 }
 
-export async function updateBranch(
-  id: string,
-  body: { code: string; name_en: string; name_ar?: string },
-): Promise<Branch> {
-  const raw = await http.request<unknown>(`/branches/${id}`, {
+export async function createBranch(body: BranchInput): Promise<Branch> {
+  const raw = await http.request<unknown>("/branches", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  const mapped = mapBranch(raw);
+  if (!mapped) throw new Error("invalid branch");
+  return mapped;
+}
+
+export async function updateBranch(id: string, body: Partial<BranchInput>): Promise<Branch> {
+  const raw = await http.request<unknown>(`/branches/${encodeURIComponent(id)}`, {
     method: "PATCH",
-    body: JSON.stringify({
-      code: body.code,
-      name_en: body.name_en,
-      name_ar: body.name_ar ?? "",
-    }),
+    body: JSON.stringify(body),
   });
   const mapped = mapBranch(raw);
   if (!mapped) throw new Error("invalid branch");
@@ -172,11 +194,16 @@ export async function listUsers(params?: {
   q?: string;
   role?: string;
   branchId?: string;
+  /** Company-wide list (company-scoped viewers only; ignores branchId). */
+  allBranches?: boolean;
+  limit?: number;
 }): Promise<ApiUser[]> {
   const sp = new URLSearchParams();
   if (params?.q) sp.set("q", params.q);
   if (params?.role) sp.set("role", params.role);
-  if (params?.branchId) sp.set("branch_id", params.branchId);
+  if (params?.allBranches) sp.set("all_branches", "true");
+  else if (params?.branchId) sp.set("branch_id", params.branchId);
+  if (params?.limit) sp.set("limit", String(params.limit));
   const qs = sp.toString() ? `?${sp}` : "";
   return withDemoFallback(
     () => http.request<ApiUser[]>(`/users${qs}`),

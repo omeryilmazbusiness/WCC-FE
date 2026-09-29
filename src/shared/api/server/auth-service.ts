@@ -1,10 +1,12 @@
 import {
   DEMO_ROLE_PERMISSIONS,
   DEMO_ROLE_SCOPE,
+  homeFor,
   isPermission,
 } from "@/shared/config/permissions";
-import { isAppRole, type AppRole } from "@/shared/config/routes";
+import { isAppRole, routes, type AppRole } from "@/shared/config/routes";
 import { env } from "@/shared/config/env";
+import { withWorkspace, type WorkspaceRef } from "@/shared/lib/workspace-path";
 import { ApiError } from "../api-error";
 import {
   AUTH_ENDPOINTS,
@@ -16,13 +18,14 @@ import {
   type BackendUser,
   type MfaVerifyRequest,
 } from "../auth-contract";
-import type { SessionUser, ViewerSession } from "../session";
+import type { SessionUser, SessionWorkspace, ViewerSession } from "../session";
 import { backendFetch, backendJson, type ClientMeta } from "./backend";
 import { sessionExpiresAt, type TokenSet } from "./cookies";
 
 const DEMO_TOKEN_PREFIX = "demo.";
 const DEMO_PASSWORD = "ChangeMe123!";
 const DEMO_BRANCH = "11111111-1111-1111-1111-111111111111";
+const DEMO_COMPANY = "33333333-3333-3333-3333-333333333333";
 const REFRESH_REUSE_WINDOW_MS = 30_000;
 
 export function toTokenSet(pair: BackendTokenPair): TokenSet {
@@ -147,6 +150,33 @@ function mapUser(user: BackendUser): SessionUser {
   };
 }
 
+/** Session cookies stay small: a tenant never needs more branches than this in the switcher. */
+const MAX_SESSION_BRANCHES = 60;
+
+function mapWorkspace(me: BackendMeResponse): SessionWorkspace | undefined {
+  if (!me.company?.slug || !me.branches?.length) return undefined;
+  return {
+    company: {
+      id: String(me.company.id),
+      slug: me.company.slug,
+      nameEn: me.company.name_en ?? "",
+      nameAr: me.company.name_ar ?? "",
+    },
+    homeBranchId: String(me.home_branch_id ?? me.branch_id ?? ""),
+    branches: me.branches
+      .filter((b) => b.is_active !== false || String(b.id) === String(me.home_branch_id))
+      .slice(0, MAX_SESSION_BRANCHES)
+      .map((b) => ({
+        id: String(b.id),
+        slug: b.slug,
+        code: b.code ?? "",
+        nameEn: b.name_en ?? "",
+        nameAr: b.name_ar ?? "",
+        kind: b.kind === "main_center" ? "main_center" : "branch",
+      })),
+  };
+}
+
 export async function loadViewer(
   accessToken: string,
   meta: ClientMeta,
@@ -163,9 +193,40 @@ export async function loadViewer(
     user,
     permissions: (me.permissions ?? []).filter(isPermission),
     scope: me.scope ?? "own",
+    workspace: mapWorkspace(me),
     expiresAt: sessionExpiresAt(),
     mfaEnrollmentRequired: Boolean(flags.mfaEnrollmentRequired) && !user.mfaEnabled,
   };
+}
+
+/** The viewer's home workspace (`company/home-branch`), if the session carries one. */
+export function homeWorkspace(viewer: ViewerSession): WorkspaceRef | null {
+  const ws = viewer.workspace;
+  if (!ws) return null;
+  const branch = ws.branches.find((b) => b.id === ws.homeBranchId) ?? ws.branches[0];
+  return branch ? { company: ws.company.slug, branch: branch.slug } : null;
+}
+
+/**
+ * Post-login landing inside the viewer's home workspace: a GM with unfinished
+ * onboarding goes straight to `/setup`.
+ */
+export async function landingFor(
+  accessToken: string,
+  viewer: ViewerSession,
+  meta: ClientMeta,
+): Promise<string> {
+  const ref = homeWorkspace(viewer);
+  const home = homeFor(viewer.user.role, viewer.permissions);
+  if (isDemoToken(accessToken) || !viewer.permissions.includes("setup.manage")) {
+    return withWorkspace(home, ref);
+  }
+  try {
+    const setup = await backendJson<{ required?: boolean }>("/setup", { accessToken, meta });
+    return withWorkspace(setup.required ? routes.setup : home, ref);
+  } catch {
+    return withWorkspace(home, ref);
+  }
 }
 
 export function isDemoToken(token: string | undefined): boolean {
@@ -188,6 +249,13 @@ function demoViewer(role: AppRole): ViewerSession {
     user: { id: user.id, email, fullName: user.fullName, role, branchId: DEMO_BRANCH },
     permissions: [...DEMO_ROLE_PERMISSIONS[role]],
     scope: DEMO_ROLE_SCOPE[role],
+    workspace: {
+      company: { id: DEMO_COMPANY, slug: "wodi", nameEn: "WODI Travel", nameAr: "ودي للسفر" },
+      homeBranchId: DEMO_BRANCH,
+      branches: [
+        { id: DEMO_BRANCH, slug: "main", code: "WODI", nameEn: "Main Center", nameAr: "المركز الرئيسي", kind: "main_center" },
+      ],
+    },
     expiresAt: sessionExpiresAt(),
     demo: true,
   };

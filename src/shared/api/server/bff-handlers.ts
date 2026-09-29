@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/shared/config/env";
-import { homeFor } from "@/shared/config/permissions";
 import { routes } from "@/shared/config/routes";
 import {
   ApiError,
@@ -29,6 +28,7 @@ import {
   backendVerifyMfa,
   demoLogin,
   hasTokens,
+  landingFor,
   loadViewer,
   refreshTokens,
   toTokenSet,
@@ -98,10 +98,11 @@ async function authenticatedResponse(
   tokens: TokenSet,
   viewer: ViewerSession,
   status: "authenticated" | "mfa_enrollment_required",
+  meta: ClientMeta,
 ): Promise<NextResponse> {
   const body: LoginResult = {
     status,
-    home: status === "authenticated" ? homeFor(viewer.user.role, viewer.permissions) : routes.security,
+    home: status === "authenticated" ? await landingFor(tokens.accessToken, viewer, meta) : routes.security,
     viewer,
   };
   const res = NextResponse.json({ data: body });
@@ -137,6 +138,7 @@ async function completeLogin(login: BackendLoginResponse, meta: ClientMeta): Pro
     tokens,
     viewer,
     viewer.mfaEnrollmentRequired ? "mfa_enrollment_required" : "authenticated",
+    meta,
   );
 }
 
@@ -156,7 +158,7 @@ export async function handleLogin(req: NextRequest): Promise<NextResponse> {
     if (env.demoMode && isNetworkError(err)) {
       try {
         const demo = demoLogin(email, password);
-        return await authenticatedResponse(demo.tokens, demo.viewer, "authenticated");
+        return await authenticatedResponse(demo.tokens, demo.viewer, "authenticated", meta);
       } catch (demoErr) {
         return errorResponse(demoErr);
       }
@@ -222,7 +224,7 @@ export async function handleMfaSetupConfirm(req: NextRequest): Promise<NextRespo
     const tokens = toTokenSet(confirmed);
     const viewer = await loadViewer(tokens.accessToken, meta, { mfaEnrollmentRequired: false });
     const body: MfaSetupConfirmResult = {
-      home: homeFor(viewer.user.role, viewer.permissions),
+      home: await landingFor(tokens.accessToken, viewer, meta),
       viewer,
       recovery_codes: confirmed.recovery_codes ?? [],
     };

@@ -5,7 +5,9 @@ import {
 } from "./api-error";
 import { VIEWER_REFRESHED_HEADER } from "./auth-contract";
 import { DedupingHttpClient } from "./deduping-http-client";
+import { BRANCH_SLUG_HEADER } from "./session";
 import { loginHref, sessionEndReason } from "./session-end";
+import { splitWorkspace } from "../lib/workspace-path";
 
 export { ApiError } from "./api-error";
 
@@ -97,11 +99,25 @@ function announceViewerRefresh(res: Response) {
  * the same-origin BFF proxy, which reads the HttpOnly cookie and refreshes on 401.
  * A 401 surfacing here means the BFF already ended the session (cookies cleared).
  */
+/** Branch slug of the current page URL (`/{locale}/{company}/{branch}/...`). */
+function pageBranchSlug(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  const path = window.location.pathname.replace(/^\/(en|ar)(?=\/|$)/, "");
+  return splitWorkspace(path).workspace?.branch;
+}
+
+function proxyHeaders(): HeadersInit {
+  const slug = pageBranchSlug();
+  return slug
+    ? { [CSRF_HEADER]: CSRF_HEADER_VALUE, [BRANCH_SLUG_HEADER]: slug }
+    : { [CSRF_HEADER]: CSRF_HEADER_VALUE };
+}
+
 const dedupingHttp = new DedupingHttpClient(
   new FetchHttpClient({
     baseUrl: PROXY_BASE_PATH,
     credentials: "same-origin",
-    headers: () => ({ [CSRF_HEADER]: CSRF_HEADER_VALUE }),
+    headers: proxyHeaders,
     onUnauthorized: redirectToLogin,
     onResponse: announceViewerRefresh,
   }),

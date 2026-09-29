@@ -1,7 +1,8 @@
-export type { Branch, Team, ApiUser } from "./api";
+export type { Branch, BranchInput, BranchKind, Team, ApiUser } from "./api";
 export {
   listBranches,
   updateBranch,
+  createBranch,
   listTeams,
   listUsers,
   createUser,

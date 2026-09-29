@@ -11,7 +11,7 @@ import {
   type TeamMemberStat,
 } from "@/entities/dashboard";
 import { useCan } from "@/entities/viewer";
-import { BranchSetupHost } from "@/features/branch-setup";
+import { SetupResumeBanner } from "@/features/gm-setup";
 import { routes } from "@/shared/config/routes";
 import { useApiQuery } from "@/shared/lib/use-api-query";
 import { ListScreen, QueryState, SegmentedControl, StatTile } from "@/shared/ui";
@@ -80,7 +80,7 @@ export function ManagerDashboardBoard() {
 
   return (
     <ListScreen title={t("title")} description={t("subtitle")} actions={periodControl}>
-      <BranchSetupHost />
+      <SetupResumeBanner />
       <CommandBar />
 
       {dashboard.data ? (

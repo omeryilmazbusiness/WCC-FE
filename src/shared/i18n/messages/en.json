@@ -15,6 +15,7 @@
     "targets": "Targets",
     "importExport": "Import / Export",
     "reports": "Reports",
+    "setup": "Setup",
     "aiSetup": "AI setup",
     "suppliers": "Suppliers",
     "integrations": "Integrations",
@@ -28,7 +29,8 @@
     "rooming": "Rooming",
     "security": "Security",
     "fxRates": "FX rates",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "companies": "Companies"
   },
   "auth": {
     "title": "Sign in",
@@ -370,6 +372,12 @@
       "behind": "Behind",
       "placeholder": "No target set"
     }
+  },
+  "branchScope": {
+    "mainCenter": "Main center",
+    "branch": "Branch",
+    "branches": "Branches",
+    "switchBranch": "Switch branch"
   },
   "tasks": {
     "title": "My tasks",
@@ -870,64 +878,213 @@
     "connectedAs": "Connected: {provider} ({hint})",
     "goDashboard": "Go to dashboard"
   },
-  "branchSetup": {
-    "eyebrow": "First setup",
-    "title": "Set up your company",
-    "subtitle": "Company & team first, then AI and channels. Skip anytime — the app stays usable.",
+  "setup": {
+    "brand": "WODI",
+    "title": "Set up your workspace",
+    "eyebrow": "Step {current} of {total}",
+    "eyebrowDone": "Setup complete",
+    "loading": "Loading setup…",
+    "loadError": "Couldn’t load setup",
     "steps": {
-      "org": "Company",
-      "ai": "AI",
-      "channels": "Channels"
+      "aria": "Setup steps",
+      "company": {
+        "label": "Company"
+      },
+      "staff": {
+        "label": "Team"
+      },
+      "ai": {
+        "label": "AI"
+      },
+      "channels": {
+        "label": "Channels"
+      }
     },
-    "progress": "{done} of {total} complete",
-    "aiBody": "Bring your own OpenAI, Claude, or Gemini API key for this branch.",
-    "aiReady": "AI connected: {provider} ({hint})",
-    "channelsBody": "Connect at least one channel to receive customer messages.",
-    "channelsConnected": "{count} channel(s) connected",
-    "connect": "Connect",
-    "connected": "Connected",
-    "back": "Back",
-    "continue": "Continue",
-    "skip": "Skip for now",
-    "finish": "Done",
-    "resumeHint": "Setup incomplete — finish company, AI, or channels when ready.",
-    "resume": "Continue setup",
-    "companyTitle": "Company details",
-    "companyBody": "Name your agency as it appears across the product.",
-    "companyCode": "Code",
-    "companyNameEn": "Name (EN)",
-    "companyNameAr": "Name (AR)",
-    "companyNameEnPh": "e.g. Al Noor Travel",
-    "companyNameArPh": "مثال: النور للسفر",
-    "saveCompany": "Save company",
-    "companySaved": "Company saved",
-    "companySaveError": "Could not save company",
-    "orgLoadError": "Could not load company data",
-    "staffTitle": "Create department accounts",
-    "staffBody": "Add one account per unit. Only the GM exists at first install.",
-    "staffOneByOne": "Enter email and password for this role, then create.",
-    "staffStep": "Account {current} of {total}",
-    "staffPasswordPh": "Choose a temporary password",
+    "status": {
+      "done": "Done",
+      "skipped": "Skipped",
+      "pending": "Not set"
+    },
+    "actions": {
+      "back": "Back",
+      "later": "Finish later",
+      "dashboard": "Dashboard",
+      "laterError": "Couldn't save your progress"
+    },
+    "company": {
+      "title": "Your company",
+      "subtitle": "This appears on quotes, invoices and messages to guests.",
+      "groups": {
+        "identity": "Identity",
+        "contact": "Contact",
+        "location": "Location",
+        "preferences": "Preferences",
+        "address": "Workspace address"
+      },
+      "fields": {
+        "nameEn": "Name",
+        "nameAr": "Arabic name",
+        "legalName": "Legal name",
+        "email": "Email",
+        "phone": "Phone",
+        "website": "Website",
+        "country": "Country",
+        "city": "City",
+        "address": "Address",
+        "currency": "Currency",
+        "timezone": "Time zone",
+        "slug": "Web address"
+      },
+      "placeholders": {
+        "nameEn": "Al Noor Travel",
+        "nameAr": "النور للسفر",
+        "legalName": "Optional",
+        "email": "hello@company.com",
+        "phone": "+966 5x xxx xxxx",
+        "website": "company.com",
+        "country": "SA",
+        "city": "Riyadh",
+        "address": "Street, district",
+        "currency": "USD",
+        "timezone": "Asia/Riyadh",
+        "slug": "al-noor"
+      },
+      "preferencesHint": "Used for prices, reports and reminders. You can change these later.",
+      "errors": {
+        "nameEn": "Enter 2–120 characters.",
+        "nameAr": "Too long.",
+        "legalName": "Too long.",
+        "email": "Enter a valid email.",
+        "phone": "Enter a valid phone number.",
+        "website": "Enter a valid website.",
+        "country": "Choose a country.",
+        "city": "Enter the city.",
+        "address": "Enter the address.",
+        "currency": "Use a 3-letter currency code.",
+        "timezone": "Choose a valid time zone.",
+        "slug": "2–48 lowercase letters, digits or dashes.",
+        "slugTaken": "This address is already taken."
+      },
+      "save": "Save & continue",
+      "saveError": "Couldn't save the company",
+      "slugHint": "Your team signs in to {path}. Use lowercase letters, digits and dashes.",
+      "locationHint": "Country, city and address are required.",
+      "branches": {
+        "title": "Branches",
+        "hint": "Every company has one main center. Staff belong to exactly one branch.",
+        "name": "Branch name",
+        "namePlaceholder": "Riyadh Office",
+        "kind": "Type",
+        "mainCenter": "Main center",
+        "branch": "Branch",
+        "mainRequired": "Pick another branch as main center first.",
+        "remove": "Remove branch",
+        "add": "Add branch",
+        "errors": {
+          "name": "Enter 2–120 characters.",
+          "duplicate": "Another branch already uses this name."
+        }
+      }
+    },
     "roles": {
-      "manager": "Branch manager",
-      "employee": "Sales employee",
+      "manager": "Manager",
+      "employee": "Agent",
       "finance": "Finance",
       "operations": "Operations"
     },
-    "rolePending": "Not created yet",
-    "staffName": "Full name",
-    "staffEmail": "Work email",
-    "staffPassword": "Password",
-    "staffRequired": "Name, email, and password are required",
-    "createStaff": "Create account",
-    "staffCreated": "{role} account created",
-    "staffCreateError": "Could not create account — email may already exist",
-    "staffIncomplete": "Create all department accounts first",
-    "companyRequired": "Enter company code and name",
-    "orgComplete": "Save & continue to AI",
-    "orgCompleteHint": "Fill company details after all accounts are created",
-    "orgReady": "Company and all departments are ready",
-    "saving": "Saving…"
+    "staff": {
+      "title": "Your team",
+      "subtitle": "Create profiles for the people who will work in WODI.",
+      "listTitle": "Profiles",
+      "add": "New profile",
+      "loading": "Loading profiles…",
+      "laterHint": "Add only who you need now. You can create more profiles anytime from Users.",
+      "continue": "Continue",
+      "skip": "Skip for now",
+      "advanceError": "Couldn't continue",
+      "sheet": {
+        "title": "New profile",
+        "subtitle": "Share the email and temporary password with your teammate.",
+        "name": "Full name",
+        "namePlaceholder": "Sara Ahmed",
+        "email": "Email",
+        "role": "Role",
+        "password": "Temporary password",
+        "passwordHint": "They can sign in with this password right away.",
+        "regenerate": "Generate new password",
+        "copy": "Copy email and password",
+        "cancel": "Cancel",
+        "create": "Create profile",
+        "creating": "Creating…",
+        "created": "{name} was added",
+        "error": "Couldn't create the profile",
+        "errors": {
+          "name": "Enter the full name.",
+          "email": "Enter a valid email.",
+          "emailTaken": "This email is already in use.",
+          "branch": "Choose a branch.",
+          "password": {
+            "length": "Use at least 10 characters.",
+            "mix": "Mix letters and digits.",
+            "common": "This password is too easy to guess."
+          }
+        },
+        "branch": "Branch",
+        "mainCenter": "Main center",
+        "modeGenerate": "Generate",
+        "modeManual": "Set manually",
+        "manualHint": "At least 10 characters with letters and digits.",
+        "manualPlaceholder": "Type a password",
+        "showPassword": "Show password",
+        "hidePassword": "Hide password"
+      }
+    },
+    "ai": {
+      "title": "AI assistant",
+      "subtitle": "Connect your own AI key for summaries, replies and lead scoring.",
+      "provider": "Provider",
+      "providers": {
+        "openai": "OpenAI",
+        "anthropic": "Anthropic",
+        "gemini": "Gemini"
+      },
+      "apiKey": "API key",
+      "model": "Model",
+      "modelPlaceholder": "Default",
+      "keyHint": "Your key is encrypted and never shown again.",
+      "connected": "AI is connected",
+      "change": "Change",
+      "connect": "Connect",
+      "continue": "Continue",
+      "skip": "Skip for now",
+      "saveError": "Couldn't connect the AI provider",
+      "advanceError": "Couldn't continue",
+      "errors": {
+        "key": "Paste a valid API key."
+      }
+    },
+    "channels": {
+      "title": "Channels",
+      "subtitle": "Bring guest conversations into one inbox.",
+      "connected": "Connected",
+      "notConnected": "Not connected",
+      "laterHint": "You can connect channels later from Integrations.",
+      "finish": "Finish setup",
+      "finishError": "Couldn't finish setup",
+      "skip": "Skip for now"
+    },
+    "done": {
+      "title": "You're all set",
+      "subtitle": "Your workspace is ready. You can revisit any step from here.",
+      "summary": "Summary",
+      "cta": "Go to dashboard"
+    },
+    "banner": {
+      "title": "Finish setting up your workspace",
+      "subtitle": "Company, team, AI and channels in a few quick steps.",
+      "cta": "Continue",
+      "remaining": "Still open: {steps}"
+    }
   },
   "ai": {
     "execTitle": "AI executive summary",
@@ -2028,5 +2185,73 @@
     "openRecord": "Open",
     "settingsHint": "Thresholds, SLA A/B and escalation rules are managed in",
     "settingsLink": "admin settings"
+  },
+  "adminCompanies": {
+    "title": "Companies",
+    "subtitle": "Every tenant on the platform, its general manager and footprint.",
+    "register": "Register company",
+    "search": "Search by name or address",
+    "empty": "No companies yet",
+    "limitHint": "Showing the first {count}. Refine the search to find others.",
+    "active": "Active",
+    "suspended": "Suspended",
+    "columns": {
+      "company": "Company",
+      "gm": "General manager",
+      "location": "Location",
+      "branches": "Branches",
+      "users": "Users",
+      "status": "Status",
+      "created": "Created"
+    },
+    "form": {
+      "title": "Register company",
+      "subtitle": "Creates the company, its main center and the general manager account.",
+      "groups": {
+        "company": "Company",
+        "gm": "General manager"
+      },
+      "fields": {
+        "nameEn": "Name",
+        "nameAr": "Arabic name",
+        "slug": "Web address",
+        "country": "Country",
+        "city": "City",
+        "gmName": "Full name",
+        "gmEmail": "Email",
+        "gmPassword": "Temporary password"
+      },
+      "slugHint": "Workspace URL: {path}. Leave empty to derive it from the name.",
+      "gmHint": "The GM completes company details, branches and team on first sign-in.",
+      "regenerate": "Generate new password",
+      "cancel": "Cancel",
+      "create": "Register",
+      "creating": "Registering…",
+      "created": "{name} was registered",
+      "error": "Couldn't register the company",
+      "doneTitle": "Company registered",
+      "doneUrl": "Workspace",
+      "doneHint": "Share these credentials securely. The GM is guided through setup on first sign-in.",
+      "copy": "Copy email and password",
+      "another": "Register another",
+      "close": "Done",
+      "errors": {
+        "nameEn": "Enter 2–120 characters.",
+        "nameAr": "Too long.",
+        "slug": "2–48 lowercase letters, digits or dashes; not a reserved word.",
+        "slugTaken": "This address is already taken.",
+        "country": "Use a 2-letter country code.",
+        "city": "Too long.",
+        "gmName": "Enter the full name.",
+        "gmEmail": "Enter a valid email.",
+        "emailTaken": "This email is already in use.",
+        "gmPassword": "Invalid password.",
+        "password": {
+          "length": "Use 10–128 characters.",
+          "mix": "Mix letters and digits.",
+          "common": "This password is too easy to guess."
+        }
+      }
+    }
   }
 }
