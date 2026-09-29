@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { Building2, Check, ChevronsUpDown } from "lucide-react";
+import { Building2, Check, ChevronsUpDown, ShieldCheck } from "lucide-react";
 import { useViewer } from "@/entities/viewer";
 import type { SessionBranch } from "@/shared/api/session";
 import { usePathname } from "@/shared/i18n/navigation";
@@ -25,6 +25,16 @@ export function BranchScopeSelect() {
   const rest = usePathname();
   const active = useActiveBranch();
   const ws = viewer.workspace;
+  if (!ws && viewer.scope === "global") {
+    return (
+      <div className="flex min-w-0 items-center gap-2" data-testid="platform-badge">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-white">
+          <ShieldCheck className="h-3.5 w-3.5" strokeWidth={1.75} />
+        </span>
+        <span className="truncate text-[13px] font-semibold text-zinc-900">{t("platform")}</span>
+      </div>
+    );
+  }
   if (!ws || !active) return null;
 
   const companyName = (locale === "ar" && ws.company.nameAr) || ws.company.nameEn || ws.company.slug;

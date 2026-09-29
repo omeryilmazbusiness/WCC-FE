@@ -15,6 +15,7 @@ import {
   TIMEZONE_CHOICES,
   branchDraftHints,
   companyHints,
+  companySlug,
   draftSlug,
   type BranchDraft,
   type BranchDraftErrors,
@@ -68,6 +69,7 @@ export function CompanyStep({ overview, repository, onSaved, onBack }: Props) {
   const [branchErrors, setBranchErrors] = useState<BranchDraftErrors>({});
   const [busy, setBusy] = useState(false);
   const main = drafts.find((d) => d.kind === "main_center");
+  const slug = companySlug(form.nameEn, overview.company);
 
   const currencyOptions = useMemo(() => {
     const base: string[] = [...CURRENCY_CHOICES];
@@ -90,6 +92,7 @@ export function CompanyStep({ overview, repository, onSaved, onBack }: Props) {
   function set<K extends keyof CompanyProfile>(key: K, value: CompanyProfile[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
     if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
+    if (key === "nameEn" && errors.slug) setErrors((prev) => ({ ...prev, slug: undefined }));
   }
 
   function message(key: keyof CompanyProfile, raw?: string): string | undefined {
@@ -124,7 +127,8 @@ export function CompanyStep({ overview, repository, onSaved, onBack }: Props) {
   }
 
   async function save() {
-    const hints = companyHints(form);
+    const profile = { ...form, slug };
+    const hints = companyHints(profile);
     const branchHints = branchDraftHints(drafts);
     setErrors(hints);
     setBranchErrors(branchHints);
@@ -132,7 +136,7 @@ export function CompanyStep({ overview, repository, onSaved, onBack }: Props) {
     setBusy(true);
     try {
       await syncBranches();
-      const next = await repository.saveCompany(form);
+      const next = await repository.saveCompany(profile);
       const viewer = await refreshViewer();
       const ws = viewer?.workspace;
       const branch = ws?.branches.find((b) => b.id === activeBranch?.id) ?? ws?.branches[0];
@@ -160,12 +164,16 @@ export function CompanyStep({ overview, repository, onSaved, onBack }: Props) {
     }
   }
 
+  // The URL follows the English name, so its errors belong to the name field.
+  const errorOf = (key: keyof CompanyProfile) =>
+    message(key, errors[key]) ?? (key === "nameEn" ? message("slug", errors.slug) : undefined);
+
   const field = (key: keyof CompanyProfile, extra: React.InputHTMLAttributes<HTMLInputElement> = {}) => (
-    <GlassField id={`setup-${key}`} label={t(`fields.${key}`)} error={message(key, errors[key])}>
+    <GlassField id={`setup-${key}`} label={t(`fields.${key}`)} error={errorOf(key)}>
       <GlassInput
         id={`setup-${key}`}
         value={form[key]}
-        invalid={Boolean(errors[key])}
+        invalid={Boolean(errorOf(key))}
         placeholder={t(`placeholders.${key}`)}
         onChange={(e) => set(key, e.target.value)}
         data-testid={`setup-field-${key}`}
@@ -185,25 +193,17 @@ export function CompanyStep({ overview, repository, onSaved, onBack }: Props) {
     >
       <StepHero icon={Building2} tint="company" title={t("title")} subtitle={t("subtitle")} />
 
-      <GlassGroup title={t("groups.identity")}>
+      <GlassGroup
+        title={t("groups.identity")}
+        footer={
+          <span data-testid="setup-workspace-path">
+            {t("slugHint", { path: `/${slug || "…"}/${(main ? draftSlug(main) : "") || "…"}` })}
+          </span>
+        }
+      >
         {field("nameEn", { autoComplete: "organization", required: true })}
         {field("nameAr", { dir: "rtl", lang: "ar" })}
         {field("legalName")}
-      </GlassGroup>
-
-      <GlassGroup
-        title={t("groups.address")}
-        footer={t("slugHint", {
-          path: `/${form.slug || "…"}/${(main ? draftSlug(main) : "") || "…"}`,
-        })}
-      >
-        {field("slug", {
-          dir: "ltr",
-          spellCheck: false,
-          autoCapitalize: "none",
-          maxLength: 48,
-          onChange: (e) => set("slug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "")),
-        })}
       </GlassGroup>
 
       <BranchesGroup

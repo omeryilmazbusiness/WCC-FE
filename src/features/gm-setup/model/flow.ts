@@ -124,6 +124,12 @@ export function slugify(name: string): string {
     .replace(/-+$/g, "");
 }
 
+/** URL segment of the company: follows the English name, the stored one until renamed. */
+export function companySlug(nameEn: string, saved: { nameEn: string; slug: string }): string {
+  if (nameEn.trim() === saved.nameEn.trim()) return saved.slug;
+  return slugify(nameEn) || saved.slug;
+}
+
 export type BranchDraft = {
   /** Existing branch id; empty for a branch added in this session. */
   id: string;

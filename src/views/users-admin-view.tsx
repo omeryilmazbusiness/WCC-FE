@@ -12,7 +12,7 @@ import {
   updateUser,
   type ApiUser,
 } from "@/entities/identity";
-import { useCan } from "@/entities/viewer";
+import { useCan, useViewer } from "@/entities/viewer";
 import { useActiveBranchId } from "@/features/branch-scope";
 import { RevokeUserSessionsButton } from "@/features/revoke-user-sessions";
 import { formatDateTime } from "@/shared/lib/format";
@@ -49,8 +49,14 @@ export function UsersAdminView() {
   const tc = useTranslations("common");
   const locale = useLocale();
   const branchId = useActiveBranchId();
+  const viewer = useViewer();
+  // Platform admins oversee each company through its GM only; GMs are created
+  // with their company and everyone else is managed inside the company.
+  const platform = !viewer.workspace && viewer.scope === "global";
+  const creatableRoles: AppRole[] = APP_ROLES.filter((r) => r !== "admin");
   const feedback = useMutationFeedback();
   const canWrite = useCan("users.write");
+  const canCreate = canWrite && !platform;
   const canUnlock = useCan("users.unlock");
   const [query, setQuery] = useState("");
   const [role, setRole] = useState<string>("all");
@@ -83,16 +89,25 @@ export function UsersAdminView() {
       }
     }
 
+    const identity: ColumnDef<ApiUser>[] = platform
+      ? [
+          {
+            accessorKey: "company_name",
+            header: t("company"),
+            cell: ({ row }) => <span className="font-medium text-zinc-900">{row.original.company_name || "—"}</span>,
+          },
+        ]
+      : [
+          {
+            accessorKey: "role",
+            header: t("role"),
+            cell: ({ row }) => <Badge className="rounded-lg capitalize">{row.original.role}</Badge>,
+          },
+        ];
     return [
       { accessorKey: "full_name", header: t("name") },
       { accessorKey: "email", header: t("email") },
-      {
-        accessorKey: "role",
-        header: t("role"),
-        cell: ({ row }) => (
-          <Badge className="rounded-lg capitalize">{row.original.role}</Badge>
-        ),
-      },
+      ...identity,
       {
         accessorKey: "is_active",
         header: t("status"),
@@ -158,23 +173,20 @@ export function UsersAdminView() {
         },
       },
     ];
-  }, [t, tc, feedback, reload, busyId, canWrite, canUnlock]);
+  }, [t, tc, feedback, reload, busyId, canWrite, canUnlock, platform]);
 
   return (
     <ListScreen
-      title={t("usersTitle")}
-      description={t("usersSubtitle")}
+      title={platform ? t("gmsTitle") : t("usersTitle")}
+      description={platform ? t("gmsSubtitle") : t("usersSubtitle")}
       actions={
-        canWrite ? (
+        canCreate ? (
           <form
             className="flex flex-wrap items-end gap-2"
             onSubmit={async (e) => {
               e.preventDefault();
               try {
-                await createUser({
-                  ...form,
-                  branch_id: branchId,
-                });
+                await createUser({ ...form, branch_id: branchId });
                 feedback.success(t("created"));
                 setForm(EMPTY_FORM);
                 void reload();
@@ -219,7 +231,7 @@ export function UsersAdminView() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {APP_ROLES.map((r) => (
+                {creatableRoles.map((r) => (
                   <SelectItem key={r} value={r}>
                     {r}
                   </SelectItem>
@@ -245,18 +257,22 @@ export function UsersAdminView() {
             setQuery("");
             setRole("all");
           }}
-          sections={[
-            {
-              id: "role",
-              label: t("role"),
-              value: role,
-              onChange: (v: string) => setRole(v),
-              options: [
-                { value: "all", label: t("allRoles") },
-                ...APP_ROLES.map((r) => ({ value: r, label: r })),
-              ],
-            },
-          ]}
+          sections={
+            platform
+              ? []
+              : [
+                  {
+                    id: "role",
+                    label: t("role"),
+                    value: role,
+                    onChange: (v: string) => setRole(v),
+                    options: [
+                      { value: "all", label: t("allRoles") },
+                      ...APP_ROLES.map((r) => ({ value: r, label: r })),
+                    ],
+                  },
+                ]
+          }
         />
       }
     >
@@ -265,7 +281,7 @@ export function UsersAdminView() {
         error={users.error}
         onRetry={() => void reload()}
         empty={rows.length === 0}
-        emptyTitle={t("usersEmpty")}
+        emptyTitle={platform ? t("gmsEmpty") : t("usersEmpty")}
       >
         <DataTable columns={columns} data={rows} />
       </QueryState>

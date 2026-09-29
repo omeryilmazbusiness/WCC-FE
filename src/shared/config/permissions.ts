@@ -137,7 +137,7 @@ const ROLE_HOME: Record<AppRole, GuardedRoute> = {
   employee: routes.workspace,
   operations: routes.workspace,
   finance: routes.finance,
-  admin: routes.adminUsers,
+  admin: routes.adminCompanies,
 };
 
 /** Role's preferred landing page if permitted, else the first permitted screen. */
@@ -156,14 +156,8 @@ export function homeFor(role: AppRole, granted: readonly string[]): string {
  */
 export const DEMO_ROLE_PERMISSIONS: Record<AppRole, readonly Permission[]> = {
   gm: PERMISSIONS.filter((p) => p !== "companies.manage"),
-  admin: [
-    "users.read", "users.write", "users.unlock", "roles.read", "audit.read", "branches.read", "ops.read",
-    "privacy.manage", "integrations.read", "integrations.write",
-    "notifications.read", "notifications.write", "notifications.manage",
-    "reports.read", "reports.export", "ai.read", "ai.write", "ai.setup",
-    "filesync.read", "filesync.write", "settings.read", "settings.write",
-    "branches.manage", "companies.manage",
-  ],
+  // Platform operator: belongs to no company and holds no company-data permission.
+  admin: ["companies.manage", "users.read", "users.write", "users.unlock", "audit.read", "ops.read"],
   manager: PERMISSIONS.filter(
     (p) =>
       p !== "users.write" &&

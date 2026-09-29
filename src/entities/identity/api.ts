@@ -47,6 +47,8 @@ export type ApiUser = {
   /** RFC 3339; set while a login lockout is active. */
   locked_until?: string | null;
   failed_login_attempts?: number;
+  /** English company name; set on listings for company accounts. */
+  company_name?: string;
 };
 
 const DEMO_BRANCH: Branch = {
@@ -221,7 +223,8 @@ export function createUser(body: {
   password: string;
   full_name: string;
   role: AppRole;
-  branch_id: string;
+  /** Omitted for platform admins, who belong to no company. */
+  branch_id?: string;
   team_id?: string;
 }): Promise<ApiUser> {
   return http.request<ApiUser>("/users", {

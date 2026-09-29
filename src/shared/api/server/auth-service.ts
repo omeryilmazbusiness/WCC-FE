@@ -246,10 +246,10 @@ function demoViewer(role: AppRole): ViewerSession {
   const [email, user] =
     Object.entries(DEMO_USERS).find(([, u]) => u.role === role) ?? Object.entries(DEMO_USERS)[0];
   return {
-    user: { id: user.id, email, fullName: user.fullName, role, branchId: DEMO_BRANCH },
+    user: { id: user.id, email, fullName: user.fullName, role, branchId: role === "admin" ? "" : DEMO_BRANCH },
     permissions: [...DEMO_ROLE_PERMISSIONS[role]],
     scope: DEMO_ROLE_SCOPE[role],
-    workspace: {
+    workspace: role === "admin" ? undefined : {
       company: { id: DEMO_COMPANY, slug: "wodi", nameEn: "WODI Travel", nameAr: "ودي للسفر" },
       homeBranchId: DEMO_BRANCH,
       branches: [

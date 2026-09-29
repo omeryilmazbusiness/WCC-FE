@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 import {
   branchDraftHints,
   companyHints,
+  companySlug,
   donePercent,
   generatePassword,
   initialStep,
@@ -104,6 +105,15 @@ function overview(patch: Partial<SetupOverview> = {}): SetupOverview {
   assert.equal(slugify("مكتب"), "");
   assert.equal(slugify("a".repeat(60)).length, 48);
   assert.equal(slugify(`${"a".repeat(47)} b`), "a".repeat(47));
+}
+
+// the company URL follows the English name
+{
+  const saved = { nameEn: "WIFAD", slug: "wifad" };
+  assert.equal(companySlug("WIFAD", saved), "wifad");
+  assert.equal(companySlug(" WIFAD ", saved), "wifad");
+  assert.equal(companySlug("Test Travel", saved), "test-travel");
+  assert.equal(companySlug("وفاد", saved), "wifad");
 }
 
 // branch drafts
