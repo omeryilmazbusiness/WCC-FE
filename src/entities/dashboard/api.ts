@@ -5,7 +5,9 @@ import { createLeadRepository } from "@/entities/lead";
 import type {
   AttentionItem,
   DashboardKPI,
+  MoneyStat,
   MyWorkItem,
+  RevenueSummary,
   TargetSnapshot,
   TeamMemberStat,
 } from "./model";
@@ -16,6 +18,7 @@ export interface DashboardRepository {
   getAttention(limit?: number): Promise<AttentionItem[]>;
   getMyWork(limit?: number): Promise<MyWorkItem[]>;
   getTarget(scope?: "personal" | "branch"): Promise<TargetSnapshot>;
+  getRevenue(from: Date, to: Date): Promise<RevenueSummary>;
 }
 
 function defaultPeriod(): { from: Date; to: Date } {
@@ -95,6 +98,43 @@ function mapTarget(raw: Raw): TargetSnapshot {
   };
 }
 
+function mapMoney(raw: unknown): MoneyStat {
+  const r = (raw ?? {}) as Raw;
+  return { amount: Number(r.amount ?? 0), count: Number(r.count ?? 0) };
+}
+
+function nullableNumber(v: unknown): number | null {
+  return v === null || v === undefined ? null : Number(v);
+}
+
+export function mapRevenue(raw: Raw): RevenueSummary {
+  const list = (v: unknown) => (Array.isArray(v) ? (v as Raw[]) : []);
+  return {
+    currency: String(raw.currency ?? ""),
+    periodFrom: String(raw.period_from ?? ""),
+    periodTo: String(raw.period_to ?? ""),
+    booked: mapMoney(raw.booked),
+    collected: mapMoney(raw.collected),
+    refunds: mapMoney(raw.refunds),
+    netCollected: Number(raw.net_collected ?? 0),
+    margin: nullableNumber(raw.margin),
+    marginPct: nullableNumber(raw.margin_pct),
+    costedBookings: Number(raw.costed_bookings ?? 0),
+    collectionPct: nullableNumber(raw.collection_pct),
+    outstanding: mapMoney(raw.outstanding),
+    overdue: mapMoney(raw.overdue),
+    dueSoon: mapMoney(raw.due_soon),
+    pendingVerification: mapMoney(raw.pending_verification),
+    methods: list(raw.methods).map((m) => ({
+      method: String(m.method ?? "other"),
+      amount: Number(m.amount ?? 0),
+      count: Number(m.count ?? 0),
+    })),
+    series: list(raw.series).map((p) => ({ date: String(p.date ?? ""), amount: Number(p.amount ?? 0) })),
+    unconverted: (Array.isArray(raw.unconverted) ? raw.unconverted : []).map(String),
+  };
+}
+
 export class ApiDashboardRepository implements DashboardRepository {
   constructor(private readonly http: HttpClient) {}
 
@@ -135,9 +175,19 @@ export class ApiDashboardRepository implements DashboardRepository {
     const qs = scope === "branch" ? "?scope=branch" : "";
     return mapTarget(await this.http.request<Raw>(`/dashboard/my-target${qs}`));
   }
+
+  async getRevenue(from: Date, to: Date): Promise<RevenueSummary> {
+    const sp = new URLSearchParams({ from: from.toISOString(), to: to.toISOString() });
+    return mapRevenue(await this.http.request<Raw>(`/dashboard/revenue?${sp}`));
+  }
 }
 
 export class MemoryDashboardRepository implements DashboardRepository {
+  /** Revenue comes only from the finance ledger; there is no offline copy. */
+  async getRevenue(): Promise<RevenueSummary> {
+    throw new Error("Revenue is unavailable offline");
+  }
+
   async getKPIs(from?: Date, to?: Date): Promise<DashboardKPI> {
     const period = from && to ? { from, to } : defaultPeriod();
     const leads = await createLeadRepository().list();

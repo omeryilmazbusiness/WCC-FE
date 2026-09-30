@@ -7,6 +7,7 @@ import {
   createDashboardRepository,
   type AttentionItem,
   type DashboardKPI,
+  type RevenueSummary,
   type TargetSnapshot,
   type TeamMemberStat,
 } from "@/entities/dashboard";
@@ -15,11 +16,11 @@ import { SetupResumeBanner } from "@/features/gm-setup";
 import { routes } from "@/shared/config/routes";
 import { useApiQuery } from "@/shared/lib/use-api-query";
 import { ListScreen, QueryState, SegmentedControl, StatTile } from "@/shared/ui";
+import { RevenueCardState } from "./revenue-card-state";
 import { AIExecutiveSummaryCard } from "./ai-executive-summary-card";
 import { AttentionWidget } from "./attention-widget";
 import { LostLeadsCard } from "./lost-leads-card";
 import { CommandBar } from "./command-bar";
-import { RevenueWidget } from "./revenue-widget";
 import { TargetWidget } from "./target-widget";
 import { TeamWidget } from "./team-widget";
 
@@ -49,6 +50,7 @@ export function ManagerDashboardBoard() {
   const tc = useTranslations("common");
   const locale = useLocale();
   const canAI = useCan("ai.read");
+  const canFinance = useCan("payments.read");
   const [period, setPeriod] = useState<Period>("30");
 
   const dashboard = useApiQuery(
@@ -64,6 +66,15 @@ export function ManagerDashboardBoard() {
     },
     [period],
     { liveTopics: ["lead", "payment", "document", "task", "target", "conversation"] },
+  );
+
+  const revenue = useApiQuery(
+    async (): Promise<RevenueSummary> => {
+      const { from, to } = periodRange(Number(period));
+      return repo.getRevenue(from, to);
+    },
+    [period],
+    { enabled: canFinance, liveTopics: ["payment", "booking"] },
   );
 
   const periodControl = (
@@ -88,6 +99,18 @@ export function ManagerDashboardBoard() {
         <DashboardGrid
           data={dashboard.data}
           locale={locale}
+          revenueSlot={
+            canFinance ? (
+              <RevenueCardState
+                data={revenue.data}
+                loading={revenue.loading}
+                error={revenue.error}
+                onRetry={() => void revenue.reload()}
+                locale={locale}
+                periodDays={Number(period)}
+              />
+            ) : null
+          }
           aiSlot={
             canAI ? (
               <div className="grid gap-4 lg:grid-cols-2" data-testid="manager-ai-row">
@@ -112,10 +135,11 @@ export function ManagerDashboardBoard() {
   );
 }
 
-function DashboardGrid({ data, locale, aiSlot }: { data: DashboardData; locale: string; aiSlot: ReactNode }) {
+type GridProps = { data: DashboardData; locale: string; aiSlot: ReactNode; revenueSlot: ReactNode };
+
+function DashboardGrid({ data, locale, aiSlot, revenueSlot }: GridProps) {
   const t = useTranslations("manager");
   const { kpi, team, attention, target } = data;
-  const teamCollected = team.reduce((sum, m) => sum + (m.collectedAmt ?? 0), 0);
 
   return (
     <>
@@ -128,15 +152,14 @@ function DashboardGrid({ data, locale, aiSlot }: { data: DashboardData; locale: 
 
       {aiSlot}
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      {revenueSlot ? (
+        <div className="grid gap-4 lg:grid-cols-3" data-testid="manager-money-row">
+          <TargetWidget target={target} locale={locale} />
+          <div className="lg:col-span-2">{revenueSlot}</div>
+        </div>
+      ) : (
         <TargetWidget target={target} locale={locale} />
-        <RevenueWidget
-          bookedMinor={kpi.bookedAmt ?? 0}
-          collectedMinor={kpi.collectedAmt || teamCollected}
-          marginMinor={kpi.marginAmt ?? 0}
-          locale={locale}
-        />
-      </div>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <AttentionWidget items={attention} />

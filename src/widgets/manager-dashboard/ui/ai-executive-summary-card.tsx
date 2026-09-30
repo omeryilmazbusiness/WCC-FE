@@ -39,7 +39,6 @@ export function AIExecutiveSummaryCard() {
       subtitle={t("execSubtitle")}
       icon={Sparkles}
       accent="violet"
-      model={data?.available ? data.model : undefined}
       updatedAt={data?.available ? data.createdAt : undefined}
       data-testid="ai-executive-summary"
       action={

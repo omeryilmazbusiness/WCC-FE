@@ -29,8 +29,6 @@ type Props = {
   subtitle?: string;
   icon: ComponentType<{ className?: string; strokeWidth?: number }>;
   accent: Accent;
-  /** Model that produced the content; shown in the AI pill. */
-  model?: string;
   updatedAt?: string;
   /** Header action, e.g. regenerate. Rendered on the gradient. */
   action?: ReactNode;
@@ -38,13 +36,12 @@ type Props = {
   "data-testid"?: string;
 };
 
-/** Card frame for AI output: gradient header, icon badge, model and freshness. */
+/** Card frame for AI output: gradient header, icon badge and freshness. */
 export function AIInsightCard({
   title,
   subtitle,
   icon: Icon,
   accent,
-  model,
   updatedAt,
   action,
   children,
@@ -74,7 +71,7 @@ export function AIInsightCard({
         <div className="relative mt-4 flex flex-wrap items-center gap-2 text-[11px] font-semibold">
           <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-1 ring-1 ring-white/30">
             <Sparkles className="h-3 w-3" aria-hidden />
-            {model ? `AI · ${model}` : "AI"}
+            AI
           </span>
           {updatedAt ? (
             <span className="rounded-full bg-black/10 px-2.5 py-1 text-white/85">

@@ -4,6 +4,10 @@ export type {
   TargetSnapshot,
   AttentionItem,
   MyWorkItem,
+  MoneyStat,
+  RevenueMethod,
+  RevenuePoint,
+  RevenueSummary,
 } from "./model";
 export {
   type DashboardRepository,
@@ -11,4 +15,5 @@ export {
   ApiDashboardRepository,
   getMemoryDashboardRepository,
   createDashboardRepository,
+  mapRevenue,
 } from "./api";

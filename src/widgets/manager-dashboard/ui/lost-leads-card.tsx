@@ -55,7 +55,6 @@ export function LostLeadsCard() {
       subtitle={shown ? t("lostPeriod", { ...periodLabel(shown, locale), count: shown.lostCount }) : t("lostSubtitle")}
       icon={TrendingDown}
       accent="rose"
-      model={shown?.model || undefined}
       updatedAt={shown?.createdAt || undefined}
       data-testid="lost-leads-card"
       action={

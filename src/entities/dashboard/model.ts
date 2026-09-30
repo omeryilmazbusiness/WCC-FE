@@ -58,3 +58,35 @@ export type TargetSnapshot = {
   periodStart?: string;
   periodEnd?: string;
 };
+
+/** Minor units in RevenueSummary.currency. */
+export type MoneyStat = { amount: number; count: number };
+
+export type RevenueMethod = { method: string; amount: number; count: number };
+
+export type RevenuePoint = { date: string; amount: number };
+
+/** Finance-ledger revenue in the branch reporting currency (all amounts minor units). */
+export type RevenueSummary = {
+  currency: string;
+  periodFrom: string;
+  periodTo: string;
+  booked: MoneyStat;
+  collected: MoneyStat;
+  refunds: MoneyStat;
+  netCollected: number;
+  /** Null until at least one booking in the period has a cost entered. */
+  margin: number | null;
+  marginPct: number | null;
+  costedBookings: number;
+  /** Share of the period's booked amount already collected. */
+  collectionPct: number | null;
+  outstanding: MoneyStat;
+  overdue: MoneyStat;
+  dueSoon: MoneyStat;
+  pendingVerification: MoneyStat;
+  methods: RevenueMethod[];
+  series: RevenuePoint[];
+  /** Currencies left out because no FX rate exists for them. */
+  unconverted: string[];
+};
