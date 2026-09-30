@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import type { Lead, LeadOwner, LeadRepository } from "@/entities/lead";
 import { useCan } from "@/entities/viewer";
@@ -25,12 +25,15 @@ type Props = {
   selectedIds: string[];
   repository: LeadRepository;
   onAssigned: (leads: Lead[]) => void;
+  /** Custom trigger element (rendered asChild); defaults to an outline "Assign {count}" button. */
+  trigger?: ReactNode;
 };
 
 export function BulkAssignLeadsDialog({
   selectedIds,
   repository,
   onAssigned,
+  trigger,
 }: Props) {
   const allowed = useCan("leads.write");
   const t = useTranslations("pipeline");
@@ -84,9 +87,11 @@ export function BulkAssignLeadsDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button type="button" variant="outline">
-          {t("bulkAssign", { count: selectedIds.length })}
-        </Button>
+        {trigger ?? (
+          <Button type="button" variant="outline">
+            {t("bulkAssign", { count: selectedIds.length })}
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

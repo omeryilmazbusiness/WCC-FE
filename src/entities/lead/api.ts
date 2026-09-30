@@ -17,14 +17,25 @@ import {
   type TripInterest,
   emptyTripInterest,
 } from "./model";
+import {
+  budgetSums,
+  type BoardColumn,
+  type BudgetSum,
+} from "./lib/pipeline";
+import { leadQueryParams, type LeadQuery } from "./lib/query";
+
+export type LeadPage = { items: Lead[]; total: number };
 
 export interface LeadRepository {
-  list(params?: {
-    q?: string;
-    ownerId?: string;
-    stage?: string;
-    noFollowUp?: boolean;
-  }): Promise<Lead[]>;
+  /** First 200 matches, newest activity first; for small lookups, not the pipeline. */
+  list(params?: LeadQuery): Promise<Lead[]>;
+  /** One server page of matches with the filtered total. */
+  page(query: LeadQuery, page: { limit: number; offset: number }): Promise<LeadPage>;
+  /** Every lane's totals and budgets for the query plus its first `perStage` cards (0 = totals only). */
+  board(query: LeadQuery, perStage: number): Promise<BoardColumn[]>;
+  /** Soft-deletes leads; `restore` undoes it. */
+  remove(ids: string[]): Promise<void>;
+  restore(ids: string[]): Promise<Lead[]>;
   listByCustomerId(customerId: string): Promise<Lead[]>;
   getById(id: string): Promise<Lead>;
   create(input: LeadCreateInput): Promise<Lead>;
@@ -107,27 +118,68 @@ function mapHistory(raw: Record<string, unknown>): StageHistoryItem {
   };
 }
 
+function mapBudget(raw: Record<string, unknown>): BudgetSum {
+  return {
+    currency: String(raw.currency ?? ""),
+    amount: Number(raw.amount ?? 0),
+    count: Number(raw.count ?? 0),
+  };
+}
+
+function mapColumn(raw: Record<string, unknown>): BoardColumn {
+  return {
+    stage: String(raw.stage ?? "new") as LeadStage,
+    total: Number(raw.total ?? 0),
+    noFollowUp: Number(raw.no_follow_up ?? 0),
+    budgets: (Array.isArray(raw.budgets) ? raw.budgets : []).map(mapBudget),
+    items: (Array.isArray(raw.items) ? raw.items : []).map(mapLead),
+  };
+}
+
 export class ApiLeadRepository implements LeadRepository {
   constructor(private readonly http: HttpClient) {}
 
-  async list(params?: {
-    q?: string;
-    ownerId?: string;
-    stage?: string;
-    noFollowUp?: boolean;
-  }): Promise<Lead[]> {
-    const sp = new URLSearchParams({ limit: "200" });
-    if (params?.q) sp.set("q", params.q);
-    if (params?.ownerId) sp.set("owner_id", params.ownerId);
-    if (params?.stage) sp.set("stage", params.stage);
-    if (params?.noFollowUp) sp.set("no_follow_up", "true");
-    const data = await this.http.request<ApiLead[]>(`/leads?${sp}`);
+  async list(params: LeadQuery = {}): Promise<Lead[]> {
+    return (await this.page(params, { limit: 200, offset: 0 })).items;
+  }
+
+  async page(query: LeadQuery, page: { limit: number; offset: number }): Promise<LeadPage> {
+    const sp = leadQueryParams(query);
+    sp.set("limit", String(page.limit));
+    sp.set("offset", String(page.offset));
+    const res = await this.http.raw(`/leads?${sp}`);
+    const payload = (await res.json().catch(() => ({}))) as {
+      data?: ApiLead[];
+      meta?: { total?: number };
+    };
+    const items = (Array.isArray(payload.data) ? payload.data : []).map(mapLead);
+    return { items, total: Number(payload.meta?.total ?? items.length) };
+  }
+
+  async board(query: LeadQuery, perStage: number): Promise<BoardColumn[]> {
+    const sp = leadQueryParams(query);
+    sp.set("per_stage", String(perStage));
+    const data = await this.http.request<{ columns?: Record<string, unknown>[] }>(`/leads/board?${sp}`);
+    return (Array.isArray(data?.columns) ? data.columns : []).map(mapColumn);
+  }
+
+  async remove(ids: string[]): Promise<void> {
+    await this.http.request("/leads/delete", {
+      method: "POST",
+      body: JSON.stringify({ lead_ids: ids }),
+    });
+  }
+
+  async restore(ids: string[]): Promise<Lead[]> {
+    const data = await this.http.request<ApiLead[]>("/leads/restore", {
+      method: "POST",
+      body: JSON.stringify({ lead_ids: ids }),
+    });
     return (Array.isArray(data) ? data : []).map(mapLead);
   }
 
   async listByCustomerId(customerId: string): Promise<Lead[]> {
-    const all = await this.list();
-    return all.filter((l) => l.customerId === customerId);
+    return this.list({ customerId });
   }
 
   async getById(id: string): Promise<Lead> {
@@ -346,32 +398,76 @@ const seed: Omit<Lead, "interest">[] = [
 ];
 
 const store: Lead[] = seed.map((l) => ({ ...l, interest: emptyTripInterest() }));
+const deletedIds = new Set<string>();
+
+function matchesQuery(l: Lead, query: LeadQuery): boolean {
+  if (deletedIds.has(l.id)) return false;
+  if (query.ownerId && l.ownerId !== query.ownerId) return false;
+  if (query.customerId && l.customerId !== query.customerId) return false;
+  if (query.stage && l.stage !== query.stage) return false;
+  if (query.source && l.source.toLowerCase() !== query.source.toLowerCase()) return false;
+  if (query.noFollowUp && !l.noFollowUp) return false;
+  if (query.createdFrom && l.createdAt < query.createdFrom) return false;
+  if (query.createdTo && l.createdAt >= query.createdTo) return false;
+  const q = query.q?.trim().toLowerCase();
+  if (!q) return true;
+  return (
+    l.fullName.toLowerCase().includes(q) ||
+    l.phone.includes(q) ||
+    l.source.toLowerCase().includes(q) ||
+    l.ownerName.toLowerCase().includes(q)
+  );
+}
+
+function sortLeads(rows: Lead[], sort: LeadQuery["sort"]): Lead[] {
+  const by: Record<string, (a: Lead, b: Lead) => number> = {
+    created: (a, b) => b.createdAt.localeCompare(a.createdAt),
+    oldest: (a, b) => a.createdAt.localeCompare(b.createdAt),
+    name: (a, b) => a.fullName.localeCompare(b.fullName),
+    budget: (a, b) => (b.interest.budgetAmount ?? -1) - (a.interest.budgetAmount ?? -1),
+    travel: (a, b) => (a.interest.travelDate ?? "9999").localeCompare(b.interest.travelDate ?? "9999"),
+  };
+  const cmp = by[sort ?? ""] ?? ((a: Lead, b: Lead) => b.updatedAt.localeCompare(a.updatedAt));
+  return [...rows].sort(cmp);
+}
 
 const memoryHistory: Record<string, StageHistoryItem[]> = {};
 
 export class MemoryLeadRepository implements LeadRepository {
-  async list(params?: {
-    q?: string;
-    ownerId?: string;
-    stage?: string;
-    noFollowUp?: boolean;
-  }): Promise<Lead[]> {
-    let rows = [...store].sort(
-      (a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt),
-    );
-    if (params?.ownerId) rows = rows.filter((l) => l.ownerId === params.ownerId);
-    if (params?.stage) rows = rows.filter((l) => l.stage === params.stage);
-    if (params?.noFollowUp) rows = rows.filter((l) => l.noFollowUp);
-    const q = params?.q?.trim().toLowerCase();
-    if (q) {
-      rows = rows.filter(
-        (l) =>
-          l.fullName.toLowerCase().includes(q) ||
-          l.phone.includes(q) ||
-          l.source.toLowerCase().includes(q),
-      );
+  async list(params: LeadQuery = {}): Promise<Lead[]> {
+    return sortLeads(store.filter((l) => matchesQuery(l, params)), params.sort);
+  }
+
+  async page(query: LeadQuery, page: { limit: number; offset: number }): Promise<LeadPage> {
+    const rows = await this.list(query);
+    return { items: rows.slice(page.offset, page.offset + page.limit), total: rows.length };
+  }
+
+  async board(query: LeadQuery, perStage: number): Promise<BoardColumn[]> {
+    const rows = await this.list({ ...query, stage: undefined });
+    return LEAD_STAGES.map((stage) => {
+      const lane = rows.filter((l) => l.stage === stage);
+      return {
+        stage,
+        total: lane.length,
+        noFollowUp: lane.filter((l) => l.noFollowUp).length,
+        budgets: budgetSums(lane).sort((a, b) => b.amount - a.amount),
+        items: lane.slice(0, perStage),
+      };
+    });
+  }
+
+  async remove(ids: string[]): Promise<void> {
+    for (const id of ids) {
+      const lead = await this.getById(id);
+      if (lead.convertedBookingId) throw new Error("A lead converted to a booking cannot be deleted");
     }
-    return rows;
+    for (const id of ids) deletedIds.add(id);
+  }
+
+  async restore(ids: string[]): Promise<Lead[]> {
+    for (const id of ids) deletedIds.delete(id);
+    return Promise.all(ids.map((id) => this.getById(id)));
   }
 
   async listByCustomerId(customerId: string): Promise<Lead[]> {
@@ -379,7 +475,7 @@ export class MemoryLeadRepository implements LeadRepository {
   }
 
   async getById(id: string): Promise<Lead> {
-    const found = store.find((l) => l.id === id);
+    const found = store.find((l) => l.id === id && !deletedIds.has(id));
     if (!found) throw new Error("Lead not found");
     return found;
   }
@@ -566,6 +662,8 @@ export function createLeadRepository(): LeadRepository {
     memory,
     reads: [
       "list",
+      "page",
+      "board",
       "listByCustomerId",
       "getById",
       "history",

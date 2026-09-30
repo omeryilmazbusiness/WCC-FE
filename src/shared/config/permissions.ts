@@ -14,6 +14,7 @@ export const PERMISSIONS = [
   "privacy.manage",
   "leads.read",
   "leads.write",
+  "leads.delete",
   "bookings.read",
   "bookings.write",
   "bookings.override",

@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Flame, Gauge, Snowflake, Zap, type LucideIcon } from "lucide-react";
-import { createAIRepository, type LeadScore } from "@/entities/ai";
+import type { LeadScore } from "@/entities/ai";
 import { useCan } from "@/entities/viewer";
 import { cn } from "@/shared/lib/cn";
+import { loadLeadScore } from "../model/score-loader";
 
 type Band = "urgent" | "high" | "normal" | "low";
 
@@ -20,10 +21,8 @@ function isBand(value: string): value is Band {
   return value in BAND_LOOK;
 }
 
-const repo = createAIRepository();
-
 /** AI priority for a lead, loaded lazily; renders nothing until a score exists. */
-export function LeadPriorityBadge({ leadId }: { leadId: string }) {
+export function LeadPriorityBadge({ leadId, compact = false }: { leadId: string; compact?: boolean }) {
   const t = useTranslations("pipeline.card.priority");
   const canScore = useCan("ai.write");
   const [score, setScore] = useState<LeadScore | null>(null);
@@ -31,14 +30,9 @@ export function LeadPriorityBadge({ leadId }: { leadId: string }) {
   useEffect(() => {
     if (!canScore) return;
     let cancelled = false;
-    void repo
-      .scoreLead(leadId, false)
-      .then((s) => {
-        if (!cancelled) setScore(s);
-      })
-      .catch(() => {
-        if (!cancelled) setScore(null);
-      });
+    void loadLeadScore(leadId).then((s) => {
+      if (!cancelled) setScore(s);
+    });
     return () => {
       cancelled = true;
     };
@@ -47,6 +41,21 @@ export function LeadPriorityBadge({ leadId }: { leadId: string }) {
   if (!score) return null;
   const band: Band = isBand(score.priorityBand) ? score.priorityBand : "normal";
   const { icon: Icon, className } = BAND_LOOK[band];
+
+  if (compact) {
+    return (
+      <span
+        role="img"
+        aria-label={t(band)}
+        title={[t(band), ...score.signals.map((s) => s.label)].join(" · ")}
+        data-testid="lead-priority"
+        data-band={band}
+        className={cn("inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full ring-1 ring-inset", className)}
+      >
+        <Icon className="h-3 w-3" strokeWidth={2.4} aria-hidden />
+      </span>
+    );
+  }
 
   return (
     <span

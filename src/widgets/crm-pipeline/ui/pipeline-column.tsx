@@ -1,9 +1,16 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Inbox } from "lucide-react";
-import { pipelineValue, stageLook, type Lead, type LeadRepository, type LeadStage } from "@/entities/lead";
+import { ChevronsDown, Inbox, Loader2 } from "lucide-react";
+import {
+  stageLook,
+  valueFromBudgets,
+  type BoardColumn,
+  type Lead,
+  type LeadRepository,
+  type LeadStage,
+} from "@/entities/lead";
 import { cn } from "@/shared/lib/cn";
 import { formatMoneyWhole } from "@/shared/lib/format";
 import { TONES } from "@/shared/ui";
@@ -13,8 +20,11 @@ import { LeadCard } from "./lead-card";
 export type DropState = "idle" | "allowed" | "blocked";
 
 type Props = {
-  stage: LeadStage;
-  leads: Lead[];
+  lane: BoardColumn;
+  /** The first page is loading or reloading after a filter change. */
+  busy: boolean;
+  loadingMore: boolean;
+  onLoadMore: (stage: LeadStage) => void;
   locale: string;
   repository: LeadRepository;
   canWrite: boolean;
@@ -30,8 +40,10 @@ type Props = {
 
 /** One stage: a fixed-height lane whose cards scroll inside it. */
 export function PipelineColumn({
-  stage,
-  leads,
+  lane,
+  busy,
+  loadingMore,
+  onLoadMore,
   locale,
   repository,
   canWrite,
@@ -45,11 +57,31 @@ export function PipelineColumn({
   onDragEnd,
 }: Props) {
   const t = useTranslations("pipeline");
+  const { stage, items: leads, total } = lane;
   const look = stageLook(stage);
   const Icon = look.icon;
-  const value = pipelineValue(leads);
+  const value = valueFromBudgets(lane.budgets);
   const [over, setOver] = useState(false);
   const depth = useRef(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const remaining = Math.max(0, total - leads.length);
+  const hasMore = remaining > 0;
+
+  // Loads the next page as the lane is scrolled near its end.
+  useEffect(() => {
+    const root = scrollRef.current;
+    const target = sentinelRef.current;
+    if (!root || !target || !hasMore) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) onLoadMore(stage);
+      },
+      { root, rootMargin: "0px 0px 240px 0px" },
+    );
+    io.observe(target);
+    return () => io.disconnect();
+  }, [hasMore, onLoadMore, stage, leads.length]);
 
   const resetOver = () => {
     depth.current = 0;
@@ -84,7 +116,7 @@ export function PipelineColumn({
         if (leadId && dropState === "allowed") onDropLead(leadId, stage);
       }}
       className={cn(
-        "flex h-[calc(100dvh-17.5rem)] min-h-[36rem] w-[18.5rem] shrink-0 flex-col rounded-[28px] border bg-gradient-to-b transition-all duration-200",
+        "flex h-[calc(100dvh-25.75rem)] min-h-[30rem] w-[18.5rem] min-[1440px]:h-[calc(100dvh-21.25rem)] min-[1440px]:min-h-[32rem] shrink-0 flex-col rounded-[28px] border bg-gradient-to-b transition-all duration-200",
         TONES[look.tone].tint,
         "border-zinc-200/60 shadow-[0_10px_30px_-26px_rgba(15,23,42,0.4)]",
         dropState === "blocked" && "opacity-45 saturate-50",
@@ -108,11 +140,18 @@ export function PipelineColumn({
           className={cn("rounded-full px-2.5 py-1 text-[12px] font-semibold tabular-nums", TONES[look.tone].soft)}
           data-testid="pipeline-column-count"
         >
-          {leads.length}
+          {total.toLocaleString(locale)}
         </span>
       </header>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto overscroll-y-contain px-3 pb-3 [scrollbar-gutter:stable] [scrollbar-width:thin]">
+      <div
+        ref={scrollRef}
+        className={cn(
+          "flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto overscroll-y-contain px-3 pb-3 transition-opacity [scrollbar-gutter:stable] [scrollbar-width:thin]",
+          busy && "opacity-60",
+        )}
+        aria-busy={busy || loadingMore}
+      >
         {leads.map((lead) => (
           <LeadCard
             key={lead.id}
@@ -131,7 +170,25 @@ export function PipelineColumn({
             }}
           />
         ))}
-        {leads.length === 0 ? (
+        {hasMore ? (
+          <div ref={sentinelRef} className="pt-0.5">
+            <button
+              type="button"
+              onClick={() => onLoadMore(stage)}
+              disabled={loadingMore}
+              className="flex h-10 w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-zinc-300/80 bg-white/70 text-[12.5px] font-semibold text-zinc-600 transition hover:border-zinc-400 hover:bg-white hover:text-zinc-900 disabled:opacity-70"
+              data-testid="pipeline-column-more"
+            >
+              {loadingMore ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              ) : (
+                <ChevronsDown className="h-4 w-4" aria-hidden />
+              )}
+              {t("column.more", { count: remaining })}
+            </button>
+          </div>
+        ) : null}
+        {leads.length === 0 && !busy ? (
           <div
             className={cn(
               "flex flex-col items-center justify-center gap-2 rounded-[22px] border-2 border-dashed px-4 py-8 text-center transition-colors",

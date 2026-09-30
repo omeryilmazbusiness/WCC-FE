@@ -12,6 +12,8 @@ export type ToastItem = {
   description?: string;
   tone?: ToastTone;
   durationMs?: number;
+  /** One inline action (e.g. Undo); running it dismisses the toast. */
+  action?: { label: string; onClick: () => void };
 };
 
 type ToastContextValue = {
@@ -46,6 +48,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         description: toast.description,
         tone: toast.tone ?? "default",
         durationMs: toast.durationMs ?? 4200,
+        action: toast.action,
       };
       setToasts((prev) => [...prev, item]);
       if (item.durationMs && item.durationMs > 0) {
@@ -127,6 +130,19 @@ function ToastViewport({
                 </p>
               ) : null}
             </div>
+            {toast.action ? (
+              <button
+                type="button"
+                onClick={() => {
+                  toast.action?.onClick();
+                  onDismiss(toast.id);
+                }}
+                className="shrink-0 self-center rounded-xl bg-zinc-950 px-3 py-1.5 text-[12.5px] font-semibold text-white transition-colors hover:bg-zinc-800"
+                data-testid="toast-action"
+              >
+                {toast.action.label}
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={() => onDismiss(toast.id)}

@@ -20,6 +20,18 @@ function str(v: unknown, fallback = ""): string {
   return String(v);
 }
 
+function mapLeadScore(raw: Raw, id: string): LeadScore {
+  return {
+    leadId: str(raw.lead_id ?? raw.leadId ?? id),
+    name: str(raw.name),
+    priorityScore: Number(raw.priority_score ?? raw.priorityScore ?? 0),
+    priorityBand: str(raw.priority_band ?? raw.priorityBand ?? "normal") as LeadScore["priorityBand"],
+    signals: Array.isArray(raw.signals) ? (raw.signals as LeadScore["signals"]) : [],
+    explanation: str(raw.explanation),
+    source: str(raw.source),
+  };
+}
+
 function mapSetup(raw: Raw): AISetup {
   const providers = Array.isArray(raw.accepted_providers)
     ? (raw.accepted_providers as string[])
@@ -111,6 +123,8 @@ export type AIRepository = {
   analyzeLostLeads(): Promise<LostLeadsAnalysis>;
   conversationAssist(id: string): Promise<ConversationAssist>;
   scoreLead(id: string, explain?: boolean): Promise<LeadScore>;
+  /** Scores up to 100 leads in one request; leads the caller cannot see are omitted. */
+  scoreLeads(ids: string[]): Promise<LeadScore[]>;
   targetInsight(id: string): Promise<TargetInsight>;
   ocrExtract(input: {
     imageBase64: string;
@@ -189,19 +203,15 @@ class ApiRepo implements AIRepository {
           method: "POST",
         })
       : await this.http.request<Raw>(`/ai/leads/${id}/score`);
-    return {
-      leadId: str(raw.lead_id ?? raw.leadId ?? id),
-      name: str(raw.name),
-      priorityScore: Number(raw.priority_score ?? raw.priorityScore ?? 0),
-      priorityBand: str(
-        raw.priority_band ?? raw.priorityBand ?? "normal",
-      ) as LeadScore["priorityBand"],
-      signals: Array.isArray(raw.signals)
-        ? (raw.signals as LeadScore["signals"])
-        : [],
-      explanation: str(raw.explanation),
-      source: str(raw.source),
-    };
+    return mapLeadScore(raw, id);
+  }
+
+  async scoreLeads(ids: string[]) {
+    const rows = await this.http.request<Raw[]>("/ai/leads/scores", {
+      method: "POST",
+      body: JSON.stringify({ lead_ids: ids }),
+    });
+    return (Array.isArray(rows) ? rows : []).map((raw) => mapLeadScore(raw, ""));
   }
 
   async targetInsight(id: string) {
@@ -287,6 +297,10 @@ class MemoryRepo implements AIRepository {
   }
 
   async scoreLead(): Promise<LeadScore> {
+    return offline();
+  }
+
+  async scoreLeads(): Promise<LeadScore[]> {
     return offline();
   }
 

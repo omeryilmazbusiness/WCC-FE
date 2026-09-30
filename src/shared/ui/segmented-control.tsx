@@ -1,16 +1,20 @@
 "use client";
 
+import type { LucideIcon } from "lucide-react";
 import { cn } from "@/shared/lib/cn";
 
 type Option<T extends string> = {
   value: T;
   label: string;
+  icon?: LucideIcon;
 };
 
 type SegmentedControlProps<T extends string> = {
   value: T;
   onChange: (value: T) => void;
   options: Option<T>[];
+  /** `lg` matches the 44px buttons used in hero headers. */
+  size?: "md" | "lg";
   className?: string;
   "aria-label"?: string;
 };
@@ -20,6 +24,7 @@ export function SegmentedControl<T extends string>({
   value,
   onChange,
   options,
+  size = "md",
   className,
   "aria-label": ariaLabel,
 }: SegmentedControlProps<T>) {
@@ -34,6 +39,7 @@ export function SegmentedControl<T extends string>({
     >
       {options.map((opt) => {
         const active = opt.value === value;
+        const Icon = opt.icon;
         return (
           <button
             key={opt.value}
@@ -41,13 +47,16 @@ export function SegmentedControl<T extends string>({
             role="tab"
             aria-selected={active}
             onClick={() => onChange(opt.value)}
+            data-testid={`segment-${opt.value}`}
             className={cn(
-              "rounded-xl px-3.5 py-2 text-xs font-semibold transition-all duration-300",
+              "inline-flex items-center gap-1.5 rounded-xl font-semibold transition-all duration-300",
+              size === "lg" ? "h-9 px-3.5 text-[13px]" : "px-3.5 py-2 text-xs",
               active
                 ? "bg-white text-zinc-950 shadow-sm"
                 : "text-zinc-500 hover:text-zinc-800",
             )}
           >
+            {Icon ? <Icon className={size === "lg" ? "h-4 w-4" : "h-3.5 w-3.5"} strokeWidth={2.2} aria-hidden /> : null}
             {opt.label}
           </button>
         );

@@ -117,6 +117,18 @@ export function formatMoneyWhole(minor: number, locale: string, currency: string
   }
 }
 
+/** Whole units below a million, compact above (SAR 57.1M), for tight tiles. */
+export function formatMoneyShort(minor: number, locale: string, currency: string): string {
+  if (!Number.isFinite(minor)) return "—";
+  const whole = Math.round(minor / 100);
+  if (Math.abs(whole) < 1_000_000) return formatMoneyWhole(minor, locale, currency);
+  try {
+    return formatCurrency(whole, locale, currency, { notation: "compact", maximumFractionDigits: 1 });
+  } catch {
+    return formatMoneyWhole(minor, locale, currency);
+  }
+}
+
 /** Compact percent e.g. 42.5% */
 export function formatPercent(
   value: number,

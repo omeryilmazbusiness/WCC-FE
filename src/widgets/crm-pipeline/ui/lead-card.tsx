@@ -1,16 +1,12 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import {
   BellOff,
   CalendarDays,
   CircleCheckBig,
-  Clock3,
-  MapPinned,
   Package,
   PencilLine,
-  Phone,
   UserRoundPlus,
   UsersRound,
   Wallet,
@@ -29,7 +25,7 @@ import { LeadPriorityBadge } from "@/features/lead-priority";
 import { initials } from "@/shared/lib/avatar";
 import { cn } from "@/shared/lib/cn";
 import { formatDay, formatMoneyWhole, formatRelativeTime } from "@/shared/lib/format";
-import { IconTile, TONES } from "@/shared/ui";
+import { TONES, type Tone } from "@/shared/ui";
 
 type Props = {
   lead: Lead;
@@ -44,6 +40,9 @@ type Props = {
   onDragEnd: () => void;
 };
 
+const ACTION =
+  "inline-flex h-7 w-7 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/10";
+
 /** A lead on the board: who, what trip they want, where they came from and who owns it. */
 export function LeadCard({ lead, locale, repository, canWrite, dragging, onChanged, onOpen, onEdit, onDragStart, onDragEnd }: Props) {
   const t = useTranslations("pipeline");
@@ -55,9 +54,12 @@ export function LeadCard({ lead, locale, repository, canWrite, dragging, onChang
       ? formatMoneyWhole(interest.budgetAmount, locale, interest.budgetCurrency)
       : "";
   const hasTrip = Boolean(travel || interest.paxCount || budget || interest.packageInterest);
+  const hasFlags = lead.noFollowUp || Boolean(lead.convertedBookingId);
   const sourceKind = leadSourceKind(lead.source);
   const source = LEAD_SOURCE_LOOK[sourceKind];
+  const SourceIcon = source.icon;
   const sourceLabel = sourceKind === "other" ? lead.source : t(`card.sources.${sourceKind}`);
+  const owner = lead.ownerName || "—";
 
   return (
     <article
@@ -71,10 +73,10 @@ export function LeadCard({ lead, locale, repository, canWrite, dragging, onChang
       data-testid="lead-card"
       data-lead={lead.id}
       className={cn(
-        "group relative rounded-[22px] border border-zinc-200/60 bg-white p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_28px_-22px_rgba(15,23,42,0.45)] transition-all duration-200",
+        "group relative rounded-[20px] bg-white p-3.5 shadow-[0_0_0_1px_rgba(15,23,42,0.05),0_1px_2px_rgba(15,23,42,0.03)] transition-[box-shadow,transform] duration-200",
         canWrite && "cursor-grab active:cursor-grabbing",
-        "hover:-translate-y-0.5 hover:border-zinc-300/70 hover:shadow-[0_1px_2px_rgba(15,23,42,0.05),0_20px_36px_-24px_rgba(15,23,42,0.5)]",
-        lead.noFollowUp && "border-amber-200/80",
+        "hover:-translate-y-px hover:shadow-[0_0_0_1px_rgba(15,23,42,0.07),0_14px_30px_-18px_rgba(15,23,42,0.35)]",
+        lead.noFollowUp && "shadow-[0_0_0_1px_rgba(245,158,11,0.28),0_1px_2px_rgba(15,23,42,0.03)]",
         dragging && "rotate-1 opacity-50",
       )}
     >
@@ -83,157 +85,153 @@ export function LeadCard({ lead, locale, repository, canWrite, dragging, onChang
         className="block w-full rounded-2xl text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/10"
         onClick={() => onOpen(lead)}
       >
-        <div className="flex items-start gap-3">
+        <div className="flex items-center gap-3">
           <span
             className={cn(
-              "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-[13px] font-bold tracking-wide",
-              TONES[look.tone].gradient,
+              "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[12.5px] font-semibold tracking-wide",
+              TONES[look.tone].soft,
             )}
             aria-hidden
           >
             {initials(lead.fullName)}
           </span>
-          <div className="min-w-0 flex-1 pt-0.5">
-            <div className="flex min-w-0 items-center gap-2">
-              <p dir="auto" title={lead.fullName} className="min-w-0 flex-1 truncate text-[14.5px] font-semibold tracking-tight text-zinc-950">
-                {lead.fullName}
-              </p>
-              <LeadPriorityBadge leadId={lead.id} />
-            </div>
-            <p className="mt-0.5 flex min-w-0 items-center gap-1 text-[12px] font-medium text-zinc-500">
-              <Phone className="h-3 w-3 shrink-0 text-zinc-400" strokeWidth={2.2} aria-hidden />
-              <span dir="ltr" className="truncate tabular-nums">
-                {lead.phone}
-              </span>
+          <div className="min-w-0 flex-1">
+            <p dir="auto" title={lead.fullName} className="truncate text-[14px] font-semibold tracking-tight text-zinc-900">
+              {lead.fullName}
             </p>
-            <p className="mt-0.5 flex min-w-0 items-center gap-1 text-[11px] font-medium text-zinc-400" title={t("card.updated")}>
-              <Clock3 className="h-3 w-3 shrink-0" aria-hidden />
-              <span className="truncate">{formatRelativeTime(lead.updatedAt, locale)}</span>
+            <p dir="ltr" className="truncate text-start text-[12px] tabular-nums text-zinc-400 rtl:text-end">
+              {lead.phone}
             </p>
           </div>
+          <LeadPriorityBadge leadId={lead.id} compact />
         </div>
 
-        {hasTrip ? (
-          <div className="mt-3.5 grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-2.5" data-testid="lead-card-trip">
-            {travel ? <Fact leading={<IconTile icon={CalendarDays} tone="sky" />} label={t("card.travel")} value={travel} /> : null}
+        {hasTrip || hasFlags ? (
+          <div className="mt-3 flex flex-wrap gap-1.5" data-testid="lead-card-trip">
+            {travel ? <Chip icon={CalendarDays} tone="sky" label={t("card.travel")} value={travel} /> : null}
             {interest.paxCount ? (
-              <Fact leading={<IconTile icon={UsersRound} tone="violet" />} label={t("card.travellers")} value={String(interest.paxCount)} />
+              <Chip icon={UsersRound} tone="violet" label={t("card.travellers")} value={String(interest.paxCount)} />
             ) : null}
-            {budget ? <Fact leading={<IconTile icon={Wallet} tone="emerald" />} label={t("card.budget")} value={budget} className="col-span-2" /> : null}
+            {budget ? <Chip icon={Wallet} tone="emerald" label={t("card.budget")} value={budget} /> : null}
             {interest.packageInterest ? (
-              <Fact leading={<IconTile icon={Package} tone="amber" />} label={t("card.package")} value={interest.packageInterest} className="col-span-2" />
+              <Chip icon={Package} tone="amber" label={t("card.package")} value={interest.packageInterest} className="max-w-full" />
             ) : null}
-          </div>
-        ) : (
-          <div
-            className="mt-3.5 flex items-center gap-2.5 rounded-2xl border border-dashed border-zinc-200 px-2.5 py-2 text-[12px] font-medium text-zinc-400"
-            data-testid="lead-card-no-trip"
-          >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-zinc-50 text-zinc-400">
-              <MapPinned className="h-4 w-4" strokeWidth={2} aria-hidden />
-            </span>
-            {t("card.noTrip")}
-          </div>
-        )}
-
-        {lead.noFollowUp || lead.convertedBookingId || (lead.stage === "lost" && lead.lostReason) ? (
-          <div className="mt-3 flex flex-wrap gap-1.5">
             {lead.noFollowUp ? (
-              <Flag icon={BellOff} className="bg-amber-50 text-amber-800 ring-amber-100">
-                {t("noFollowUpYes")}
-              </Flag>
+              <Chip icon={BellOff} tone="amber" label={t("noFollowUpYes")} value={t("noFollowUpYes")} filled />
             ) : null}
             {lead.convertedBookingId ? (
-              <Flag icon={CircleCheckBig} className="bg-emerald-50 text-emerald-700 ring-emerald-100">
-                {t("card.converted")}
-              </Flag>
-            ) : null}
-            {lead.stage === "lost" && lead.lostReason ? (
-              <p className="line-clamp-2 w-full rounded-xl bg-zinc-50 px-2.5 py-1.5 text-[11.5px] text-zinc-600">{lead.lostReason}</p>
+              <Chip icon={CircleCheckBig} tone="emerald" label={t("card.converted")} value={t("card.converted")} filled />
             ) : null}
           </div>
         ) : null}
 
-        <div className="mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 border-t border-dashed border-zinc-200/80 pt-3" data-testid="lead-card-meta">
-          {sourceLabel ? <Fact leading={<IconTile icon={source.icon} tone={source.tone} size="sm" />} label={t("card.source")} value={sourceLabel} /> : null}
-          <Fact
-            label={t("card.owner")}
-            value={lead.ownerName || "—"}
-            leading={
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] bg-zinc-100 text-[10px] font-bold text-zinc-600">
-                {initials(lead.ownerName || "?")}
-              </span>
-            }
-          />
-        </div>
+        {lead.stage === "lost" && lead.lostReason ? (
+          <p dir="auto" className="mt-2.5 line-clamp-2 text-[12px] leading-5 text-zinc-500">
+            {lead.lostReason}
+          </p>
+        ) : null}
       </button>
 
-      <div className="mt-3 flex items-center gap-1">
-        <LeadStageMenu lead={lead} repository={repository} onChanged={onChanged} />
-        {canWrite ? (
-          <div className="ms-auto flex items-center gap-1">
-            <AssignLeadDialog
-              lead={lead}
-              repository={repository}
-              onAssigned={onChanged}
-              trigger={<IconAction icon={UserRoundPlus} label={t("assign")} testId="lead-card-assign" />}
-            />
-            <IconAction icon={PencilLine} label={t("edit")} onClick={() => onEdit(lead)} testId="lead-card-edit" emphasis />
-          </div>
+      <div className="mt-3 flex h-7 items-center gap-1.5" data-testid="lead-card-meta">
+        {sourceLabel ? (
+          <span
+            role="img"
+            aria-label={`${t("card.source")}: ${sourceLabel}`}
+            title={`${t("card.source")}: ${sourceLabel}`}
+            className={cn("flex h-6 w-6 shrink-0 items-center justify-center rounded-full", TONES[source.tone].soft)}
+          >
+            <SourceIcon className="h-3 w-3" strokeWidth={2.2} aria-hidden />
+          </span>
         ) : null}
+        <span
+          role="img"
+          aria-label={`${t("card.owner")}: ${owner}`}
+          title={`${t("card.owner")}: ${owner}`}
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-[9.5px] font-semibold text-zinc-600"
+        >
+          {initials(lead.ownerName || "?")}
+        </span>
+
+        <div className="relative ms-auto flex h-7 items-center">
+          <time
+            dateTime={lead.updatedAt}
+            title={t("card.updated")}
+            className={cn(
+              "text-[11.5px] text-zinc-400 transition-opacity duration-150",
+              canWrite && "[@media(hover:hover)]:group-focus-within:opacity-0 [@media(hover:hover)]:group-hover:opacity-0",
+            )}
+          >
+            {formatRelativeTime(lead.updatedAt, locale)}
+          </time>
+          {canWrite ? (
+            <div
+              className={cn(
+                "absolute inset-y-0 end-0 flex items-center gap-0.5 rounded-full bg-white transition-opacity duration-150",
+                "[@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:opacity-0",
+                "[@media(hover:hover)]:group-focus-within:pointer-events-auto [@media(hover:hover)]:group-focus-within:opacity-100",
+                "[@media(hover:hover)]:group-hover:pointer-events-auto [@media(hover:hover)]:group-hover:opacity-100",
+              )}
+            >
+              <LeadStageMenu lead={lead} repository={repository} onChanged={onChanged} trigger="icon" triggerClassName={ACTION} />
+              <AssignLeadDialog
+                lead={lead}
+                repository={repository}
+                onAssigned={onChanged}
+                trigger={
+                  <button type="button" aria-label={t("assign")} title={t("assign")} data-testid="lead-card-assign" className={ACTION}>
+                    <UserRoundPlus className="h-4 w-4" strokeWidth={2} aria-hidden />
+                  </button>
+                }
+              />
+              <button
+                type="button"
+                aria-label={t("edit")}
+                title={t("edit")}
+                data-testid="lead-card-edit"
+                onClick={() => onEdit(lead)}
+                className={cn(ACTION, "bg-zinc-900 text-white hover:bg-zinc-700 hover:text-white")}
+              >
+                <PencilLine className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+              </button>
+            </div>
+          ) : null}
+        </div>
       </div>
     </article>
   );
 }
 
-function Fact({ leading, label, value, className }: { leading: ReactNode; label: string; value: string; className?: string }) {
-  return (
-    <div className={cn("flex min-w-0 items-center gap-2", className)} title={`${label}: ${value}`}>
-      {leading}
-      <div className="min-w-0">
-        <p className="truncate text-[10.5px] font-medium leading-4 text-zinc-400">{label}</p>
-        <p dir="auto" className="truncate text-start text-[12.5px] font-semibold leading-4 text-zinc-800">
-          {value}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function Flag({ icon: Icon, className, children }: { icon: LucideIcon; className: string; children: ReactNode }) {
-  return (
-    <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-inset", className)}>
-      <Icon className="h-3.5 w-3.5" strokeWidth={2.2} aria-hidden />
-      {children}
-    </span>
-  );
-}
-
-type IconActionProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+function Chip({
+  icon: Icon,
+  tone,
+  label,
+  value,
+  filled,
+  className,
+}: {
   icon: LucideIcon;
+  tone: Tone;
   label: string;
-  testId?: string;
-  emphasis?: boolean;
-};
-
-function IconAction({ icon: Icon, label, testId, emphasis, className, ...rest }: IconActionProps) {
+  value: string;
+  filled?: boolean;
+  className?: string;
+}) {
   return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      data-testid={testId}
+    <span
+      title={label === value ? label : `${label}: ${value}`}
       className={cn(
-        "inline-flex h-8 items-center gap-1.5 rounded-xl px-2.5 text-[12px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/10",
-        emphasis
-          ? "bg-zinc-900 text-white shadow-[0_6px_14px_-8px_rgba(15,23,42,0.7)] hover:bg-zinc-800"
-          : "bg-zinc-50 text-zinc-500 ring-1 ring-inset ring-zinc-100 hover:bg-zinc-100 hover:text-zinc-900",
+        "inline-flex h-7 min-w-0 items-center gap-1.5 rounded-full ps-1 pe-2.5 text-[12px] font-medium",
+        filled ? TONES[tone].soft : "bg-zinc-50 text-zinc-700",
         className,
       )}
-      {...rest}
     >
-      <Icon className="h-4 w-4" strokeWidth={2} aria-hidden />
-      {emphasis ? <span>{label}</span> : null}
-    </button>
+      <span className={cn("flex h-5 w-5 shrink-0 items-center justify-center rounded-full", filled ? "bg-white/70" : TONES[tone].soft)}>
+        <Icon className="h-3 w-3" strokeWidth={2.2} aria-hidden />
+      </span>
+      {label === value ? null : <span className="sr-only">{label}: </span>}
+      <span dir="auto" className="truncate">
+        {value}
+      </span>
+    </span>
   );
 }

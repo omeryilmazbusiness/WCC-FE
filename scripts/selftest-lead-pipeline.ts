@@ -1,7 +1,8 @@
 /**
  * Self-test: lead pipeline rules (pure). Stage order with "paid" between
  * proposal and won, allowed moves, the conversion path (mirrors the backend's
- * ConversionPath) and per-column budget totals.
+ * ConversionPath), per-column budget totals, server-paged lane bookkeeping and
+ * the created-in period windows.
  * Run: npm run test:lead-pipeline
  */
 
@@ -17,7 +18,17 @@ import {
   type Lead,
   type LeadStage,
 } from "../src/entities/lead/model.ts";
-import { pipelineValue } from "../src/entities/lead/lib/pipeline.ts";
+import {
+  appendBoardPage,
+  combineBudgets,
+  mergeBoardSummary,
+  pipelineValue,
+  removeBoardLeads,
+  upsertBoardLead,
+  valueFromBudgets,
+  type BoardColumn,
+} from "../src/entities/lead/lib/pipeline.ts";
+import { leadQueryParams, periodRange, weekStartFor } from "../src/entities/lead/lib/query.ts";
 import { LEAD_SOURCE_KINDS, leadSourceKind } from "../src/entities/lead/lib/source.ts";
 
 // Order: paid sits between proposal and won, on the board and in the list.
@@ -110,5 +121,88 @@ const sources: [string | null | undefined, string][] = [
 ];
 for (const [input, kind] of sources) assert.equal(leadSourceKind(input), kind, String(input));
 assert.ok(LEAD_SOURCE_KINDS.includes("other"));
+
+// Server lane totals pick the richest currency, like pipelineValue.
+assert.equal(valueFromBudgets([]), null);
+assert.deepEqual(valueFromBudgets([{ currency: "SAR", amount: 900, count: 3 }, { currency: "USD", amount: 100, count: 1 }]), {
+  amount: 900,
+  currency: "SAR",
+  count: 3,
+  partial: true,
+});
+assert.deepEqual(combineBudgets([{ currency: "SAR", amount: 500, count: 2 }], [{ currency: "SAR", amount: 500, count: 2 }], -1), []);
+
+// Lane bookkeeping: moves, edits, deletes and paging keep totals and budgets right.
+function lead(id: string, stage: LeadStage, budget: number | null = null, noFollowUp = false): Lead {
+  return {
+    id, stage, noFollowUp,
+    branchId: "b", customerId: null, fullName: id, phone: "", source: "", ownerId: "o", ownerName: "",
+    lostReasonCode: "", lostReason: "", notes: "", convertedBookingId: null, createdAt: "", updatedAt: "",
+    interest: { ...emptyTripInterest(), budgetAmount: budget, budgetCurrency: budget ? "SAR" : "" },
+  };
+}
+function lane(stage: LeadStage, items: Lead[], total = items.length): BoardColumn {
+  return {
+    stage, total, items,
+    noFollowUp: items.filter((l) => l.noFollowUp).length,
+    budgets: combineBudgets([], items.filter((l) => l.interest.budgetAmount).map((l) => ({ currency: "SAR", amount: l.interest.budgetAmount!, count: 1 }))),
+  };
+}
+const a = lead("a", "new", 1000, true);
+const b = lead("b", "new", 500);
+let board = [lane("new", [a, b], 30), lane("contacted", [], 4)];
+
+board = upsertBoardLead(board, { ...a, stage: "contacted", noFollowUp: false });
+assert.deepEqual(board[0].items.map((l) => l.id), ["b"]);
+assert.equal(board[0].total, 29);
+assert.equal(board[0].noFollowUp, 0);
+assert.deepEqual(board[0].budgets, [{ currency: "SAR", amount: 500, count: 1 }]);
+assert.deepEqual(board[1].items.map((l) => l.id), ["a"]);
+assert.equal(board[1].total, 5);
+assert.deepEqual(board[1].budgets, [{ currency: "SAR", amount: 1000, count: 1 }]);
+
+// Edit in place keeps position and count, budget follows.
+board = appendBoardPage(board, "new", [lead("c", "new"), b]);
+assert.deepEqual(board[0].items.map((l) => l.id), ["b", "c"], "page dedupes");
+board = upsertBoardLead(board, { ...b, interest: { ...b.interest, budgetAmount: 800 } });
+assert.deepEqual(board[0].items.map((l) => l.id), ["b", "c"]);
+assert.equal(board[0].total, 29);
+assert.deepEqual(board[0].budgets, [{ currency: "SAR", amount: 800, count: 1 }]);
+
+// A created lead lands on top of its lane.
+board = upsertBoardLead(board, lead("n", "new"));
+assert.equal(board[0].items[0].id, "n");
+assert.equal(board[0].total, 30);
+
+board = removeBoardLeads(board, new Set(["n", "c", "unloaded"]));
+assert.deepEqual(board[0].items.map((l) => l.id), ["b"]);
+assert.equal(board[0].total, 28);
+
+board = mergeBoardSummary(board, [lane("new", [], 100)]);
+assert.equal(board[0].total, 100);
+assert.deepEqual(board[0].items.map((l) => l.id), ["b"], "summary keeps cards");
+
+// Period windows are local calendar ranges; the week starts per locale.
+const wed = new Date(2026, 8, 30, 15, 30); // Wed 30 Sep 2026
+assert.deepEqual(periodRange("all", wed, 1), {});
+const monWeek = periodRange("week", wed, 1);
+assert.deepEqual([monWeek.from, monWeek.to], [new Date(2026, 8, 28), new Date(2026, 9, 5)]);
+const sunWeek = periodRange("week", wed, weekStartFor("ar"));
+assert.deepEqual([sunWeek.from, sunWeek.to], [new Date(2026, 8, 27), new Date(2026, 9, 4)]);
+const sunday = periodRange("week", new Date(2026, 8, 27, 9), 1);
+assert.deepEqual(sunday.from, new Date(2026, 8, 21), "Sunday belongs to the Monday week before");
+const month = periodRange("month", wed, 1);
+assert.deepEqual([month.from, month.to], [new Date(2026, 8, 1), new Date(2026, 9, 1)]);
+const dec = periodRange("month", new Date(2026, 11, 31), 1);
+assert.deepEqual(dec.to, new Date(2027, 0, 1));
+const quarter = periodRange("quarter", wed, 1);
+assert.equal(Math.round((+quarter.to! - +quarter.from!) / 86_400_000), 90);
+
+// Query string: empty values are dropped and the default sort is implicit.
+assert.equal(leadQueryParams({ q: "  ", sort: "updated" }).toString(), "");
+assert.equal(
+  leadQueryParams({ q: " omar ", stage: "paid", noFollowUp: true, sort: "budget", createdFrom: "2026-09-01T00:00:00.000Z" }).toString(),
+  "q=omar&stage=paid&no_follow_up=true&created_from=2026-09-01T00%3A00%3A00.000Z&sort=budget",
+);
 
 console.log("lead pipeline self-test OK");

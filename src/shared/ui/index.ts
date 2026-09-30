@@ -81,7 +81,7 @@ export {
   TableHead,
   TableCell,
 } from "./table";
-export { DataTable } from "./data-table";
+export { DataTable, type DataTableColumnMeta } from "./data-table";
 export { SearchField } from "./search-field";
 export {
   SearchFilterBar,

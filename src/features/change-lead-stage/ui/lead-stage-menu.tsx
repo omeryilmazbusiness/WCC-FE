@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { ChevronDown } from "lucide-react";
+import { ArrowRightLeft, ChevronDown } from "lucide-react";
 import {
   canTransitionLead,
   nextStages,
@@ -30,9 +30,12 @@ type Props = {
   lead: Lead;
   repository: LeadRepository;
   onChanged: (lead: Lead) => void;
+  /** `icon` renders a bare move button, for places where the stage is already visible. */
+  trigger?: "badge" | "icon";
+  triggerClassName?: string;
 };
 
-export function LeadStageMenu({ lead, repository, onChanged }: Props) {
+export function LeadStageMenu({ lead, repository, onChanged, trigger = "badge", triggerClassName }: Props) {
   const t = useTranslations("pipeline");
   const { push } = useToast();
   const feedback = useMutationFeedback();
@@ -60,6 +63,7 @@ export function LeadStageMenu({ lead, repository, onChanged }: Props) {
   }
 
   if (!canWrite) {
+    if (trigger === "icon") return null;
     return (
       <StageBadge
         tone={LEAD_STAGE_TONES[lead.stage]}
@@ -72,13 +76,25 @@ export function LeadStageMenu({ lead, repository, onChanged }: Props) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button type="button" variant="ghost" size="sm" className="h-8 gap-1 px-1.5" title={t("moveTo")}>
-            <StageBadge
-              tone={LEAD_STAGE_TONES[lead.stage]}
-              label={t(`stages.${lead.stage}`)}
-            />
-            <ChevronDown className="h-3.5 w-3.5 text-zinc-400" aria-hidden />
-          </Button>
+          {trigger === "icon" ? (
+            <button
+              type="button"
+              aria-label={t("moveTo")}
+              title={t("moveTo")}
+              data-testid="lead-stage-move"
+              className={triggerClassName}
+            >
+              <ArrowRightLeft className="h-4 w-4" strokeWidth={2} aria-hidden />
+            </button>
+          ) : (
+            <Button type="button" variant="ghost" size="sm" className="h-8 gap-1 px-1.5" title={t("moveTo")}>
+              <StageBadge
+                tone={LEAD_STAGE_TONES[lead.stage]}
+                label={t(`stages.${lead.stage}`)}
+              />
+              <ChevronDown className="h-3.5 w-3.5 text-zinc-400" aria-hidden />
+            </Button>
+          )}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="min-w-[11rem]">
           <DropdownMenuLabel>{t("moveTo")}</DropdownMenuLabel>

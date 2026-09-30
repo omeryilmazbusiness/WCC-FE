@@ -15,17 +15,28 @@ import {
   TableHeader,
   TableRow,
 } from "@/shared/ui/table";
+import { cn } from "@/shared/lib/cn";
+
+/** Per-column classes for both header and cells, e.g. responsive `hidden 2xl:table-cell`. */
+export type DataTableColumnMeta = { className?: string };
+
+function metaClass(meta: unknown): string | undefined {
+  return (meta as DataTableColumnMeta | undefined)?.className;
+}
 
 type DataTableProps<TData, TValue> = {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   emptyMessage?: string;
+  /** Extra classes for the card wrapper, e.g. cell padding overrides via `[&_td]:`. */
+  className?: string;
 };
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   emptyMessage = "No results",
+  className,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -34,13 +45,18 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <div className="overflow-hidden rounded-[24px] border border-zinc-200/70 bg-white shadow-[0_12px_36px_-22px_rgba(15,23,42,0.22)]">
+    <div
+      className={cn(
+        "overflow-hidden rounded-[24px] border border-zinc-200/70 bg-white shadow-[0_12px_36px_-22px_rgba(15,23,42,0.22)]",
+        className,
+      )}
+    >
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((hg) => (
             <TableRow key={hg.id}>
               {hg.headers.map((header) => (
-                <TableHead key={header.id}>
+                <TableHead key={header.id} className={metaClass(header.column.columnDef.meta)}>
                   {header.isPlaceholder
                     ? null
                     : flexRender(
@@ -57,7 +73,7 @@ export function DataTable<TData, TValue>({
             table.getRowModel().rows.map((row) => (
               <TableRow key={row.id}>
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
+                  <TableCell key={cell.id} className={metaClass(cell.column.columnDef.meta)}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}

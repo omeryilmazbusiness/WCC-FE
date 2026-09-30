@@ -795,7 +795,8 @@
       }
     },
     "column": {
-      "noBudget": "No budgets yet"
+      "noBudget": "No budgets yet",
+      "more": "{count, plural, one {Load # more} other {Load # more}}"
     },
     "savedTitle": "Lead updated",
     "detail": {
@@ -816,6 +817,61 @@
       "addTrip": "Add trip details",
       "leadCreated": "Lead created",
       "moreActions": "Actions"
+    },
+    "stats": {
+      "open": "Open leads",
+      "value": "Open pipeline",
+      "noValue": "No budgets yet",
+      "noFollowUp": "No follow-up",
+      "noFollowUpHint": "Show only these",
+      "partial": "Largest currency only"
+    },
+    "list": {
+      "lead": "Lead",
+      "stage": "Stage",
+      "trip": "Trip",
+      "budget": "Budget",
+      "source": "Source",
+      "owner": "Owner",
+      "updated": "Updated",
+      "actions": "Actions",
+      "selectAll": "Select all leads",
+      "selectRow": "Select {name}",
+      "selected": "{count, plural, one {# lead selected} other {# leads selected}}",
+      "assignSelected": "Assign owner",
+      "clear": "Clear",
+      "noTrip": "No trip details",
+      "range": "{first}–{last} of {total}"
+    },
+    "period": {
+      "label": "Created",
+      "all": "All time",
+      "week": "This week",
+      "month": "This month",
+      "quarter": "Last 90 days",
+      "total": "{count, plural, one {{formatted} lead} other {{formatted} leads}}"
+    },
+    "sort": {
+      "label": "Sort by",
+      "updated": "Recently updated",
+      "created": "Newest first",
+      "oldest": "Oldest first",
+      "name": "Name A–Z",
+      "budget": "Highest budget",
+      "travel": "Soonest travel"
+    },
+    "delete": {
+      "action": "Delete lead",
+      "selected": "Delete",
+      "confirmTitle": "{count, plural, one {Delete this lead?} other {Delete # leads?}}",
+      "confirmOne": "{name} will be removed from the pipeline and its open follow-up tasks cancelled. You can undo right after.",
+      "confirmMany": "{count} leads will be removed from the pipeline and their open follow-up tasks cancelled. You can undo right after.",
+      "confirm": "Delete",
+      "done": "{count, plural, one {Lead deleted} other {# leads deleted}}",
+      "undo": "Undo",
+      "restored": "{count, plural, one {Lead restored} other {# leads restored}}",
+      "error": "Could not delete",
+      "restoreError": "Could not restore"
     }
   },
   "packages": {

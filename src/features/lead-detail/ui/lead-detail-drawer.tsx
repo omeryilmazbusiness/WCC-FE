@@ -19,6 +19,7 @@ import {
   Plane,
   Repeat2,
   StickyNote,
+  Trash2,
   UserRound,
   UsersRound,
   Wallet,
@@ -65,9 +66,11 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   repository: LeadRepository;
   onChanged: (lead: Lead) => void;
+  /** Shown when the viewer may delete leads; the caller confirms and deletes. */
+  onDelete?: (lead: Lead) => void;
 };
 
-export function LeadDetailDrawer({ lead, open, onOpenChange, repository, onChanged }: Props) {
+export function LeadDetailDrawer({ lead, open, onOpenChange, repository, onChanged, onDelete }: Props) {
   const locale = useLocale();
   const [history, setHistory] = useState<StageHistoryItem[]>([]);
   const [packageLabel, setPackageLabel] = useState("");
@@ -122,6 +125,7 @@ export function LeadDetailDrawer({ lead, open, onOpenChange, repository, onChang
             packageLabel={packageLabel}
             repository={repository}
             onChanged={onChanged}
+            onDelete={onDelete}
           />
         ) : null}
       </DrawerContent>
@@ -136,9 +140,10 @@ type DetailProps = {
   packageLabel: string;
   repository: LeadRepository;
   onChanged: (lead: Lead) => void;
+  onDelete?: (lead: Lead) => void;
 };
 
-function LeadDetail({ lead, locale, history, packageLabel, repository, onChanged }: DetailProps) {
+function LeadDetail({ lead, locale, history, packageLabel, repository, onChanged, onDelete }: DetailProps) {
   const t = useTranslations("pipeline");
   const feedback = useMutationFeedback();
   const canWrite = useCan("leads.write");
@@ -419,6 +424,18 @@ function LeadDetail({ lead, locale, history, packageLabel, repository, onChanged
       <DrawerFooter className="justify-between gap-2 border-zinc-200/60 bg-white px-5 py-3.5">
         <LeadStageMenu lead={lead} repository={repository} onChanged={onChanged} />
         <div className="flex items-center gap-2">
+          {onDelete && !lead.convertedBookingId ? (
+            <button
+              type="button"
+              onClick={() => onDelete(lead)}
+              aria-label={t("delete.action")}
+              title={t("delete.action")}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-rose-600 ring-1 ring-inset ring-rose-100 transition hover:bg-rose-100 hover:text-rose-700"
+              data-testid="lead-detail-delete"
+            >
+              <Trash2 className="h-4 w-4" aria-hidden />
+            </button>
+          ) : null}
           <ConvertLeadDialog
             lead={lead}
             repository={repository}
