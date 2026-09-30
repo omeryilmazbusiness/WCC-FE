@@ -19,8 +19,42 @@ export {
   getMemoryDashboardRepository,
   createDashboardRepository,
   mapRevenue,
+  mapTeam,
   mapAttentionSummary,
   summarizeAttention,
 } from "./api";
 export { ATTENTION_KINDS } from "./model";
 export { attentionHref } from "./lib/attention-link";
+export {
+  type DashboardPeriod,
+  type PeriodPreset,
+  type PeriodWindow,
+  type RangeError,
+  type RangeShortcut,
+  DEFAULT_PERIOD,
+  MAX_RANGE_DAYS,
+  PERIOD_PRESETS,
+  RANGE_SHORTCUTS,
+  daysInclusive,
+  parsePeriodParams,
+  periodDays,
+  periodKey,
+  resolveWindow,
+  shortcutRange,
+  toISODay,
+  trailingRange,
+  validateRange,
+  writePeriodParams,
+} from "./lib/period";
+export {
+  type TeamMetric,
+  type TeamTotals,
+  DEFAULT_TEAM_METRIC,
+  TEAM_METRICS,
+  colorIndex,
+  initials,
+  metricValue,
+  rankTeam,
+  teamTotals,
+  winRate,
+} from "./lib/team";

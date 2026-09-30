@@ -1,63 +1,117 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { AlarmClock, ClipboardList, Kanban, Users, type LucideIcon } from "lucide-react";
-import type { TeamMemberStat } from "@/entities/dashboard";
+import { Users, UsersRound } from "lucide-react";
+import {
+  DEFAULT_TEAM_METRIC,
+  TEAM_METRICS,
+  metricValue,
+  rankTeam,
+  teamTotals,
+  type TeamMemberStat,
+  type TeamMetric,
+} from "@/entities/dashboard";
 import { cn } from "@/shared/lib/cn";
-import { ListRow, PagedList, WidgetCard } from "@/shared/ui";
+import { PagedList, TONES, WidgetCard } from "@/shared/ui";
+import { MetricTile } from "./metric-tile";
+import { formatCompactMinor } from "./money";
+import { TEAM_METRIC_LOOK } from "./team-look";
+import { TeamRow } from "./team-row";
 
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  return (parts[0]?.[0] ?? "?").concat(parts.length > 1 ? parts[parts.length - 1][0] : "").toUpperCase();
-}
+type Props = { members: TeamMemberStat[]; locale: string };
 
-function Metric({ icon: Icon, value, label, alert }: { icon: LucideIcon; value: number; label: string; alert?: boolean }) {
+/**
+ * Team performance for the selected period: a tile per metric with the team
+ * total (tap to rank by it) above each member's standing on that metric.
+ */
+export function TeamWidget({ members, locale }: Props) {
+  const t = useTranslations("manager.team");
+  const [metric, setMetric] = useState<TeamMetric>(DEFAULT_TEAM_METRIC);
+
+  const totals = useMemo(() => teamTotals(members), [members]);
+  const ranked = useMemo(() => rankTeam(members, metric), [members, metric]);
+  const max = ranked.length > 0 ? metricValue(ranked[0], metric) : 0;
+  const rankOf = useMemo(() => new Map(ranked.map((m, i) => [m.id, i])), [ranked]);
+  const teamRate = totals.leads > 0 ? Math.min(100, Math.round((totals.won * 100) / totals.leads)) : null;
+
   return (
-    <span
-      className={cn(
-        "inline-flex min-w-11 items-center justify-end gap-1 text-xs font-semibold tabular-nums",
-        alert ? "text-rose-600" : "text-zinc-500",
-      )}
-      title={label}
-      aria-label={`${label}: ${value}`}
+    <WidgetCard
+      title={t("title")}
+      icon={Users}
+      tone="indigo"
+      count={members.length}
+      actions={
+        teamRate !== null ? (
+          <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700" data-testid="team-win-rate">
+            {t("winRate", { pct: teamRate })}
+          </span>
+        ) : null
+      }
+      data-testid="manager-team"
     >
-      <Icon className="h-3.5 w-3.5" strokeWidth={2} />
-      {value}
-    </span>
+      <div className="grid grid-cols-5 gap-2" role="group" aria-label={t("sortBy")}>
+        {TEAM_METRICS.map((k) => {
+          const look = TEAM_METRIC_LOOK[k];
+          const total = totals[k];
+          return (
+            <MetricTile
+              key={k}
+              icon={look.icon}
+              tone={look.tone}
+              value={k === "collected" ? <CompactMoney minor={total} currency={totals.currency} locale={locale} /> : total.toLocaleString(locale)}
+              label={t(`tiles.${k}`)}
+              title={t("sortByMetric", { metric: t(`tiles.${k}`) })}
+              active={metric === k}
+              alert={look.alert && total > 0}
+              compact={k === "collected"}
+              onClick={() => setMetric(k)}
+              data-testid={`team-tile-${k}`}
+            />
+          );
+        })}
+      </div>
+
+      <PagedList
+        className="mt-4"
+        items={ranked}
+        resetKey={metric}
+        rowHeight={64}
+        gap={4}
+        getKey={(m) => m.id}
+        empty={<NoActivity />}
+        renderItem={(m) => <TeamRow member={m} metric={metric} rank={rankOf.get(m.id) ?? 0} max={max} locale={locale} />}
+      />
+
+      {metric === "collected" && totals.partial ? (
+        <p className="-mt-1 text-center text-[11px] font-medium text-zinc-400" data-testid="team-partial">
+          {t("partial")}
+        </p>
+      ) : null}
+    </WidgetCard>
   );
 }
 
-type Props = { members: TeamMemberStat[] };
-
-export function TeamWidget({ members }: Props) {
-  const t = useTranslations("manager");
-
+function NoActivity() {
+  const t = useTranslations("manager.team");
   return (
-    <WidgetCard title={t("teamTitle")} icon={Users} tone="indigo" count={members.length} data-testid="manager-team">
-      <PagedList
-        items={members}
-        getKey={(m) => m.id}
-        empty={<p className="text-sm font-medium text-zinc-400">{t("teamEmpty")}</p>}
-        renderItem={(m) => (
-          <ListRow
-            title={m.name}
-            subtitle={m.role}
-            data-testid="team-row"
-            leading={
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700">
-                {initials(m.name)}
-              </span>
-            }
-            trailing={
-              <>
-                <Metric icon={Kanban} value={m.leadsHandled} label={t("team.leads")} />
-                <Metric icon={ClipboardList} value={m.openTasks} label={t("team.openTasks")} />
-                <Metric icon={AlarmClock} value={m.overdueTasks} label={t("team.overdue")} alert={m.overdueTasks > 0} />
-              </>
-            }
-          />
-        )}
-      />
-    </WidgetCard>
+    <div className="flex flex-col items-center gap-3 text-center" data-testid="team-empty">
+      <span className={cn("flex h-14 w-14 items-center justify-center rounded-[20px]", TONES.indigo.gradient)}>
+        <UsersRound className="h-7 w-7" strokeWidth={2} />
+      </span>
+      <div className="space-y-0.5">
+        <p className="text-[15px] font-semibold text-zinc-900">{t("empty")}</p>
+        <p className="text-[13px] text-zinc-500">{t("emptyHint")}</p>
+      </div>
+    </div>
+  );
+}
+
+function CompactMoney({ minor, currency, locale }: { minor: number; currency: string; locale: string }) {
+  return (
+    <>
+      {currency ? <span className="me-0.5 text-[10.5px] font-semibold text-zinc-400">{currency}</span> : null}
+      {formatCompactMinor(minor, locale)}
+    </>
   );
 }

@@ -9,6 +9,7 @@ import { cn } from "@/shared/lib/cn";
 import { PagedList, TONES, WidgetCard } from "@/shared/ui";
 import { lookFor } from "./attention-look";
 import { AttentionRow } from "./attention-row";
+import { MetricTile } from "./metric-tile";
 
 type Props = {
   items: AttentionItem[];
@@ -55,32 +56,21 @@ export function AttentionWidget({ items, summary, locale }: Props) {
       <div className="grid grid-cols-5 gap-2" role="group" aria-label={t("filter")}>
         {ATTENTION_KINDS.map((k) => {
           const look = lookFor(k);
-          const Icon = look.icon;
           const count = summary.kinds[k];
           const active = kind === k;
           return (
-            <button
+            <MetricTile
               key={k}
-              type="button"
-              disabled={count === 0 && !active}
-              aria-pressed={active}
+              icon={look.icon}
+              tone={look.tone}
+              value={count}
+              label={t(`tiles.${k}`)}
               title={kindLabel(k)}
+              active={active}
+              disabled={count === 0}
               onClick={() => setKind(active ? null : k)}
               data-testid={`attention-tile-${k}`}
-              className={cn(
-                "flex min-w-0 flex-col items-center gap-1.5 rounded-[20px] px-1 pb-2.5 pt-3 transition-all",
-                active
-                  ? "bg-white shadow-[0_14px_30px_-18px_rgba(15,23,42,0.45)] ring-2 ring-zinc-900/80"
-                  : "bg-zinc-50/70 hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_12px_26px_-20px_rgba(15,23,42,0.45)]",
-                count === 0 && !active && "cursor-default opacity-45 hover:translate-y-0 hover:bg-zinc-50/70 hover:shadow-none",
-              )}
-            >
-              <span className={cn("flex h-10 w-10 items-center justify-center rounded-2xl", TONES[look.tone].gradient)}>
-                <Icon className="h-5 w-5" strokeWidth={2.1} />
-              </span>
-              <span className="text-[18px] font-semibold leading-none tabular-nums tracking-tight text-zinc-950">{count}</span>
-              <span className="w-full truncate text-center text-[11px] font-medium text-zinc-500">{t(`tiles.${k}`)}</span>
-            </button>
+            />
           );
         })}
       </div>

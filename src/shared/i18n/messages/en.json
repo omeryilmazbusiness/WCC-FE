@@ -135,19 +135,62 @@
       "package": "Packages",
       "customers": "Customers"
     },
-    "teamTitle": "Team",
-    "teamEmpty": "No team activity yet",
     "team": {
-      "name": "Employee",
-      "leads": "Leads",
-      "openTasks": "Open tasks",
-      "overdue": "Overdue",
-      "wins": "Wins"
+      "title": "Team",
+      "sortBy": "Rank team by",
+      "sortByMetric": "Rank by {metric}",
+      "tiles": {
+        "leads": "Leads",
+        "won": "Won",
+        "collected": "Collected",
+        "openTasks": "Open tasks",
+        "overdue": "Overdue"
+      },
+      "roles": {
+        "gm": "GM",
+        "manager": "Manager",
+        "employee": "Agent",
+        "finance": "Finance",
+        "operations": "Operations",
+        "admin": "Admin"
+      },
+      "summary": "{won} of {leads} leads won",
+      "noLeads": "No leads yet",
+      "winRate": "{pct}% win",
+      "overdueCount": "{count} overdue",
+      "excludes": "Excludes {currencies}: no exchange rate",
+      "partial": "* Some collections are left out: no exchange rate for their currency",
+      "unnamed": "Unnamed user",
+      "empty": "No team activity in this period",
+      "emptyHint": "Leads, tasks and bookings your team owns will show up here."
     },
     "periodShort": {
       "d7": "7d",
       "d30": "30d",
       "d90": "90d"
+    },
+    "periodPicker": {
+      "open": "Custom range",
+      "editLabel": "Custom range {range}, change",
+      "title": "Custom range",
+      "hint": "Pick any window up to 366 days",
+      "close": "Close",
+      "from": "From",
+      "to": "To",
+      "apply": "Apply",
+      "days": "{count, plural, one {# day} other {# days}}",
+      "shortcuts": {
+        "thisMonth": "This month",
+        "lastMonth": "Last month",
+        "quarter": "This quarter",
+        "yearToDate": "Year to date"
+      },
+      "errors": {
+        "required": "Choose both dates",
+        "order": "Start must be before end",
+        "future": "End date can't be in the future",
+        "tooLong": "Range can be at most 366 days"
+      }
     },
     "revenue": {
       "title": "Revenue",

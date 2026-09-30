@@ -47,16 +47,18 @@ function mapKPI(raw: Raw): DashboardKPI {
   };
 }
 
-function mapTeam(raw: Raw): TeamMemberStat {
+export function mapTeam(raw: Raw): TeamMemberStat {
   return {
     id: String(raw.owner_id ?? raw.id ?? ""),
     name: String(raw.owner_name ?? raw.name ?? ""),
-    role: String(raw.role ?? "sales"),
-    leadsHandled: Number(raw.leads_handled ?? raw.leadsHandled ?? 0),
-    openTasks: Number(raw.open_tasks ?? raw.openTasks ?? 0),
-    overdueTasks: Number(raw.overdue_tasks ?? raw.overdueTasks ?? 0),
-    revenueShare: Number(raw.leads_won ?? raw.revenueShare ?? 0),
-    collectedAmt: Number(raw.collected_amt ?? raw.collectedAmt ?? 0),
+    role: String(raw.role ?? ""),
+    leadsHandled: Number(raw.leads_handled ?? 0),
+    leadsWon: Number(raw.leads_won ?? 0),
+    openTasks: Number(raw.open_tasks ?? 0),
+    overdueTasks: Number(raw.overdue_tasks ?? 0),
+    collected: Number(raw.collected_amt ?? 0),
+    currency: String(raw.currency ?? ""),
+    unconverted: Array.isArray(raw.unconverted) ? raw.unconverted.map(String) : [],
   };
 }
 
@@ -284,14 +286,17 @@ export class MemoryDashboardRepository implements DashboardRepository {
       const row = byOwner.get(l.ownerId) ?? {
         id: l.ownerId,
         name: l.ownerName,
-        role: "sales",
+        role: "employee",
         leadsHandled: 0,
+        leadsWon: 0,
         openTasks: 0,
         overdueTasks: 0,
-        revenueShare: 0,
+        collected: 0,
+        currency: "",
+        unconverted: [],
       };
       row.leadsHandled += 1;
-      if (l.stage === "won") row.revenueShare += 1;
+      if (l.stage === "won") row.leadsWon += 1;
       byOwner.set(l.ownerId, row);
     }
 
@@ -299,11 +304,14 @@ export class MemoryDashboardRepository implements DashboardRepository {
       const row = byOwner.get(t.assigneeId) ?? {
         id: t.assigneeId,
         name: t.assigneeName,
-        role: "ops",
+        role: "operations",
         leadsHandled: 0,
+        leadsWon: 0,
         openTasks: 0,
         overdueTasks: 0,
-        revenueShare: 0,
+        collected: 0,
+        currency: "",
+        unconverted: [],
       };
       if (t.status === "open" || t.status === "in_progress") row.openTasks += 1;
       if (isTaskOverdue(t)) row.overdueTasks += 1;

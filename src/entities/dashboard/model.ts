@@ -16,12 +16,17 @@ export type DashboardKPI = {
 export type TeamMemberStat = {
   id: string;
   name: string;
+  /** Account role: gm | manager | employee | finance | operations. */
   role: string;
   leadsHandled: number;
+  leadsWon: number;
   openTasks: number;
   overdueTasks: number;
-  revenueShare: number;
-  collectedAmt?: number;
+  /** Collected on the member's bookings in the period, minor units of `currency`. */
+  collected: number;
+  currency: string;
+  /** Currencies left out of `collected` for lack of an FX rate. */
+  unconverted: string[];
 };
 
 /** Exception sources in display order; mirrors the backend's AttentionKinds. */
