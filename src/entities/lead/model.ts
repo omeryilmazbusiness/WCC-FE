@@ -3,6 +3,7 @@ export type LeadStage =
   | "contacted"
   | "qualified"
   | "proposal"
+  | "paid"
   | "won"
   | "lost";
 
@@ -11,6 +12,7 @@ export const LEAD_STAGES: LeadStage[] = [
   "contacted",
   "qualified",
   "proposal",
+  "paid",
   "won",
   "lost",
 ];
@@ -20,6 +22,7 @@ export const PIPELINE_COLUMNS: LeadStage[] = [
   "contacted",
   "qualified",
   "proposal",
+  "paid",
   "won",
   "lost",
 ];
@@ -161,7 +164,8 @@ const ALLOWED: Record<LeadStage, LeadStage[]> = {
   new: ["contacted", "lost"],
   contacted: ["qualified", "lost"],
   qualified: ["proposal", "lost"],
-  proposal: ["won", "lost"],
+  proposal: ["paid", "lost"],
+  paid: ["won", "lost"],
   won: [],
   lost: [],
 };
@@ -172,4 +176,25 @@ export function canTransitionLead(from: LeadStage, to: LeadStage): boolean {
 
 export function nextStages(from: LeadStage): LeadStage[] {
   return ALLOWED[from];
+}
+
+export function isOpenStage(stage: LeadStage): boolean {
+  return stage !== "won" && stage !== "lost";
+}
+
+/**
+ * Stages a lead walks through to reach won when converted to a booking;
+ * null when it has not reached proposal. Mirrors the backend's ConversionPath.
+ */
+export function conversionPath(from: LeadStage): LeadStage[] | null {
+  switch (from) {
+    case "proposal":
+      return ["paid", "won"];
+    case "paid":
+      return ["won"];
+    case "won":
+      return [];
+    default:
+      return null;
+  }
 }

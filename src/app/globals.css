@@ -80,7 +80,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-[dir="rtl"] {
+[dir="rtl"],
+html[dir="rtl"] body {
   font-family: var(--font-arabic), var(--font-sans);
 }
 

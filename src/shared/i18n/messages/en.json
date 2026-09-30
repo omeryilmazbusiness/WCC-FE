@@ -719,6 +719,7 @@
       "contacted": "Contacted",
       "qualified": "Qualified",
       "proposal": "Proposal",
+      "paid": "Paid",
       "won": "Won",
       "lost": "Lost"
     },
@@ -762,6 +763,59 @@
       "budget": "Enter an amount like 12500 or 12500.50",
       "currency": "Use a 3-letter code, e.g. SAR",
       "currencyRequired": "Add a currency for the budget"
+    },
+    "card": {
+      "pax": "{count, plural, one {# traveller} other {# travellers}}",
+      "converted": "Booking created",
+      "updated": "Last updated",
+      "travel": "Travel",
+      "travellers": "Travellers",
+      "budget": "Budget",
+      "package": "Package",
+      "noTrip": "No trip details yet",
+      "addTrip": "Add details",
+      "source": "Source",
+      "owner": "Owner",
+      "priority": {
+        "urgent": "Urgent",
+        "high": "High",
+        "normal": "Normal",
+        "low": "Low"
+      },
+      "sources": {
+        "whatsapp": "WhatsApp",
+        "instagram": "Instagram",
+        "facebook": "Facebook",
+        "web": "Website",
+        "email": "Email",
+        "phone": "Phone call",
+        "referral": "Referral",
+        "walkin": "Walk-in",
+        "other": "Other"
+      }
+    },
+    "column": {
+      "noBudget": "No budgets yet"
+    },
+    "savedTitle": "Lead updated",
+    "detail": {
+      "contact": "Contact",
+      "call": "Call",
+      "details": "Details",
+      "created": "Created",
+      "updated": "Updated {time}",
+      "followUp": "Follow-up",
+      "followUpOn": "Follow-ups active",
+      "followUpOff": "Not following up",
+      "customerLinked": "Linked customer",
+      "open": "Open",
+      "change": "Change",
+      "booking": "Booking",
+      "lostTitle": "Why it was lost",
+      "notes": "Notes",
+      "addTrip": "Add trip details",
+      "leadCreated": "Lead created",
+      "moreActions": "Actions"
     }
   },
   "packages": {

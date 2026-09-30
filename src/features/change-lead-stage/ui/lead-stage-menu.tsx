@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { ChevronDown } from "lucide-react";
 import {
   canTransitionLead,
   nextStages,
@@ -71,11 +72,12 @@ export function LeadStageMenu({ lead, repository, onChanged }: Props) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button type="button" variant="ghost" size="sm" className="h-8 px-2">
+          <Button type="button" variant="ghost" size="sm" className="h-8 gap-1 px-1.5" title={t("moveTo")}>
             <StageBadge
               tone={LEAD_STAGE_TONES[lead.stage]}
               label={t(`stages.${lead.stage}`)}
             />
+            <ChevronDown className="h-3.5 w-3.5 text-zinc-400" aria-hidden />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="min-w-[11rem]">

@@ -26,6 +26,8 @@
     "test:target-period": "node --experimental-strip-types scripts/selftest-target-period.ts",
     "test:dashboard-period": "node --experimental-strip-types scripts/selftest-dashboard-period.ts",
     "test:team-stats": "node --experimental-strip-types scripts/selftest-team-stats.ts",
+    "test:lead-pipeline": "node --experimental-strip-types scripts/selftest-lead-pipeline.ts",
+    "test:scroll-axis": "node --experimental-strip-types scripts/selftest-scroll-axis.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },

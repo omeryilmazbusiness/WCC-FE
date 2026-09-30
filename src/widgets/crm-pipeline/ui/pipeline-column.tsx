@@ -1,120 +1,148 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import {
-  canTransitionLead,
-  type Lead,
-  type LeadRepository,
-  type LeadStage,
-} from "@/entities/lead";
-import { AssignLeadDialog } from "@/features/assign-lead";
-import { LeadStageMenu } from "@/features/change-lead-stage";
-import { ConvertLeadDialog } from "@/features/convert-lead";
-import { LEAD_STAGE_TONES, StageBadge } from "@/shared/ui";
+import { Inbox } from "lucide-react";
+import { pipelineValue, stageLook, type Lead, type LeadRepository, type LeadStage } from "@/entities/lead";
 import { cn } from "@/shared/lib/cn";
-import { LeadPriorityBadge } from "./lead-priority-badge";
+import { formatMoneyWhole } from "@/shared/lib/format";
+import { TONES } from "@/shared/ui";
+import { LeadCard } from "./lead-card";
+
+/** How this column relates to the lead being dragged. */
+export type DropState = "idle" | "allowed" | "blocked";
 
 type Props = {
   stage: LeadStage;
   leads: Lead[];
+  locale: string;
   repository: LeadRepository;
+  canWrite: boolean;
+  dropState: DropState;
+  draggingId: string | null;
   onChanged: (lead: Lead) => void;
   onDropLead: (leadId: string, stage: LeadStage) => void;
   onOpenLead: (lead: Lead) => void;
+  onEditLead: (lead: Lead) => void;
+  onDragStart: (lead: Lead) => void;
+  onDragEnd: () => void;
 };
 
+/** One stage: a fixed-height lane whose cards scroll inside it. */
 export function PipelineColumn({
   stage,
   leads,
+  locale,
   repository,
+  canWrite,
+  dropState,
+  draggingId,
   onChanged,
   onDropLead,
   onOpenLead,
+  onEditLead,
+  onDragStart,
+  onDragEnd,
 }: Props) {
   const t = useTranslations("pipeline");
+  const look = stageLook(stage);
+  const Icon = look.icon;
+  const value = pipelineValue(leads);
+  const [over, setOver] = useState(false);
+  const depth = useRef(0);
+
+  const resetOver = () => {
+    depth.current = 0;
+    setOver(false);
+  };
 
   return (
     <section
-      className="flex min-h-[28rem] w-[17.5rem] shrink-0 flex-col rounded-[24px] border border-zinc-200/80 bg-zinc-50/80"
-      onDragOver={(e) => e.preventDefault()}
+      aria-label={t(`stages.${stage}`)}
+      data-testid={`pipeline-column-${stage}`}
+      data-drop={dropState}
+      onDragEnter={(e) => {
+        if (dropState !== "allowed") return;
+        e.preventDefault();
+        depth.current += 1;
+        setOver(true);
+      }}
+      onDragOver={(e) => {
+        if (dropState !== "allowed") return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+      }}
+      onDragLeave={() => {
+        if (dropState !== "allowed") return;
+        depth.current = Math.max(0, depth.current - 1);
+        if (depth.current === 0) setOver(false);
+      }}
       onDrop={(e) => {
         e.preventDefault();
+        resetOver();
         const leadId = e.dataTransfer.getData("text/lead-id");
-        if (leadId) onDropLead(leadId, stage);
+        if (leadId && dropState === "allowed") onDropLead(leadId, stage);
       }}
+      className={cn(
+        "flex h-[calc(100dvh-17.5rem)] min-h-[36rem] w-[18.5rem] shrink-0 flex-col rounded-[28px] border bg-gradient-to-b transition-all duration-200",
+        TONES[look.tone].tint,
+        "border-zinc-200/60 shadow-[0_10px_30px_-26px_rgba(15,23,42,0.4)]",
+        dropState === "blocked" && "opacity-45 saturate-50",
+        dropState === "allowed" && "border-dashed border-zinc-300",
+        over && "border-solid border-zinc-900/70 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.45)] ring-4 ring-zinc-900/5",
+      )}
     >
-      <header className="flex items-center justify-between gap-2 px-4 py-3">
-        <StageBadge
-          tone={LEAD_STAGE_TONES[stage]}
-          label={t(`stages.${stage}`)}
-        />
-        <span className="rounded-xl bg-white px-2 py-0.5 text-xs font-semibold tabular-nums text-zinc-500 shadow-sm">
+      <header className="flex items-center gap-3 px-4 pb-3 pt-4">
+        <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl", TONES[look.tone].gradient)}>
+          <Icon className="h-5 w-5" strokeWidth={2.1} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h2 className="truncate text-[15px] font-semibold tracking-tight text-zinc-950">{t(`stages.${stage}`)}</h2>
+          <p className="truncate text-[11.5px] font-medium text-zinc-500" data-testid="pipeline-column-value">
+            {value
+              ? `${formatMoneyWhole(value.amount, locale, value.currency)}${value.partial ? " *" : ""}`
+              : t("column.noBudget")}
+          </p>
+        </div>
+        <span
+          className={cn("rounded-full px-2.5 py-1 text-[12px] font-semibold tabular-nums", TONES[look.tone].soft)}
+          data-testid="pipeline-column-count"
+        >
           {leads.length}
         </span>
       </header>
-      <div className="flex flex-1 flex-col gap-2.5 overflow-y-auto px-3 pb-3">
+
+      <div className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto overscroll-y-contain px-3 pb-3 [scrollbar-gutter:stable] [scrollbar-width:thin]">
         {leads.map((lead) => (
-          <article
+          <LeadCard
             key={lead.id}
-            draggable={canTransitionLead(lead.stage, stage) || lead.stage === stage}
-            onDragStart={(e) => {
-              e.dataTransfer.setData("text/lead-id", lead.id);
-              e.dataTransfer.effectAllowed = "move";
+            lead={lead}
+            locale={locale}
+            repository={repository}
+            canWrite={canWrite}
+            dragging={draggingId === lead.id}
+            onChanged={onChanged}
+            onOpen={onOpenLead}
+            onEdit={onEditLead}
+            onDragStart={onDragStart}
+            onDragEnd={() => {
+              resetOver();
+              onDragEnd();
             }}
-            className={cn(
-              "rounded-2xl border border-zinc-200/80 bg-white p-3.5 shadow-[0_8px_24px_-18px_rgba(24,24,27,0.45)] transition-all duration-300",
-              "cursor-grab active:cursor-grabbing hover:-translate-y-0.5",
-              lead.noFollowUp && "border-amber-300/80",
-            )}
-          >
-            <button
-              type="button"
-              className="w-full text-start"
-              onClick={() => onOpenLead(lead)}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <p className="text-sm font-semibold text-zinc-950">{lead.fullName}</p>
-                <LeadPriorityBadge leadId={lead.id} />
-              </div>
-              <p className="mt-1 text-xs font-medium text-zinc-500">{lead.phone}</p>
-              <p className="mt-2 truncate text-xs text-zinc-400">
-                {lead.ownerName}
-                {lead.source ? ` · ${lead.source}` : ""}
-              </p>
-              {lead.noFollowUp ? (
-                <p className="mt-2 text-xs font-semibold text-amber-700">
-                  {t("noFollowUpYes")}
-                </p>
-              ) : null}
-              {lead.stage === "lost" && lead.lostReason ? (
-                <p className="mt-2 line-clamp-2 text-xs text-zinc-500">
-                  {lead.lostReason}
-                </p>
-              ) : null}
-            </button>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <LeadStageMenu
-                lead={lead}
-                repository={repository}
-                onChanged={onChanged}
-              />
-              <AssignLeadDialog
-                lead={lead}
-                repository={repository}
-                onAssigned={onChanged}
-              />
-              <ConvertLeadDialog
-                lead={lead}
-                repository={repository}
-                onConverted={(updated) => onChanged(updated)}
-              />
-            </div>
-          </article>
+          />
         ))}
         {leads.length === 0 ? (
-          <p className="px-1 py-8 text-center text-xs font-medium text-zinc-400">
-            {t("emptyColumn")}
-          </p>
+          <div
+            className={cn(
+              "flex flex-col items-center justify-center gap-2 rounded-[22px] border-2 border-dashed px-4 py-8 text-center transition-colors",
+              over ? "border-zinc-900/40 bg-white/80" : "border-zinc-200/80",
+            )}
+          >
+            <span className={cn("flex h-10 w-10 items-center justify-center rounded-2xl", TONES[look.tone].soft)}>
+              <Inbox className="h-5 w-5" strokeWidth={2} />
+            </span>
+            <p className="text-[12px] font-medium text-zinc-400">{t("emptyColumn")}</p>
+          </div>
         ) : null}
       </div>
     </section>

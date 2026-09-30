@@ -51,8 +51,6 @@ export {
   type TeamTotals,
   DEFAULT_TEAM_METRIC,
   TEAM_METRICS,
-  colorIndex,
-  initials,
   metricValue,
   rankTeam,
   teamTotals,

@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import { NextIntlClientProvider } from "next-intl";
 import type { AbstractIntlMessages } from "next-intl";
+import { isRtl } from "./routing";
 
 type Props = {
   locale: string;
@@ -14,6 +16,14 @@ type Props = {
  * (onError / getMessageFallback cannot cross the RSC boundary.)
  */
 export function IntlClientProvider({ locale, messages, children }: Props) {
+  // Portaled overlays (drawers, dialogs, toasts) render under <body>, outside the
+  // locale wrapper, so the document itself must carry the language and direction.
+  useEffect(() => {
+    const root = document.documentElement;
+    root.lang = locale;
+    root.dir = isRtl(locale) ? "rtl" : "ltr";
+  }, [locale]);
+
   return (
     <NextIntlClientProvider
       locale={locale}

@@ -107,6 +107,16 @@ export function formatMoney(minor: number, locale: string, currency: string): st
   }
 }
 
+/** Minor units → localized currency in whole major units ("SAR 36,000"), for estimates such as budgets. */
+export function formatMoneyWhole(minor: number, locale: string, currency: string): string {
+  if (!Number.isFinite(minor)) return "—";
+  try {
+    return formatCurrency(Math.round(minor / 100), locale, currency, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  } catch {
+    return `${formatNumber(Math.round(minor / 100), locale)} ${currency}`;
+  }
+}
+
 /** Compact percent e.g. 42.5% */
 export function formatPercent(
   value: number,

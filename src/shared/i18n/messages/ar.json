@@ -719,6 +719,7 @@
       "contacted": "تم التواصل",
       "qualified": "مؤهل",
       "proposal": "عرض",
+      "paid": "مدفوع",
       "won": "فوز",
       "lost": "خسارة"
     },
@@ -762,6 +763,59 @@
       "budget": "أدخل مبلغاً مثل 12500 أو 12500.50",
       "currency": "استخدم رمزاً من 3 أحرف، مثل SAR",
       "currencyRequired": "أضف عملة للميزانية"
+    },
+    "card": {
+      "pax": "{count, plural, zero {# مسافر} one {مسافر واحد} two {مسافران} few {# مسافرين} many {# مسافرًا} other {# مسافر}}",
+      "converted": "تم إنشاء الحجز",
+      "updated": "آخر تحديث",
+      "travel": "السفر",
+      "travellers": "المسافرون",
+      "budget": "الميزانية",
+      "package": "الباقة",
+      "noTrip": "لا توجد تفاصيل رحلة بعد",
+      "addTrip": "أضف التفاصيل",
+      "source": "المصدر",
+      "owner": "المسؤول",
+      "priority": {
+        "urgent": "عاجل",
+        "high": "مرتفع",
+        "normal": "عادي",
+        "low": "منخفض"
+      },
+      "sources": {
+        "whatsapp": "واتساب",
+        "instagram": "إنستغرام",
+        "facebook": "فيسبوك",
+        "web": "الموقع",
+        "email": "البريد",
+        "phone": "مكالمة",
+        "referral": "إحالة",
+        "walkin": "زيارة",
+        "other": "أخرى"
+      }
+    },
+    "column": {
+      "noBudget": "لا توجد ميزانيات بعد"
+    },
+    "savedTitle": "تم تحديث العميل المحتمل",
+    "detail": {
+      "contact": "التواصل",
+      "call": "اتصال",
+      "details": "التفاصيل",
+      "created": "تاريخ الإنشاء",
+      "updated": "آخر تحديث {time}",
+      "followUp": "المتابعة",
+      "followUpOn": "المتابعة مفعّلة",
+      "followUpOff": "بدون متابعة",
+      "customerLinked": "عميل مرتبط",
+      "open": "فتح",
+      "change": "تغيير",
+      "booking": "الحجز",
+      "lostTitle": "سبب الخسارة",
+      "notes": "ملاحظات",
+      "addTrip": "أضف تفاصيل الرحلة",
+      "leadCreated": "تم إنشاء العميل المحتمل",
+      "moreActions": "الإجراءات"
     }
   },
   "packages": {

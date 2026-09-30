@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import type { Lead, LeadOwner, LeadRepository } from "@/entities/lead";
 import { useCan } from "@/entities/viewer";
@@ -24,9 +24,11 @@ type Props = {
   lead: Lead;
   repository: LeadRepository;
   onAssigned: (lead: Lead) => void;
+  /** Custom trigger element (rendered asChild); defaults to an outline "Assign" button. */
+  trigger?: ReactNode;
 };
 
-export function AssignLeadDialog({ lead, repository, onAssigned }: Props) {
+export function AssignLeadDialog({ lead, repository, onAssigned, trigger }: Props) {
   const allowed = useCan("leads.write");
   const t = useTranslations("pipeline");
   const feedback = useMutationFeedback();
@@ -65,9 +67,11 @@ export function AssignLeadDialog({ lead, repository, onAssigned }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button type="button" variant="outline" size="sm">
-          {t("assign")}
-        </Button>
+        {trigger ?? (
+          <Button type="button" variant="outline" size="sm">
+            {t("assign")}
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

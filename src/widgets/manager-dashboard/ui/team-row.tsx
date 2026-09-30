@@ -2,13 +2,12 @@
 
 import { useTranslations } from "next-intl";
 import {
-  colorIndex,
-  initials,
   metricValue,
   winRate,
   type TeamMemberStat,
   type TeamMetric,
 } from "@/entities/dashboard";
+import { colorIndex, initials } from "@/shared/lib/avatar";
 import { cn } from "@/shared/lib/cn";
 import { TONES } from "@/shared/ui";
 import { formatCompactMoney } from "./money";

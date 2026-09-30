@@ -7,6 +7,7 @@ const TONE_STYLES = {
   indigo: "bg-indigo-50 text-indigo-800",
   violet: "bg-violet-50 text-violet-800",
   amber: "bg-amber-50 text-amber-900",
+  teal: "bg-teal-50 text-teal-800",
   emerald: "bg-emerald-50 text-emerald-800",
   zinc: "bg-zinc-100 text-zinc-600",
 } as const;
@@ -37,6 +38,7 @@ export const LEAD_STAGE_TONES: Record<string, StageBadgeTone> = {
   contacted: "indigo",
   qualified: "violet",
   proposal: "amber",
+  paid: "teal",
   won: "emerald",
   lost: "zinc",
 };

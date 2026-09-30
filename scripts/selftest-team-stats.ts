@@ -6,11 +6,10 @@
 
 import assert from "node:assert/strict";
 import type { TeamMemberStat } from "../src/entities/dashboard/model.ts";
+import { colorIndex, initials } from "../src/shared/lib/avatar.ts";
 import {
   DEFAULT_TEAM_METRIC,
   TEAM_METRICS,
-  colorIndex,
-  initials,
   metricValue,
   rankTeam,
   teamTotals,

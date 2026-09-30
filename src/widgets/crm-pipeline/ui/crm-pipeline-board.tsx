@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
   canTransitionLead,
   groupLeadsByStage,
@@ -10,11 +10,13 @@ import {
   type LeadRepository,
   type LeadStage,
 } from "@/entities/lead";
-import { CreateLeadDialog } from "@/features/create-lead";
+import { CreateLeadDialog, LeadFormDialog } from "@/features/create-lead";
 import { LostReasonDialog } from "@/features/change-lead-stage";
 import { BulkAssignLeadsDialog } from "@/features/bulk-assign-leads";
 import { LeadDetailDrawer } from "@/features/lead-detail";
 import { createTaskRepository } from "@/entities/task";
+import { useCan } from "@/entities/viewer";
+import { useDragScroll } from "@/shared/lib/use-drag-scroll";
 import {
   ListScreen,
   SearchFilterBar,
@@ -22,7 +24,7 @@ import {
   useToast,
   useMutationFeedback,
 } from "@/shared/ui";
-import { PipelineColumn } from "./pipeline-column";
+import { PipelineColumn, type DropState } from "./pipeline-column";
 import { PipelineTable } from "./pipeline-table";
 
 type ViewMode = "kanban" | "table";
@@ -35,6 +37,8 @@ type Props = {
 export function CrmPipelineBoard({ repository, initialLeads }: Props) {
   const t = useTranslations("pipeline");
   const tc = useTranslations("common");
+  const locale = useLocale();
+  const canWrite = useCan("leads.write");
   const { push } = useToast();
   const feedback = useMutationFeedback();
   const [leads, setLeads] = useState(initialLeads);
@@ -44,6 +48,9 @@ export function CrmPipelineBoard({ repository, initialLeads }: Props) {
   const [noFollowOnly, setNoFollowOnly] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [detail, setDetail] = useState<Lead | null>(null);
+  const [editing, setEditing] = useState<Lead | null>(null);
+  const [dragging, setDragging] = useState<Lead | null>(null);
+  const boardRef = useDragScroll<HTMLDivElement>();
   const [pendingLost, setPendingLost] = useState<{
     lead: Lead;
     stage: LeadStage;
@@ -80,7 +87,13 @@ export function CrmPipelineBoard({ repository, initialLeads }: Props) {
     return [...map.entries()];
   }, [leads]);
 
+  function dropStateFor(stage: LeadStage): DropState {
+    if (!dragging || dragging.stage === stage) return "idle";
+    return canTransitionLead(dragging.stage, stage) ? "allowed" : "blocked";
+  }
+
   async function handleDrop(leadId: string, stage: LeadStage) {
+    setDragging(null);
     const lead = leads.find((l) => l.id === leadId);
     if (!lead || lead.stage === stage) return;
     if (!canTransitionLead(lead.stage, stage)) {
@@ -204,16 +217,27 @@ export function CrmPipelineBoard({ repository, initialLeads }: Props) {
       }
     >
       {view === "kanban" ? (
-        <div className="flex gap-3 overflow-x-auto pb-2">
+        <div
+          ref={boardRef}
+          className="-mx-1 flex cursor-grab gap-3.5 overflow-x-auto px-1 pb-3 select-none [scrollbar-width:thin] data-[panning]:cursor-grabbing data-[panning]:*:pointer-events-none"
+          data-testid="pipeline-board"
+        >
           {PIPELINE_COLUMNS.map((stage) => (
             <PipelineColumn
               key={stage}
               stage={stage}
               leads={byStage[stage]}
+              locale={locale}
               repository={repository}
+              canWrite={canWrite}
+              dropState={dropStateFor(stage)}
+              draggingId={dragging?.id ?? null}
               onChanged={upsert}
               onDropLead={(id, s) => void handleDrop(id, s)}
               onOpenLead={setDetail}
+              onEditLead={setEditing}
+              onDragStart={setDragging}
+              onDragEnd={() => setDragging(null)}
             />
           ))}
         </div>
@@ -243,6 +267,19 @@ export function CrmPipelineBoard({ repository, initialLeads }: Props) {
             description: t("movedBody", { stage: t("stages.lost") }),
             tone: "success",
           });
+        }}
+      />
+
+      <LeadFormDialog
+        repository={repository}
+        open={Boolean(editing)}
+        onOpenChange={(open) => {
+          if (!open) setEditing(null);
+        }}
+        lead={editing}
+        onSaved={(lead) => {
+          upsert(lead);
+          push({ title: t("savedTitle"), description: lead.fullName, tone: "success" });
         }}
       />
 

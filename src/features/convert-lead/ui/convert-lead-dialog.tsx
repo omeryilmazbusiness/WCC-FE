@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
-import type { Lead, LeadRepository } from "@/entities/lead";
+import { conversionPath, type Lead, type LeadRepository } from "@/entities/lead";
 import { createTourPackageRepository } from "@/entities/tourpackage";
 import { useCan } from "@/entities/viewer";
 import { useRouter } from "@/shared/i18n/navigation";
@@ -29,9 +29,11 @@ type Props = {
   lead: Lead;
   repository: LeadRepository;
   onConverted: (lead: Lead, bookingId: string) => void;
+  /** Custom trigger element (rendered asChild); defaults to a small "Convert" button. */
+  trigger?: ReactNode;
 };
 
-export function ConvertLeadDialog({ lead, repository, onConverted }: Props) {
+export function ConvertLeadDialog({ lead, repository, onConverted, trigger }: Props) {
   const allowed = useCan("leads.write");
   const t = useTranslations("pipeline");
   const tc = useTranslations("common");
@@ -66,7 +68,7 @@ export function ConvertLeadDialog({ lead, repository, onConverted }: Props) {
   }, [open, pkgRepo]);
 
   if (lead.convertedBookingId) return null;
-  if (lead.stage === "lost") return null;
+  if (!conversionPath(lead.stage)) return null;
 
   async function confirm() {
     if (!departureId) return;
@@ -102,9 +104,11 @@ export function ConvertLeadDialog({ lead, repository, onConverted }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button type="button" size="sm">
-          {t("convert")}
-        </Button>
+        {trigger ?? (
+          <Button type="button" size="sm">
+            {t("convert")}
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

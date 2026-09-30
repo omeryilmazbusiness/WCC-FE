@@ -2,6 +2,8 @@ import { http, type HttpClient } from "@/shared/api/http-client";
 import { createRepository } from "@/shared/api/repository";
 import {
   canTransitionLead,
+  conversionPath,
+  LEAD_STAGES,
   type ChangeStageInput,
   type ConvertLeadInput,
   type ConvertLeadResult,
@@ -491,15 +493,10 @@ export class MemoryLeadRepository implements LeadRepository {
     if (!lead.customerId) {
       throw new Error("Lead must be linked to a customer before conversion");
     }
-    if (lead.stage !== "won") {
-      // walk to won if possible from proposal
-      if (lead.stage === "proposal") {
-        lead = await this.changeStage(id, { stage: "won", note: "converted" });
-      } else if (canTransitionLead(lead.stage, "won")) {
-        lead = await this.changeStage(id, { stage: "won", note: "converted" });
-      } else {
-        throw new Error("Lead must reach proposal before conversion");
-      }
+    const path = conversionPath(lead.stage);
+    if (!path) throw new Error("Lead must reach proposal before conversion");
+    for (const stage of path) {
+      lead = await this.changeStage(id, { stage, note: "converted" });
     }
     const { MemoryBookingRepository } = await import("@/entities/booking/api");
     const bookingRepo = new MemoryBookingRepository();
@@ -538,7 +535,7 @@ export class MemoryLeadRepository implements LeadRepository {
       lost,
       conversion_rate: closed ? won / closed : 0,
       no_follow_up: rows.filter((l) => l.noFollowUp).length,
-      by_stage: LEAD_STAGES_LOCAL.map((s) => ({
+      by_stage: LEAD_STAGES.map((s) => ({
         key: s,
         count: rows.filter((l) => l.stage === s).length,
       })),
@@ -552,26 +549,11 @@ export class MemoryLeadRepository implements LeadRepository {
   }
 }
 
-const LEAD_STAGES_LOCAL: LeadStage[] = [
-  "new",
-  "contacted",
-  "qualified",
-  "proposal",
-  "won",
-  "lost",
-];
-
+/** Leads per stage, every stage present; unknown stages from the API are dropped rather than crashing. */
 export function groupLeadsByStage(leads: Lead[]): Record<LeadStage, Lead[]> {
-  const map = {
-    new: [],
-    contacted: [],
-    qualified: [],
-    proposal: [],
-    won: [],
-    lost: [],
-  } as Record<LeadStage, Lead[]>;
+  const map = Object.fromEntries(LEAD_STAGES.map((s) => [s, [] as Lead[]])) as Record<LeadStage, Lead[]>;
   for (const lead of leads) {
-    map[lead.stage].push(lead);
+    map[lead.stage]?.push(lead);
   }
   return map;
 }

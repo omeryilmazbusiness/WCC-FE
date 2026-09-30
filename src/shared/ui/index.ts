@@ -29,6 +29,7 @@ export { CapacityBadge } from "./capacity-badge";
 export { MetricCard, type MetricAccent } from "./metric-card";
 export { SurfacePanel, type SurfaceAccent } from "./surface-panel";
 export { TONES, type Tone } from "./tone";
+export { IconTile } from "./icon-tile";
 export { WidgetCard } from "./widget-card";
 export { StatTile } from "./stat-tile";
 export { ActionTile } from "./action-tile";
