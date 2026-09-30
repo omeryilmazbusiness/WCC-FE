@@ -3,6 +3,9 @@ export type {
   TeamMemberStat,
   TargetSnapshot,
   AttentionItem,
+  AttentionKind,
+  AttentionLinkType,
+  AttentionSummary,
   MyWorkItem,
   MoneyStat,
   RevenueMethod,
@@ -16,4 +19,8 @@ export {
   getMemoryDashboardRepository,
   createDashboardRepository,
   mapRevenue,
+  mapAttentionSummary,
+  summarizeAttention,
 } from "./api";
+export { ATTENTION_KINDS } from "./model";
+export { attentionHref } from "./lib/attention-link";

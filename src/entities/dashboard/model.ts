@@ -24,15 +24,39 @@ export type TeamMemberStat = {
   collectedAmt?: number;
 };
 
+/** Exception sources in display order; mirrors the backend's AttentionKinds. */
+export const ATTENTION_KINDS = ["escalated_task", "overdue_task", "unpaid_booking", "missing_doc", "capacity"] as const;
+export type AttentionKind = (typeof ATTENTION_KINDS)[number];
+
+/** Record an attention row opens. */
+export type AttentionLinkType = "booking" | "package" | "lead" | "conversation" | "revenue_target" | "task";
+
 export type AttentionItem = {
   id: string;
-  kind: string;
+  kind: AttentionKind | string;
   severity: "low" | "medium" | "high" | string;
   title: string;
   relatedType: string;
   relatedId: string;
   ageHours: number;
   hrefHint: string;
+  /** Who or what the row is about (customer, lead, package · departure). */
+  context: string;
+  linkType: AttentionLinkType | string;
+  linkId: string;
+  /** Open balance of an unpaid booking, minor units of `currency`. */
+  amount: number | null;
+  currency: string;
+  capacitySold: number | null;
+  capacityTotal: number | null;
+  dueAt: string | null;
+};
+
+/** Counts over every open exception, not just the loaded page. */
+export type AttentionSummary = {
+  total: number;
+  high: number;
+  kinds: Record<AttentionKind, number>;
 };
 
 export type MyWorkItem = {

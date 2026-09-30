@@ -6,6 +6,7 @@ import { AlarmClock, FileWarning, Kanban, Wallet } from "lucide-react";
 import {
   createDashboardRepository,
   type AttentionItem,
+  type AttentionSummary,
   type DashboardKPI,
   type RevenueSummary,
   type TeamMemberStat,
@@ -36,6 +37,7 @@ type DashboardData = {
   kpi: DashboardKPI;
   team: TeamMemberStat[];
   attention: AttentionItem[];
+  attentionSummary: AttentionSummary;
 };
 
 function periodRange(days: number): { from: Date; to: Date } {
@@ -58,15 +60,16 @@ export function ManagerDashboardBoard() {
   const dashboard = useApiQuery(
     async (): Promise<DashboardData> => {
       const { from, to } = periodRange(Number(period));
-      const [kpi, team, attention] = await Promise.all([
+      const [kpi, team, attention, attentionSummary] = await Promise.all([
         repo.getKPIs(from, to),
         repo.getTeamStats(from, to),
         repo.getAttention(ATTENTION_LIMIT),
+        repo.getAttentionSummary(),
       ]);
-      return { kpi, team, attention };
+      return { kpi, team, attention, attentionSummary };
     },
     [period],
-    { liveTopics: ["lead", "payment", "document", "task", "conversation"] },
+    { liveTopics: ["lead", "payment", "document", "task", "conversation", "booking", "departure"] },
   );
 
   const targets = useApiQuery(
@@ -105,6 +108,7 @@ export function ManagerDashboardBoard() {
       {dashboard.data ? (
         <DashboardGrid
           data={dashboard.data}
+          locale={locale}
           targetSlot={
             canTargets ? (
               <ActiveTargetsWidget
@@ -153,11 +157,11 @@ export function ManagerDashboardBoard() {
   );
 }
 
-type GridProps = { data: DashboardData; aiSlot: ReactNode; targetSlot: ReactNode; revenueSlot: ReactNode };
+type GridProps = { data: DashboardData; locale: string; aiSlot: ReactNode; targetSlot: ReactNode; revenueSlot: ReactNode };
 
-function DashboardGrid({ data, aiSlot, targetSlot, revenueSlot }: GridProps) {
+function DashboardGrid({ data, locale, aiSlot, targetSlot, revenueSlot }: GridProps) {
   const t = useTranslations("manager");
-  const { kpi, team, attention } = data;
+  const { kpi, team, attention, attentionSummary } = data;
 
   return (
     <>
@@ -180,7 +184,7 @@ function DashboardGrid({ data, aiSlot, targetSlot, revenueSlot }: GridProps) {
       )}
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <AttentionWidget items={attention} />
+        <AttentionWidget items={attention} summary={attentionSummary} locale={locale} />
         <TeamWidget members={team} />
       </div>
     </>

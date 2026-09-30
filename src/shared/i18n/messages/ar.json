@@ -135,15 +135,6 @@
       "package": "الباقات",
       "customers": "العملاء"
     },
-    "attentionTitle": "يحتاج انتباهاً",
-    "attentionEmpty": "لا استثناءات الآن",
-    "attentionKinds": {
-      "overdue_task": "مهمة متأخرة",
-      "unpaid_booking": "حجز غير مدفوع",
-      "missing_doc": "مستند ناقص",
-      "capacity": "مخاطر السعة",
-      "escalated_task": "مصعّد"
-    },
     "teamTitle": "الفريق",
     "teamEmpty": "لا يوجد نشاط للفريق بعد",
     "team": {
@@ -158,9 +149,6 @@
       "d30": "٣٠ يومًا",
       "d90": "٩٠ يومًا"
     },
-    "seeAll": "عرض الكل",
-    "ageHours": "{count} س",
-    "ageDays": "{count} ي",
     "revenue": {
       "title": "الإيرادات",
       "subtitle": "من السجل المالي · {currency}",
@@ -213,6 +201,38 @@
       "reached": "تحقق الهدف",
       "perDay": "المطلوب يوميًا",
       "unconverted": "لم تُحتسب {currencies} — أضف سعر صرف"
+    },
+    "attention": {
+      "title": "يحتاج إلى متابعة",
+      "seeAll": "فتح المهام",
+      "filter": "تصفية حسب النوع",
+      "urgent": "عاجل",
+      "urgentCount": "{count} عاجل",
+      "empty": "لا شيء معلق",
+      "emptyFiltered": "لا يوجد عناصر من هذا النوع",
+      "emptyHint": "لا توجد استثناءات مفتوحة لهذا الفرع الآن.",
+      "showing": "عرض أكثر {shown} عناصر إلحاحًا من أصل {total}",
+      "balance": "رصيد مستحق",
+      "seats": "{sold}/{total}",
+      "overdueBy": "متأخر {age}",
+      "dueIn": "مستحق خلال {age}",
+      "waiting": "مفتوح منذ {age}",
+      "ageHours": "{count} س",
+      "ageDays": "{count} ي",
+      "kinds": {
+        "escalated_task": "مهمة مصعّدة",
+        "overdue_task": "مهمة متأخرة",
+        "unpaid_booking": "حجز غير مدفوع",
+        "missing_doc": "مستندات ناقصة",
+        "capacity": "خطر السعة"
+      },
+      "tiles": {
+        "escalated_task": "مصعّدة",
+        "overdue_task": "متأخرة",
+        "unpaid_booking": "غير مدفوع",
+        "missing_doc": "مستندات",
+        "capacity": "السعة"
+      }
     }
   },
   "inbox": {

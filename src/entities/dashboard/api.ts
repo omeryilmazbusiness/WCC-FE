@@ -2,8 +2,10 @@ import { http, type HttpClient } from "@/shared/api/http-client";
 import { createRepository } from "@/shared/api/repository";
 import { createTaskRepository, isTaskOverdue } from "@/entities/task";
 import { createLeadRepository } from "@/entities/lead";
+import { ATTENTION_KINDS } from "./model";
 import type {
   AttentionItem,
+  AttentionSummary,
   DashboardKPI,
   MoneyStat,
   MyWorkItem,
@@ -16,6 +18,7 @@ export interface DashboardRepository {
   getKPIs(from?: Date, to?: Date): Promise<DashboardKPI>;
   getTeamStats(from?: Date, to?: Date): Promise<TeamMemberStat[]>;
   getAttention(limit?: number): Promise<AttentionItem[]>;
+  getAttentionSummary(): Promise<AttentionSummary>;
   getMyWork(limit?: number): Promise<MyWorkItem[]>;
   getTarget(scope?: "personal" | "branch"): Promise<TargetSnapshot>;
   getRevenue(from: Date, to: Date): Promise<RevenueSummary>;
@@ -57,17 +60,47 @@ function mapTeam(raw: Raw): TeamMemberStat {
   };
 }
 
+function numberOrNull(v: unknown): number | null {
+  return v === null || v === undefined || v === "" ? null : Number(v);
+}
+
 function mapAttention(raw: Raw): AttentionItem {
+  const relatedType = String(raw.related_type ?? raw.relatedType ?? "");
+  const relatedId = String(raw.related_id ?? raw.relatedId ?? "");
   return {
     id: String(raw.id),
     kind: String(raw.kind ?? ""),
     severity: String(raw.severity ?? "medium"),
     title: String(raw.title ?? ""),
-    relatedType: String(raw.related_type ?? raw.relatedType ?? ""),
-    relatedId: String(raw.related_id ?? raw.relatedId ?? ""),
+    relatedType,
+    relatedId,
     ageHours: Number(raw.age_hours ?? raw.ageHours ?? 0),
     hrefHint: String(raw.href_hint ?? raw.hrefHint ?? "tasks"),
+    context: String(raw.context ?? ""),
+    linkType: String(raw.link_type ?? raw.linkType ?? "task"),
+    linkId: String(raw.link_id ?? raw.linkId ?? raw.id ?? ""),
+    amount: numberOrNull(raw.amount),
+    currency: String(raw.currency ?? ""),
+    capacitySold: numberOrNull(raw.capacity_sold ?? raw.capacitySold),
+    capacityTotal: numberOrNull(raw.capacity_total ?? raw.capacityTotal),
+    dueAt: (raw.due_at ?? raw.dueAt ?? null) as string | null,
   };
+}
+
+export function mapAttentionSummary(raw: Raw): AttentionSummary {
+  const kinds = (raw.kinds ?? {}) as Record<string, unknown>;
+  return {
+    total: Number(raw.total ?? 0),
+    high: Number(raw.high ?? 0),
+    kinds: Object.fromEntries(ATTENTION_KINDS.map((k) => [k, Number(kinds[k] ?? 0)])) as AttentionSummary["kinds"],
+  };
+}
+
+/** Summary of an already loaded feed (demo mode, or when counts come from the page). */
+export function summarizeAttention(items: readonly AttentionItem[]): AttentionSummary {
+  const kinds = Object.fromEntries(ATTENTION_KINDS.map((k) => [k, 0])) as AttentionSummary["kinds"];
+  for (const it of items) if (it.kind in kinds) kinds[it.kind as keyof typeof kinds] += 1;
+  return { total: items.length, high: items.filter((it) => it.severity === "high").length, kinds };
 }
 
 function mapMyWork(raw: Raw): MyWorkItem {
@@ -162,6 +195,10 @@ export class ApiDashboardRepository implements DashboardRepository {
       `/dashboard/attention?limit=${limit}`,
     );
     return (Array.isArray(data) ? data : []).map(mapAttention);
+  }
+
+  async getAttentionSummary(): Promise<AttentionSummary> {
+    return mapAttentionSummary(await this.http.request<Raw>("/dashboard/attention/summary"));
   }
 
   async getMyWork(limit = 20): Promise<MyWorkItem[]> {
@@ -295,8 +332,20 @@ export class MemoryDashboardRepository implements DashboardRepository {
             )
           : 0,
         hrefHint: "tasks",
+        context: "",
+        linkType: "task",
+        linkId: t.id,
+        amount: null,
+        currency: "",
+        capacitySold: null,
+        capacityTotal: null,
+        dueAt: t.dueAt,
       }));
     return overdue;
+  }
+
+  async getAttentionSummary(): Promise<AttentionSummary> {
+    return summarizeAttention(await this.getAttention(50));
   }
 
   async getMyWork(limit = 20): Promise<MyWorkItem[]> {
@@ -350,6 +399,7 @@ export function createDashboardRepository(): DashboardRepository {
       "getKPIs",
       "getTeamStats",
       "getAttention",
+      "getAttentionSummary",
       "getMyWork",
       "getTarget",
     ],

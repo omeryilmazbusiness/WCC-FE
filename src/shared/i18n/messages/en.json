@@ -135,15 +135,6 @@
       "package": "Packages",
       "customers": "Customers"
     },
-    "attentionTitle": "Needs attention",
-    "attentionEmpty": "No exceptions right now",
-    "attentionKinds": {
-      "overdue_task": "Overdue task",
-      "unpaid_booking": "Unpaid booking",
-      "missing_doc": "Missing document",
-      "capacity": "Capacity risk",
-      "escalated_task": "Escalated"
-    },
     "teamTitle": "Team",
     "teamEmpty": "No team activity yet",
     "team": {
@@ -158,9 +149,6 @@
       "d30": "30d",
       "d90": "90d"
     },
-    "seeAll": "See all",
-    "ageHours": "{count}h",
-    "ageDays": "{count}d",
     "revenue": {
       "title": "Revenue",
       "subtitle": "From the finance ledger · {currency}",
@@ -213,6 +201,38 @@
       "reached": "Goal reached",
       "perDay": "Daily need",
       "unconverted": "{currencies} not counted — add FX rate"
+    },
+    "attention": {
+      "title": "Needs attention",
+      "seeAll": "Open tasks",
+      "filter": "Filter by type",
+      "urgent": "Urgent",
+      "urgentCount": "{count} urgent",
+      "empty": "All clear",
+      "emptyFiltered": "Nothing of this type",
+      "emptyHint": "No open exceptions for this branch right now.",
+      "showing": "Showing the {shown} most urgent of {total}",
+      "balance": "Balance due",
+      "seats": "{sold}/{total}",
+      "overdueBy": "Overdue {age}",
+      "dueIn": "Due in {age}",
+      "waiting": "Open {age}",
+      "ageHours": "{count}h",
+      "ageDays": "{count}d",
+      "kinds": {
+        "escalated_task": "Escalated task",
+        "overdue_task": "Overdue task",
+        "unpaid_booking": "Unpaid booking",
+        "missing_doc": "Missing documents",
+        "capacity": "Capacity risk"
+      },
+      "tiles": {
+        "escalated_task": "Escalated",
+        "overdue_task": "Overdue",
+        "unpaid_booking": "Unpaid",
+        "missing_doc": "Documents",
+        "capacity": "Capacity"
+      }
     }
   },
   "inbox": {
