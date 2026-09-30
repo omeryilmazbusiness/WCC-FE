@@ -62,6 +62,8 @@ type SearchFilterBarProps = {
   loading?: boolean;
   /** Extra attributes for the input (role, aria-*, key handlers, test ids). */
   inputProps?: InputProps;
+  /** Field look; `hero` is the large dashboard pill. */
+  variant?: "minimal" | "hero";
   className?: string;
 };
 
@@ -82,6 +84,7 @@ export function SearchFilterBar({
   showActiveChips = true,
   loading = false,
   inputProps,
+  variant = "minimal",
   className,
 }: SearchFilterBarProps) {
   const tc = useTranslations("common");
@@ -101,7 +104,7 @@ export function SearchFilterBar({
     <div className={cn("flex w-full flex-col gap-2", className)} data-testid="search-filter-bar">
       <SearchField
         {...inputProps}
-        variant="minimal"
+        variant={variant}
         value={value}
         onValueChange={onValueChange}
         placeholder={placeholder}
@@ -119,6 +122,7 @@ export function SearchFilterBar({
                 filtered={filtered}
                 labels={labels}
                 onReset={resetAll}
+                round={variant === "hero"}
               />
             ) : null}
           </>
@@ -138,9 +142,10 @@ type FilterMenuButtonProps = {
   filtered: boolean;
   labels: { filter: string; reset: string };
   onReset: () => void;
+  round?: boolean;
 };
 
-function FilterMenuButton({ sections, activeCount, filtered, labels, onReset }: FilterMenuButtonProps) {
+function FilterMenuButton({ sections, activeCount, filtered, labels, onReset, round }: FilterMenuButtonProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -149,7 +154,8 @@ function FilterMenuButton({ sections, activeCount, filtered, labels, onReset }: 
           aria-label={labels.filter}
           data-testid="search-filter-trigger"
           className={cn(
-            "relative flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] text-zinc-400 transition-all duration-300 hover:bg-zinc-100 hover:text-zinc-950",
+            "relative flex shrink-0 items-center justify-center text-zinc-400 transition-all duration-300 hover:bg-zinc-100 hover:text-zinc-950",
+            round ? "h-11 w-11 rounded-full bg-zinc-50" : "h-10 w-10 rounded-[14px]",
             activeCount > 0 && "bg-zinc-950 text-white hover:bg-zinc-800 hover:text-white",
           )}
         >

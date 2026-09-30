@@ -31,12 +31,15 @@ export function CommandBar() {
   const actions = QUICK_ACTIONS.filter((a) => hasPermission(granted, a.permission));
 
   return (
-    <section className="flex flex-col gap-4 rounded-[28px] border border-zinc-200/60 bg-white p-4 shadow-[0_10px_34px_-24px_rgba(15,23,42,0.35)] lg:flex-row lg:items-center lg:gap-6 lg:p-5">
-      <GlobalSearch className="lg:flex-1" />
+    <section
+      className="flex flex-col gap-5 lg:flex-row lg:items-center lg:gap-8"
+      data-testid="manager-command-bar"
+    >
+      <GlobalSearch variant="hero" className="lg:flex-1" />
       {actions.length ? (
-        <nav className="flex flex-wrap items-start justify-center gap-1 lg:justify-end" data-testid="manager-quick-actions">
+        <nav className="flex flex-wrap items-start justify-center gap-2 lg:justify-end" data-testid="manager-quick-actions">
           {actions.map((a) => (
-            <ActionTile key={a.key} href={a.href} icon={a.icon} tone={a.tone} label={t(`quick.${a.key}`)} />
+            <ActionTile key={a.key} size="lg" href={a.href} icon={a.icon} tone={a.tone} label={t(`quick.${a.key}`)} />
           ))}
         </nav>
       ) : null}

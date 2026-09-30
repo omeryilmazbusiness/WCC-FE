@@ -22,7 +22,7 @@ const repo = createSearchRepository();
 type Results = { key: string; hits: SearchHit[] } | null;
 
 /** Cross-entity search with a type filter; results open under the bar. */
-export function GlobalSearch({ className }: { className?: string }) {
+export function GlobalSearch({ className, variant }: { className?: string; variant?: "minimal" | "hero" }) {
   const t = useTranslations("search");
   const router = useRouter();
   const listId = useId();
@@ -107,6 +107,7 @@ export function GlobalSearch({ className }: { className?: string }) {
   return (
     <div ref={wrapRef} className={cn("relative min-w-0 w-full", className)}>
       <SearchFilterBar
+        variant={variant}
         value={q}
         onValueChange={changeQuery}
         placeholder={t("placeholder")}
