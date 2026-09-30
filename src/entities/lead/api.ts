@@ -10,7 +10,10 @@ import {
   type LeadCreateInput,
   type LeadOwner,
   type LeadStage,
+  type LeadUpdateInput,
   type StageHistoryItem,
+  type TripInterest,
+  emptyTripInterest,
 } from "./model";
 
 export interface LeadRepository {
@@ -23,6 +26,7 @@ export interface LeadRepository {
   listByCustomerId(customerId: string): Promise<Lead[]>;
   getById(id: string): Promise<Lead>;
   create(input: LeadCreateInput): Promise<Lead>;
+  update(id: string, input: LeadUpdateInput): Promise<Lead>;
   changeStage(id: string, input: ChangeStageInput): Promise<Lead>;
   assign(id: string, ownerId: string, ownerName?: string): Promise<Lead>;
   bulkAssign(leadIds: string[], ownerId: string, ownerName?: string): Promise<Lead[]>;
@@ -34,6 +38,36 @@ export interface LeadRepository {
 }
 
 type ApiLead = Record<string, unknown>;
+
+function numOrNull(v: unknown): number | null {
+  return typeof v === "number" && Number.isFinite(v) ? v : null;
+}
+
+function mapInterest(raw: unknown): TripInterest {
+  if (!raw || typeof raw !== "object") return emptyTripInterest();
+  const r = raw as Record<string, unknown>;
+  return {
+    travelDate: typeof r.travel_date === "string" && r.travel_date ? r.travel_date : null,
+    travelWindow: String(r.travel_window ?? ""),
+    paxCount: numOrNull(r.pax_count),
+    budgetAmount: numOrNull(r.budget_amount),
+    budgetCurrency: String(r.budget_currency ?? ""),
+    packageId: typeof r.package_id === "string" && r.package_id ? r.package_id : null,
+    packageInterest: String(r.package_interest ?? ""),
+  };
+}
+
+function interestBody(t: TripInterest) {
+  return {
+    travel_date: t.travelDate || null,
+    travel_window: t.travelWindow,
+    pax_count: t.paxCount,
+    budget_amount: t.budgetAmount,
+    budget_currency: t.budgetCurrency,
+    package_id: t.packageId || null,
+    package_interest: t.packageInterest,
+  };
+}
 
 function mapLead(raw: ApiLead): Lead {
   return {
@@ -49,6 +83,7 @@ function mapLead(raw: ApiLead): Lead {
     lostReasonCode: String(raw.lostReasonCode ?? raw.lost_reason_code ?? ""),
     lostReason: String(raw.lostReason ?? raw.lost_reason ?? ""),
     notes: String(raw.notes ?? ""),
+    interest: mapInterest(raw.interest),
     noFollowUp: Boolean(raw.noFollowUp ?? raw.no_follow_up ?? false),
     convertedBookingId: (raw.convertedBookingId ??
       raw.converted_booking_id ??
@@ -108,6 +143,21 @@ export class ApiLeadRepository implements LeadRepository {
           notes: input.notes ?? "",
           owner_id: input.ownerId,
           customer_id: input.customerId || null,
+          interest: input.interest ? interestBody(input.interest) : undefined,
+        }),
+      }),
+    );
+  }
+
+  async update(id: string, input: LeadUpdateInput): Promise<Lead> {
+    return mapLead(
+      await this.http.request<ApiLead>(`/leads/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          full_name: input.fullName,
+          phone: input.phone,
+          notes: input.notes,
+          interest: input.interest ? interestBody(input.interest) : undefined,
         }),
       }),
     );
@@ -209,7 +259,7 @@ function nowIso() {
   return new Date().toISOString();
 }
 
-const store: Lead[] = [
+const seed: Omit<Lead, "interest">[] = [
   {
     id: "lead-1",
     branchId: "11111111-1111-1111-1111-111111111111",
@@ -293,6 +343,8 @@ const store: Lead[] = [
   },
 ];
 
+const store: Lead[] = seed.map((l) => ({ ...l, interest: emptyTripInterest() }));
+
 const memoryHistory: Record<string, StageHistoryItem[]> = {};
 
 export class MemoryLeadRepository implements LeadRepository {
@@ -344,6 +396,7 @@ export class MemoryLeadRepository implements LeadRepository {
       lostReasonCode: "",
       lostReason: "",
       notes: input.notes?.trim() ?? "",
+      interest: input.interest ?? emptyTripInterest(),
       noFollowUp: false,
       createdAt: nowIso(),
       updatedAt: nowIso(),
@@ -360,6 +413,16 @@ export class MemoryLeadRepository implements LeadRepository {
         createdAt: nowIso(),
       },
     ];
+    return lead;
+  }
+
+  async update(id: string, input: LeadUpdateInput): Promise<Lead> {
+    const lead = await this.getById(id);
+    if (input.fullName !== undefined) lead.fullName = input.fullName.trim();
+    if (input.phone !== undefined) lead.phone = input.phone.trim();
+    if (input.notes !== undefined) lead.notes = input.notes;
+    if (input.interest) lead.interest = { ...input.interest };
+    lead.updatedAt = nowIso();
     return lead;
   }
 

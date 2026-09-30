@@ -2,16 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import type {
-  Lead,
-  LeadRepository,
-  StageHistoryItem,
+import {
+  hasTripInterest,
+  type Lead,
+  type LeadRepository,
+  type StageHistoryItem,
 } from "@/entities/lead";
+import { createTourPackageRepository } from "@/entities/tourpackage";
 import { useCan } from "@/entities/viewer";
 import { AssignLeadDialog } from "@/features/assign-lead";
 import { LeadStageMenu } from "@/features/change-lead-stage";
 import { ConvertLeadDialog } from "@/features/convert-lead";
-import { formatDateTime } from "@/shared/lib/format";
+import { LeadFormDialog } from "@/features/create-lead";
+import { formatDateTime, formatDay, formatMoney } from "@/shared/lib/format";
 import {
   Badge,
   Button,
@@ -45,6 +48,23 @@ export function LeadDetailDrawer({
   const feedback = useMutationFeedback();
   const canWrite = useCan("leads.write");
   const [history, setHistory] = useState<StageHistoryItem[]>([]);
+  const [editing, setEditing] = useState(false);
+  const [packageLabel, setPackageLabel] = useState("");
+  const packageId = lead?.interest.packageId ?? null;
+
+  useEffect(() => {
+    if (!packageId || !open) {
+      setPackageLabel("");
+      return;
+    }
+    void createTourPackageRepository()
+      .listPackages(false)
+      .then((rows) => {
+        const p = rows.find((r) => r.id === packageId);
+        setPackageLabel(p ? `${p.code} · ${locale === "ar" && p.nameAr ? p.nameAr : p.nameEn}` : "");
+      })
+      .catch(() => setPackageLabel(""));
+  }, [packageId, open, locale]);
 
   useEffect(() => {
     if (!lead || !open) return;
@@ -104,6 +124,41 @@ export function LeadDetailDrawer({
                 </div>
               </dl>
 
+              <section className="rounded-2xl border border-zinc-200/80 bg-white p-4">
+                <h3 className="mb-3 text-sm font-semibold text-zinc-950">{t("tripTitle")}</h3>
+                {hasTripInterest(lead.interest) ? (
+                  <dl className="grid grid-cols-2 gap-3 text-sm">
+                    <TripItem
+                      label={t("fields.travelDate")}
+                      value={
+                        lead.interest.travelDate
+                          ? formatDay(lead.interest.travelDate, locale)
+                          : lead.interest.travelWindow
+                      }
+                      hint={lead.interest.travelDate ? lead.interest.travelWindow : ""}
+                    />
+                    <TripItem
+                      label={t("fields.travellers")}
+                      value={lead.interest.paxCount ? String(lead.interest.paxCount) : ""}
+                    />
+                    <TripItem
+                      label={t("fields.budget")}
+                      value={
+                        lead.interest.budgetAmount != null && lead.interest.budgetCurrency
+                          ? formatMoney(lead.interest.budgetAmount, locale, lead.interest.budgetCurrency)
+                          : ""
+                      }
+                    />
+                    <TripItem
+                      label={t("fields.package")}
+                      value={packageLabel || lead.interest.packageInterest}
+                    />
+                  </dl>
+                ) : (
+                  <p className="text-sm text-zinc-500">{t("tripEmpty")}</p>
+                )}
+              </section>
+
               {lead.notes ? (
                 <p className="rounded-2xl bg-zinc-50 p-3 text-sm text-zinc-700 whitespace-pre-wrap">
                   {lead.notes}
@@ -147,6 +202,11 @@ export function LeadDetailDrawer({
               </div>
             </DrawerBody>
             <DrawerFooter className="flex flex-wrap gap-2">
+              {canWrite ? (
+                <Button type="button" variant="outline" size="sm" onClick={() => setEditing(true)}>
+                  {t("edit")}
+                </Button>
+              ) : null}
               <LeadStageMenu
                 lead={lead}
                 repository={repository}
@@ -183,9 +243,26 @@ export function LeadDetailDrawer({
                 </Button>
               ) : null}
             </DrawerFooter>
+            <LeadFormDialog
+              repository={repository}
+              open={editing}
+              onOpenChange={setEditing}
+              lead={lead}
+              onSaved={onChanged}
+            />
           </>
         ) : null}
       </DrawerContent>
     </Drawer>
+  );
+}
+
+function TripItem({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <div>
+      <dt className="text-xs font-semibold uppercase text-zinc-500">{label}</dt>
+      <dd className="mt-1 font-medium text-zinc-900">{value || "—"}</dd>
+      {hint ? <dd className="text-xs text-zinc-500">{hint}</dd> : null}
+    </div>
   );
 }

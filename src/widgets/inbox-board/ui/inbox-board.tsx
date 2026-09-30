@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import {
   Inbox,
   AlertTriangle,
-  UserPlus,
   CheckCircle2,
   Ban,
   Copy,
@@ -24,11 +23,11 @@ import {
   type NextTaskOutcome,
   type NextTaskSuggestion,
 } from "@/entities/conversation";
-import { createLeadRepository } from "@/entities/lead";
 import { createTaskRepository } from "@/entities/task";
 import { createAIRepository } from "@/entities/ai";
 import { useCan } from "@/entities/viewer";
 import { InboxSetupWizard } from "@/features/inbox-setup";
+import { LeadFromConversation } from "@/features/lead-from-conversation";
 import { useSessionUser } from "@/shared/api/session-context";
 import { routes } from "@/shared/config/routes";
 import { Link } from "@/shared/i18n/navigation";
@@ -72,7 +71,6 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
   const canManageChannels = useCan("integrations.write");
   const canWrite = useCan("inbox.write");
   const canAssist = useCan("ai.write");
-  const canCreateLead = useCan("leads.write");
   const canCreateTask = useCan("tasks.write");
   const canCreateBooking = useCan("bookings.write");
   const [loadError, setLoadError] = useState<unknown>(null);
@@ -263,28 +261,6 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
       await repository.setStatus(selected.id, status);
       await reload();
       feedback.success(t("statusUpdated"));
-    } catch (err) {
-      feedback.error(err, t("actionError"));
-    }
-  }
-
-  async function createLeadFromConvo() {
-    if (!selected) return;
-    try {
-      const leadRepo = createLeadRepository();
-      const owners = await leadRepo.listOwners();
-      const owner = owners[0] ?? {
-        id: user.id,
-        name: user.fullName,
-      };
-      await leadRepo.create({
-        fullName: selected.identityLabel || selected.subject || "Inbox lead",
-        phone: "+905550000000",
-        source: selected.channel,
-        ownerId: owner.id,
-        ownerName: owner.name,
-      });
-      feedback.success(t("leadCreated"));
     } catch (err) {
       feedback.error(err, t("actionError"));
     }
@@ -747,17 +723,11 @@ export function InboxBoard({ repository: repositoryProp }: Props) {
                 <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
                   {t("createFrom")}
                 </p>
-                {canCreateLead ? (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => void createLeadFromConvo()}
-                  >
-                    <UserPlus className="h-4 w-4" />
-                    {t("createLead")}
-                  </Button>
-                ) : null}
+                <LeadFromConversation
+                  conversation={selected}
+                  conversationRepository={repository}
+                  onLinked={() => void reload()}
+                />
                 {canCreateTask ? (
                   <Button
                     type="button"

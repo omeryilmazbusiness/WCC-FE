@@ -25,6 +25,8 @@ export interface ConversationRepository {
     opts?: { internalNote?: boolean },
   ): Promise<InboxMessage>;
   assign(conversationId: string, ownerId: string): Promise<Conversation>;
+  /** Attach a lead of the same branch to the conversation. */
+  linkLead(conversationId: string, leadId: string): Promise<Conversation>;
   setStatus(
     conversationId: string,
     status: ConversationStatus,
@@ -71,6 +73,8 @@ function mapConversation(raw: Raw): Conversation {
     ),
     customerName: String(raw.customer_name ?? raw.customerName ?? ""),
     identityLabel: String(raw.identity_label ?? raw.identityLabel ?? ""),
+    contactName: String(raw.contact_name ?? ""),
+    contactPhone: String(raw.contact_phone ?? ""),
     updatedAt: String(raw.updated_at ?? raw.updatedAt ?? ""),
     createdAt: String(raw.created_at ?? raw.createdAt ?? ""),
   };
@@ -198,6 +202,15 @@ export class ApiConversationRepository implements ConversationRepository {
     );
   }
 
+  async linkLead(conversationId: string, leadId: string): Promise<Conversation> {
+    return mapConversation(
+      await this.http.request<Raw>(`/inbox/conversations/${conversationId}/lead`, {
+        method: "POST",
+        body: JSON.stringify({ lead_id: leadId }),
+      }),
+    );
+  }
+
   async setStatus(
     conversationId: string,
     status: ConversationStatus,
@@ -298,6 +311,8 @@ function seedConversations(): Conversation[] {
       lastMessagePreview: "Do you have April packages?",
       customerName: "",
       identityLabel: "Demo Guest · +905551112233",
+      contactName: "Demo Guest",
+      contactPhone: "+905551112233",
       updatedAt: new Date(now - 20 * 60_000).toISOString(),
       createdAt: new Date(now - 20 * 60_000).toISOString(),
     },
@@ -317,6 +332,8 @@ function seedConversations(): Conversation[] {
       lastMessagePreview: "Which documents do I need?",
       customerName: "",
       identityLabel: "Email Guest · guest@example.com",
+      contactName: "Email Guest",
+      contactPhone: "",
       updatedAt: new Date(now - 10 * 60_000).toISOString(),
       createdAt: new Date(now - 10 * 60_000).toISOString(),
     },
@@ -437,6 +454,13 @@ export class MemoryConversationRepository implements ConversationRepository {
     c.ownerId = ownerId;
     c.ownerName =
       ownerId === MANAGER ? "Branch Manager" : "Sales Employee";
+    c.updatedAt = new Date().toISOString();
+    return c;
+  }
+
+  async linkLead(conversationId: string, leadId: string): Promise<Conversation> {
+    const c = await this.get(conversationId);
+    c.leadId = leadId;
     c.updatedAt = new Date().toISOString();
     return c;
   }

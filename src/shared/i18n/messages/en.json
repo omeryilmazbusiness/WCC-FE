@@ -215,7 +215,17 @@
     "statusUpdated": "Status updated",
     "leadCreated": "Lead created",
     "taskCreated": "Task created",
-    "actionError": "Could not update conversation"
+    "actionError": "Could not update conversation",
+    "leadDraftCreate": "Create lead with AI",
+    "leadDraftComplete": "Complete lead with AI",
+    "leadDraftReading": "Reading the conversation…",
+    "leadDraftHint": "Name, date, travellers, budget and package",
+    "leadDraftNothing": "AI found no trip details yet. Fill in what you know.",
+    "leadDraftError": "AI could not read this conversation",
+    "leadDraftNoAI": "Connect an AI provider key to fill leads from conversations. You can still create the lead by hand.",
+    "leadDraftConnect": "Connect AI",
+    "editLead": "Edit lead",
+    "leadUpdated": "Lead updated"
   },
   "inboxSetup": {
     "pageTitle": "Inbox setup",
@@ -617,7 +627,36 @@
       "customer": "Customer",
       "departure": "Departure",
       "pax": "Pax",
-      "amount": "Amount"
+      "amount": "Amount",
+      "travelDate": "Travel date",
+      "travelWindow": "Travel period",
+      "travelWindowHint": "e.g. March 2027, Ramadan",
+      "travellers": "Travellers",
+      "budget": "Budget",
+      "currency": "Currency",
+      "package": "Package",
+      "packageNone": "No package selected",
+      "packageInterest": "What they want",
+      "packageInterestHint": "e.g. 5-star Umrah, 10 nights",
+      "notes": "Notes"
+    },
+    "edit": "Edit",
+    "editLead": "Edit lead",
+    "editHint": "Update contact and trip details.",
+    "aiBadge": "AI",
+    "aiBanner": "Filled by AI from the conversation. Check the marked fields before saving.",
+    "tripTitle": "Trip interest",
+    "tripEmpty": "No trip details yet.",
+    "sections": {
+      "contact": "Contact",
+      "trip": "Trip",
+      "budgetPackage": "Budget and package"
+    },
+    "errors": {
+      "pax": "Enter a number between 1 and 500",
+      "budget": "Enter an amount like 12500 or 12500.50",
+      "currency": "Use a 3-letter code, e.g. SAR",
+      "currencyRequired": "Add a currency for the budget"
     }
   },
   "packages": {
@@ -881,7 +920,10 @@
     "readyBody": "Manager summary, inbox drafts, lead priority, and OCR are available for this branch.",
     "edit": "Change provider",
     "connectedAs": "Connected: {provider} ({hint})",
-    "goDashboard": "Go to dashboard"
+    "goDashboard": "Go to dashboard",
+    "modelHint": "Default: {model}. Pick from the list or type another model ID.",
+    "verifying": "Checking with provider…",
+    "verifyNote": "We send one short test request to confirm the key and model before saving."
   },
   "setup": {
     "brand": "WODI",
@@ -1096,10 +1138,26 @@
     "configure": "Configure AI",
     "refresh": "Refresh",
     "loading": "Generating…",
-    "empty": "No summary yet",
     "focus": "Focus",
     "sourceAi": "Source: AI provider",
-    "sourceRules": "Source: rules engine (AI key optional)"
+    "sourceRules": "Source: rules engine (AI key optional)",
+    "lostTitle": "Why we lose leads",
+    "lostAnalyze": "Analyze now",
+    "lostEmpty": "No analysis yet. It runs every Monday morning for the past week, or analyze now.",
+    "lostNone": "No leads were lost in this period.",
+    "lostPeriod": "{from} – {to} · Lost leads: {count}",
+    "lostActions": "What to do",
+    "lostNoAi": "Connect an AI provider key to see why leads are lost each week, with simple tips.",
+    "lostError": "Could not analyze lost leads",
+    "execSubtitle": "Today's operations at a glance",
+    "execNoAi": "Connect an AI provider key to get a short morning briefing of your branch.",
+    "execEmpty": "No briefing yet today. It is prepared every morning, or generate one now.",
+    "execError": "Could not generate the briefing",
+    "generate": "Generate",
+    "updated": "Updated {when}",
+    "askAdmin": "Ask your general manager to connect AI.",
+    "lostSubtitle": "Weekly, from why-lost notes",
+    "lostReasonsLabel": "Lost reasons"
   },
   "aiOcr": {
     "title": "OCR extract (confirm before save)",
@@ -1801,7 +1859,14 @@
     "unknownTitle": "Something went wrong",
     "unknownDescription": "Please try again.",
     "retry": "Retry",
-    "emptyTitle": "Nothing here yet"
+    "emptyTitle": "Nothing here yet",
+    "codes": {
+      "ai_not_configured": "AI isn't set up for this branch yet. Add a provider key in AI setup.",
+      "ai_model_not_found": "The provider doesn't offer this model. Pick one from the list or leave the field blank for the default.",
+      "ai_key_invalid": "The provider rejected this API key. Check that it's correct and active.",
+      "ai_rate_limited": "The provider's quota or rate limit was reached. Check billing or try again later.",
+      "ai_provider_error": "The AI provider couldn't answer right now. Please try again."
+    }
   },
   "security": {
     "title": "Security",

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { KeyRound } from "lucide-react";
 import {
   AI_PROVIDERS,
+  aiErrorCode,
   createAIRepository,
   type AIProvider,
   type AISetup,
@@ -17,9 +18,15 @@ type Props = {
   onSaved?: (setup: AISetup) => void;
 };
 
+type FieldErrors = { apiKey?: string; model?: string };
+
+const inputClass =
+  "h-11 w-full rounded-xl border bg-zinc-50 px-3 text-sm font-medium text-zinc-950";
+
 /** Compact BYO AI key form (reusable in branch wizard + /setup/ai). */
 export function AIProviderForm({ initial, onSaved }: Props) {
   const t = useTranslations("aiSetup");
+  const tErr = useTranslations("errors");
   const { push } = useToast();
   const feedback = useMutationFeedback();
   const repo = useMemo(() => createAIRepository(), []);
@@ -29,26 +36,45 @@ export function AIProviderForm({ initial, onSaved }: Props) {
   const [apiKey, setApiKey] = useState("");
   const [model, setModel] = useState(initial?.model ?? "");
   const [busy, setBusy] = useState(false);
+  const [errors, setErrors] = useState<FieldErrors>({});
   const keyHint = initial?.keyHint ?? "";
+  const models = AI_PROVIDERS.find((p) => p.id === provider)?.models ?? [];
+  const listId = `ai-models-${provider}`;
+
+  function chooseProvider(next: AIProvider) {
+    if (next === provider) return;
+    setProvider(next);
+    setModel("");
+    setErrors({});
+  }
 
   async function save() {
+    setErrors({});
+    const bodyKey = apiKey.trim();
+    if (!bodyKey && !initial?.configured) {
+      setErrors({ apiKey: t("keyRequired") });
+      return;
+    }
     setBusy(true);
     try {
-      const bodyKey = apiKey.trim();
-      if (!bodyKey && !initial?.configured) {
-        push({ title: t("keyRequired"), tone: "error" });
-        return;
-      }
       const setup = await repo.completeSetup({
         provider,
         apiKey: bodyKey,
         model: model.trim() || undefined,
       });
       setApiKey("");
+      setModel(setup.model ?? "");
       onSaved?.(setup);
       push({ title: t("saved"), tone: "success" });
     } catch (err) {
-      feedback.error(err, t("saveError"));
+      const code = aiErrorCode(err);
+      if (code === "ai_model_not_found") {
+        setErrors({ model: tErr(`codes.${code}`) });
+      } else if (code === "ai_key_invalid" || code === "ai_rate_limited") {
+        setErrors({ apiKey: tErr(`codes.${code}`) });
+      } else {
+        feedback.error(err, t("saveError"));
+      }
     } finally {
       setBusy(false);
     }
@@ -66,7 +92,7 @@ export function AIProviderForm({ initial, onSaved }: Props) {
             type="button"
             role="radio"
             aria-checked={provider === p.id}
-            onClick={() => setProvider(p.id)}
+            onClick={() => chooseProvider(p.id)}
             className={cn(
               "flex items-center justify-between rounded-xl border px-4 py-3 text-start transition",
               provider === p.id
@@ -96,8 +122,14 @@ export function AIProviderForm({ initial, onSaved }: Props) {
               ? t("keyPlaceholderKeep", { hint: keyHint })
               : t("keyPlaceholder")
           }
-          className="h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm font-medium text-zinc-950"
+          aria-invalid={Boolean(errors.apiKey)}
+          className={cn(inputClass, errors.apiKey ? "border-rose-400" : "border-zinc-200")}
         />
+        {errors.apiKey ? (
+          <span role="alert" className="block text-xs font-medium text-rose-600">
+            {errors.apiKey}
+          </span>
+        ) : null}
       </label>
 
       <label className="block space-y-1.5">
@@ -106,15 +138,35 @@ export function AIProviderForm({ initial, onSaved }: Props) {
         </span>
         <input
           type="text"
+          name="ai-model"
+          list={listId}
+          autoComplete="off"
           value={model}
           onChange={(e) => setModel(e.target.value)}
-          placeholder={t("modelPlaceholder")}
-          className="h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm font-medium text-zinc-950"
+          placeholder={models[0] ?? t("modelPlaceholder")}
+          aria-invalid={Boolean(errors.model)}
+          className={cn(inputClass, errors.model ? "border-rose-400" : "border-zinc-200")}
         />
+        <datalist id={listId}>
+          {models.map((m) => (
+            <option key={m} value={m} />
+          ))}
+        </datalist>
+        {errors.model ? (
+          <span role="alert" className="block text-xs font-medium text-rose-600">
+            {errors.model}
+          </span>
+        ) : models[0] ? (
+          <span className="block text-xs text-zinc-400">
+            {t("modelHint", { model: models[0] })}
+          </span>
+        ) : null}
       </label>
 
+      <p className="text-xs text-zinc-400">{t("verifyNote")}</p>
+
       <Button type="button" disabled={busy} onClick={() => void save()}>
-        {busy ? t("saving") : t("save")}
+        {busy ? t("verifying") : t("save")}
       </Button>
     </div>
   );

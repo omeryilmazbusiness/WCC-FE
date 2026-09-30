@@ -2,6 +2,8 @@ export type {
   Lead,
   LeadStage,
   LeadCreateInput,
+  LeadUpdateInput,
+  TripInterest,
   ChangeStageInput,
   ConvertLeadInput,
   ConvertLeadResult,
@@ -16,6 +18,8 @@ export {
   LOST_REASON_CODES,
   canTransitionLead,
   nextStages,
+  emptyTripInterest,
+  hasTripInterest,
 } from "./model";
 export type { LeadRepository } from "./api";
 export {

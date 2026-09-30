@@ -59,8 +59,15 @@ export function useDescribeError(): (err: unknown) => DescribedError {
           return { kind, title: t("forbiddenTitle"), description: t("forbiddenDescription") };
         case "conflict":
           return { kind, title: t("conflictTitle"), description: backendMessage ?? t("conflictDescription") };
-        case "validation":
-          return { kind, title: t("validationTitle"), description: backendMessage ?? t("validationDescription") };
+        case "validation": {
+          const code = backendMessage?.match(/^([a-z_]+):/)?.[1];
+          const known = code && t.has(`codes.${code}`) ? t(`codes.${code}`) : undefined;
+          return {
+            kind,
+            title: t("validationTitle"),
+            description: known ?? backendMessage ?? t("validationDescription"),
+          };
+        }
         case "locked":
         case "rateLimited": {
           const retryAfter = isApiError(err) ? err.retryAfter : undefined;

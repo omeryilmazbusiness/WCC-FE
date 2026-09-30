@@ -35,6 +35,40 @@ export const LOST_REASON_CODES = [
 
 export type LostReasonCode = (typeof LOST_REASON_CODES)[number];
 
+/** What the customer asked for. budgetAmount is in minor units. */
+export type TripInterest = {
+  travelDate: string | null;
+  travelWindow: string;
+  paxCount: number | null;
+  budgetAmount: number | null;
+  budgetCurrency: string;
+  packageId: string | null;
+  packageInterest: string;
+};
+
+export function emptyTripInterest(): TripInterest {
+  return {
+    travelDate: null,
+    travelWindow: "",
+    paxCount: null,
+    budgetAmount: null,
+    budgetCurrency: "",
+    packageId: null,
+    packageInterest: "",
+  };
+}
+
+export function hasTripInterest(t: TripInterest): boolean {
+  return Boolean(
+    t.travelDate ||
+      t.travelWindow ||
+      t.paxCount ||
+      t.budgetAmount != null ||
+      t.packageId ||
+      t.packageInterest,
+  );
+}
+
 export type Lead = {
   id: string;
   branchId: string;
@@ -48,6 +82,7 @@ export type Lead = {
   lostReasonCode: string;
   lostReason: string;
   notes: string;
+  interest: TripInterest;
   noFollowUp: boolean;
   convertedBookingId?: string | null;
   createdAt: string;
@@ -62,6 +97,15 @@ export type LeadCreateInput = {
   ownerName: string;
   notes?: string;
   customerId?: string | null;
+  interest?: TripInterest;
+};
+
+/** Undefined fields stay unchanged; interest replaces the whole interest. */
+export type LeadUpdateInput = {
+  fullName?: string;
+  phone?: string;
+  notes?: string;
+  interest?: TripInterest;
 };
 
 export type ChangeStageInput = {

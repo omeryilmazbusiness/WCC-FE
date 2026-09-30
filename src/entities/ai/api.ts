@@ -6,7 +6,9 @@ import type {
   AISetup,
   ConversationAssist,
   DailySummary,
+  LeadDraftResult,
   LeadScore,
+  LostLeadsAnalysis,
   OCRResult,
   TargetInsight,
 } from "./model";
@@ -33,6 +35,68 @@ function mapSetup(raw: Raw): AISetup {
   };
 }
 
+function strings(v: unknown): string[] {
+  return Array.isArray(v) ? v.map((x) => String(x)).filter(Boolean) : [];
+}
+
+function mapLostLeads(raw: Raw): LostLeadsAnalysis {
+  const summary = (raw.summary ?? {}) as Raw;
+  const actions = (raw.actions ?? {}) as Raw;
+  return {
+    available: Boolean(raw.available),
+    periodStart: str(raw.period_start),
+    periodEnd: str(raw.period_end),
+    lostCount: Number(raw.lost_count ?? 0),
+    reasons: Array.isArray(raw.reasons)
+      ? (raw.reasons as Raw[]).map((r) => ({ code: str(r.code), count: Number(r.count ?? 0) }))
+      : [],
+    source: str(raw.source),
+    aiEnabled: Boolean(raw.ai_enabled),
+    summary: { en: str(summary.en), ar: str(summary.ar) },
+    actions: { en: strings(actions.en), ar: strings(actions.ar) },
+    model: str(raw.model),
+    createdAt: str(raw.created_at),
+  };
+}
+
+function mapDailySummary(raw: Raw): DailySummary {
+  return {
+    available: Boolean(raw.available),
+    aiEnabled: Boolean(raw.ai_enabled),
+    headline: str(raw.headline),
+    bullets: strings(raw.bullets),
+    focus: str(raw.focus),
+    attention: strings(raw.attention),
+    model: str(raw.model),
+    createdAt: str(raw.created_at),
+  };
+}
+
+function numOrNull(v: unknown): number | null {
+  return typeof v === "number" && Number.isFinite(v) ? v : null;
+}
+
+function mapLeadDraft(raw: Raw): LeadDraftResult {
+  const d = (raw.draft ?? {}) as Raw;
+  return {
+    draft: {
+      fullName: str(d.full_name),
+      phone: str(d.phone),
+      travelDate: str(d.travel_date),
+      travelWindow: str(d.travel_window),
+      paxCount: numOrNull(d.pax_count),
+      budgetAmount: numOrNull(d.budget_amount),
+      budgetCurrency: str(d.budget_currency),
+      packageId: typeof d.package_id === "string" && d.package_id ? d.package_id : null,
+      packageInterest: str(d.package_interest),
+      notes: str(d.notes),
+      aiFields: strings(d.ai_fields),
+    },
+    leadId: typeof raw.lead_id === "string" && raw.lead_id ? raw.lead_id : null,
+    model: str(raw.model),
+  };
+}
+
 export type AIRepository = {
   getSetup(): Promise<AISetup>;
   completeSetup(input: {
@@ -41,6 +105,10 @@ export type AIRepository = {
     model?: string;
   }): Promise<AISetup>;
   dailySummary(): Promise<DailySummary>;
+  generateDailySummary(): Promise<DailySummary>;
+  leadDraft(conversationId: string): Promise<LeadDraftResult>;
+  lostLeadsAnalysis(): Promise<LostLeadsAnalysis>;
+  analyzeLostLeads(): Promise<LostLeadsAnalysis>;
   conversationAssist(id: string): Promise<ConversationAssist>;
   scoreLead(id: string, explain?: boolean): Promise<LeadScore>;
   targetInsight(id: string): Promise<TargetInsight>;
@@ -77,19 +145,27 @@ class ApiRepo implements AIRepository {
   }
 
   async dailySummary() {
-    const raw = await this.http.request<Raw>("/ai/daily-summary");
-    return {
-      headline: str(raw.headline),
-      bullets: Array.isArray(raw.bullets) ? (raw.bullets as string[]) : [],
-      focus: str(raw.focus),
-      attention: Array.isArray(raw.attention)
-        ? (raw.attention as string[])
-        : [],
-      source: str(raw.source),
-      aiEnabled: Boolean(raw.ai_enabled ?? raw.aiEnabled),
-      runId: str(raw.run_id ?? raw.runId),
-      text: str(raw.text),
-    };
+    return mapDailySummary(await this.http.request<Raw>("/ai/daily-summary"));
+  }
+
+  async generateDailySummary() {
+    return mapDailySummary(await this.http.request<Raw>("/ai/daily-summary", { method: "POST" }));
+  }
+
+  async leadDraft(conversationId: string) {
+    return mapLeadDraft(
+      await this.http.request<Raw>(`/ai/conversations/${conversationId}/lead-draft`, {
+        method: "POST",
+      }),
+    );
+  }
+
+  async lostLeadsAnalysis() {
+    return mapLostLeads(await this.http.request<Raw>("/ai/lost-leads/analysis"));
+  }
+
+  async analyzeLostLeads() {
+    return mapLostLeads(await this.http.request<Raw>("/ai/lost-leads/analysis", { method: "POST" }));
   }
 
   async conversationAssist(id: string) {
@@ -166,6 +242,7 @@ class ApiRepo implements AIRepository {
   }
 }
 
+/** Offline twin: setup state only; AI output never comes from memory. */
 class MemoryRepo implements AIRepository {
   private setup: AISetup = {
     configured: false,
@@ -181,71 +258,77 @@ class MemoryRepo implements AIRepository {
     return { ...this.setup };
   }
 
-  async completeSetup(input: {
-    provider: AIProvider;
-    apiKey: string;
-    model?: string;
-  }) {
-    this.setup = {
-      ...this.setup,
-      configured: true,
-      enabled: true,
-      provider: input.provider,
-      model: input.model || "default",
-      keyHint: "••••" + input.apiKey.slice(-4),
-      setupCompleted: true,
-    };
-    return { ...this.setup };
+  async completeSetup(): Promise<AISetup> {
+    return offline();
   }
 
-  async dailySummary() {
-    return {
-      headline: "Demo briefing",
-      bullets: ["Configure your AI key for live summaries"],
-      source: "deterministic",
-      aiEnabled: false,
-    };
+  async dailySummary(): Promise<DailySummary> {
+    return offline();
   }
 
-  async conversationAssist() {
-    return {
-      summary: "Demo summary",
-      nextStep: "Configure AI",
-      replyDraft: "",
-      autoSend: false,
-      source: "deterministic",
-    };
+  async generateDailySummary(): Promise<DailySummary> {
+    return offline();
   }
 
-  async scoreLead(id: string) {
-    return {
-      leadId: id,
-      name: "Lead",
-      priorityScore: 55,
-      priorityBand: "high" as const,
-      signals: [{ code: "demo", label: "Demo signal", points: 55 }],
-      explanation: "",
-      source: "deterministic",
-    };
+  async leadDraft(): Promise<LeadDraftResult> {
+    return offline();
   }
 
-  async targetInsight() {
-    return {
-      label: "Target",
-      status: "behind",
-      recommendations: ["Focus on unpaid bookings"],
-      source: "deterministic",
-    };
+  async lostLeadsAnalysis(): Promise<LostLeadsAnalysis> {
+    return offline();
   }
 
-  async ocrExtract() {
-    return {
-      fields: { full_name: "", passport_no: "" },
-      requiresConfirmation: true,
-      confidence: 0,
-      runId: "",
-    };
+  async analyzeLostLeads(): Promise<LostLeadsAnalysis> {
+    return offline();
   }
+
+  async conversationAssist(): Promise<ConversationAssist> {
+    return offline();
+  }
+
+  async scoreLead(): Promise<LeadScore> {
+    return offline();
+  }
+
+  async targetInsight(): Promise<TargetInsight> {
+    return offline();
+  }
+
+  async ocrExtract(): Promise<OCRResult> {
+    return offline();
+  }
+}
+
+function offline(): never {
+  throw new Error("AI is unavailable offline");
+}
+
+/** The branch has no usable AI provider key. */
+export function isAINotConfigured(err: unknown): boolean {
+  return isApiError(err) && err.message.startsWith("ai_not_configured");
+}
+
+export const AI_ERROR_CODES = [
+  "ai_not_configured",
+  "ai_model_not_found",
+  "ai_key_invalid",
+  "ai_rate_limited",
+  "ai_provider_error",
+] as const;
+
+export type AIErrorCode = (typeof AI_ERROR_CODES)[number];
+
+/** Backend AI failures are "<code>: <detail>"; returns the code or null. */
+export function aiErrorCode(err: unknown): AIErrorCode | null {
+  if (!isApiError(err)) return null;
+  const code = err.message.split(":", 1)[0];
+  return (AI_ERROR_CODES as readonly string[]).includes(code) ? (code as AIErrorCode) : null;
+}
+
+/** The provider call failed (bad model/key, quota, outage, unusable output). */
+export function isAIProviderError(err: unknown): boolean {
+  const code = aiErrorCode(err);
+  return code !== null && code !== "ai_not_configured";
 }
 
 let mem: MemoryRepo | null = null;
@@ -270,6 +353,6 @@ export function createAIRepository(): AIRepository {
   return createRepository<AIRepository>({
     api,
     memory: mem,
-    reads: ["getSetup", "dailySummary", "targetInsight"],
+    reads: ["getSetup"],
   });
 }

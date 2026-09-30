@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { AlarmClock, FileWarning, Kanban, Wallet } from "lucide-react";
 import {
@@ -17,6 +17,7 @@ import { useApiQuery } from "@/shared/lib/use-api-query";
 import { ListScreen, QueryState, SegmentedControl, StatTile } from "@/shared/ui";
 import { AIExecutiveSummaryCard } from "./ai-executive-summary-card";
 import { AttentionWidget } from "./attention-widget";
+import { LostLeadsCard } from "./lost-leads-card";
 import { CommandBar } from "./command-bar";
 import { RevenueWidget } from "./revenue-widget";
 import { TargetWidget } from "./target-widget";
@@ -84,7 +85,18 @@ export function ManagerDashboardBoard() {
       <CommandBar />
 
       {dashboard.data ? (
-        <DashboardGrid data={dashboard.data} locale={locale} />
+        <DashboardGrid
+          data={dashboard.data}
+          locale={locale}
+          aiSlot={
+            canAI ? (
+              <div className="grid gap-4 lg:grid-cols-2" data-testid="manager-ai-row">
+                <AIExecutiveSummaryCard />
+                <LostLeadsCard />
+              </div>
+            ) : null
+          }
+        />
       ) : (
         <QueryState
           loading={dashboard.loading}
@@ -96,12 +108,11 @@ export function ManagerDashboardBoard() {
         </QueryState>
       )}
 
-      {canAI ? <AIExecutiveSummaryCard /> : null}
     </ListScreen>
   );
 }
 
-function DashboardGrid({ data, locale }: { data: DashboardData; locale: string }) {
+function DashboardGrid({ data, locale, aiSlot }: { data: DashboardData; locale: string; aiSlot: ReactNode }) {
   const t = useTranslations("manager");
   const { kpi, team, attention, target } = data;
   const teamCollected = team.reduce((sum, m) => sum + (m.collectedAmt ?? 0), 0);
@@ -114,6 +125,8 @@ function DashboardGrid({ data, locale }: { data: DashboardData; locale: string }
         <StatTile href={routes.bookings} label={t("kpi.bookingsUnpaid")} value={kpi.bookingsUnpaid} icon={Wallet} tone="rose" />
         <StatTile href={routes.tasks} label={t("kpi.missingDocs")} value={kpi.missingDocs} icon={FileWarning} tone="violet" />
       </div>
+
+      {aiSlot}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <TargetWidget target={target} locale={locale} />

@@ -63,6 +63,9 @@ export type Conversation = {
   lastMessagePreview: string;
   customerName: string;
   identityLabel: string;
+  /** Channel identity display name and phone, as the provider sent them. */
+  contactName: string;
+  contactPhone: string;
   updatedAt: string;
   createdAt: string;
 };
