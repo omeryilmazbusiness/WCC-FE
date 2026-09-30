@@ -1,5 +1,6 @@
 import { http, type HttpClient } from "@/shared/api/http-client";
 import { createRepository } from "@/shared/api/repository";
+import { daysInclusive, todayISO } from "./lib/period";
 import type {
   RevenueTarget,
   TargetContribution,
@@ -8,6 +9,7 @@ import type {
   TargetShare,
   TargetSource,
   TargetWeight,
+  TargetPeriodKind,
 } from "./model";
 
 type Raw = Record<string, unknown>;
@@ -24,6 +26,7 @@ function mapTarget(raw: Raw): RevenueTarget {
     metric: String(raw.metric ?? "collected") as RevenueTarget["metric"],
     scopeType: String(raw.scope_type ?? "branch") as RevenueTarget["scopeType"],
     curveType: String(raw.curve_type ?? "linear") as RevenueTarget["curveType"],
+    periodKind: String(raw.period_kind ?? "custom") as TargetPeriodKind,
     periodStart: String(raw.period_start ?? ""),
     periodEnd: String(raw.period_end ?? ""),
   };
@@ -37,6 +40,7 @@ function mapProgress(raw: Raw): TargetProgress {
     metric: String(raw.metric ?? "collected") as TargetProgress["metric"],
     scopeType: String(raw.scope_type ?? "branch") as TargetProgress["scopeType"],
     curveType: String(raw.curve_type ?? "linear") as TargetProgress["curveType"],
+    periodKind: String(raw.period_kind ?? "custom") as TargetPeriodKind,
     targetAmount: Number(raw.target_amount ?? 0),
     actualAmount: Number(raw.actual_amount ?? 0),
     expectedToDate: Number(raw.expected_to_date ?? 0),
@@ -49,6 +53,9 @@ function mapProgress(raw: Raw): TargetProgress {
     periodStart: String(raw.period_start ?? ""),
     periodEnd: String(raw.period_end ?? ""),
     asOf: String(raw.as_of ?? ""),
+    daysTotal: Number(raw.days_total ?? 0),
+    daysLeft: Number(raw.days_left ?? 0),
+    unconverted: Array.isArray(raw.unconverted) ? raw.unconverted.map(String) : [],
   };
 }
 
@@ -59,8 +66,10 @@ export type CreateTargetInput = {
   metric?: string;
   scopeType?: string;
   curveType?: string;
+  periodKind: TargetPeriodKind;
   periodStart: string;
-  periodEnd: string;
+  /** Required for season and custom; calendar kinds derive it. */
+  periodEnd?: string;
   ownerId?: string | null;
 };
 
@@ -68,6 +77,9 @@ export interface RevenueTargetRepository {
   list(): Promise<RevenueTarget[]>;
   create(input: CreateTargetInput): Promise<RevenueTarget>;
   update(id: string, patch: Partial<CreateTargetInput>): Promise<RevenueTarget>;
+  remove(id: string): Promise<void>;
+  /** Branch-wide targets running today, shortest horizon first, with progress. */
+  active(): Promise<TargetProgress[]>;
   progress(id: string): Promise<TargetProgress>;
   setWeights(id: string, weights: TargetWeight[]): Promise<TargetWeight[]>;
   getWeights(id: string): Promise<TargetWeight[]>;
@@ -97,6 +109,7 @@ class ApiRepo implements RevenueTargetRepository {
           metric: input.metric,
           scope_type: input.scopeType,
           curve_type: input.curveType,
+          period_kind: input.periodKind,
           period_start: input.periodStart,
           period_end: input.periodEnd,
           owner_id: input.ownerId,
@@ -112,6 +125,7 @@ class ApiRepo implements RevenueTargetRepository {
     if (patch.metric != null) body.metric = patch.metric;
     if (patch.scopeType != null) body.scope_type = patch.scopeType;
     if (patch.curveType != null) body.curve_type = patch.curveType;
+    if (patch.periodKind != null) body.period_kind = patch.periodKind;
     if (patch.periodStart != null) body.period_start = patch.periodStart;
     if (patch.periodEnd != null) body.period_end = patch.periodEnd;
     if (patch.ownerId !== undefined) body.owner_id = patch.ownerId;
@@ -121,6 +135,14 @@ class ApiRepo implements RevenueTargetRepository {
         body: JSON.stringify(body),
       }),
     );
+  }
+  async remove(id: string) {
+    await this.http.request<unknown>(`/targets/${id}`, { method: "DELETE" });
+  }
+  async active() {
+    const data = await this.http.request<Raw[] | { items?: Raw[] }>("/targets/active");
+    const rows = Array.isArray(data) ? data : (data.items ?? []);
+    return rows.map(mapProgress);
   }
   async progress(id: string) {
     return mapProgress(await this.http.request<Raw>(`/targets/${id}/progress`));
@@ -239,6 +261,7 @@ class MemoryRepo implements RevenueTargetRepository {
       metric: "collected",
       scopeType: "branch",
       curveType: "linear",
+      periodKind: "yearly",
       periodStart: `${new Date().getFullYear()}-01-01`,
       periodEnd: `${new Date().getFullYear()}-12-31`,
     },
@@ -261,8 +284,9 @@ class MemoryRepo implements RevenueTargetRepository {
       metric: (input.metric as RevenueTarget["metric"]) ?? "collected",
       scopeType: (input.scopeType as RevenueTarget["scopeType"]) ?? "branch",
       curveType: (input.curveType as RevenueTarget["curveType"]) ?? "linear",
+      periodKind: input.periodKind,
       periodStart: input.periodStart,
-      periodEnd: input.periodEnd,
+      periodEnd: input.periodEnd ?? input.periodStart,
     };
     this.targets.push(t);
     return t;
@@ -274,7 +298,18 @@ class MemoryRepo implements RevenueTargetRepository {
     if (patch.curveType != null) t.curveType = patch.curveType as RevenueTarget["curveType"];
     if (patch.periodStart != null) t.periodStart = patch.periodStart;
     if (patch.periodEnd != null) t.periodEnd = patch.periodEnd;
+    if (patch.periodKind != null) t.periodKind = patch.periodKind;
     return t;
+  }
+  async remove(id: string) {
+    this.targets = this.targets.filter((x) => x.id !== id);
+  }
+  async active() {
+    const today = todayISO();
+    const running = this.targets.filter(
+      (x) => x.scopeType === "branch" && x.periodStart <= today && today <= x.periodEnd,
+    );
+    return Promise.all(running.map((x) => this.progress(x.id)));
   }
   async progress(id: string): Promise<TargetProgress> {
     const t = this.targets.find((x) => x.id === id)!;
@@ -287,6 +322,7 @@ class MemoryRepo implements RevenueTargetRepository {
       metric: t.metric,
       scopeType: t.scopeType,
       curveType: t.curveType,
+      periodKind: t.periodKind,
       targetAmount: t.targetAmount,
       actualAmount: actual,
       expectedToDate: expected,
@@ -298,7 +334,10 @@ class MemoryRepo implements RevenueTargetRepository {
       status: "ahead",
       periodStart: t.periodStart,
       periodEnd: t.periodEnd,
-      asOf: new Date().toISOString().slice(0, 10),
+      asOf: todayISO(),
+      daysTotal: daysInclusive(t.periodStart, t.periodEnd),
+      daysLeft: Math.max(0, daysInclusive(todayISO(), t.periodEnd)),
+      unconverted: [],
     };
   }
   async setWeights(id: string, weights: TargetWeight[]) {
@@ -376,6 +415,7 @@ export function createRevenueTargetRepository(): RevenueTargetRepository {
     memory: mem,
     reads: [
       "list",
+      "active",
       "progress",
       "getWeights",
       "contributions",

@@ -1,15 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import {
+  AlertTriangle,
   CalendarRange,
   Gauge,
-  Plus,
   RefreshCw,
+  Trash2,
   TrendingUp,
 } from "lucide-react";
 import {
+  PeriodKindIcon,
   createRevenueTargetRepository,
   type RevenueTarget,
   type TargetContribution,
@@ -21,11 +23,13 @@ import {
 } from "@/entities/revenuetarget";
 import { useCan } from "@/entities/viewer";
 import { TargetAIInsight } from "@/features/ai-target-insight";
+import { CreateTargetDialog } from "@/features/create-target";
 import { Link } from "@/shared/i18n/navigation";
 import { routes } from "@/shared/config/routes";
 import {
   Badge,
   Button,
+  ConfirmDialog,
   EmptyState,
   Input,
   Label,
@@ -40,9 +44,9 @@ import { cn } from "@/shared/lib/cn";
 
 type Tab = "overview" | "seasonality" | "ranking" | "chart" | "sources";
 
-function money(amount: number, currency: string) {
+function money(amount: number, currency: string, locale?: string) {
   try {
-    return new Intl.NumberFormat(undefined, {
+    return new Intl.NumberFormat(locale, {
       style: "currency",
       currency,
       maximumFractionDigits: 0,
@@ -84,6 +88,8 @@ const STATUS_STYLE: Record<
 
 export function TargetPerformanceBoard() {
   const t = useTranslations("targets");
+  const tc = useTranslations("common");
+  const locale = useLocale();
   const { push } = useToast();
   const feedback = useMutationFeedback();
   const canWrite = useCan("targets.write");
@@ -100,16 +106,8 @@ export function TargetPerformanceBoard() {
   const [series, setSeries] = useState<TargetSeriesPoint[]>([]);
   const [sources, setSources] = useState<TargetSource[]>([]);
   const [tab, setTab] = useState<Tab>("overview");
-  const [creating, setCreating] = useState(false);
-
-  const [label, setLabel] = useState("Season target");
-  const [amount, setAmount] = useState("1000000");
-  const [periodStart, setPeriodStart] = useState(
-    `${new Date().getFullYear()}-01-01`,
-  );
-  const [periodEnd, setPeriodEnd] = useState(
-    `${new Date().getFullYear()}-12-31`,
-  );
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [weightDraft, setWeightDraft] = useState(
     "8.3,8.3,8.4,8.3,8.3,8.4,8.3,8.3,8.4,8.3,8.3,8.4",
   );
@@ -117,8 +115,10 @@ export function TargetPerformanceBoard() {
   const loadList = useCallback(async () => {
     const list = await repo.list();
     setTargets(list);
-    if (!selectedId && list[0]) setSelectedId(list[0].id);
-  }, [repo, selectedId]);
+    setSelectedId((current) =>
+      current && list.some((x) => x.id === current) ? current : (list[0]?.id ?? null),
+    );
+  }, [repo]);
 
   const loadSelected = useCallback(
     async (id: string) => {
@@ -165,28 +165,31 @@ export function TargetPerformanceBoard() {
   }, [loadList]);
 
   useEffect(() => {
-    if (!selectedId) return;
+    if (!selectedId) {
+      setProgress(null);
+      return;
+    }
     void loadSelected(selectedId).catch(setLoadError);
   }, [selectedId, loadSelected]);
 
-  async function createTarget() {
+  async function onCreated(created: RevenueTarget) {
+    setSelectedId(created.id);
+    await loadList().catch(setLoadError);
+  }
+
+  async function deleteSelected() {
+    if (!selectedId) return;
+    setDeleting(true);
     try {
-      const created = await repo.create({
-        label,
-        targetAmount: Math.round(Number(amount) * 100),
-        periodStart,
-        periodEnd,
-        metric: "collected",
-        scopeType: "branch",
-        curveType: "linear",
-        currency: "SAR",
-      });
-      feedback.success(t("created"));
-      setSelectedId(created.id);
-      setCreating(false);
+      await repo.remove(selectedId);
+      feedback.success(t("deleted"));
+      setConfirmDelete(false);
+      setSelectedId(null);
       await loadList();
     } catch (err) {
-      feedback.error(err, t("saveError"));
+      feedback.error(err, t("deleteError"));
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -259,76 +262,67 @@ export function TargetPerformanceBoard() {
         description={t("subtitle")}
         actions={
           canWrite ? (
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => setCreating((v) => !v)}
-            >
-              <Plus className="me-1.5 h-3.5 w-3.5" strokeWidth={2} />
-              {t("create")}
-            </Button>
-            {selectedId ? (
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => void recompute()}
-              >
-                <RefreshCw className="me-1.5 h-3.5 w-3.5" strokeWidth={2} />
-                {t("recompute")}
-              </Button>
-            ) : null}
-          </div>
+            <div className="flex items-center gap-2">
+              {selectedId ? (
+                <>
+                  <Button size="sm" variant="secondary" onClick={() => void recompute()}>
+                    <RefreshCw className="me-1.5 h-3.5 w-3.5" strokeWidth={2} />
+                    {t("recompute")}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                    onClick={() => setConfirmDelete(true)}
+                    data-testid="target-delete"
+                  >
+                    <Trash2 className="me-1.5 h-3.5 w-3.5" strokeWidth={2} />
+                    {t("delete")}
+                  </Button>
+                </>
+              ) : null}
+              <CreateTargetDialog repository={repo} onCreated={(created) => void onCreated(created)} />
+            </div>
           ) : undefined
         }
       />
 
-      {canWrite && creating ? (
-        <div className="mt-4 grid gap-3 rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-[0_10px_30px_-24px_rgba(15,23,42,0.35)] sm:grid-cols-2 lg:grid-cols-5">
-          <Field label={t("fields.label")}>
-            <Input value={label} onChange={(e) => setLabel(e.target.value)} />
-          </Field>
-          <Field label={t("fields.amount")}>
-            <Input value={amount} onChange={(e) => setAmount(e.target.value)} />
-          </Field>
-          <Field label={t("fields.periodStart")}>
-            <Input
-              type="date"
-              value={periodStart}
-              onChange={(e) => setPeriodStart(e.target.value)}
-            />
-          </Field>
-          <Field label={t("fields.periodEnd")}>
-            <Input
-              type="date"
-              value={periodEnd}
-              onChange={(e) => setPeriodEnd(e.target.value)}
-            />
-          </Field>
-          <div className="flex items-end">
-            <Button className="w-full" onClick={() => void createTarget()}>
-              {t("create")}
-            </Button>
-          </div>
-        </div>
-      ) : null}
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title={t("deleteTitle")}
+        description={t("deleteHint", { label: targets.find((x) => x.id === selectedId)?.label ?? "" })}
+        confirmLabel={t("delete")}
+        cancelLabel={tc("cancel")}
+        onConfirm={() => void deleteSelected()}
+        pending={deleting}
+        destructive
+      />
 
-      <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-        {targets.map((tg) => (
-          <button
-            key={tg.id}
-            type="button"
-            onClick={() => setSelectedId(tg.id)}
-            className={cn(
-              "shrink-0 rounded-full border px-3.5 py-1.5 text-[13px] font-semibold transition-all",
-              selectedId === tg.id
-                ? "border-zinc-900 bg-zinc-900 text-white shadow-sm"
-                : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:text-zinc-900",
-            )}
-          >
-            {tg.label}
-          </button>
-        ))}
+      <div className="mt-4 flex gap-2.5 overflow-x-auto pb-1" data-testid="target-chips">
+        {targets.map((tg) => {
+          const active = selectedId === tg.id;
+          return (
+            <button
+              key={tg.id}
+              type="button"
+              onClick={() => setSelectedId(tg.id)}
+              aria-pressed={active}
+              className={cn(
+                "flex shrink-0 items-center gap-2.5 rounded-2xl border py-1.5 pe-3.5 ps-1.5 text-start transition-all",
+                active
+                  ? "border-transparent bg-white shadow-[0_12px_28px_-18px_rgba(15,23,42,0.5)] ring-2 ring-zinc-900/80"
+                  : "border-zinc-200/80 bg-white/70 hover:border-zinc-300 hover:bg-white",
+              )}
+            >
+              <PeriodKindIcon kind={tg.periodKind} size="sm" />
+              <span className="min-w-0">
+                <span className="block max-w-[12rem] truncate text-[13px] font-semibold text-zinc-900">{tg.label}</span>
+                <span className="block text-[11px] font-medium text-zinc-400">{t(`kinds.${tg.periodKind}`)}</span>
+              </span>
+            </button>
+          );
+        })}
         {targets.length === 0 ? (
           <p className="px-1 text-sm text-zinc-400">{t("emptyHint")}</p>
         ) : null}
@@ -367,12 +361,15 @@ export function TargetPerformanceBoard() {
                     {t(`status.${progress.status}`)}
                   </Badge>
                   <Badge className="bg-zinc-100 text-zinc-600">
-                    {progress.curveType}
+                    {t(`kinds.${progress.periodKind}`)}
+                  </Badge>
+                  <Badge className="bg-zinc-100 text-zinc-600">
+                    {t(`metrics.${progress.metric}`)}
                   </Badge>
                 </div>
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                   <p className="text-[34px] font-semibold leading-none tracking-tight text-zinc-950 tabular-nums sm:text-[40px]">
-                    {money(progress.actualAmount, progress.currency)}
+                    {money(progress.actualAmount, progress.currency, locale)}
                   </p>
                   <p className="text-sm font-medium text-zinc-400">
                     {t("ofTarget", {
@@ -423,6 +420,16 @@ export function TargetPerformanceBoard() {
                 {money(progress.expectedToDate, progress.currency)}
               </span>
             </div>
+
+            {progress.unconverted.length > 0 ? (
+              <Link
+                href={routes.financeFx}
+                className="mt-3 flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-2 text-[12px] font-medium text-amber-800 hover:bg-amber-100"
+              >
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                {t("unconverted", { currencies: progress.unconverted.join(", ") })}
+              </Link>
+            ) : null}
 
             <div className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-zinc-200/80 bg-zinc-200/80 sm:grid-cols-4">
               <Kpi
@@ -634,21 +641,6 @@ export function TargetPerformanceBoard() {
         </div>
       )}
     </Screen>
-  );
-}
-
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <Label>{label}</Label>
-      {children}
-    </div>
   );
 }
 

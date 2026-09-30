@@ -33,6 +33,7 @@ export { WidgetCard } from "./widget-card";
 export { StatTile } from "./stat-tile";
 export { ActionTile } from "./action-tile";
 export { ProgressRing } from "./progress-ring";
+export { SoftGradientBackground } from "./soft-gradient-background";
 export { ListRow } from "./list-row";
 export { Pager } from "./pager";
 export { PagedList } from "./paged-list";

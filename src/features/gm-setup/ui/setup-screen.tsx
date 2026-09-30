@@ -7,7 +7,7 @@ import { createSetupRepository, type SetupOverview, type SetupStepKey } from "@/
 import { useRouter } from "@/shared/i18n/navigation";
 import { routes } from "@/shared/config/routes";
 import { useApiQuery } from "@/shared/lib/use-api-query";
-import { ErrorState, LoadingState, useMutationFeedback } from "@/shared/ui";
+import { ErrorState, LoadingState, SoftGradientBackground, useMutationFeedback } from "@/shared/ui";
 import { initialStep, neighborStep, statusOf, stepOrder } from "../model/flow";
 import { AIStep } from "./ai-step";
 import { ChannelsStep } from "./channels-step";
@@ -43,7 +43,12 @@ export function SetupScreen({ initial }: Props) {
 }
 
 function SetupFrame({ children }: { children: React.ReactNode }) {
-  return <div className="setup-wallpaper min-h-dvh">{children}</div>;
+  return (
+    <div className="relative isolate min-h-dvh">
+      <SoftGradientBackground className="fixed" />
+      {children}
+    </div>
+  );
 }
 
 function SetupFlow({ initial }: { initial: SetupOverview }) {

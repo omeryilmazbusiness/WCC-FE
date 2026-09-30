@@ -119,14 +119,6 @@
     "title": "Manager dashboard",
     "subtitle": "Today at a glance",
     "period": "Period",
-    "targetActual": "Collected",
-    "targetGoal": "Target",
-    "targetStatus": {
-      "ahead": "Ahead",
-      "on_track": "On track",
-      "behind": "Behind",
-      "placeholder": "No target set"
-    },
     "kpi": {
       "leadsOpen": "Leads open",
       "tasksOverdue": "Overdue tasks",
@@ -167,10 +159,8 @@
       "d90": "90d"
     },
     "seeAll": "See all",
-    "targetOf": "of {goal}",
     "ageHours": "{count}h",
     "ageDays": "{count}d",
-    "targetEmpty": "No target set for this period",
     "revenue": {
       "title": "Revenue",
       "subtitle": "From the finance ledger · {currency}",
@@ -206,6 +196,23 @@
       "addRate": "Add rate",
       "error": "Couldn't load revenue from finance.",
       "retry": "Try again"
+    },
+    "targets": {
+      "title": "Targets",
+      "manage": "Manage targets",
+      "loadError": "Could not load targets",
+      "empty": "No active target",
+      "emptyHint": "Set a weekly, monthly, season or yearly goal to track pace here.",
+      "create": "Create target",
+      "more": "+{count} more",
+      "of": "of {goal}",
+      "timeLeft": "Time left",
+      "daysLeft": "{count, plural, one {# day} other {# days}}",
+      "ended": "Ended",
+      "pace": "Pace",
+      "reached": "Goal reached",
+      "perDay": "Daily need",
+      "unconverted": "{currencies} not counted — add FX rate"
     }
   },
   "inbox": {
@@ -1350,7 +1357,7 @@
   },
   "targets": {
     "title": "Revenue targets",
-    "subtitle": "Season goal vs actual collections — pace, forecast, and who is driving the number",
+    "subtitle": "Weekly, monthly, season, yearly or custom goals against real finance numbers — pace, forecast and who is driving it",
     "listTitle": "Targets",
     "createTitle": "New target",
     "create": "New target",
@@ -1360,7 +1367,7 @@
     "loadError": "Could not load targets",
     "saveError": "Could not save",
     "empty": "No target selected",
-    "emptyHint": "Create a branch season target to begin.",
+    "emptyHint": "Create a weekly, monthly, season, yearly or custom target to begin.",
     "ofTarget": "of {target}",
     "progress": "Progress",
     "share": "share",
@@ -1391,7 +1398,9 @@
       "label": "Label",
       "amount": "Target amount",
       "periodStart": "Period start",
-      "periodEnd": "Period end"
+      "periodEnd": "Period end",
+      "metric": "Measure",
+      "currency": "Currency"
     },
     "seasonalityHint": "Enter 12 monthly weights (percent). They are normalized to 100%.",
     "weightsCsv": "Monthly weights (CSV)",
@@ -1402,7 +1411,58 @@
     "chartEmpty": "No series points",
     "chartLegend": "Dark = cumulative actual · Green = expected",
     "sourcesEmpty": "No contributing records",
-    "openBooking": "Open"
+    "openBooking": "Open",
+    "delete": "Delete",
+    "deleted": "Target deleted",
+    "deleteError": "Could not delete target",
+    "deleteTitle": "Delete this target?",
+    "deleteHint": "“{label}” and its seasonality, shares and history will be removed. Bookings and payments are not affected.",
+    "unconverted": "{currencies} not counted — add an FX rate to include them",
+    "kinds": {
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "season": "Season",
+      "yearly": "Yearly",
+      "custom": "Custom"
+    },
+    "kindHints": {
+      "weekly": "Mon – Sun",
+      "monthly": "Calendar month",
+      "season": "Hajj, Umrah, summer…",
+      "yearly": "Jan – Dec",
+      "custom": "Any date range"
+    },
+    "metrics": {
+      "collected": "Collected",
+      "booked": "Booked"
+    },
+    "form": {
+      "hint": "Pick a period, set the amount and track it live against collected or booked revenue.",
+      "kindLabel": "Period",
+      "previous": "Previous period",
+      "next": "Next period",
+      "days": "{count, plural, one {# day} other {# days}}",
+      "currencyAuto": "Auto",
+      "submit": "Create target",
+      "saving": "Creating…",
+      "labelWeekly": "Week {week} · {year}",
+      "labelYearly": "{year} target",
+      "labelSeason": "Season · {range}",
+      "labelCustom": "Target · {range}",
+      "errors": {
+        "period": {
+          "start": "Choose a start date",
+          "end": "End date must be on or after the start date",
+          "span": "A target can cover at most 3 years"
+        },
+        "amount": {
+          "required": "Enter a target amount",
+          "invalid": "Enter a positive amount, e.g. 250000"
+        },
+        "currency": "Use a 3-letter code such as SAR",
+        "label": "Give the target a name"
+      }
+    }
   },
   "importExport": {
     "title": "Import & export",

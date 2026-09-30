@@ -168,7 +168,7 @@ body {
 }
 
 /* GM setup: soft wallpaper the glass surfaces float on */
-.setup-wallpaper {
+.soft-gradient-bg {
   background-color: #f4f5f9;
   background-image:
     radial-gradient(60% 50% at 12% 8%, rgba(125, 176, 255, 0.35) 0%, transparent 70%),
@@ -176,6 +176,55 @@ body {
     radial-gradient(55% 50% at 80% 92%, rgba(120, 222, 196, 0.28) 0%, transparent 70%),
     radial-gradient(45% 40% at 10% 90%, rgba(255, 184, 150, 0.26) 0%, transparent 70%);
   background-attachment: fixed;
+}
+
+/* Animated OKLCH wallpaper (SoftGradientBackground); the radial wallpaper above is the fallback. */
+@property --soft-hue-1 {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 30deg;
+}
+@property --soft-hue-2 {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 180deg;
+}
+
+@keyframes soft-gradient-hue {
+  from {
+    --soft-hue-1: 30deg;
+    --soft-hue-2: 180deg;
+  }
+  to {
+    --soft-hue-1: 390deg;
+    --soft-hue-2: 540deg;
+  }
+}
+
+@supports (background-image: linear-gradient(in oklch longer hue to right, red, blue)) {
+  .soft-gradient-bg {
+    background-color: #f7f7fa;
+    background-image:
+      linear-gradient(
+        in oklch longer hue to right,
+        oklch(0.95 0.07 var(--soft-hue-1) / 60%),
+        oklch(0.92 0.08 var(--soft-hue-2) / 60%)
+      ),
+      linear-gradient(
+        in oklch longer hue to bottom,
+        oklch(0.95 0.07 var(--soft-hue-1) / 60%),
+        oklch(0.92 0.08 var(--soft-hue-2) / 60%)
+      );
+    background-size: 100% 100%;
+    background-attachment: scroll;
+    animation: soft-gradient-hue var(--soft-gradient-duration, 24s) linear infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .soft-gradient-bg {
+    animation: none;
+  }
 }
 
 .glass-pill {

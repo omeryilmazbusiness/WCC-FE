@@ -2,6 +2,7 @@ export type TargetMetric = "collected" | "booked";
 export type TargetScope = "branch" | "team" | "employee";
 export type TargetCurve = "linear" | "seasonal";
 export type TargetStatus = "ahead" | "on_track" | "behind" | "placeholder";
+export type TargetPeriodKind = "weekly" | "monthly" | "season" | "yearly" | "custom";
 
 export type RevenueTarget = {
   id: string;
@@ -14,6 +15,7 @@ export type RevenueTarget = {
   metric: TargetMetric;
   scopeType: TargetScope;
   curveType: TargetCurve;
+  periodKind: TargetPeriodKind;
   periodStart: string;
   periodEnd: string;
 };
@@ -28,6 +30,7 @@ export type TargetProgress = {
   metric: TargetMetric;
   scopeType: TargetScope;
   curveType: TargetCurve;
+  periodKind: TargetPeriodKind;
   targetAmount: number;
   actualAmount: number;
   expectedToDate: number;
@@ -40,6 +43,10 @@ export type TargetProgress = {
   periodStart: string;
   periodEnd: string;
   asOf: string;
+  daysTotal: number;
+  daysLeft: number;
+  /** Currencies left out of actualAmount because no FX rate was effective. */
+  unconverted: string[];
 };
 
 export type TargetContribution = {

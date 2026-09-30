@@ -8,9 +8,9 @@ import {
   type AttentionItem,
   type DashboardKPI,
   type RevenueSummary,
-  type TargetSnapshot,
   type TeamMemberStat,
 } from "@/entities/dashboard";
+import { createRevenueTargetRepository, type TargetProgress } from "@/entities/revenuetarget";
 import { useCan } from "@/entities/viewer";
 import { SetupResumeBanner } from "@/features/gm-setup";
 import { routes } from "@/shared/config/routes";
@@ -21,10 +21,11 @@ import { AIExecutiveSummaryCard } from "./ai-executive-summary-card";
 import { AttentionWidget } from "./attention-widget";
 import { LostLeadsCard } from "./lost-leads-card";
 import { CommandBar } from "./command-bar";
-import { TargetWidget } from "./target-widget";
+import { ActiveTargetsWidget } from "./active-targets-widget";
 import { TeamWidget } from "./team-widget";
 
 const repo = createDashboardRepository();
+const targetRepo = createRevenueTargetRepository();
 
 /** The attention endpoint caps at 50; the card pages through them. */
 const ATTENTION_LIMIT = 50;
@@ -35,7 +36,6 @@ type DashboardData = {
   kpi: DashboardKPI;
   team: TeamMemberStat[];
   attention: AttentionItem[];
-  target: TargetSnapshot;
 };
 
 function periodRange(days: number): { from: Date; to: Date } {
@@ -51,21 +51,28 @@ export function ManagerDashboardBoard() {
   const locale = useLocale();
   const canAI = useCan("ai.read");
   const canFinance = useCan("payments.read");
+  const canTargets = useCan("targets.read");
+  const canManageTargets = useCan("targets.write");
   const [period, setPeriod] = useState<Period>("30");
 
   const dashboard = useApiQuery(
     async (): Promise<DashboardData> => {
       const { from, to } = periodRange(Number(period));
-      const [kpi, team, attention, target] = await Promise.all([
+      const [kpi, team, attention] = await Promise.all([
         repo.getKPIs(from, to),
         repo.getTeamStats(from, to),
         repo.getAttention(ATTENTION_LIMIT),
-        repo.getTarget("branch"),
       ]);
-      return { kpi, team, attention, target };
+      return { kpi, team, attention };
     },
     [period],
-    { liveTopics: ["lead", "payment", "document", "task", "target", "conversation"] },
+    { liveTopics: ["lead", "payment", "document", "task", "conversation"] },
+  );
+
+  const targets = useApiQuery(
+    (): Promise<TargetProgress[]> => targetRepo.active(),
+    [],
+    { enabled: canTargets, liveTopics: ["target", "payment", "booking"] },
   );
 
   const revenue = useApiQuery(
@@ -98,7 +105,18 @@ export function ManagerDashboardBoard() {
       {dashboard.data ? (
         <DashboardGrid
           data={dashboard.data}
-          locale={locale}
+          targetSlot={
+            canTargets ? (
+              <ActiveTargetsWidget
+                targets={targets.data ?? null}
+                loading={targets.loading}
+                error={targets.error}
+                onRetry={() => void targets.reload()}
+                locale={locale}
+                canManage={canManageTargets}
+              />
+            ) : null
+          }
           revenueSlot={
             canFinance ? (
               <RevenueCardState
@@ -135,11 +153,11 @@ export function ManagerDashboardBoard() {
   );
 }
 
-type GridProps = { data: DashboardData; locale: string; aiSlot: ReactNode; revenueSlot: ReactNode };
+type GridProps = { data: DashboardData; aiSlot: ReactNode; targetSlot: ReactNode; revenueSlot: ReactNode };
 
-function DashboardGrid({ data, locale, aiSlot, revenueSlot }: GridProps) {
+function DashboardGrid({ data, aiSlot, targetSlot, revenueSlot }: GridProps) {
   const t = useTranslations("manager");
-  const { kpi, team, attention, target } = data;
+  const { kpi, team, attention } = data;
 
   return (
     <>
@@ -152,13 +170,13 @@ function DashboardGrid({ data, locale, aiSlot, revenueSlot }: GridProps) {
 
       {aiSlot}
 
-      {revenueSlot ? (
+      {targetSlot && revenueSlot ? (
         <div className="grid gap-4 lg:grid-cols-3" data-testid="manager-money-row">
-          <TargetWidget target={target} locale={locale} />
+          {targetSlot}
           <div className="lg:col-span-2">{revenueSlot}</div>
         </div>
       ) : (
-        <TargetWidget target={target} locale={locale} />
+        targetSlot ?? revenueSlot
       )}
 
       <div className="grid gap-4 lg:grid-cols-2">

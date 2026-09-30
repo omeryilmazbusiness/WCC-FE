@@ -87,11 +87,11 @@ function mapMyWork(raw: Raw): MyWorkItem {
 
 function mapTarget(raw: Raw): TargetSnapshot {
   return {
-    label: String(raw.label ?? "Season target"),
+    label: String(raw.label ?? ""),
     targetAmount: Number(raw.target_amount ?? raw.targetAmount ?? 0),
     actualAmount: Number(raw.actual_amount ?? raw.actualAmount ?? 0),
     expectedToDate: Number(raw.expected_to_date ?? raw.expectedToDate ?? 0),
-    currency: String(raw.currency ?? "USD"),
+    currency: String(raw.currency ?? ""),
     status: String(raw.status ?? "placeholder") as TargetSnapshot["status"],
     periodStart: String(raw.period_start ?? raw.periodStart ?? ""),
     periodEnd: String(raw.period_end ?? raw.periodEnd ?? ""),
