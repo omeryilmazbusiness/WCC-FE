@@ -71,6 +71,13 @@ export function formatRelativeTime(
   return rtf.format(0, "second");
 }
 
+/** Compact elapsed time — "45m", "3h", "2d" — in the UI locale. */
+export function formatDurationShort(minutes: number, locale: string): string {
+  const m = Math.max(0, Math.round(minutes));
+  const [value, unit] = m < 60 ? [m, "minute"] : m < 1440 ? [Math.floor(m / 60), "hour"] : [Math.floor(m / 1440), "day"];
+  return new Intl.NumberFormat(toIntlLocale(locale), { style: "unit", unit, unitDisplay: "narrow" }).format(value);
+}
+
 /** Locale-aware number formatting. */
 export function formatNumber(
   value: number,

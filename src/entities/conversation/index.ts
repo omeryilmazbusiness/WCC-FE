@@ -13,10 +13,13 @@ export type {
   NextTaskOutcome,
   NextTaskSuggestion,
   ConfirmedNextTask,
+  ChannelCounts,
 } from "./model";
 export {
   SOCIAL_CHANNELS,
   NEXT_TASK_OUTCOMES,
+  INBOX_CHANNEL_ORDER,
+  visibleChannels,
   isSLABreached,
   unansweredAgeMinutes,
   hasConnectedSocial,
@@ -28,3 +31,4 @@ export {
   getMemoryConversationRepository,
   createConversationRepository,
 } from "./api";
+export { CHANNEL_LOOK, channelLook, type ChannelLook } from "./ui/channel-look";

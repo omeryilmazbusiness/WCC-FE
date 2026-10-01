@@ -330,7 +330,60 @@
     "leadDraftNoAI": "Connect an AI provider key to fill leads from conversations. You can still create the lead by hand.",
     "leadDraftConnect": "Connect AI",
     "editLead": "Edit lead",
-    "leadUpdated": "Lead updated"
+    "leadUpdated": "Lead updated",
+    "tabs": {
+      "label": "Channels",
+      "all": "All"
+    },
+    "health": {
+      "live": "Live",
+      "degraded": "Degraded",
+      "down": "Down"
+    },
+    "waiting": "Waiting {time}",
+    "noPreview": "No messages yet",
+    "you": "You",
+    "owner": "Owner",
+    "ownerHint": "Owns this conversation",
+    "unassignedHint": "Nobody is answering yet",
+    "assignToMe": "Assign to me",
+    "handOver": "Hand over",
+    "pickAssignee": "Hand over to",
+    "statusTitle": "Close conversation",
+    "statusShort": {
+      "resolved": "Resolve",
+      "spam": "Spam",
+      "duplicate": "Duplicate"
+    },
+    "statusDone": {
+      "resolved": "Conversation resolved",
+      "spam": "Marked as spam",
+      "duplicate": "Marked as duplicate"
+    },
+    "taskTitle": "Follow up: {name}",
+    "tile": {
+      "lead": "Lead",
+      "editLead": "Edit lead",
+      "task": "Task",
+      "booking": "Booking",
+      "customer": "Customer",
+      "pipeline": "Pipeline"
+    },
+    "composer": {
+      "mode": "Message type",
+      "reply": "Reply",
+      "note": "Note",
+      "shortcut": "⌘/Ctrl + Enter"
+    },
+    "messagesEmpty": "No messages in this conversation yet",
+    "messageFailed": "Not delivered",
+    "pickThreadHint": "Choose a conversation to read the thread and reply.",
+    "noChannels": {
+      "title": "No channel connected yet",
+      "body": "Connect WhatsApp, Instagram, Messenger or Gmail and conversations will start arriving here.",
+      "channels": "Supported channels",
+      "connect": "Connect channels"
+    }
   },
   "inboxSetup": {
     "pageTitle": "Inbox setup",

@@ -103,6 +103,40 @@ export type ConversationListFilter = {
   unansweredMinutes?: number;
 };
 
+/** Display order for channel tabs and pickers. */
+export const INBOX_CHANNEL_ORDER: InboxChannel[] = [
+  "whatsapp",
+  "instagram",
+  "facebook",
+  "gmail",
+  "email",
+  "stub",
+];
+
+/** Open conversations per channel for a queue/search filter. */
+export type ChannelCounts = {
+  total: number;
+  channels: Partial<Record<InboxChannel, number>>;
+};
+
+/**
+ * Tabs to show: channels that are connected or already hold conversations,
+ * in display order. The `stub` test channel only appears when it has traffic.
+ */
+export function visibleChannels(
+  accounts: readonly ChannelHealth[] | null,
+  counts: ChannelCounts | null,
+): InboxChannel[] {
+  const live = new Set<InboxChannel>();
+  for (const a of accounts ?? []) {
+    if (a.connected) live.add(a.provider);
+  }
+  for (const [channel, n] of Object.entries(counts?.channels ?? {})) {
+    if (n && n > 0) live.add(channel as InboxChannel);
+  }
+  return INBOX_CHANNEL_ORDER.filter((c) => live.has(c));
+}
+
 export type NextTaskOutcome =
   | "follow_up"
   | "send_quote"

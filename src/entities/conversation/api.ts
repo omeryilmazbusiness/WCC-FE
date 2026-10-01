@@ -1,6 +1,7 @@
 import { http, type HttpClient } from "@/shared/api/http-client";
 import { createRepository } from "@/shared/api/repository";
 import type {
+  ChannelCounts,
   ChannelHealth,
   ConnectCredentials,
   ConfirmedNextTask,
@@ -17,6 +18,8 @@ import { isSLABreached, SOCIAL_CHANNELS } from "./model";
 
 export interface ConversationRepository {
   list(filter?: ConversationListFilter): Promise<Conversation[]>;
+  /** Per-channel totals for the same filter; `filter.channel` is ignored. */
+  channelCounts(filter?: ConversationListFilter): Promise<ChannelCounts>;
   get(id: string): Promise<Conversation>;
   listMessages(conversationId: string): Promise<InboxMessage[]>;
   reply(
@@ -32,6 +35,8 @@ export interface ConversationRepository {
     status: ConversationStatus,
   ): Promise<Conversation>;
   channelHealth(): Promise<ChannelHealth[]>;
+  /** Connection state per channel for any inbox user; no credentials or webhook details. */
+  inboxChannels(): Promise<ChannelHealth[]>;
   /** Persist BYO credentials for a channel (Meta Cloud / Gmail OAuth tokens). */
   connectChannel(
     provider: SocialChannel,
@@ -139,25 +144,39 @@ function mapConfirmedNextTask(raw: Raw): ConfirmedNextTask {
   };
 }
 
+function listParams(filter: ConversationListFilter): string {
+  const sp = new URLSearchParams();
+  if (filter.q) sp.set("q", filter.q);
+  if (filter.channel) sp.set("channel", filter.channel);
+  if (filter.status) sp.set("status", filter.status);
+  if (filter.unassigned) sp.set("unassigned", "true");
+  if (filter.mine) sp.set("mine", "true");
+  if (filter.slaBreached) sp.set("sla_breached", "true");
+  if (filter.unansweredMinutes)
+    sp.set("unanswered_minutes", String(filter.unansweredMinutes));
+  const qs = sp.toString();
+  return qs ? `?${qs}` : "";
+}
+
 export class ApiConversationRepository implements ConversationRepository {
   constructor(private readonly http: HttpClient) {}
 
   async list(filter: ConversationListFilter = {}): Promise<Conversation[]> {
-    const sp = new URLSearchParams();
-    if (filter.q) sp.set("q", filter.q);
-    if (filter.channel) sp.set("channel", filter.channel);
-    if (filter.status) sp.set("status", filter.status);
-    if (filter.unassigned) sp.set("unassigned", "true");
-    if (filter.mine) sp.set("mine", "true");
-    if (filter.slaBreached) sp.set("sla_breached", "true");
-    if (filter.unansweredMinutes)
-      sp.set("unanswered_minutes", String(filter.unansweredMinutes));
-    const qs = sp.toString();
     const data = await this.http.request<{ items?: Raw[] } | Raw[]>(
-      `/inbox/conversations${qs ? `?${qs}` : ""}`,
+      `/inbox/conversations${listParams(filter)}`,
     );
     const rows = Array.isArray(data) ? data : (data.items ?? []);
     return rows.map(mapConversation);
+  }
+
+  async channelCounts(filter: ConversationListFilter = {}): Promise<ChannelCounts> {
+    const data = await this.http.request<{ total?: number; channels?: Record<string, number> }>(
+      `/inbox/conversations/counts${listParams({ ...filter, channel: "" })}`,
+    );
+    return {
+      total: Number(data.total ?? 0),
+      channels: (data.channels ?? {}) as ChannelCounts["channels"],
+    };
   }
 
   async get(id: string): Promise<Conversation> {
@@ -234,6 +253,11 @@ export class ApiConversationRepository implements ConversationRepository {
     if (Array.isArray(data)) return data.map(mapHealth);
     const accounts = data.accounts ?? [];
     return accounts.map(mapHealth);
+  }
+
+  async inboxChannels(): Promise<ChannelHealth[]> {
+    const data = await this.http.request<Raw[]>("/inbox/channels");
+    return (Array.isArray(data) ? data : []).map(mapHealth);
   }
 
   async connectChannel(
@@ -407,6 +431,13 @@ export class MemoryConversationRepository implements ConversationRepository {
     );
   }
 
+  async channelCounts(filter: ConversationListFilter = {}): Promise<ChannelCounts> {
+    const rows = await this.list({ ...filter, channel: "" });
+    const channels: ChannelCounts["channels"] = {};
+    for (const c of rows) channels[c.channel] = (channels[c.channel] ?? 0) + 1;
+    return { total: rows.length, channels };
+  }
+
   async get(id: string): Promise<Conversation> {
     const c = this.conversations.find((x) => x.id === id);
     if (!c) throw new Error("conversation not found");
@@ -480,6 +511,17 @@ export class MemoryConversationRepository implements ConversationRepository {
 
   async channelHealth(): Promise<ChannelHealth[]> {
     return loadSocialAccounts(this.branchId);
+  }
+
+  async inboxChannels(): Promise<ChannelHealth[]> {
+    return loadSocialAccounts(this.branchId).map(({ provider, displayName, status, lastError, lastOkAt, connected }) => ({
+      provider,
+      displayName,
+      status,
+      lastError,
+      lastOkAt,
+      connected,
+    }));
   }
 
   async connectChannel(
@@ -657,6 +699,6 @@ export function createConversationRepository(
   return createRepository<ConversationRepository>({
     api,
     memory,
-    reads: ["list", "get", "listMessages", "channelHealth"],
+    reads: ["list", "channelCounts", "get", "listMessages", "channelHealth", "inboxChannels"],
   });
 }

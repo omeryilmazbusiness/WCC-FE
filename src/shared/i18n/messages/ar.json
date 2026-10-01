@@ -330,7 +330,60 @@
     "leadDraftNoAI": "اربط مفتاح مزوّد الذكاء الاصطناعي لتعبئة العملاء المحتملين من المحادثات. ما زال بإمكانك الإنشاء يدوياً.",
     "leadDraftConnect": "ربط الذكاء الاصطناعي",
     "editLead": "تعديل العميل المحتمل",
-    "leadUpdated": "تم تحديث العميل المحتمل"
+    "leadUpdated": "تم تحديث العميل المحتمل",
+    "tabs": {
+      "label": "القنوات",
+      "all": "الكل"
+    },
+    "health": {
+      "live": "متصل",
+      "degraded": "أداء منخفض",
+      "down": "متوقف"
+    },
+    "waiting": "بانتظار الرد {time}",
+    "noPreview": "لا توجد رسائل بعد",
+    "you": "أنت",
+    "owner": "المسؤول",
+    "ownerHint": "مسؤول عن هذه المحادثة",
+    "unassignedHint": "لم يرد أحد بعد",
+    "assignToMe": "إسناد إليّ",
+    "handOver": "تحويل",
+    "pickAssignee": "تحويل إلى",
+    "statusTitle": "إغلاق المحادثة",
+    "statusShort": {
+      "resolved": "حل",
+      "spam": "مزعج",
+      "duplicate": "مكرر"
+    },
+    "statusDone": {
+      "resolved": "تم حل المحادثة",
+      "spam": "تم وضع علامة مزعج",
+      "duplicate": "تم وضع علامة مكرر"
+    },
+    "taskTitle": "متابعة: {name}",
+    "tile": {
+      "lead": "عميل محتمل",
+      "editLead": "تعديل العميل",
+      "task": "مهمة",
+      "booking": "حجز",
+      "customer": "العميل",
+      "pipeline": "المسار"
+    },
+    "composer": {
+      "mode": "نوع الرسالة",
+      "reply": "رد",
+      "note": "ملاحظة",
+      "shortcut": "⌘/Ctrl + Enter"
+    },
+    "messagesEmpty": "لا توجد رسائل في هذه المحادثة بعد",
+    "messageFailed": "لم يتم التسليم",
+    "pickThreadHint": "اختر محادثة لقراءتها والرد عليها.",
+    "noChannels": {
+      "title": "لا توجد قناة متصلة بعد",
+      "body": "اربط واتساب أو إنستغرام أو ماسنجر أو جيميل وستبدأ المحادثات بالوصول هنا.",
+      "channels": "القنوات المدعومة",
+      "connect": "ربط القنوات"
+    }
   },
   "inboxSetup": {
     "pageTitle": "إعداد الوارد",

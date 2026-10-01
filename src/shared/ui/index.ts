@@ -33,6 +33,7 @@ export { IconTile } from "./icon-tile";
 export { WidgetCard } from "./widget-card";
 export { StatTile } from "./stat-tile";
 export { ActionTile } from "./action-tile";
+export { ControlTile } from "./control-tile";
 export { ProgressRing } from "./progress-ring";
 export { SoftGradientBackground } from "./soft-gradient-background";
 export { ListRow } from "./list-row";
