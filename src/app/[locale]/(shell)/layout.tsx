@@ -1,8 +1,10 @@
+import { cookies } from "next/headers";
 import { setRequestLocale } from "next-intl/server";
 import { redirect } from "@/shared/i18n/navigation";
 import { getServerSession, getServerWorkspace } from "@/shared/api/get-server-session";
 import { routes } from "@/shared/config/routes";
-import { AppShell } from "@/widgets/app-shell";
+import { loadUiPreferences } from "@/entities/ui-preference/server";
+import { AppShell, SIDEBAR_COOKIE, isSidebarCollapsed } from "@/widgets/app-shell";
 
 type Props = {
   children: React.ReactNode;
@@ -18,8 +20,18 @@ export default async function ShellLayout({ children, params }: Props) {
     return null;
   }
 
+  const [workspace, preferences, jar] = await Promise.all([
+    getServerWorkspace(),
+    loadUiPreferences(),
+    cookies(),
+  ]);
   return (
-    <AppShell viewer={session} workspace={await getServerWorkspace()}>
+    <AppShell
+      viewer={session}
+      workspace={workspace}
+      navFavorites={preferences?.navFavorites ?? null}
+      sidebarCollapsed={isSidebarCollapsed(jar.get(SIDEBAR_COOKIE)?.value)}
+    >
       {children}
     </AppShell>
   );

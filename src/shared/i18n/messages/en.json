@@ -33,12 +33,29 @@
     "companies": "Companies",
     "label": "Main navigation",
     "groups": {
+      "overview": "Overview",
       "sales": "Sales & CRM",
       "operations": "Operations",
       "finance": "Finance & reports",
       "tools": "Tools & setup",
       "admin": "Administration"
-    }
+    },
+    "favorites": {
+      "title": "Favorites",
+      "empty": "Drag any page here to pin it — up to {max}.",
+      "dragHint": "Drag pages here to pin them",
+      "dropToPin": "Drop to add to favorites",
+      "dropToRemove": "Drop outside to remove",
+      "full": "Favorites are full ({max}) — remove one first",
+      "pin": "Add to favorites",
+      "unpin": "Remove from favorites",
+      "removed": "{name} removed from favorites",
+      "undo": "Undo",
+      "reset": "Reset to default",
+      "saveFailed": "Couldn't save favorites. Please try again."
+    },
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar"
   },
   "auth": {
     "title": "Sign in",
@@ -2659,5 +2676,11 @@
         }
       }
     }
+  },
+  "tabs": {
+    "label": "Open screens",
+    "close": "Close {name}",
+    "count": "{count} of {max} screens open",
+    "limitReplaced": "Up to {max} screens can stay open — opened in the current tab. Close a tab to keep more side by side."
   }
 }

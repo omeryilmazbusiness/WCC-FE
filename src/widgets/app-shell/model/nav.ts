@@ -11,6 +11,7 @@ import {
   Kanban,
   KeyRound,
   LayoutDashboard,
+  LayoutGrid,
   ListTodo,
   MessageSquare,
   Package,
@@ -20,6 +21,7 @@ import {
   ScrollText,
   Settings,
   Shield,
+  ShieldCheck,
   ShieldHalf,
   Sparkles,
   Target,
@@ -30,6 +32,7 @@ import {
   Wrench,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { MAX_NAV_FAVORITES } from "@/entities/ui-preference";
 import {
   ROUTE_PERMISSIONS,
   type GuardedRoute,
@@ -64,6 +67,8 @@ export type NavLabel =
   | "settings"
   | "companies";
 
+export type NavTone = "sky" | "violet" | "emerald" | "amber" | "indigo" | "slate";
+
 export type NavItem = {
   href: GuardedRoute;
   label: NavLabel;
@@ -72,11 +77,7 @@ export type NavItem = {
   unless?: Permission;
 };
 
-export type NavTone = "sky" | "violet" | "emerald" | "amber" | "indigo" | "slate" | "rose";
-
-export type NavGroupId = "sales" | "operations" | "finance" | "tools" | "admin";
-
-export type QuickItem = NavItem & { tone: NavTone };
+export type NavGroupId = "overview" | "sales" | "operations" | "finance" | "tools" | "admin";
 
 export type NavGroup = {
   id: NavGroupId;
@@ -85,29 +86,29 @@ export type NavGroup = {
   items: readonly NavItem[];
 };
 
-/** Daily screens pinned above the groups as one-tap tiles. */
-export const QUICK_ITEMS: readonly QuickItem[] = [
-  { href: routes.manager, label: "manager", icon: LayoutDashboard, tone: "sky" },
-  {
-    href: routes.workspace,
-    label: "workspace",
-    icon: Briefcase,
-    tone: "sky",
-    unless: "dashboard.read",
-  },
-  { href: routes.inbox, label: "inbox", icon: MessageSquare, tone: "emerald" },
-  { href: routes.tasks, label: "tasks", icon: ListTodo, tone: "amber" },
-  { href: routes.notifications, label: "notifications", icon: Bell, tone: "rose" },
-];
+/** A pinned shortcut, coloured like the group it belongs to. */
+export type FavoriteItem = NavItem & { tone: NavTone };
 
 /** Visibility comes from `ROUTE_PERMISSIONS` — the same map the middleware enforces. */
 export const NAV_GROUPS: readonly NavGroup[] = [
+  {
+    id: "overview",
+    icon: LayoutGrid,
+    tone: "sky",
+    items: [
+      { href: routes.manager, label: "manager", icon: LayoutDashboard },
+      { href: routes.workspace, label: "workspace", icon: Briefcase, unless: "dashboard.read" },
+      { href: routes.tasks, label: "tasks", icon: ListTodo },
+      { href: routes.notifications, label: "notifications", icon: Bell },
+    ],
+  },
   {
     id: "sales",
     icon: TrendingUp,
     tone: "violet",
     items: [
       { href: routes.pipeline, label: "pipeline", icon: Kanban },
+      { href: routes.inbox, label: "inbox", icon: MessageSquare },
       { href: routes.customers, label: "customers", icon: Users },
       { href: routes.targets, label: "targets", icon: Target },
     ],
@@ -140,11 +141,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     tone: "indigo",
     items: [
       { href: routes.integrations, label: "integrations", icon: Plug },
-      {
-        href: routes.importExport,
-        label: "importExport",
-        icon: FileSpreadsheet,
-      },
+      { href: routes.importExport, label: "importExport", icon: FileSpreadsheet },
       { href: routes.aiSetup, label: "aiSetup", icon: Sparkles },
       { href: routes.setup, label: "setup", icon: Rocket },
     ],
@@ -163,6 +160,15 @@ export const NAV_GROUPS: readonly NavGroup[] = [
   },
 ];
 
+/** Shortcuts shown until the user customises favorites; unpermitted ones drop out. */
+export const DEFAULT_FAVORITES: readonly GuardedRoute[] = [
+  routes.manager,
+  routes.workspace,
+  routes.inbox,
+  routes.tasks,
+  routes.notifications,
+];
+
 function canSee(item: NavItem, permissions: readonly string[]): boolean {
   return (
     permissions.includes(ROUTE_PERMISSIONS[item.href]) &&
@@ -170,25 +176,66 @@ function canSee(item: NavItem, permissions: readonly string[]): boolean {
   );
 }
 
-export type VisibleNav = { quick: QuickItem[]; groups: NavGroup[] };
+/** Groups trimmed to the viewer's permitted items; empty groups are dropped. */
+export function visibleNavGroups(permissions: readonly string[]): NavGroup[] {
+  return NAV_GROUPS.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => canSee(item, permissions)),
+  })).filter((group) => group.items.length > 0);
+}
 
-/** Quick tiles and groups trimmed to the viewer's permitted items; empty groups are dropped. */
-export function visibleNav(permissions: readonly string[]): VisibleNav {
-  return {
-    quick: QUICK_ITEMS.filter((item) => canSee(item, permissions)),
-    groups: NAV_GROUPS.map((group) => ({
-      ...group,
-      items: group.items.filter((item) => canSee(item, permissions)),
-    })).filter((group) => group.items.length > 0),
-  };
+/**
+ * Pinned shortcuts the viewer can open, in the saved order. Unknown or
+ * no-longer-permitted routes are skipped rather than shown broken.
+ */
+export function resolveFavorites(
+  groups: readonly NavGroup[],
+  saved: readonly string[] | null,
+): FavoriteItem[] {
+  const byHref = new Map<string, FavoriteItem>();
+  for (const group of groups) {
+    for (const item of group.items) byHref.set(item.href, { ...item, tone: group.tone });
+  }
+  const out: FavoriteItem[] = [];
+  for (const href of saved ?? DEFAULT_FAVORITES) {
+    const item = byHref.get(href);
+    if (item && !out.some((f) => f.href === href)) out.push(item);
+    if (out.length === MAX_NAV_FAVORITES) break;
+  }
+  return out;
 }
 
 /** Most specific permitted route matching the path, so `/finance/fx` beats `/finance`. */
-export function activeNavHref(nav: VisibleNav, pathname: string): GuardedRoute | undefined {
-  return [...nav.quick, ...nav.groups.flatMap((group) => group.items)]
-    .map((item) => item.href)
+export function activeNavHref(
+  groups: readonly NavGroup[],
+  pathname: string,
+): GuardedRoute | undefined {
+  return groups
+    .flatMap((group) => group.items.map((item) => item.href))
     .filter((href) => pathname === href || pathname.startsWith(`${href}/`))
     .sort((a, b) => b.length - a.length)[0];
+}
+
+/** Screen a path belongs to: the nav route it lives under, else its first segment. */
+export function screenRoot(groups: readonly NavGroup[], path: string): string {
+  const clean = path.split(/[?#]/)[0] || "/";
+  return activeNavHref(groups, clean) ?? `/${clean.split("/").filter(Boolean)[0] ?? ""}`;
+}
+
+export type ScreenMeta = {
+  /** Translation key under `nav`, or null for screens outside the menu. */
+  label: NavLabel | "security" | null;
+  icon: LucideIcon;
+  tone: NavTone;
+};
+
+export function screenMeta(groups: readonly NavGroup[], root: string): ScreenMeta {
+  for (const group of groups) {
+    const item = group.items.find((i) => i.href === root);
+    if (item) return { label: item.label, icon: item.icon, tone: group.tone };
+  }
+  if (root === routes.security) return { label: "security", icon: ShieldCheck, tone: "slate" };
+  return { label: null, icon: LayoutGrid, tone: "slate" };
 }
 
 export function groupOf(
@@ -197,4 +244,12 @@ export function groupOf(
 ): NavGroupId | undefined {
   if (!href) return undefined;
   return groups.find((group) => group.items.some((item) => item.href === href))?.id;
+}
+
+/** Moves `from` to `to` where `to` is an insertion index in the original list. */
+export function reorder<T>(list: readonly T[], from: number, to: number): T[] {
+  const next = [...list];
+  const [moved] = next.splice(from, 1);
+  next.splice(from < to ? to - 1 : to, 0, moved);
+  return next;
 }
