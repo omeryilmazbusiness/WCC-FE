@@ -606,8 +606,8 @@
   "tasks": {
     "title": "My tasks",
     "teamTitle": "Team tasks",
-    "subtitle": "Kanban and table — complete, reschedule, open related records",
-    "teamSubtitle": "Branch queue — assign, escalate, and clear overdue work",
+    "subtitle": "Plan, prioritise and close your work — from leads, bookings or your own list",
+    "teamSubtitle": "Branch queue — assign, prioritise and clear overdue work",
     "kanban": "Kanban",
     "table": "Table",
     "viewMode": "Tasks view",
@@ -615,7 +615,7 @@
     "filterAll": "All statuses",
     "filterStatus": "Status",
     "empty": "No tasks match",
-    "emptyHint": "Clear filters or create work from a lead or booking.",
+    "emptyHint": "Clear filters or create a new task.",
     "emptyColumn": "Drop tasks here",
     "complete": "Complete",
     "reschedule": "Reschedule",
@@ -658,7 +658,86 @@
       "kind": "Kind",
       "assignee": "Assignee",
       "dueAt": "Due",
-      "actions": "Actions"
+      "actions": "Actions",
+      "priority": "Importance"
+    },
+    "newTask": "New task",
+    "filterAny": "All",
+    "priorities": {
+      "critical": "Critical",
+      "major": "Major",
+      "minor": "Minor"
+    },
+    "priorityHints": {
+      "critical": "Blocks a customer or revenue",
+      "major": "Important, do it soon",
+      "minor": "Routine, when there is time"
+    },
+    "stats": {
+      "open": "Active tasks",
+      "overdue": "Overdue",
+      "critical": "Critical",
+      "overdueHint": "Show only overdue tasks",
+      "criticalHint": "Show only critical tasks"
+    },
+    "column": {
+      "overdue": "{count, plural, one {# overdue} other {# overdue}}",
+      "hints": {
+        "open": "Waiting to start",
+        "in_progress": "Being worked on",
+        "done": "Completed",
+        "cancelled": "No longer needed"
+      }
+    },
+    "card": {
+      "noDue": "No deadline"
+    },
+    "create": {
+      "title": "New task",
+      "hint": "Set what needs doing, how important it is and when it is due.",
+      "titlePlaceholder": "e.g. Send the visa checklist to the Al-Harbi family",
+      "fields": {
+        "title": "Task",
+        "priority": "Importance",
+        "kind": "Type",
+        "due": "Deadline",
+        "date": "Date",
+        "time": "Time",
+        "assignee": "Assignee"
+      },
+      "presets": {
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "in3days": "In 3 days",
+        "nextWeek": "In a week",
+        "custom": "Pick date",
+        "none": "No deadline"
+      },
+      "noDue": "No deadline — it stays in the list until done",
+      "me": "{name} (me)",
+      "errors": {
+        "title": {
+          "required": "Enter what needs to be done",
+          "tooLong": "Keep it under {max} characters"
+        },
+        "due": {
+          "invalid": "Pick a valid date and time",
+          "past": "The deadline must be in the future"
+        },
+        "assignee": "Choose who will do it"
+      },
+      "submit": "Create task",
+      "saving": "Creating…",
+      "created": "Task created",
+      "error": "Could not create the task"
+    },
+    "related": {
+      "lead": "Lead",
+      "booking": "Booking",
+      "customer": "Customer",
+      "conversation": "Conversation",
+      "departure": "Departure",
+      "package": "Package"
     }
   },
   "customers": {

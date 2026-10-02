@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import {
+  hasRelatedRecord,
   isTaskOverdue,
   type Task,
   type TaskRepository,
@@ -10,6 +11,7 @@ import { hrefForRelated } from "@/shared/lib/related-href";
 import { Link } from "@/shared/i18n/navigation";
 import { EmptyState, StageBadge, TASK_STATUS_TONES } from "@/shared/ui";
 import { cn } from "@/shared/lib/cn";
+import { useRelatedText } from "../model/use-related-text";
 import { TaskActions } from "./task-actions";
 
 type Props = {
@@ -28,6 +30,7 @@ export function TaskQueueList({
   emptyHint,
 }: Props) {
   const t = useTranslations("tasks");
+  const relatedText = useRelatedText();
 
   if (tasks.length === 0) {
     return <EmptyState title={emptyTitle} description={emptyHint} />;
@@ -69,13 +72,15 @@ export function TaskQueueList({
                 <p className="mt-2 text-sm font-semibold text-zinc-950">
                   {task.title}
                 </p>
-                <Link
-                  href={href}
-                  className="mt-1 inline-block text-xs font-medium text-sky-700 hover:underline"
-                  data-testid={`task-related-${task.id}`}
-                >
-                  {task.relatedLabel}
-                </Link>
+                {hasRelatedRecord(task) ? (
+                  <Link
+                    href={href}
+                    className="mt-1 inline-block text-xs font-medium text-sky-700 hover:underline"
+                    data-testid={`task-related-${task.id}`}
+                  >
+                    {relatedText(task)}
+                  </Link>
+                ) : null}
                 {task.dueAt ? (
                   <p className="mt-1 text-[11px] font-medium tabular-nums text-zinc-400">
                     {t("due")}: {new Date(task.dueAt).toLocaleString()}

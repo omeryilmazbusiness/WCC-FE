@@ -33,7 +33,8 @@
     "test:workspace-tabs": "node --experimental-strip-types scripts/selftest-workspace-tabs.ts",
     "test:query-cache": "node --experimental-strip-types scripts/selftest-query-cache.ts",
     "test:typewriter": "node --experimental-strip-types scripts/selftest-typewriter.ts",
-    "test:flights": "node --experimental-strip-types scripts/selftest-flights.ts"
+    "test:flights": "node --experimental-strip-types scripts/selftest-flights.ts",
+    "test:tasks": "node --experimental-strip-types scripts/selftest-tasks.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

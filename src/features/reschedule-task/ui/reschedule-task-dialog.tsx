@@ -40,6 +40,9 @@ type Props = {
   repository: TaskRepository;
   onChanged: (task: Task) => void;
   compact?: boolean;
+  /** Icon-only trigger for dense card footers; styled by `className`. */
+  iconOnly?: boolean;
+  className?: string;
 };
 
 function toLocalInputValue(iso: string | null): string {
@@ -54,6 +57,8 @@ export function RescheduleTaskDialog({
   repository,
   onChanged,
   compact,
+  iconOnly,
+  className,
 }: Props) {
   const allowed = useCan("tasks.write");
   const t = useTranslations("tasks");
@@ -83,17 +88,35 @@ export function RescheduleTaskDialog({
   if (!allowed) return null;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (next) form.reset({ dueAt: toLocalInputValue(task.dueAt) });
+        setOpen(next);
+      }}
+    >
       <DialogTrigger asChild>
-        <Button
-          type="button"
-          size={compact ? "sm" : "default"}
-          variant="outline"
-          data-testid={`reschedule-task-${task.id}`}
-        >
-          <CalendarClock className="h-4 w-4" strokeWidth={1.75} />
-          {t("reschedule")}
-        </Button>
+        {iconOnly ? (
+          <button
+            type="button"
+            aria-label={t("reschedule")}
+            title={t("reschedule")}
+            data-testid={`reschedule-task-${task.id}`}
+            className={className}
+          >
+            <CalendarClock className="h-4 w-4" strokeWidth={2} aria-hidden />
+          </button>
+        ) : (
+          <Button
+            type="button"
+            size={compact ? "sm" : "default"}
+            variant="outline"
+            data-testid={`reschedule-task-${task.id}`}
+          >
+            <CalendarClock className="h-4 w-4" strokeWidth={1.75} />
+            {t("reschedule")}
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

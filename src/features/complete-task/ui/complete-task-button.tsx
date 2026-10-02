@@ -12,6 +12,9 @@ type Props = {
   repository: TaskRepository;
   onChanged: (task: Task) => void;
   compact?: boolean;
+  /** Icon-only trigger for dense card footers; styled by `className`. */
+  iconOnly?: boolean;
+  className?: string;
 };
 
 export function CompleteTaskButton({
@@ -19,6 +22,8 @@ export function CompleteTaskButton({
   repository,
   onChanged,
   compact,
+  iconOnly,
+  className,
 }: Props) {
   const allowed = useCan("tasks.write");
   const t = useTranslations("tasks");
@@ -42,6 +47,22 @@ export function CompleteTaskButton({
   }
 
   if (!allowed) return null;
+
+  if (iconOnly) {
+    return (
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => void onClick()}
+        aria-label={t("complete")}
+        title={t("complete")}
+        data-testid={`complete-task-${task.id}`}
+        className={className}
+      >
+        <Check className="h-4 w-4" strokeWidth={2.2} aria-hidden />
+      </button>
+    );
+  }
 
   return (
     <Button

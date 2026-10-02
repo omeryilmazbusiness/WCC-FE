@@ -4,13 +4,12 @@ import { useTranslations } from "next-intl";
 import { createTaskRepository } from "@/entities/task";
 import { useCan, useViewer } from "@/entities/viewer";
 import { useApiQuery } from "@/shared/lib/use-api-query";
-import { EmptyState, QueryState, Screen } from "@/shared/ui";
+import { QueryState, Screen } from "@/shared/ui";
 import { TasksBoard } from "@/widgets/tasks-board";
 
 const repo = createTaskRepository();
 
 export function TasksView() {
-  const t = useTranslations("tasks");
   const tc = useTranslations("common");
   const { user, scope } = useViewer();
   const canWrite = useCan("tasks.write");
@@ -35,14 +34,6 @@ export function TasksView() {
         >
           {null}
         </QueryState>
-      </Screen>
-    );
-  }
-
-  if (tasks.length === 0) {
-    return (
-      <Screen>
-        <EmptyState title={t("empty")} description={t("emptyHint")} />
       </Screen>
     );
   }

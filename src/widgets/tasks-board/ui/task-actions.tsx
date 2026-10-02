@@ -13,7 +13,7 @@ type Props = {
 /** Shared action cluster — queue, table, and kanban reuse this. */
 export function TaskActions({ task, repository, onChanged }: Props) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2 xl:flex-nowrap">
       <CompleteTaskButton
         task={task}
         repository={repository}

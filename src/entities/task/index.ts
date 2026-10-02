@@ -4,15 +4,32 @@ export type {
   TaskKind,
   TaskPriority,
   TaskCreateInput,
+  TaskStats,
+  TaskFilter,
 } from "./model";
 export {
   TASK_STATUSES,
   TASK_BOARD_COLUMNS,
+  TASK_KINDS,
+  TASK_PRIORITIES,
   canTransitionTask,
+  compareTasks,
+  filterTasks,
+  hasRelatedRecord,
+  isTaskClosed,
   isTaskOverdue,
+  isTaskPriority,
   isDueToday,
   groupTasksByStatus,
+  normalizeTaskPriority,
+  summarizeTasks,
 } from "./model";
+export {
+  TASK_KIND_LOOK,
+  TASK_PRIORITY_LOOK,
+  TASK_STATUS_LOOK,
+  type TaskLook,
+} from "./ui/task-look";
 export {
   type TaskRepository,
   MemoryTaskRepository,

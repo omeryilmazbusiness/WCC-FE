@@ -2,10 +2,11 @@ import { http, type HttpClient } from "@/shared/api/http-client";
 import { createRepository } from "@/shared/api/repository";
 import {
   canTransitionTask,
+  hasRelatedRecord,
+  normalizeTaskPriority,
   type Task,
   type TaskCreateInput,
   type TaskKind,
-  type TaskPriority,
   type TaskStatus,
 } from "./model";
 
@@ -51,24 +52,33 @@ export interface TaskRepository {
 
 type Raw = Record<string, unknown>;
 
+/** Mutation responses may omit the joined assignee name; keep the one the caller already knows. */
+function withAssigneeName(task: Task, name?: string): Task {
+  return task.assigneeName || !name ? task : { ...task, assigneeName: name };
+}
+
 function mapTask(raw: Raw): Task {
-  const relatedType = String(raw.relatedType ?? raw.related_type ?? "");
-  const relatedId = String(raw.relatedId ?? raw.related_id ?? "");
+  const ref = {
+    relatedType: String(raw.relatedType ?? raw.related_type ?? ""),
+    relatedId: String(raw.relatedId ?? raw.related_id ?? ""),
+  };
+  const linked = hasRelatedRecord(ref);
+  const relatedType = linked ? ref.relatedType : "";
+  const relatedId = linked ? ref.relatedId : "";
+  const label = String(raw.relatedLabel ?? raw.related_label ?? "");
   return {
     id: String(raw.id),
     branchId: String(raw.branchId ?? raw.branch_id ?? ""),
     title: String(raw.title ?? ""),
     kind: String(raw.kind ?? "custom") as TaskKind,
     status: String(raw.status ?? "open") as TaskStatus,
-    priority: String(raw.priority ?? "normal") as TaskPriority,
+    priority: normalizeTaskPriority(raw.priority),
     outcome: String(raw.outcome ?? ""),
     assigneeId: String(raw.assigneeId ?? raw.assignee_id ?? ""),
     assigneeName: String(raw.assigneeName ?? raw.assignee_name ?? ""),
     relatedType,
     relatedId,
-    relatedLabel: String(
-      raw.relatedLabel ?? raw.related_label ?? `${relatedType} ${relatedId.slice(0, 8)}`,
-    ),
+    relatedLabel: linked ? label : "",
     customerId: (raw.customerId ?? raw.customer_id ?? null) as string | null,
     dueAt: (raw.dueAt ?? raw.due_at ?? null) as string | null,
     escalatedAt: (raw.escalatedAt ?? raw.escalated_at ?? null) as string | null,
@@ -133,18 +143,24 @@ export class ApiTaskRepository implements TaskRepository {
   }
 
   async create(input: TaskCreateInput): Promise<Task> {
-    return mapTask(
+    const created = mapTask(
       await this.http.request<Raw>("/tasks", {
         method: "POST",
         body: JSON.stringify({
           title: input.title,
           kind: input.kind,
-          assignee_id: input.assigneeId,
-          related_type: input.relatedType,
-          related_id: input.relatedId,
+          priority: input.priority ?? "minor",
+          assignee_id: input.assigneeId || undefined,
+          ...(input.relatedType && input.relatedId
+            ? { related_type: input.relatedType, related_id: input.relatedId }
+            : {}),
           due_at: input.dueAt ?? null,
         }),
       }),
+    );
+    return withAssigneeName(
+      { ...created, relatedLabel: created.relatedId ? input.relatedLabel || created.relatedLabel : "" },
+      input.assigneeName,
     );
   }
 
@@ -175,21 +191,22 @@ export class ApiTaskRepository implements TaskRepository {
     );
   }
 
-  async assign(id: string, assigneeId: string): Promise<Task> {
-    return mapTask(
+  async assign(id: string, assigneeId: string, assigneeName?: string): Promise<Task> {
+    const task = mapTask(
       await this.http.request<Raw>(`/tasks/${id}/assign`, {
         method: "POST",
         body: JSON.stringify({ assignee_id: assigneeId }),
       }),
     );
+    return assigneeName ? { ...task, assigneeName } : task;
   }
 
-  async bulkAssign(taskIds: string[], assigneeId: string): Promise<Task[]> {
+  async bulkAssign(taskIds: string[], assigneeId: string, assigneeName?: string): Promise<Task[]> {
     const data = await this.http.request<Raw[]>("/tasks/assign", {
       method: "POST",
       body: JSON.stringify({ task_ids: taskIds, assignee_id: assigneeId }),
     });
-    return (Array.isArray(data) ? data : []).map(mapTask);
+    return (Array.isArray(data) ? data : []).map(mapTask).map((t) => (assigneeName ? { ...t, assigneeName } : t));
   }
 
   async escalateOverdue(): Promise<number> {
@@ -247,7 +264,7 @@ const store: Task[] = [
     title: "Follow up Ahmet WhatsApp quote",
     kind: "followup",
     status: "open",
-    priority: "normal",
+    priority: "minor",
     outcome: "",
     assigneeId: SALES.id,
     assigneeName: SALES.name,
@@ -267,7 +284,7 @@ const store: Task[] = [
     title: "Collect passport — Fatima",
     kind: "document",
     status: "in_progress",
-    priority: "high",
+    priority: "major",
     outcome: "",
     assigneeId: SALES.id,
     assigneeName: SALES.name,
@@ -287,7 +304,7 @@ const store: Task[] = [
     title: "Collect deposit payment",
     kind: "payment",
     status: "open",
-    priority: "high",
+    priority: "critical",
     outcome: "",
     assigneeId: SALES.id,
     assigneeName: SALES.name,
@@ -307,7 +324,7 @@ const store: Task[] = [
     title: "Call Omar — proposal follow-up",
     kind: "followup",
     status: "open",
-    priority: "normal",
+    priority: "major",
     outcome: "",
     assigneeId: MANAGER.id,
     assigneeName: MANAGER.name,
@@ -393,15 +410,15 @@ export class MemoryTaskRepository implements TaskRepository {
       title: input.title,
       kind: input.kind,
       status: "open",
-      priority: "normal",
+      priority: input.priority ?? "minor",
       outcome: "",
       assigneeId: input.assigneeId,
       assigneeName: input.assigneeName,
-      relatedType: input.relatedType,
-      relatedId: input.relatedId,
-      relatedLabel: input.relatedLabel,
+      relatedType: input.relatedType ?? "",
+      relatedId: input.relatedId ?? "",
+      relatedLabel: input.relatedLabel ?? "",
       customerId: input.customerId ?? null,
-      dueAt: input.dueAt ?? daysFromNow(1),
+      dueAt: input.dueAt ?? null,
       escalatedAt: null,
       createdAt: stamp,
       updatedAt: stamp,
@@ -479,7 +496,7 @@ export class MemoryTaskRepository implements TaskRepository {
       if (!t.dueAt || t.escalatedAt) continue;
       if (new Date(t.dueAt).getTime() + 24 * 3600 * 1000 > now) continue;
       t.escalatedAt = nowIso();
-      t.priority = "high";
+      if (t.priority !== "critical") t.priority = "major";
       t.updatedAt = nowIso();
       n++;
     }
