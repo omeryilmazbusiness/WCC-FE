@@ -2,42 +2,9 @@
 
 import { useCallback } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import {
-  Bell,
-  Building2,
-  LayoutDashboard,
-  Users,
-  Briefcase,
-  Kanban,
-  Package,
-  CalendarCheck2,
-  ListTodo,
-  MessageSquare,
-  Wallet,
-  Target,
-  FileSpreadsheet,
-  FileBarChart2,
-  Sparkles,
-  FileWarning,
-  Truck,
-  Plug,
-  Shield,
-  KeyRound,
-  ScrollText,
-  Settings,
-  BedDouble,
-  ShieldCheck,
-  ArrowLeftRight,
-  Rocket,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { Building2, ShieldCheck } from "lucide-react";
 import type { ViewerSession } from "@/shared/api/session";
 import { loginHref, sessionEndReason } from "@/shared/api/session-end";
-import {
-  ROUTE_PERMISSIONS,
-  type GuardedRoute,
-  type Permission,
-} from "@/shared/config/permissions";
 import { routes } from "@/shared/config/routes";
 import { Link, usePathname, WorkspaceRefProvider } from "@/shared/i18n/navigation";
 import type { WorkspaceRef } from "@/shared/lib/workspace-path";
@@ -45,7 +12,9 @@ import { cn } from "@/shared/lib/cn";
 import { ToastProvider } from "@/shared/ui";
 import { ViewerProvider, useViewer } from "@/entities/viewer";
 import { SessionExpiryWatcher } from "@/features/auth-by-credentials";
+import { activeNavHref, visibleNav } from "../model/nav";
 import { AppHeader } from "./app-header";
+import { SidebarNav } from "./sidebar-nav";
 
 type Props = {
   viewer: ViewerSession;
@@ -54,89 +23,21 @@ type Props = {
   children: React.ReactNode;
 };
 
-type NavLabel =
-  | "manager"
-  | "workspace"
-  | "pipeline"
-  | "inbox"
-  | "tasks"
-  | "notifications"
-  | "customers"
-  | "packages"
-  | "bookings"
-  | "finance"
-  | "fxRates"
-  | "targets"
-  | "importExport"
-  | "reports"
-  | "setup"
-  | "aiSetup"
-  | "suppliers"
-  | "rooming"
-  | "missingDocs"
-  | "integrations"
-  | "users"
-  | "roles"
-  | "audit"
-  | "settings"
-  | "companies";
-
-type NavItem = {
-  href: GuardedRoute;
-  label: NavLabel;
-  icon: LucideIcon;
-  /** Hide when the viewer also holds this (e.g. managers land on the dashboard). */
-  unless?: Permission;
-};
-
-/** Visibility comes from `ROUTE_PERMISSIONS` — the same map the middleware enforces. */
-const NAV_ITEMS: readonly NavItem[] = [
-  { href: routes.manager, label: "manager", icon: LayoutDashboard },
-  { href: routes.workspace, label: "workspace", icon: Briefcase, unless: "dashboard.read" },
-  { href: routes.pipeline, label: "pipeline", icon: Kanban },
-  { href: routes.inbox, label: "inbox", icon: MessageSquare },
-  { href: routes.tasks, label: "tasks", icon: ListTodo },
-  { href: routes.notifications, label: "notifications", icon: Bell },
-  { href: routes.customers, label: "customers", icon: Users },
-  { href: routes.packages, label: "packages", icon: Package },
-  { href: routes.bookings, label: "bookings", icon: CalendarCheck2 },
-  { href: routes.finance, label: "finance", icon: Wallet },
-  { href: routes.financeFx, label: "fxRates", icon: ArrowLeftRight },
-  { href: routes.targets, label: "targets", icon: Target },
-  { href: routes.importExport, label: "importExport", icon: FileSpreadsheet },
-  { href: routes.reports, label: "reports", icon: FileBarChart2 },
-  { href: routes.setup, label: "setup", icon: Rocket },
-  { href: routes.aiSetup, label: "aiSetup", icon: Sparkles },
-  { href: routes.suppliers, label: "suppliers", icon: Truck },
-  { href: routes.rooming, label: "rooming", icon: BedDouble },
-  { href: routes.missingDocs, label: "missingDocs", icon: FileWarning },
-  { href: routes.integrations, label: "integrations", icon: Plug },
-  { href: routes.adminCompanies, label: "companies", icon: Building2 },
-  { href: routes.adminUsers, label: "users", icon: Shield },
-  { href: routes.adminRoles, label: "roles", icon: KeyRound },
-  { href: routes.adminAudit, label: "audit", icon: ScrollText },
-  { href: routes.adminSettings, label: "settings", icon: Settings },
-];
-
-function visibleNav(permissions: readonly string[]): NavItem[] {
-  return NAV_ITEMS.filter(
-    (item) =>
-      permissions.includes(ROUTE_PERMISSIONS[item.href]) &&
-      !(item.unless && permissions.includes(item.unless)),
-  );
-}
-
 /** Session, permission and toast context shared by every signed-in surface. */
 export function ShellProviders({ viewer, workspace = null, children }: Props) {
   const locale = useLocale();
   const onSessionExpired = useCallback(
-    (err: unknown) => window.location.assign(loginHref(locale, sessionEndReason(err))),
+    (err: unknown) =>
+      window.location.assign(loginHref(locale, sessionEndReason(err))),
     [locale],
   );
 
   return (
     <WorkspaceRefProvider value={workspace}>
-      <ViewerProvider initialViewer={viewer} onSessionExpired={onSessionExpired}>
+      <ViewerProvider
+        initialViewer={viewer}
+        onSessionExpired={onSessionExpired}
+      >
         <ToastProvider>
           <SessionExpiryWatcher />
           {children}
@@ -159,11 +60,8 @@ function ShellFrame({ children }: { children: React.ReactNode }) {
   const ta = useTranslations("app");
   const pathname = usePathname();
   const { user, permissions } = useViewer();
-  const items = visibleNav(permissions);
-  const activeHref = items
-    .map((item) => item.href)
-    .filter((href) => pathname === href || pathname.startsWith(`${href}/`))
-    .sort((a, b) => b.length - a.length)[0];
+  const nav = visibleNav(permissions);
+  const activeHref = activeNavHref(nav, pathname);
   const securityActive = pathname === routes.security;
 
   return (
@@ -183,37 +81,7 @@ function ShellFrame({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2.5 py-3">
-          {items.map((item) => {
-            const active = item.href === activeHref;
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-medium transition-all duration-300",
-                  active
-                    ? "bg-white text-zinc-950 shadow-sm"
-                    : "text-zinc-400 hover:bg-white/8 hover:text-white",
-                )}
-              >
-                <span
-                  className={cn(
-                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-300",
-                    active
-                      ? "bg-zinc-950 text-white"
-                      : "bg-white/10 text-white group-hover:bg-white/15",
-                  )}
-                >
-                  <Icon className="h-[17px] w-[17px]" strokeWidth={1.75} />
-                </span>
-                {t(item.label)}
-              </Link>
-            );
-          })}
-        </nav>
+        <SidebarNav nav={nav} activeHref={activeHref} />
 
         <Link
           href={routes.security}

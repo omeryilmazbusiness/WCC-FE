@@ -30,7 +30,15 @@
     "security": "Security",
     "fxRates": "FX rates",
     "notifications": "Notifications",
-    "companies": "Companies"
+    "companies": "Companies",
+    "label": "Main navigation",
+    "groups": {
+      "sales": "Sales & CRM",
+      "operations": "Operations",
+      "finance": "Finance & reports",
+      "tools": "Tools & setup",
+      "admin": "Administration"
+    }
   },
   "auth": {
     "title": "Sign in",
