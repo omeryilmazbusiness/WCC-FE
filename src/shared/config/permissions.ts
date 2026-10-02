@@ -30,6 +30,7 @@ export const PERMISSIONS = [
   "visa.write",
   "suppliers.read",
   "suppliers.write",
+  "flights.search",
   "ops.read",
   "dashboard.read",
   "packages.read",
@@ -94,6 +95,7 @@ export const ROUTE_PERMISSIONS = {
   [routes.aiSetup]: "ai.setup",
   [routes.suppliers]: "suppliers.read",
   [routes.rooming]: "packages.read",
+  [routes.flights]: "flights.search",
   [routes.missingDocs]: "documents.read",
   [routes.integrations]: "integrations.read",
   [routes.adminUsers]: "users.read",
@@ -173,7 +175,7 @@ export const DEMO_ROLE_PERMISSIONS: Record<AppRole, readonly Permission[]> = {
   employee: [
     "branches.read", "customers.read", "customers.write", "leads.read", "leads.write",
     "bookings.read", "bookings.write", "documents.read", "documents.write", "visa.read",
-    "visa.write", "suppliers.read", "tasks.read", "tasks.write", "packages.read",
+    "visa.write", "suppliers.read", "flights.search", "tasks.read", "tasks.write", "packages.read",
     "inbox.read", "inbox.write", "targets.read", "imports.read",
     "notifications.read", "notifications.write", "reports.read", "ai.read", "ai.write",
     "filesync.read",
@@ -188,7 +190,7 @@ export const DEMO_ROLE_PERMISSIONS: Record<AppRole, readonly Permission[]> = {
   operations: [
     "branches.read", "customers.read", "customers.write", "pii.read",
     "documents.read", "documents.write", "documents.review", "visa.read", "visa.write",
-    "suppliers.read", "suppliers.write", "bookings.read", "bookings.write",
+    "suppliers.read", "suppliers.write", "flights.search", "bookings.read", "bookings.write",
     "packages.read", "packages.write", "tasks.read", "tasks.write",
     "inbox.read", "inbox.write", "integrations.read", "imports.read", "imports.write",
     "notifications.read", "notifications.write", "reports.read", "reports.export",

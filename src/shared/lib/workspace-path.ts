@@ -28,6 +28,7 @@ export const ROUTE_ROOTS: ReadonlySet<string> = new Set([
   "notifications",
   "admin",
   "rooming",
+  "flights",
 ]);
 
 /** Pages outside any workspace (reached before a session exists). */

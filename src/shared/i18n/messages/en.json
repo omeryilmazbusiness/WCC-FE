@@ -27,6 +27,7 @@
     "logout": "Sign out",
     "settings": "Settings",
     "rooming": "Rooming",
+    "flights": "Flights",
     "security": "Security",
     "fxRates": "FX rates",
     "notifications": "Notifications",
@@ -2729,5 +2730,124 @@
     "close": "Close {name}",
     "count": "{count} of {max} screens open",
     "limitReplaced": "Up to {max} screens can stay open — opened in the current tab. Close a tab to keep more side by side."
+  },
+  "flights": {
+    "title": "Flights",
+    "subtitle": "Find the flights closest to your customer's preferred departure and book them on Aviasales.",
+    "loadError": "Could not load flights",
+    "disclaimer": "Prices are indicative, based on recent searches on Aviasales, and may change when booking. Departure times are local to the origin airport. Booking opens Aviasales in a new tab.",
+    "idle": {
+      "title": "Search flights",
+      "description": "Choose where from, where to, the preferred departure date and time and the travellers. Flights within 3 days of that time are listed, closest first."
+    },
+    "notConfigured": {
+      "title": "Flight search isn't set up yet",
+      "description": "Live fare comparison isn't enabled on this server yet (Travelpayouts API token missing). You can still search and book this trip on Aviasales."
+    },
+    "unavailable": {
+      "title": "The flight provider is not responding",
+      "description": "Fares couldn't be fetched right now. Try again in a moment, or search this trip on Aviasales.",
+      "retry": "Try again"
+    },
+    "empty": {
+      "title": "No flights around that time",
+      "description": "Try another date, a nearby airport, or search the whole city instead of one airport.",
+      "descriptionDirect": "No non-stop fares found. Include flights with stops, or try another date.",
+      "includeStops": "Include flights with stops"
+    },
+    "results": {
+      "count": "{count, plural, one {# flight} other {# flights}}",
+      "around": "Around {when} (±{days} days)",
+      "updated": "updated {at}",
+      "sortLabel": "Sort flights",
+      "sort": {
+        "closest": "Closest time",
+        "cheapest": "Cheapest"
+      },
+      "refresh": "Refresh results"
+    },
+    "form": {
+      "title": "Flight search",
+      "from": "From",
+      "fromPlaceholder": "City or airport",
+      "to": "To",
+      "toPlaceholder": "City or airport",
+      "swap": "Swap origin and destination",
+      "date": "Departure date",
+      "time": "Preferred time",
+      "timeHint": "Local time at the origin",
+      "passengers": "Travellers",
+      "travellers": "{count, plural, one {# traveller} other {# travellers}}",
+      "kinds": {
+        "adults": {
+          "label": "Adults",
+          "hint": "12 years and over"
+        },
+        "children": {
+          "label": "Children",
+          "hint": "2–11 years"
+        },
+        "infants": {
+          "label": "Infants",
+          "hint": "Under 2, on lap"
+        }
+      },
+      "decrease": "Remove one: {kind}",
+      "increase": "Add one: {kind}",
+      "passengerRules": "Up to {max} travellers; one infant per adult.",
+      "currency": "Currency",
+      "submit": "Search flights",
+      "directOnly": "Non-stop only",
+      "airport": "Airport",
+      "allAirports": "All airports",
+      "noPlaces": "No matching city or airport",
+      "placesUnavailable": "Suggestions are unavailable — type the 3-letter IATA code.",
+      "searchingPlaces": "Searching…",
+      "errors": {
+        "origin": {
+          "required": "Choose where you fly from"
+        },
+        "destination": {
+          "required": "Choose where you fly to",
+          "sameAsOrigin": "Destination must differ from the origin"
+        },
+        "date": {
+          "required": "Choose a departure date",
+          "invalid": "Enter a valid date",
+          "past": "The date can't be in the past",
+          "tooFar": "Fares are available up to {days} days ahead"
+        },
+        "time": {
+          "required": "Choose a preferred time",
+          "invalid": "Enter a valid time"
+        },
+        "passengers": {
+          "invalid": "At least one adult is required",
+          "infants": "Each infant needs an adult",
+          "tooMany": "Up to {max} travellers per search"
+        }
+      }
+    },
+    "offer": {
+      "units": {
+        "d": "{n}d",
+        "h": "{n}h",
+        "m": "{n}m"
+      },
+      "direct": "Non-stop",
+      "stops": "{count, plural, one {# stop} other {# stops}}",
+      "arrival": "Arrival",
+      "closest": "Closest time",
+      "cheapest": "Cheapest",
+      "gap": {
+        "onTime": "Right on time",
+        "earlier": "{value} earlier",
+        "later": "{value} later"
+      },
+      "book": "Book",
+      "opensInNewTab": "(opens Aviasales in a new tab)"
+    },
+    "providerSearch": "Search on Aviasales",
+    "providerSearchHint": "See every live fare for this trip on Aviasales and book there."
   }
 }

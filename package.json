@@ -32,7 +32,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:workspace-tabs": "node --experimental-strip-types scripts/selftest-workspace-tabs.ts",
     "test:query-cache": "node --experimental-strip-types scripts/selftest-query-cache.ts",
-    "test:typewriter": "node --experimental-strip-types scripts/selftest-typewriter.ts"
+    "test:typewriter": "node --experimental-strip-types scripts/selftest-typewriter.ts",
+    "test:flights": "node --experimental-strip-types scripts/selftest-flights.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

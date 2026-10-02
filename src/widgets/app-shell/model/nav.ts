@@ -16,6 +16,7 @@ import {
   MessageSquare,
   Package,
   Plane,
+  PlaneTakeoff,
   Plug,
   Rocket,
   ScrollText,
@@ -59,6 +60,7 @@ export type NavLabel =
   | "aiSetup"
   | "suppliers"
   | "rooming"
+  | "flights"
   | "missingDocs"
   | "integrations"
   | "users"
@@ -120,6 +122,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     items: [
       { href: routes.packages, label: "packages", icon: Package },
       { href: routes.bookings, label: "bookings", icon: CalendarCheck2 },
+      { href: routes.flights, label: "flights", icon: PlaneTakeoff },
       { href: routes.rooming, label: "rooming", icon: BedDouble },
       { href: routes.suppliers, label: "suppliers", icon: Truck },
       { href: routes.missingDocs, label: "missingDocs", icon: FileWarning },

@@ -33,6 +33,7 @@ export const routes = {
   adminSettings: "/admin/settings",
   adminCompanies: "/admin/companies",
   rooming: "/rooming",
+  flights: "/flights",
 } as const;
 
 export type AppRole =
