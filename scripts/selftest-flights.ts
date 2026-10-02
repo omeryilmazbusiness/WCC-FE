@@ -100,6 +100,9 @@ function mappers() {
   });
   assert.equal(result.query.date, "2026-12-10");
   assert.equal(result.query.time, "14:00");
+  const anyTime = mapSearchResult({ query: { departure: "2026-12-10T00:00", any_time: true } });
+  assert.equal(anyTime.query.time, "", "any-time search has no wanted time");
+  assert.equal(anyTime.query.date, "2026-12-10");
   assert.equal(result.query.passengers.children, 1);
   assert.equal(result.query.direct, true);
   assert.equal(result.windowHours, 72);
@@ -118,6 +121,14 @@ function mappers() {
       passengers: { adults: 2, children: 1, infants: 0 }, currency: "EUR", direct: false,
     }),
     "origin=IST&destination=DXB&date=2026-12-10&time=14%3A00&adults=2&children=1&infants=0&currency=EUR&direct=false",
+  );
+  assert.equal(
+    searchQueryString({
+      origin: "IST", destination: "DXB", date: "2026-12-10", time: "",
+      passengers: { adults: 1, children: 0, infants: 0 }, currency: "USD", direct: false,
+    }),
+    "origin=IST&destination=DXB&date=2026-12-10&adults=1&children=0&infants=0&currency=USD&direct=false",
+    "no time, whole day",
   );
 }
 
@@ -165,6 +176,7 @@ function validation() {
 
   const base = defaultForm(TODAY);
   assert.equal(base.date, "2026-10-03", "defaults to tomorrow");
+  assert.equal(base.time, "", "no preferred time until one is picked");
   assert.deepEqual(base.passengers, { adults: 1, children: 0, infants: 0 });
 
   assert.deepEqual(validateForm(form(), TODAY), {});
@@ -177,13 +189,13 @@ function validation() {
   assert.equal(validateForm(form({ date: "2026-02-30" }), TODAY).date, "invalid");
   assert.equal(validateForm(form({ date: "" }), TODAY).date, "required");
   assert.equal(validateForm(form({ time: "24:00" }), TODAY).time, "invalid");
-  assert.equal(validateForm(form({ time: "" }), TODAY).time, "required");
+  assert.equal(validateForm(form({ time: "" }), TODAY).time, undefined, "time is optional");
   assert.equal(validateForm(form({ passengers: { adults: 0, children: 1, infants: 0 } }), TODAY).passengers, "invalid");
   assert.equal(validateForm(form({ passengers: { adults: 1, children: 0, infants: 2 } }), TODAY).passengers, "infants");
   assert.equal(validateForm(form({ passengers: { adults: 5, children: 5, infants: 0 } }), TODAY).passengers, "tooMany");
 
   assert.deepEqual(toSearchParams(form({ direct: true })), {
-    origin: "IST", destination: "DXB", date: "2026-10-03", time: "09:00",
+    origin: "IST", destination: "DXB", date: "2026-10-03", time: "",
     passengers: { adults: 1, children: 0, infants: 0 }, currency: "USD", direct: true,
   });
   assert.equal(toSearchParams(base), null);
@@ -225,6 +237,12 @@ function url() {
   const back = readFormParams(sp, TODAY);
   assert.deepEqual(back, f, "round trip");
   assert.deepEqual(submittedSearch(sp, TODAY), toSearchParams(f));
+
+  const noTime = writeFormParams(new URLSearchParams(), form({ date: "2026-12-10" }));
+  assert.equal(noTime.has("time"), false, "an empty time stays out of the URL");
+  assert.deepEqual(readFormParams(noTime, TODAY), form({ date: "2026-12-10" }), "round trip without time");
+  assert.equal(submittedSearch(noTime, TODAY)?.time, "");
+  assert.equal(submittedSearch(new URLSearchParams("from=IST&to=DXB&date=2026-12-10&time=25:00"), TODAY), null, "bad time is not run");
 
   assert.equal(submittedSearch(new URLSearchParams(""), TODAY), null, "nothing submitted");
   assert.equal(submittedSearch(new URLSearchParams("from=IST&to=IST&date=2026-12-10"), TODAY), null, "invalid search is not run");

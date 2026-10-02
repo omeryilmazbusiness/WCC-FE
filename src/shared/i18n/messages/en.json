@@ -2738,7 +2738,12 @@
     "disclaimer": "Prices are indicative, based on recent searches on Aviasales, and may change when booking. Departure times are local to the origin airport. Booking opens Aviasales in a new tab.",
     "idle": {
       "title": "Search flights",
-      "description": "Choose where from, where to, the preferred departure date and time and the travellers. Flights within 3 days of that time are listed, closest first."
+      "description": "Choose where from, where to, the departure date — and a preferred time if you like — and the travellers. Flights within 3 days are listed, closest first.",
+      "steps": {
+        "route": "Choose where from and where to",
+        "time": "Set the preferred departure",
+        "book": "Compare and book on Aviasales"
+      }
     },
     "notConfigured": {
       "title": "Flight search isn't set up yet",
@@ -2826,6 +2831,24 @@
           "infants": "Each infant needs an adult",
           "tooMany": "Up to {max} travellers per search"
         }
+      },
+      "anyTime": "Any time",
+      "anyTimeHint": "Search the whole day",
+      "timeOptional": "Optional — the whole day is searched",
+      "clearTime": "Clear preferred time",
+      "periods": {
+        "morning": "Morning",
+        "afternoon": "Afternoon",
+        "evening": "Evening",
+        "night": "Night"
+      },
+      "calendar": {
+        "choose": "Choose a departure date",
+        "prevMonth": "Previous month",
+        "nextMonth": "Next month",
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "nextWeek": "In a week"
       }
     },
     "offer": {
@@ -2842,12 +2865,19 @@
       "gap": {
         "onTime": "Right on time",
         "earlier": "{value} earlier",
-        "later": "{value} later"
+        "later": "{value} later",
+        "sameDay": "On your date"
       },
       "book": "Book",
-      "opensInNewTab": "(opens Aviasales in a new tab)"
+      "opensInNewTab": "(opens Aviasales in a new tab)",
+      "perAdult": "per adult"
     },
     "providerSearch": "Search on Aviasales",
-    "providerSearchHint": "See every live fare for this trip on Aviasales and book there."
+    "providerSearchHint": "See every live fare for this trip on Aviasales and book there.",
+    "hero": {
+      "source": "Fares from Aviasales",
+      "window": "±3 days around your time",
+      "secure": "Secure booking on Aviasales"
+    }
   }
 }

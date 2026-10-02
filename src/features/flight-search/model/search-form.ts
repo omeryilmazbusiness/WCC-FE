@@ -19,7 +19,7 @@ export type FlightSearchForm = {
   destination: PlaceChoice | null;
   /** `YYYY-MM-DD` */
   date: string;
-  /** `HH:MM`, wall clock at the origin. */
+  /** `HH:MM`, wall clock at the origin; "" searches the whole day. */
   time: string;
   passengers: Passengers;
   currency: FlightCurrency;
@@ -32,11 +32,10 @@ export type FormErrors = Partial<Record<FormField, FormErrorCode>>;
 
 export type PassengerKind = keyof Passengers;
 
-export const DEFAULT_TIME = "09:00";
 export const DEFAULT_CURRENCY: FlightCurrency = "USD";
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
-const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+export const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 const IATA = /^[A-Z]{3}$/;
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -61,7 +60,7 @@ export function defaultForm(today: string): FlightSearchForm {
     origin: null,
     destination: null,
     date: addDays(today, 1),
-    time: DEFAULT_TIME,
+    time: "",
     passengers: { adults: 1, children: 0, infants: 0 },
     currency: DEFAULT_CURRENCY,
     direct: false,
@@ -101,7 +100,7 @@ export function validateForm(form: FlightSearchForm, today: string): FormErrors 
   else if (form.date < today) errors.date = "past";
   else if (form.date > addDays(today, MAX_ADVANCE_DAYS)) errors.date = "tooFar";
 
-  if (!TIME.test(form.time)) errors.time = form.time ? "invalid" : "required";
+  if (form.time && !TIME.test(form.time)) errors.time = "invalid";
 
   const p = form.passengers;
   const counts = [p.adults, p.children, p.infants];
@@ -185,7 +184,7 @@ export function writeFormParams(sp: URLSearchParams, form: FlightSearchForm): UR
     if (form.destination.label !== form.destination.code) out.set("toName", form.destination.label.slice(0, LABEL_MAX));
   }
   out.set("date", form.date);
-  out.set("time", form.time);
+  if (form.time) out.set("time", form.time);
   out.set("adults", String(form.passengers.adults));
   if (form.passengers.children) out.set("children", String(form.passengers.children));
   if (form.passengers.infants) out.set("infants", String(form.passengers.infants));

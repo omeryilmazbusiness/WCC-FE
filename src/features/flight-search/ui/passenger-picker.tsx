@@ -1,10 +1,9 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { ChevronDown, Minus, Plus, Users } from "lucide-react";
+import { Baby, ChevronDown, Minus, Plus, User, UserRound, Users, type LucideIcon } from "lucide-react";
 import type { Passengers } from "@/entities/flight";
-import { cn } from "@/shared/lib/cn";
-import { Label, Popover, PopoverContent, PopoverTrigger } from "@/shared/ui";
+import { IconTile, Popover, PopoverContent, PopoverTrigger, type Tone } from "@/shared/ui";
 import {
   MAX_TRAVELLERS,
   canStep,
@@ -12,8 +11,16 @@ import {
   totalTravellers,
   type PassengerKind,
 } from "../model/search-form";
+import { FieldShell } from "./field-shell";
 
-const KINDS: readonly PassengerKind[] = ["adults", "children", "infants"];
+const KINDS: readonly { kind: PassengerKind; icon: LucideIcon; tone: Tone }[] = [
+  { kind: "adults", icon: User, tone: "sky" },
+  { kind: "children", icon: UserRound, tone: "violet" },
+  { kind: "infants", icon: Baby, tone: "rose" },
+];
+
+const STEP =
+  "inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-zinc-700 ring-1 ring-zinc-200 transition-all hover:bg-zinc-50 hover:text-zinc-950 active:scale-95 disabled:pointer-events-none disabled:opacity-35 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300";
 
 type PassengerPickerProps = {
   id: string;
@@ -27,33 +34,31 @@ export function PassengerPicker({ id, value, onChange, error }: PassengerPickerP
   const total = totalTravellers(value);
 
   return (
-    <div className="space-y-1.5">
-      <Label htmlFor={id}>{t("passengers")}</Label>
+    <FieldShell htmlFor={id} label={t("passengers")} icon={Users} tone="amber" error={error}>
       <Popover className="flex w-full">
         <PopoverTrigger
           id={id}
-          className={cn(
-            "flex h-11 w-full items-center gap-2 rounded-2xl border border-zinc-200/80 bg-white px-3.5 text-start text-sm font-medium text-zinc-950 shadow-sm transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
-            error && "border-rose-300",
-          )}
+          className="flex h-8 w-full items-center gap-2 text-start text-[15px] font-semibold text-zinc-950 focus:outline-none"
           aria-invalid={error ? true : undefined}
           data-testid="flight-passengers"
         >
-          <Users className="h-4 w-4 shrink-0 text-zinc-400" aria-hidden />
           <span className="min-w-0 flex-1 truncate">{t("travellers", { count: total })}</span>
           <ChevronDown className="h-4 w-4 text-zinc-400" aria-hidden />
         </PopoverTrigger>
-        <PopoverContent align="start" className="w-72 p-2" aria-label={t("passengers")}>
-          {KINDS.map((kind) => (
-            <div key={kind} className="flex items-center justify-between gap-3 rounded-2xl px-2.5 py-2">
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-zinc-900">{t(`kinds.${kind}.label`)}</p>
-                <p className="text-xs text-zinc-500">{t(`kinds.${kind}.hint`)}</p>
+        <PopoverContent align="start" className="w-80 rounded-[22px] p-2" aria-label={t("passengers")}>
+          {KINDS.map(({ kind, icon, tone }) => (
+            <div key={kind} className="flex items-center justify-between gap-3 rounded-2xl px-2.5 py-2.5">
+              <div className="flex min-w-0 items-center gap-3">
+                <IconTile icon={icon} tone={tone} size="md" />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-zinc-900">{t(`kinds.${kind}.label`)}</p>
+                  <p className="text-xs text-zinc-500">{t(`kinds.${kind}.hint`)}</p>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 rounded-full bg-zinc-100/80 p-1">
                 <button
                   type="button"
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-zinc-200 text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-40"
+                  className={STEP}
                   disabled={!canStep(value, kind, -1)}
                   onClick={() => onChange(stepPassengers(value, kind, -1))}
                   aria-label={t("decrease", { kind: t(`kinds.${kind}.label`) })}
@@ -62,7 +67,7 @@ export function PassengerPicker({ id, value, onChange, error }: PassengerPickerP
                   <Minus className="h-3.5 w-3.5" aria-hidden />
                 </button>
                 <output
-                  className="w-6 text-center text-sm font-semibold tabular-nums text-zinc-950"
+                  className="w-6 text-center text-sm font-bold tabular-nums text-zinc-950"
                   aria-live="polite"
                   data-testid={`passengers-${kind}`}
                 >
@@ -70,7 +75,7 @@ export function PassengerPicker({ id, value, onChange, error }: PassengerPickerP
                 </output>
                 <button
                   type="button"
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-zinc-200 text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-40"
+                  className={STEP}
                   disabled={!canStep(value, kind, 1)}
                   onClick={() => onChange(stepPassengers(value, kind, 1))}
                   aria-label={t("increase", { kind: t(`kinds.${kind}.label`) })}
@@ -81,10 +86,11 @@ export function PassengerPicker({ id, value, onChange, error }: PassengerPickerP
               </div>
             </div>
           ))}
-          <p className="px-2.5 pb-1 pt-2 text-xs text-zinc-500">{t("passengerRules", { max: MAX_TRAVELLERS })}</p>
+          <p className="mx-2.5 mt-1 border-t border-zinc-100 pb-1 pt-2.5 text-xs text-zinc-500">
+            {t("passengerRules", { max: MAX_TRAVELLERS })}
+          </p>
         </PopoverContent>
       </Popover>
-      {error ? <p className="text-xs font-medium text-rose-600">{error}</p> : null}
-    </div>
+    </FieldShell>
   );
 }

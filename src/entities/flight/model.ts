@@ -23,7 +23,7 @@ export type FlightSearchParams = {
   destination: string;
   /** `YYYY-MM-DD` */
   date: string;
-  /** `HH:MM`, wall clock at the origin. */
+  /** `HH:MM`, wall clock at the origin; "" searches the whole day. */
   time: string;
   passengers: Passengers;
   currency: string;
@@ -46,7 +46,7 @@ export type FlightOffer = {
   transfers: number;
   price: number;
   currency: string;
-  /** Signed: negative leaves before the wanted time. */
+  /** Signed: negative leaves before the wanted time (whole days for an any-time search). */
   gapMinutes: number;
   closest: boolean;
   cheapest: boolean;
@@ -139,7 +139,7 @@ export function mapSearchResult(raw: unknown): FlightSearchResult {
       destination: str(q.destination),
       departure,
       date: departure.slice(0, 10),
-      time: departure.slice(11, 16),
+      time: q.any_time === true ? "" : departure.slice(11, 16),
       passengers: { adults: int(q.adults), children: int(q.children), infants: int(q.infants) },
       currency: str(q.currency),
       direct: q.direct === true,
@@ -158,17 +158,14 @@ export function errorSearchUrl(details: Record<string, unknown> | undefined): st
 }
 
 export function searchQueryString(p: FlightSearchParams): string {
-  return new URLSearchParams({
-    origin: p.origin,
-    destination: p.destination,
-    date: p.date,
-    time: p.time,
-    adults: String(p.passengers.adults),
-    children: String(p.passengers.children),
-    infants: String(p.passengers.infants),
-    currency: p.currency,
-    direct: String(p.direct),
-  }).toString();
+  const qs = new URLSearchParams({ origin: p.origin, destination: p.destination, date: p.date });
+  if (p.time) qs.set("time", p.time);
+  qs.set("adults", String(p.passengers.adults));
+  qs.set("children", String(p.passengers.children));
+  qs.set("infants", String(p.passengers.infants));
+  qs.set("currency", p.currency);
+  qs.set("direct", String(p.direct));
+  return qs.toString();
 }
 
 /** The backend already returns closest first; cheapest re-sorts by price, then gap. */

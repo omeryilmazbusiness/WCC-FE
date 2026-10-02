@@ -2,12 +2,13 @@
 
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { useTranslations } from "next-intl";
-import { Building2, Loader2, MapPin, PlaneTakeoff } from "lucide-react";
+import { Building2, Loader2, PlaneLanding, PlaneTakeoff } from "lucide-react";
 import { PLACE_MIN_TERM, type FlightRepository, type Place } from "@/entities/flight";
 import { cn } from "@/shared/lib/cn";
 import { useDebouncedValue } from "@/shared/lib/use-debounced-value";
-import { Input, Label } from "@/shared/ui";
+import { Input } from "@/shared/ui";
 import type { PlaceChoice } from "../model/search-form";
+import { FIELD_CONTROL, FieldShell } from "./field-shell";
 
 const DEBOUNCE_MS = 250;
 
@@ -140,56 +141,58 @@ export function PlaceCombobox({
   }
 
   const showList = open && term.length >= PLACE_MIN_TERM && (places.length > 0 || loading || failed || debounced === term);
-  const Lead = icon === "takeoff" ? PlaneTakeoff : MapPin;
+  const landing = icon === "landing";
 
   return (
-    <div className="relative space-y-1.5">
-      <Label htmlFor={id}>{label}</Label>
-      <div className="relative">
-        <Lead className="pointer-events-none absolute start-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" aria-hidden />
-        <Input
-          id={id}
-          role="combobox"
-          aria-autocomplete="list"
-          aria-expanded={showList}
-          aria-controls={listId}
-          aria-activedescendant={showList && active >= 0 ? `${listId}-${active}` : undefined}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={error ? errorId : undefined}
-          autoComplete="off"
-          spellCheck={false}
-          placeholder={placeholder}
-          value={text}
-          className={cn("ps-10", loading && "pe-10", error && "border-rose-300 focus-visible:ring-rose-200")}
-          onFocus={(e) => {
-            e.currentTarget.select();
-            setOpen(true);
-          }}
-          onChange={(e) => {
-            editing.current = true;
-            setText(e.target.value);
-            setOpen(true);
-            if (value) onChange(null);
-          }}
-          onBlur={commitTyped}
-          onKeyDown={onKeyDown}
-          data-testid={`${id}-input`}
-        />
-        {loading ? (
-          <Loader2 className="absolute end-3.5 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-zinc-400" aria-hidden />
-        ) : null}
-      </div>
-      {error ? (
-        <p id={errorId} className="text-xs font-medium text-rose-600">
-          {error}
-        </p>
-      ) : null}
+    <div className="relative">
+      <FieldShell
+        htmlFor={id}
+        label={label}
+        icon={landing ? PlaneLanding : PlaneTakeoff}
+        tone={landing ? "indigo" : "sky"}
+        error={error}
+        errorId={errorId}
+      >
+        <div className="relative">
+          <Input
+            id={id}
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded={showList}
+            aria-controls={listId}
+            aria-activedescendant={showList && active >= 0 ? `${listId}-${active}` : undefined}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? errorId : undefined}
+            autoComplete="off"
+            spellCheck={false}
+            placeholder={placeholder}
+            value={text}
+            className={cn(FIELD_CONTROL, "truncate text-base", loading && "pe-7")}
+            onFocus={(e) => {
+              e.currentTarget.select();
+              setOpen(true);
+            }}
+            onChange={(e) => {
+              editing.current = true;
+              setText(e.target.value);
+              setOpen(true);
+              if (value) onChange(null);
+            }}
+            onBlur={commitTyped}
+            onKeyDown={onKeyDown}
+            data-testid={`${id}-input`}
+          />
+          {loading ? (
+            <Loader2 className="absolute end-0 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-sky-500" aria-hidden />
+          ) : null}
+        </div>
+      </FieldShell>
       {showList ? (
         <ul
           id={listId}
           role="listbox"
           aria-label={label}
-          className="absolute inset-x-0 top-full z-40 mt-1.5 max-h-80 overflow-auto rounded-[20px] border border-zinc-200/80 bg-white p-1.5 shadow-[0_16px_40px_-20px_rgba(24,24,27,0.45)]"
+          className="absolute inset-x-0 top-full z-40 mt-2 max-h-80 overflow-auto rounded-[22px] border border-white/80 bg-white/95 p-1.5 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.45)] ring-1 ring-zinc-200/70 backdrop-blur-xl"
           data-testid={`${id}-options`}
         >
           {places.map((place, i) => {
@@ -206,11 +209,16 @@ export function PlaceCombobox({
                 onMouseEnter={() => setActive(i)}
                 className={cn(
                   "flex cursor-pointer items-center gap-3 rounded-2xl px-3 py-2.5",
-                  i === active ? "bg-zinc-100" : "hover:bg-zinc-50",
+                  i === active ? "bg-sky-50/80" : "hover:bg-zinc-50",
                 )}
                 data-testid="place-option"
               >
-                <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-zinc-500">
+                <span
+                  className={cn(
+                    "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
+                    place.type === "airport" ? "bg-sky-50 text-sky-600" : "bg-indigo-50 text-indigo-600",
+                  )}
+                >
                   <PlaceIcon className="h-4 w-4" aria-hidden />
                 </span>
                 <span className="min-w-0 flex-1">
@@ -220,7 +228,7 @@ export function PlaceCombobox({
                     {where ? ` · ${where}` : ""}
                   </span>
                 </span>
-                <span dir="ltr" className="rounded-lg bg-zinc-100 px-1.5 py-0.5 font-mono text-xs font-semibold text-zinc-600">
+                <span dir="ltr" className="rounded-lg bg-white px-2 py-0.5 font-mono text-xs font-bold text-zinc-700 ring-1 ring-zinc-200/80">
                   {place.code}
                 </span>
               </li>

@@ -2,10 +2,10 @@
 
 import { useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowLeftRight, Search } from "lucide-react";
+import { ArrowLeftRight, CalendarDays, Clock3, Coins, Loader2, Route, Search } from "lucide-react";
 import type { FlightRepository } from "@/entities/flight";
 import { cn } from "@/shared/lib/cn";
-import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, buttonVariants } from "@/shared/ui";
 import {
   FLIGHT_CURRENCIES,
   MAX_ADVANCE_DAYS,
@@ -19,8 +19,11 @@ import {
   type FormErrorCode,
   type FormField,
 } from "../model/search-form";
+import { DatePicker } from "./date-picker";
+import { FIELD_CONTROL, FieldShell } from "./field-shell";
 import { PassengerPicker } from "./passenger-picker";
 import { PlaceCombobox } from "./place-combobox";
+import { TimePicker } from "./time-picker";
 
 type FlightSearchFormProps = {
   initial: FormValues;
@@ -56,11 +59,11 @@ export function FlightSearchForm({ initial, today, repository, busy, onSubmit }:
     <form
       noValidate
       onSubmit={submit}
-      className="space-y-4 rounded-[28px] border border-zinc-200/80 bg-white p-4 shadow-[0_8px_30px_rgba(0,0,0,0.03)] sm:p-5"
+      className="relative z-10 space-y-3 rounded-[30px] border border-white/80 bg-white/90 p-3 shadow-[0_24px_60px_-34px_rgba(15,23,42,0.35)] ring-1 ring-zinc-200/60 backdrop-blur-xl sm:p-4"
       data-testid="flight-search-form"
       aria-label={t("title")}
     >
-      <div className="grid items-start gap-3 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+      <div className="relative grid items-start gap-3 md:grid-cols-2">
         <PlaceCombobox
           id="flight-origin"
           label={t("from")}
@@ -72,18 +75,6 @@ export function FlightSearchForm({ initial, today, repository, busy, onSubmit }:
           icon="takeoff"
           error={message("origin", errors.origin)}
         />
-        <div className="flex justify-center md:pt-[26px]">
-          <button
-            type="button"
-            onClick={() => setForm(swapPlaces)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-zinc-200/80 bg-white text-zinc-600 shadow-sm transition-all hover:-translate-y-0.5 hover:text-zinc-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
-            aria-label={t("swap")}
-            title={t("swap")}
-            data-testid="flight-swap"
-          >
-            <ArrowLeftRight className="h-4 w-4 rotate-90 md:rotate-0" aria-hidden />
-          </button>
-        </div>
         <PlaceCombobox
           id="flight-destination"
           label={t("to")}
@@ -95,52 +86,60 @@ export function FlightSearchForm({ initial, today, repository, busy, onSubmit }:
           icon="landing"
           error={message("destination", errors.destination)}
         />
+        <button
+          type="button"
+          onClick={() => setForm(swapPlaces)}
+          className="group absolute start-1/2 top-[22px] z-10 hidden h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full bg-white text-zinc-600 shadow-[0_10px_24px_-12px_rgba(15,23,42,0.45)] ring-1 ring-zinc-200/80 transition-all duration-300 hover:text-sky-600 hover:shadow-[0_14px_28px_-12px_rgba(14,165,233,0.55)] focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 active:scale-95 md:inline-flex rtl:translate-x-1/2"
+          aria-label={t("swap")}
+          title={t("swap")}
+          data-testid="flight-swap"
+        >
+          <ArrowLeftRight className="h-4 w-4 transition-transform duration-500 group-hover:rotate-180" aria-hidden />
+        </button>
       </div>
 
-      <div className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.8fr)_minmax(0,1fr)_minmax(0,0.7fr)_auto]">
-        <div className="space-y-1.5">
-          <Label htmlFor="flight-date">{t("date")}</Label>
-          <Input
+      <div className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)_minmax(0,1fr)_minmax(0,0.8fr)]">
+        <FieldShell
+          htmlFor="flight-date"
+          label={t("date")}
+          icon={CalendarDays}
+          tone="sky"
+          error={message("date", errors.date)}
+        >
+          <DatePicker
             id="flight-date"
-            type="date"
+            value={form.date}
             min={today}
             max={addDays(today, MAX_ADVANCE_DAYS)}
-            value={form.date}
-            onChange={(e) => patch({ date: e.target.value })}
-            aria-invalid={errors.date ? true : undefined}
-            className={cn(errors.date && "border-rose-300")}
-            data-testid="flight-date"
+            locale={locale}
+            invalid={Boolean(errors.date)}
+            onChange={(date) => patch({ date })}
           />
-          {errors.date ? <p className="text-xs font-medium text-rose-600">{message("date", errors.date)}</p> : null}
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="flight-time">{t("time")}</Label>
-          <Input
+        </FieldShell>
+        <FieldShell
+          htmlFor="flight-time"
+          label={t("time")}
+          icon={Clock3}
+          tone="violet"
+          hint={form.time ? t("timeHint") : t("timeOptional")}
+          error={message("time", errors.time)}
+        >
+          <TimePicker
             id="flight-time"
-            type="time"
-            step={900}
             value={form.time}
-            onChange={(e) => patch({ time: e.target.value })}
-            aria-invalid={errors.time ? true : undefined}
-            className={cn(errors.time && "border-rose-300")}
-            data-testid="flight-time"
+            invalid={Boolean(errors.time)}
+            onChange={(time) => patch({ time })}
           />
-          {errors.time ? (
-            <p className="text-xs font-medium text-rose-600">{message("time", errors.time)}</p>
-          ) : (
-            <p className="text-xs text-zinc-500">{t("timeHint")}</p>
-          )}
-        </div>
+        </FieldShell>
         <PassengerPicker
           id="flight-passengers"
           value={form.passengers}
           onChange={(passengers) => patch({ passengers })}
           error={message("passengers", errors.passengers)}
         />
-        <div className="space-y-1.5">
-          <Label htmlFor="flight-currency">{t("currency")}</Label>
+        <FieldShell htmlFor="flight-currency" label={t("currency")} icon={Coins} tone="emerald">
           <Select value={form.currency} onValueChange={(v) => isFlightCurrency(v) && patch({ currency: v })}>
-            <SelectTrigger id="flight-currency" data-testid="flight-currency">
+            <SelectTrigger id="flight-currency" className={cn(FIELD_CONTROL, "w-full")} data-testid="flight-currency">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -151,29 +150,49 @@ export function FlightSearchForm({ initial, today, repository, busy, onSubmit }:
               ))}
             </SelectContent>
           </Select>
-        </div>
-        <div className="flex items-end sm:col-span-2 lg:col-span-1 lg:pt-[26px]">
-          <Button type="submit" className="w-full lg:w-auto" disabled={busy} data-testid="flight-search-submit">
-            <Search className="h-4 w-4" aria-hidden />
-            {t("submit")}
-          </Button>
-        </div>
+        </FieldShell>
       </div>
 
-      <label className="inline-flex cursor-pointer select-none items-center gap-2.5 text-sm font-medium text-zinc-700">
-        <input
-          type="checkbox"
-          className="peer sr-only"
-          checked={form.direct}
-          onChange={(e) => patch({ direct: e.target.checked })}
-          data-testid="flight-direct"
-        />
-        <span
-          aria-hidden
-          className="relative h-6 w-10 rounded-full bg-zinc-200 transition-colors after:absolute after:start-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:bg-emerald-500 peer-checked:after:translate-x-4 peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--ring)] rtl:peer-checked:after:-translate-x-4"
-        />
-        {t("directOnly")}
-      </label>
+      <div className="flex flex-col gap-3 px-1 pt-1 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="inline-flex cursor-pointer select-none items-center gap-3 rounded-full bg-zinc-50/80 py-1.5 pe-4 ps-1.5 text-sm font-semibold text-zinc-700 ring-1 ring-inset ring-zinc-200/70">
+            <input
+              type="checkbox"
+              className="peer sr-only"
+              checked={form.direct}
+              onChange={(e) => patch({ direct: e.target.checked })}
+              data-testid="flight-direct"
+            />
+            <span
+              aria-hidden
+              className="relative h-[26px] w-[44px] shrink-0 rounded-full bg-zinc-300/80 transition-colors duration-300 after:absolute after:start-[3px] after:top-[3px] after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-[0_2px_6px_rgba(0,0,0,0.25)] after:transition-transform after:duration-300 peer-checked:bg-[#34C759] peer-checked:after:translate-x-[18px] peer-focus-visible:ring-2 peer-focus-visible:ring-sky-300 rtl:peer-checked:after:-translate-x-[18px]"
+            />
+            <Route className="h-4 w-4 text-zinc-400" aria-hidden />
+            {t("directOnly")}
+          </label>
+          <button
+            type="button"
+            onClick={() => setForm(swapPlaces)}
+            className="inline-flex h-9 items-center gap-2 rounded-full bg-zinc-50/80 px-3.5 text-sm font-semibold text-zinc-600 ring-1 ring-inset ring-zinc-200/70 transition-colors hover:text-sky-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 md:hidden"
+            aria-label={t("swap")}
+          >
+            <ArrowLeftRight className="h-4 w-4 rotate-90" aria-hidden />
+          </button>
+        </div>
+        <button
+          type="submit"
+          disabled={busy}
+          className={buttonVariants({
+            size: "lg",
+            className:
+              "w-full rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 px-8 text-white shadow-[0_16px_32px_-14px_rgba(79,70,229,0.7)] hover:bg-transparent hover:from-sky-400 hover:to-indigo-500 hover:shadow-[0_20px_36px_-14px_rgba(79,70,229,0.75)] sm:w-auto",
+          })}
+          data-testid="flight-search-submit"
+        >
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Search className="h-4 w-4" aria-hidden />}
+          {t("submit")}
+        </button>
+      </div>
     </form>
   );
 }
