@@ -19,6 +19,7 @@ export function TasksView() {
   const query = useApiQuery(
     () => (managerMode ? repo.list() : repo.listMine(user.id)),
     [user.id, managerMode],
+    { cacheKey: ["tasks", managerMode ? "all" : user.id] },
   );
   const tasks = query.data;
 
@@ -28,6 +29,7 @@ export function TasksView() {
         <QueryState
           loading={query.loading}
           loadingLabel={tc("loading")}
+          loadingHeader
           error={query.error}
           onRetry={() => void query.reload()}
         >

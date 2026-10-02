@@ -27,7 +27,7 @@ export function LostLeadsCard() {
   const feedback = useMutationFeedback();
   const canRun = useCan("ai.write");
   const [busy, setBusy] = useState(false);
-  const query = useApiQuery(() => repo.lostLeadsAnalysis(), []);
+  const query = useApiQuery(() => repo.lostLeadsAnalysis(), [], { cacheKey: ["ai-lost-leads"] });
   const [fresh, setFresh] = useState<LostLeadsAnalysis | null>(null);
   const data = fresh ?? query.data;
 
@@ -65,7 +65,7 @@ export function LostLeadsCard() {
         ) : null
       }
     >
-      <QueryState loading={query.loading && !data} error={fresh ? null : query.error} onRetry={() => void query.reload()}>
+      <QueryState loadingVariant="lines" loading={query.loading && !data} error={fresh ? null : query.error} onRetry={() => void query.reload()}>
         {!data ? null : !enabled ? (
           <AIConnectState text={t("lostNoAi")} />
         ) : busy ? (

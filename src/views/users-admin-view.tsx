@@ -71,6 +71,7 @@ export function UsersAdminView() {
         branchId,
       }),
     [query, role, branchId],
+    { cacheKey: ["users", query, role, branchId ?? null] },
   );
   const rows = useMemo(() => users.data ?? [], [users.data]);
   const reload = users.reload;
@@ -277,6 +278,7 @@ export function UsersAdminView() {
       }
     >
       <QueryState
+        loadingVariant="table"
         loading={users.loading && !users.data}
         error={users.error}
         onRetry={() => void reload()}

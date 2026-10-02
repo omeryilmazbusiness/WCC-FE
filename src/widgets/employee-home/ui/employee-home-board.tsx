@@ -60,7 +60,10 @@ export function EmployeeHomeBoard({
       target,
       workOrder: work.filter((i) => i.source === "task").map((i) => i.id),
     };
-  }, [taskRepository, user.id, canLeads, canTargets], { liveTopics: ["task", "lead", "conversation", "target"] });
+  }, [taskRepository, user.id, canLeads, canTargets], {
+    liveTopics: ["task", "lead", "conversation", "target"],
+    cacheKey: ["employee-home", user.id, canLeads, canTargets],
+  });
   const setHome = home.setData;
   const tasks = home.data?.tasks;
   const leads = home.data?.leads;
@@ -99,6 +102,7 @@ export function EmployeeHomeBoard({
       <Screen>
         <PageHeader title={t("title")} description={t("subtitle")} />
         <QueryState
+          loadingVariant="cards"
           loading={home.loading}
           loadingLabel={tc("loading")}
           error={home.error}

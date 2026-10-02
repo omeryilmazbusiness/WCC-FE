@@ -338,6 +338,7 @@ export function CrmPipelineBoard({ repository }: Props) {
       {view === "kanban" ? (
         !data.columns ? (
           <QueryState
+            loadingVariant="board"
             loading={data.boardLoading}
             loadingLabel={tc("loading")}
             error={data.boardError}

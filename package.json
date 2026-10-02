@@ -30,7 +30,8 @@
     "test:scroll-axis": "node --experimental-strip-types scripts/selftest-scroll-axis.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:workspace-tabs": "node --experimental-strip-types scripts/selftest-workspace-tabs.ts"
+    "test:workspace-tabs": "node --experimental-strip-types scripts/selftest-workspace-tabs.ts",
+    "test:query-cache": "node --experimental-strip-types scripts/selftest-query-cache.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type DependencyList } from "react";
+import { QueryCache } from "./query-cache";
 import { useRealtime } from "./use-realtime";
+import { splitWorkspace } from "./workspace-path";
 
 export type ApiQuery<T> = {
   data: T | undefined;
@@ -20,7 +22,33 @@ export type ApiQueryOptions = {
    * the background when announced on the realtime stream; the current data stays visible.
    */
   liveTopics?: readonly string[];
+  /**
+   * Identity of the data (every input the fetcher reads, e.g. `["tasks", userId]`).
+   * When set, reopening the screen shows the last result instantly and refreshes it in
+   * the background (stale-while-revalidate). Scoped to the current company / branch.
+   */
+  cacheKey?: readonly unknown[];
 };
+
+const cache = new QueryCache({ maxEntries: 100, maxAgeMs: 5 * 60_000 });
+
+/** Company / branch of the page URL, so cached data never crosses workspaces. */
+function workspaceScope(): string {
+  const path = window.location.pathname.replace(/^\/(en|ar)(?=\/|$)/, "");
+  const ws = splitWorkspace(path).workspace;
+  return ws ? `${ws.company}/${ws.branch}` : "";
+}
+
+function cacheKeyOf(parts: readonly unknown[] | undefined): string | null {
+  // Server render: module state is shared between users, so never cache there.
+  if (!parts || typeof window === "undefined") return null;
+  return QueryCache.keyOf(workspaceScope(), parts);
+}
+
+/** Drops every cached screen result (e.g. sign-out, branch change). */
+export function clearQueryCache(): void {
+  cache.clear();
+}
 
 /**
  * Minimal async-read state for widgets: pairs with `QueryState` for loading / error /
@@ -32,23 +60,30 @@ export function useApiQuery<T>(
   options: ApiQueryOptions = {},
 ): ApiQuery<T> {
   const enabled = options.enabled ?? true;
-  const [data, setData] = useState<T | undefined>(undefined);
+  const key = cacheKeyOf(options.cacheKey);
+  const [data, setDataState] = useState<T | undefined>(() =>
+    key ? cache.get<T>(key) : undefined,
+  );
   const [error, setError] = useState<unknown>(null);
-  const [loading, setLoading] = useState(enabled);
+  const [loading, setLoading] = useState(() => enabled && (key ? cache.get(key) === undefined : true));
   const callId = useRef(0);
   const fetcherRef = useRef(fetcher);
   fetcherRef.current = fetcher;
+  const keyRef = useRef(key);
+  keyRef.current = key;
 
   const load = useCallback(async (silent: boolean) => {
     const id = ++callId.current;
+    const k = keyRef.current;
     if (!silent) {
       setLoading(true);
       setError(null);
     }
     try {
       const next = await fetcherRef.current();
+      if (k) cache.set(k, next);
       if (id === callId.current) {
-        setData(next);
+        setDataState(next);
         setError(null);
       }
     } catch (err) {
@@ -62,14 +97,32 @@ export function useApiQuery<T>(
   const reload = useCallback(() => load(false), [load]);
   const refresh = useCallback(() => load(true), [load]);
 
+  /** Optimistic edits by the screen also update what a revisit shows. */
+  const setData = useCallback<React.Dispatch<React.SetStateAction<T | undefined>>>((action) => {
+    setDataState((prev) => {
+      const next = typeof action === "function" ? (action as (p: T | undefined) => T | undefined)(prev) : action;
+      const k = keyRef.current;
+      if (k && next !== undefined) cache.set(k, next);
+      return next;
+    });
+  }, []);
+
   useEffect(() => {
     if (!enabled) {
       setLoading(false);
       return;
     }
-    void reload();
+    const cached = key ? cache.get<T>(key) : undefined;
+    if (cached !== undefined) {
+      setDataState(cached);
+      setError(null);
+      setLoading(false);
+      void refresh();
+    } else {
+      void reload();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, reload, ...deps]);
+  }, [enabled, reload, refresh, key, ...deps]);
 
   const live = options.liveTopics;
   useRealtime(

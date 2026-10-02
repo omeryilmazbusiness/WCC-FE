@@ -51,7 +51,10 @@ export function BookingsListBoard({
         status: status === "all" ? undefined : status,
       }),
     [repository, customerId, departureId, status],
-    { liveTopics: ["payment", "document"] },
+    {
+      liveTopics: ["payment", "document"],
+      cacheKey: ["bookings", customerId ?? null, departureId ?? null, status],
+    },
   );
   const rows = useMemo<Booking[]>(() => bookings.data ?? [], [bookings.data]);
 
@@ -147,6 +150,7 @@ export function BookingsListBoard({
       }
     >
       <QueryState
+        loadingVariant="table"
         loading={bookings.loading && !bookings.data}
         loadingLabel={t("loading")}
         error={bookings.error}

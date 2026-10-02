@@ -63,13 +63,16 @@ export function ManagerDashboardBoard() {
       return { kpi, team, attention, attentionSummary };
     },
     [periodKey],
-    { liveTopics: ["lead", "payment", "document", "task", "conversation", "booking", "departure"] },
+    {
+      liveTopics: ["lead", "payment", "document", "task", "conversation", "booking", "departure"],
+      cacheKey: ["dashboard", periodKey],
+    },
   );
 
   const targets = useApiQuery(
     (): Promise<TargetProgress[]> => targetRepo.active(),
     [],
-    { enabled: canTargets, liveTopics: ["target", "payment", "booking"] },
+    { enabled: canTargets, liveTopics: ["target", "payment", "booking"], cacheKey: ["targets-active"] },
   );
 
   const revenue = useApiQuery(
@@ -78,7 +81,7 @@ export function ManagerDashboardBoard() {
       return repo.getRevenue(from, to);
     },
     [periodKey],
-    { enabled: canFinance, liveTopics: ["payment", "booking"] },
+    { enabled: canFinance, liveTopics: ["payment", "booking"], cacheKey: ["revenue", periodKey] },
   );
 
   const periodControl = <DashboardPeriodPicker value={period} onChange={setPeriod} locale={locale} />;
@@ -127,6 +130,7 @@ export function ManagerDashboardBoard() {
         />
       ) : (
         <QueryState
+          loadingVariant="cards"
           loading={dashboard.loading}
           loadingLabel={tc("loading")}
           error={dashboard.error}

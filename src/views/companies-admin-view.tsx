@@ -94,7 +94,9 @@ export function CompaniesAdminView() {
   const [open, setOpen] = useState(false);
   const q = useDebouncedValue(query.trim(), 250);
 
-  const companies = useApiQuery(() => listCompanies({ q: q || undefined }), [q]);
+  const companies = useApiQuery(() => listCompanies({ q: q || undefined }), [q], {
+    cacheKey: ["companies", q],
+  });
   const rows = useMemo(() => companies.data ?? [], [companies.data]);
 
   const columns = useMemo<ColumnDef<PlatformCompany>[]>(
@@ -172,6 +174,7 @@ export function CompaniesAdminView() {
       }
     >
       <QueryState
+        loadingVariant="table"
         loading={companies.loading && !companies.data}
         error={companies.error}
         onRetry={() => void companies.reload()}

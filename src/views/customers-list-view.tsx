@@ -36,7 +36,9 @@ export function CustomersListView() {
   const [query, setQuery] = useState("");
   const [emailFilter, setEmailFilter] = useState<EmailFilter>("all");
   const [nameFilter, setNameFilter] = useState<NameFilter>("all");
-  const search = useApiQuery(() => repo.search(query), [query]);
+  const search = useApiQuery(() => repo.search(query), [query], {
+    cacheKey: ["customers", query],
+  });
   const rows = useMemo<Customer[]>(() => search.data ?? [], [search.data]);
 
   const filtered = useMemo(() => {
@@ -180,6 +182,7 @@ export function CustomersListView() {
       }
     >
       <QueryState
+        loadingVariant="table"
         loading={search.loading && !search.data}
         loadingLabel={tc("loading")}
         error={search.error}

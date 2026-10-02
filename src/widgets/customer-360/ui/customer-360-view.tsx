@@ -22,6 +22,7 @@ import {
   Button,
   DataTable,
   EmptyState,
+  LoadingState,
   MaskedSecret,
   PageHeader,
   QueryState,
@@ -207,7 +208,7 @@ export function Customer360View({ customerId }: Props) {
   if (!customer) {
     return (
       <Screen>
-        <p className="text-sm text-zinc-500">{tc("loading")}</p>
+        <LoadingState variant="detail" label={tc("loading")} />
       </Screen>
     );
   }

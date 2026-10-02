@@ -14,6 +14,7 @@ import { routes } from "@/shared/config/routes";
 import { Link } from "@/shared/i18n/navigation";
 import {
   EmptyState,
+  LoadingState,
   PageHeader,
   Screen,
   useToast,
@@ -76,7 +77,7 @@ export function PackageDetailBoard({ packageId, repository }: Props) {
   if (!pkg) {
     return (
       <Screen>
-        <p className="text-sm font-medium text-zinc-500">{t("loading")}</p>
+        <LoadingState variant="detail" label={t("loading")} />
       </Screen>
     );
   }

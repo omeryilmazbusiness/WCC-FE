@@ -6,6 +6,7 @@ import { EmptyState } from "./empty-state";
 import { ErrorState } from "./error-state";
 import { LoadingState } from "./loading-state";
 import { PermissionDenied } from "./permission-denied";
+import type { SkeletonVariant } from "./skeleton";
 import { useDescribeError } from "./use-describe-error";
 
 type QueryStateProps = {
@@ -15,6 +16,10 @@ type QueryStateProps = {
   forbidden?: boolean;
   empty?: boolean;
   loadingLabel?: string;
+  /** Skeleton shape while loading (matches the content layout). */
+  loadingVariant?: SkeletonVariant;
+  /** Sketch the page title too, when nothing else is on screen yet. */
+  loadingHeader?: boolean;
   errorTitle?: string;
   emptyTitle?: string;
   emptyDescription?: string;
@@ -35,6 +40,8 @@ export function QueryState({
   forbidden,
   empty,
   loadingLabel,
+  loadingVariant,
+  loadingHeader,
   errorTitle,
   emptyTitle,
   emptyDescription,
@@ -47,7 +54,9 @@ export function QueryState({
   const t = useTranslations("errors");
   const describe = useDescribeError();
 
-  if (loading) return <LoadingState label={loadingLabel} />;
+  if (loading) {
+    return <LoadingState label={loadingLabel} variant={loadingVariant} withHeader={loadingHeader} />;
+  }
 
   const described = error && typeof error !== "string" ? describe(error) : null;
 

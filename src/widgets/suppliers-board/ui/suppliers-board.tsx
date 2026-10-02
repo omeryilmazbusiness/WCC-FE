@@ -143,6 +143,7 @@ export function SuppliersBoard({ repository }: Props) {
       </div>
 
       <QueryState
+        loadingVariant="table"
         loading={!loaded && !loadError}
         error={loadError}
         errorTitle={t("loadError")}

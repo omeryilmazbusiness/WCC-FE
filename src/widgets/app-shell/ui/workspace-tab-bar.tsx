@@ -7,6 +7,7 @@ import { cn } from "@/shared/lib/cn";
 import { screenMeta, type NavGroup } from "../model/nav";
 import type { WorkspaceTabs } from "../model/use-workspace-tabs";
 import { MAX_TABS, type WorkspaceTab } from "../model/workspace-tabs";
+import { PendingSpinner } from "./link-pending";
 import { NavTile } from "./nav-tone";
 
 const TAB_DRAG_TYPE = "application/x-wcc-tab";
@@ -113,6 +114,7 @@ export const WorkspaceTabBar = memo(function WorkspaceTabBar({ groups, tabs, pan
                 type="button"
                 role="tab"
                 aria-selected={selected}
+                aria-busy={tabs.pendingRoot === tab.root || undefined}
                 aria-controls={panelId}
                 tabIndex={selected ? 0 : -1}
                 title={label}
@@ -134,7 +136,18 @@ export const WorkspaceTabBar = memo(function WorkspaceTabBar({ groups, tabs, pan
                     : "font-medium text-zinc-500 hover:bg-zinc-200/50 hover:text-zinc-800",
                 )}
               >
-                <NavTile tone={meta.tone} icon={meta.icon} size="sm" />
+                <span className="relative shrink-0">
+                  <NavTile tone={meta.tone} icon={meta.icon} size="sm" />
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "pointer-events-none absolute inset-0 flex items-center justify-center rounded-md bg-white/75 text-zinc-600 opacity-0 transition-opacity duration-150",
+                      tabs.pendingRoot === tab.root && "opacity-100 delay-150",
+                    )}
+                  >
+                    <PendingSpinner pending={tabs.pendingRoot === tab.root} className="h-3 w-3" />
+                  </span>
+                </span>
                 <span className="truncate">{label}</span>
               </button>
               {closable ? (

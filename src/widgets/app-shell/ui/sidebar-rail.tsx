@@ -18,6 +18,7 @@ import type { NavGroup, NavGroupId } from "../model/nav";
 import { useScreenOpener } from "../model/screen-opener";
 import type { NavFavorites } from "../model/use-nav-favorites";
 import { ActiveDot, NavItemLink } from "./nav-section";
+import { LinkPending } from "./link-pending";
 import { FOCUS_RING, NavTile } from "./nav-tone";
 
 /** Rail width (76px) + gap; logical inset so RTL opens to the left automatically. */
@@ -80,6 +81,7 @@ export function SidebarRail({ groups, favorites, activeHref }: Props) {
             <li key={item.href}>
               <Link
                 href={item.href}
+                prefetch
                 onClick={(e) => openScreen(e, item.href)}
                 aria-label={label}
                 aria-current={active ? "page" : undefined}
@@ -95,6 +97,7 @@ export function SidebarRail({ groups, favorites, activeHref }: Props) {
                 )}
               >
                 <NavTile tone={item.tone} icon={item.icon} />
+                <LinkPending className="absolute end-0.5 top-0.5 h-3 w-3 text-white" />
               </Link>
             </li>
           );

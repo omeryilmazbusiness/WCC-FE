@@ -16,7 +16,7 @@ export function AIExecutiveSummaryCard() {
   const t = useTranslations("ai");
   const feedback = useMutationFeedback();
   const canRun = useCan("ai.write");
-  const query = useApiQuery(() => repo.dailySummary(), []);
+  const query = useApiQuery(() => repo.dailySummary(), [], { cacheKey: ["ai-daily-summary"] });
   const [fresh, setFresh] = useState<DailySummary | null>(null);
   const [busy, setBusy] = useState(false);
   const data = fresh ?? query.data;
@@ -49,7 +49,7 @@ export function AIExecutiveSummaryCard() {
         ) : null
       }
     >
-      <QueryState loading={query.loading && !data} error={fresh ? null : query.error} onRetry={() => void query.reload()}>
+      <QueryState loadingVariant="lines" loading={query.loading && !data} error={fresh ? null : query.error} onRetry={() => void query.reload()}>
         {!data ? null : !enabled ? (
           <AIConnectState text={t("execNoAi")} />
         ) : busy ? (

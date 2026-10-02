@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+  type MouseEvent,
+} from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { canAccessPath } from "@/shared/config/permissions";
@@ -24,6 +32,8 @@ import {
 
 export type WorkspaceTabs = {
   state: TabsState;
+  /** Tab whose screen is still loading after a switch (for a pending indicator). */
+  pendingRoot: string | null;
   /** Sidebar link click: opens or focuses the screen's tab. Modified clicks keep browser behaviour. */
   openFromLink: (e: MouseEvent<HTMLAnchorElement>, href: string) => void;
   activate: (root: string) => void;
@@ -60,6 +70,8 @@ export function useWorkspaceTabs({ groups, permissions, storageKey }: Options): 
   const stateRef = useRef(state);
   const restored = useRef(false);
   const pendingScroll = useRef<number | null>(null);
+  const [navigating, startNavigation] = useTransition();
+  const [target, setTarget] = useState<string | null>(null);
   const cancelScroll = useRef<() => void>(() => {});
 
   const commit = useCallback(
@@ -109,7 +121,8 @@ export function useWorkspaceTabs({ groups, permissions, storageKey }: Options): 
   const goTo = useCallback(
     (tab: WorkspaceTab) => {
       pendingScroll.current = tab.scrollY;
-      router.push(tab.href, { scroll: false });
+      setTarget(tab.root);
+      startNavigation(() => router.push(tab.href, { scroll: false }));
     },
     [router],
   );
@@ -156,8 +169,9 @@ export function useWorkspaceTabs({ groups, permissions, storageKey }: Options): 
     [commit],
   );
 
+  const pendingRoot = navigating ? target : null;
   return useMemo(
-    () => ({ state, openFromLink, activate, close, move }),
-    [state, openFromLink, activate, close, move],
+    () => ({ state, pendingRoot, openFromLink, activate, close, move }),
+    [state, pendingRoot, openFromLink, activate, close, move],
   );
 }

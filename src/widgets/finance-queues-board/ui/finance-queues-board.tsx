@@ -34,6 +34,7 @@ export function FinanceQueuesBoard() {
   const [kind, setKind] = useState<FinanceQueueKind>("overdue");
   const queue = useApiQuery(() => repo.queue(kind), [repo, kind], {
     liveTopics: ["payment", "booking"],
+    cacheKey: ["finance-queue", kind],
   });
   const items = queue.data ?? [];
 
@@ -89,6 +90,7 @@ export function FinanceQueuesBoard() {
         {FINANCE_QUEUES.map((k) => (
           <TabsContent key={k} value={k} className="mt-6">
             <QueryState
+              loadingVariant="table"
               loading={queue.loading}
               loadingLabel={t("loading")}
               error={queue.error}

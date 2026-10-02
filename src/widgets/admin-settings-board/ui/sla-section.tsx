@@ -65,7 +65,7 @@ export function SlaSection({ repo, canWrite }: Props) {
   }
 
   return (
-    <QueryState loading={query.loading} error={query.error} onRetry={() => void query.reload()}>
+    <QueryState loadingVariant="lines" loading={query.loading} error={query.error} onRetry={() => void query.reload()}>
       <div className="space-y-4 rounded-2xl border border-zinc-200/80 bg-white p-5" data-testid="sla-section">
         <div>
           <p className="text-sm font-semibold text-zinc-900">{t("sla.windowsTitle")}</p>

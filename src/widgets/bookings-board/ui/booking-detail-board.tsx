@@ -36,6 +36,7 @@ import {
   DialogTitle,
   EmptyState,
   Input,
+  LoadingState,
   MaskedSecret,
   PageHeader,
   QueryState,
@@ -217,7 +218,7 @@ export function BookingDetailBoard({ bookingId, repository }: Props) {
   if (!booking) {
     return (
       <Screen>
-        <p className="text-sm text-zinc-500">{tc("loading")}</p>
+        <LoadingState variant="detail" label={tc("loading")} />
       </Screen>
     );
   }

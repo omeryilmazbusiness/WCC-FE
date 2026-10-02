@@ -9,7 +9,7 @@ import { SurfacePanel } from "@/shared/ui/surface-panel";
 
 export function RolesMatrixView() {
   const t = useTranslations("admin");
-  const query = useApiQuery(() => fetchPermissionMatrix(), []);
+  const query = useApiQuery(() => fetchPermissionMatrix(), [], { cacheKey: ["permission-matrix"] });
   const roles = query.data?.roles ?? [];
   const matrix: Record<string, string[]> = query.data?.permissions ?? {};
 
@@ -18,6 +18,7 @@ export function RolesMatrixView() {
   return (
     <ListScreen title={t("rolesTitle")} description={t("rolesSubtitle")}>
       <QueryState
+        loadingVariant="table"
         loading={query.loading}
         error={query.error}
         errorTitle={t("loadError")}

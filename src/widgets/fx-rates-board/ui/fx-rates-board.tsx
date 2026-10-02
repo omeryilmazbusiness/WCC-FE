@@ -66,7 +66,9 @@ export function FxRatesBoard() {
     }),
     [pair.base, pair.quote, fromDay, toDay],
   );
-  const rates = useApiQuery(() => repo.list(filters, { limit: FX_PAGE_SIZE, offset }), [repo, filters, offset]);
+  const rates = useApiQuery(() => repo.list(filters, { limit: FX_PAGE_SIZE, offset }), [repo, filters, offset], {
+    cacheKey: ["fx-rates", filters, offset],
+  });
   const page = rates.data;
   const rows = page?.items ?? [];
   const isFiltered = Object.values(filters).some(Boolean);
@@ -156,6 +158,7 @@ export function FxRatesBoard() {
       </div>
 
       <QueryState
+        loadingVariant="table"
         loading={rates.loading && !page}
         error={rates.error}
         errorTitle={t("loadError")}

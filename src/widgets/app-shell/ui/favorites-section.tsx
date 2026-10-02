@@ -11,6 +11,7 @@ import type { FavoriteItem, NavTone } from "../model/nav";
 import { useScreenOpener } from "../model/screen-opener";
 import type { NavFavorites } from "../model/use-nav-favorites";
 import { isNavDrag, startNavDrag, type NavDrag } from "./nav-drag";
+import { LinkPending } from "./link-pending";
 import { FOCUS_RING, NavTile, TONE } from "./nav-tone";
 
 type Props = {
@@ -226,6 +227,7 @@ function FavoriteRow({
     <div className="group/fav relative">
       <Link
         href={item.href}
+        prefetch
         draggable
         onClick={(e) => openScreen(e, item.href)}
         onDragStart={onDragStart}
@@ -250,6 +252,7 @@ function FavoriteRow({
       >
         <NavTile tone={item.tone} icon={item.icon} />
         <span className="min-w-0 flex-1 truncate">{label}</span>
+        <LinkPending />
         {active ? (
           <span
             aria-hidden

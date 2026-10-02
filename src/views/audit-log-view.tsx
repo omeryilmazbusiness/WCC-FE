@@ -133,9 +133,11 @@ export function AuditLogView() {
     [entityType, action, actorId, period],
   );
 
-  const events = useApiQuery(() => repo.list(filters, { limit: AUDIT_PAGE_SIZE, offset }), [filters, offset]);
-  const actions = useApiQuery(() => repo.listActions(), []);
-  const users = useApiQuery(() => listUsers(), [], { enabled: canReadUsers });
+  const events = useApiQuery(() => repo.list(filters, { limit: AUDIT_PAGE_SIZE, offset }), [filters, offset], {
+    cacheKey: ["audit", filters, offset],
+  });
+  const actions = useApiQuery(() => repo.listActions(), [], { cacheKey: ["audit-actions"] });
+  const users = useApiQuery(() => listUsers(), [], { enabled: canReadUsers, cacheKey: ["users", "all"] });
 
   const entityTypes = useMemo(() => {
     const fromActions = (actions.data ?? []).map((a) => a.split(".")[0]).filter(Boolean);
@@ -249,6 +251,7 @@ export function AuditLogView() {
       </div>
 
       <QueryState
+        loadingVariant="table"
         loading={events.loading && !page}
         error={events.error}
         errorTitle={t("loadError")}

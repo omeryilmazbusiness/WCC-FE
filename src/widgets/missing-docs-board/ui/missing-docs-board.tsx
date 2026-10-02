@@ -49,6 +49,7 @@ export function MissingDocsBoard({ repository }: Props) {
   const query = useApiQuery(() => repo.missingDocs(loadedId), [repo, loadedId], {
     enabled: Boolean(loadedId),
     liveTopics: ["document"],
+    cacheKey: ["missing-docs", loadedId],
   });
   const rows: MissingDocsRow[] = loadedId ? (query.data ?? []) : [];
   const busy = query.loading;

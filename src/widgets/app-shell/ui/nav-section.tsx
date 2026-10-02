@@ -11,6 +11,7 @@ import type { NavGroup, NavItem, NavTone } from "../model/nav";
 import { useScreenOpener } from "../model/screen-opener";
 import type { NavFavorites } from "../model/use-nav-favorites";
 import { startNavDrag, type NavDrag } from "./nav-drag";
+import { LinkPending } from "./link-pending";
 import { FOCUS_RING, NavTile, TONE } from "./nav-tone";
 
 type SectionProps = {
@@ -154,6 +155,7 @@ export function NavItemLink({
     <div className="group/item relative">
       <Link
         href={item.href}
+        prefetch
         draggable={Boolean(onDragStart)}
         onClick={(e) => {
           openScreen(e, item.href);
@@ -174,7 +176,8 @@ export function NavItemLink({
         )}
       >
         <Icon className={cn("h-5 w-5 shrink-0", TONE[tone].glyph)} strokeWidth={1.9} />
-        <span className="truncate">{label}</span>
+        <span className="min-w-0 flex-1 truncate">{label}</span>
+        <LinkPending />
       </Link>
       <button
         type="button"

@@ -133,6 +133,7 @@ export function PackagesListBoard({ repository }: Props) {
       }
     >
       <QueryState
+        loadingVariant="table"
         loading={packages.loading && !packages.data}
         loadingLabel={tc("loading")}
         error={packages.error}
