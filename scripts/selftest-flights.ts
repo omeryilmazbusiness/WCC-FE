@@ -55,7 +55,7 @@ function rawOffer(over: Record<string, unknown> = {}) {
     gap_minutes: -55,
     closest: true,
     cheapest: false,
-    booking_url: "https://www.aviasales.com/search/IST1012DXB21?marker=578591&t=x",
+    booking_url: "https://www.aviasales.com/search/IST1012DXB21?marker=784605&t=x",
     ...over,
   };
 }
@@ -66,7 +66,7 @@ function mappers() {
   assert.equal(o.airlineName, "Pegasus");
   assert.equal(o.originAirport, "SAW");
   assert.equal(o.gapMinutes, -55);
-  assert.equal(o.bookingUrl, "https://www.aviasales.com/search/IST1012DXB21?marker=578591&t=x");
+  assert.equal(o.bookingUrl, "https://www.aviasales.com/search/IST1012DXB21?marker=784605&t=x");
 
   assert.equal(mapOffer(rawOffer({ booking_url: "javascript:alert(1)" }))?.bookingUrl, "", "unsafe links dropped");
   assert.equal(mapOffer(rawOffer({ booking_url: "http://x.test/a" }))?.bookingUrl, "", "only https");
@@ -96,7 +96,7 @@ function mappers() {
     window_hours: 72,
     fetched_at: "2026-10-02T08:00:00Z",
     offers: [rawOffer(), { bad: true }],
-    search_url: "https://www.aviasales.com/search/IST1012DXB21?marker=578591",
+    search_url: "https://www.aviasales.com/search/IST1012DXB21?marker=784605",
   });
   assert.equal(result.query.date, "2026-12-10");
   assert.equal(result.query.time, "14:00");
@@ -105,10 +105,10 @@ function mappers() {
   assert.equal(result.windowHours, 72);
   assert.equal(result.offers.length, 1, "bad rows skipped");
   assert.equal(mapSearchResult(null).offers.length, 0);
-  assert.equal(result.searchUrl, "https://www.aviasales.com/search/IST1012DXB21?marker=578591");
+  assert.equal(result.searchUrl, "https://www.aviasales.com/search/IST1012DXB21?marker=784605");
   assert.equal(mapSearchResult({ search_url: "javascript:alert(1)" }).searchUrl, "", "unsafe search link dropped");
-  assert.equal(errorSearchUrl({ search_url: "https://www.aviasales.com/search/IST0510DAM1?marker=578591" }),
-    "https://www.aviasales.com/search/IST0510DAM1?marker=578591");
+  assert.equal(errorSearchUrl({ search_url: "https://www.aviasales.com/search/IST0510DAM1?marker=784605" }),
+    "https://www.aviasales.com/search/IST0510DAM1?marker=784605");
   assert.equal(errorSearchUrl({ search_url: "http://x.test" }), "", "plain http refused");
   assert.equal(errorSearchUrl(undefined), "");
 
