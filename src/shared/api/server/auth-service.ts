@@ -209,7 +209,7 @@ export function homeWorkspace(viewer: ViewerSession): WorkspaceRef | null {
 
 /**
  * Post-login landing inside the viewer's home workspace: a GM with unfinished
- * onboarding goes straight to `/setup`.
+ * onboarding, or signing in for the first time (welcome not seen), goes to `/setup`.
  */
 export async function landingFor(
   accessToken: string,
@@ -222,8 +222,12 @@ export async function landingFor(
     return withWorkspace(home, ref);
   }
   try {
-    const setup = await backendJson<{ required?: boolean }>("/setup", { accessToken, meta });
-    return withWorkspace(setup.required ? routes.setup : home, ref);
+    const [setup, prefs] = await Promise.all([
+      backendJson<{ required?: boolean }>("/setup", { accessToken, meta }),
+      backendJson<{ welcome_seen_at?: string | null }>("/me/preferences", { accessToken, meta }).catch(() => null),
+    ]);
+    const firstLogin = prefs !== null && !prefs.welcome_seen_at;
+    return withWorkspace(setup.required || firstLogin ? routes.setup : home, ref);
   } catch {
     return withWorkspace(home, ref);
   }

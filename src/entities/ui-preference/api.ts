@@ -10,6 +10,7 @@ export function mapUiPreferences(raw: unknown): UiPreferences {
     navFavorites: Array.isArray(list)
       ? list.filter((v): v is string => typeof v === "string")
       : null,
+    welcomeSeenAt: typeof r.welcome_seen_at === "string" && r.welcome_seen_at ? r.welcome_seen_at : null,
   };
 }
 
@@ -17,6 +18,8 @@ export type UiPreferenceRepository = {
   get(): Promise<UiPreferences>;
   /** `null` restores the role default. */
   setNavFavorites(routes: readonly string[] | null): Promise<UiPreferences>;
+  /** Ends the first-login welcome; idempotent. */
+  markWelcomeSeen(): Promise<UiPreferences>;
 };
 
 export function createUiPreferenceRepository(client: HttpClient = http): UiPreferenceRepository {
@@ -29,5 +32,7 @@ export function createUiPreferenceRepository(client: HttpClient = http): UiPrefe
           body: JSON.stringify({ nav_favorites: routes }),
         }),
       ),
+    markWelcomeSeen: async () =>
+      mapUiPreferences(await client.request<unknown>(`${UI_PREFERENCES_PATH}/welcome`, { method: "POST" })),
   };
 }

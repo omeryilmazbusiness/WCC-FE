@@ -109,7 +109,7 @@ export function ChannelsStep({ repository, onBack, onFinish }: Props) {
                 type="button"
                 onClick={() => setDialog(ch)}
                 data-testid={`setup-channel-${ch}`}
-                className="group flex items-center gap-3 rounded-[16px] bg-white/70 p-3 text-start shadow-[0_0_0_0.5px_rgba(15,23,42,0.06)] transition-all duration-200 hover:bg-white active:scale-[0.98]"
+                className="group flex items-center gap-3 rounded-[16px] bg-white/[0.07] p-3 text-start shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.1)] transition-all duration-200 hover:bg-white/[0.12] active:scale-[0.98]"
               >
                 <span
                   className={cn(
@@ -120,18 +120,18 @@ export function ChannelsStep({ repository, onBack, onFinish }: Props) {
                   <ChannelGlyph channel={ch} />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[14px] font-semibold text-zinc-950">{ti(`${ch}.name`)}</span>
+                  <span className="block truncate text-[14px] font-semibold text-white">{ti(`${ch}.name`)}</span>
                   <span
                     className={cn(
                       "flex items-center gap-1.5 text-[11px] font-medium",
-                      on ? "text-emerald-600" : "text-zinc-500",
+                      on ? "text-emerald-300" : "text-white/55",
                     )}
                   >
-                    <span className={cn("h-1.5 w-1.5 rounded-full", on ? "bg-emerald-500" : "bg-zinc-300")} />
+                    <span className={cn("h-1.5 w-1.5 rounded-full", on ? "bg-emerald-400" : "bg-white/30")} />
                     {on ? t("connected") : t("notConnected")}
                   </span>
                 </span>
-                <ChevronRight className="h-4 w-4 shrink-0 text-zinc-300 transition-colors group-hover:text-zinc-500 rtl:rotate-180" />
+                <ChevronRight className="h-4 w-4 shrink-0 text-white/30 transition-colors group-hover:text-white/55 rtl:rotate-180" />
               </button>
             );
           })}

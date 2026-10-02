@@ -91,7 +91,7 @@ export function StaffStep({ overview, repository, onChange, onBack, onDone }: Pr
             <div
               key={u.id}
               className={cn(
-                "flex flex-col items-center gap-2 rounded-[16px] bg-white/70 px-2 py-4 text-center shadow-[0_0_0_0.5px_rgba(15,23,42,0.06)]",
+                "flex flex-col items-center gap-2 rounded-[16px] bg-white/[0.07] px-2 py-4 text-center shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.1)]",
                 !u.is_active && "opacity-50",
               )}
               data-testid="setup-profile"
@@ -106,12 +106,12 @@ export function StaffStep({ overview, repository, onChange, onBack, onDone }: Pr
                 {initials(u.full_name)}
               </span>
               <span className="w-full min-w-0">
-                <span className="block truncate text-[13px] font-semibold text-zinc-950">{u.full_name}</span>
-                <span className="block truncate text-[11px] font-medium text-zinc-500">
+                <span className="block truncate text-[13px] font-semibold text-white">{u.full_name}</span>
+                <span className="block truncate text-[11px] font-medium text-white/55">
                   {STAFF_ROLES.includes(u.role as StaffRole) ? tr(u.role as StaffRole) : u.role}
                 </span>
                 {multiBranch ? (
-                  <span className="block truncate text-[10px] text-zinc-400">{branchName(u.branch_id)}</span>
+                  <span className="block truncate text-[10px] text-white/40">{branchName(u.branch_id)}</span>
                 ) : null}
               </span>
             </div>
@@ -119,7 +119,7 @@ export function StaffStep({ overview, repository, onChange, onBack, onDone }: Pr
           <button
             type="button"
             onClick={() => setSheetOpen(true)}
-            className="flex min-h-[124px] flex-col items-center justify-center gap-2 rounded-[16px] border border-dashed border-zinc-900/15 px-2 py-4 text-zinc-500 transition-all duration-200 hover:border-zinc-900/30 hover:bg-white/60 hover:text-zinc-900 active:scale-[0.98]"
+            className="flex min-h-[124px] flex-col items-center justify-center gap-2 rounded-[16px] border border-dashed border-white/20 px-2 py-4 text-white/55 transition-all duration-200 hover:border-white/35 hover:bg-white/[0.08] hover:text-white/90 active:scale-[0.98]"
             data-testid="setup-add-profile"
           >
             <span className="glass-pill flex h-12 w-12 items-center justify-center rounded-full">
@@ -129,7 +129,7 @@ export function StaffStep({ overview, repository, onChange, onBack, onDone }: Pr
           </button>
         </div>
         {users.loading && profiles.length === 0 ? (
-          <p className="px-4 py-3 text-center text-[12px] text-zinc-500">{t("loading")}</p>
+          <p className="px-4 py-3 text-center text-[12px] text-white/55">{t("loading")}</p>
         ) : null}
       </GlassGroup>
 
@@ -253,7 +253,7 @@ function NewProfileSheet({
 
   return (
     <Dialog open={open} onOpenChange={close}>
-      <DialogContent className="max-w-[440px] border-white/60 bg-[#f6f6f8]/95 backdrop-blur-2xl" data-testid="setup-profile-sheet">
+      <DialogContent className="setup-night max-w-[440px] border-white/15 bg-[#0d1328]/90 text-white backdrop-blur-2xl [&>button:last-child]:text-white/55 [&>button:last-child]:hover:bg-white/10 [&>button:last-child]:hover:text-white" data-testid="setup-profile-sheet">
         <DialogHeader className="items-center text-center">
           <span
             className={cn(
@@ -264,8 +264,8 @@ function NewProfileSheet({
           >
             {name.trim() ? initials(name) : <Users className="h-7 w-7" strokeWidth={1.75} />}
           </span>
-          <DialogTitle className="text-[18px]">{t("title")}</DialogTitle>
-          <DialogDescription className="text-[13px]">{t("subtitle")}</DialogDescription>
+          <DialogTitle className="text-[18px] text-white">{t("title")}</DialogTitle>
+          <DialogDescription className="text-[13px] text-white/55">{t("subtitle")}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={(e) => void submit(e)} className="space-y-5" noValidate>
@@ -316,7 +316,7 @@ function NewProfileSheet({
                   id="profile-branch"
                   value={branchId}
                   onChange={(e) => setBranchId(e.target.value)}
-                  className="h-[46px] w-full cursor-pointer appearance-none bg-transparent text-[14px] text-zinc-950 outline-none"
+                  className="h-[46px] w-full cursor-pointer appearance-none bg-transparent text-[14px] text-white outline-none"
                   data-testid="profile-branch"
                 >
                   {branches.map((b) => (
@@ -351,13 +351,13 @@ function NewProfileSheet({
             </div>
             {mode === "generate" ? (
               <div className="flex items-center gap-2 px-4">
-                <code className="h-[46px] min-w-0 flex-1 truncate font-mono text-[14px] leading-[46px] tracking-wide text-zinc-950" dir="ltr" data-testid="profile-password">
+                <code className="h-[46px] min-w-0 flex-1 truncate font-mono text-[14px] leading-[46px] tracking-wide text-white" dir="ltr" data-testid="profile-password">
                   {generated}
                 </code>
                 <button
                   type="button"
                   onClick={() => setGenerated(generatePassword())}
-                  className="glass-pill flex h-8 w-8 items-center justify-center rounded-full text-zinc-600 hover:text-zinc-950"
+                  className="glass-pill flex h-8 w-8 items-center justify-center rounded-full text-white/65 hover:text-white"
                   aria-label={t("regenerate")}
                 >
                   <RefreshCw className="h-3.5 w-3.5" />
@@ -365,10 +365,10 @@ function NewProfileSheet({
                 <button
                   type="button"
                   onClick={() => void copy()}
-                  className="glass-pill flex h-8 w-8 items-center justify-center rounded-full text-zinc-600 hover:text-zinc-950"
+                  className="glass-pill flex h-8 w-8 items-center justify-center rounded-full text-white/65 hover:text-white"
                   aria-label={t("copy")}
                 >
-                  {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copied ? <Check className="h-3.5 w-3.5 text-emerald-300" /> : <Copy className="h-3.5 w-3.5" />}
                 </button>
               </div>
             ) : (
@@ -391,7 +391,7 @@ function NewProfileSheet({
                 <button
                   type="button"
                   onClick={() => setReveal((v) => !v)}
-                  className="glass-pill flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-zinc-600 hover:text-zinc-950"
+                  className="glass-pill flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white/65 hover:text-white"
                   aria-label={reveal ? t("hidePassword") : t("showPassword")}
                 >
                   {reveal ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
@@ -399,7 +399,7 @@ function NewProfileSheet({
               </div>
             )}
             {errors.password ? (
-              <p className="px-4 pb-2.5 text-[11px] font-medium text-rose-600" role="alert">
+              <p className="px-4 pb-2.5 text-[11px] font-medium text-rose-300" role="alert">
                 {t(`errors.password.${errors.password}`)}
               </p>
             ) : null}

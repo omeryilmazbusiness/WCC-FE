@@ -25,22 +25,22 @@ export function SetupDone({ overview, onEdit, onFinish }: Props) {
             key={step.key}
             type="button"
             onClick={() => onEdit(step.key)}
-            className="flex w-full items-center gap-3 px-4 py-3 text-start transition-colors hover:bg-white/60"
+            className="flex w-full items-center gap-3 px-4 py-3 text-start transition-colors hover:bg-white/[0.08]"
             data-testid={`setup-summary-${step.key}`}
           >
             <AppIcon icon={STEP_ICONS[step.key]} tint={step.key} size="sm" />
-            <span className="min-w-0 flex-1 text-[14px] font-semibold text-zinc-950">
+            <span className="min-w-0 flex-1 text-[14px] font-semibold text-white">
               {t(`steps.${step.key}.label`)}
             </span>
             <span
               className={cn(
                 "text-[12px] font-medium",
-                step.status === "done" ? "text-emerald-600" : "text-zinc-400",
+                step.status === "done" ? "text-emerald-300" : "text-white/40",
               )}
             >
               {t(`status.${step.status}`)}
             </span>
-            <ChevronRight className="h-4 w-4 text-zinc-300 rtl:rotate-180" />
+            <ChevronRight className="h-4 w-4 text-white/30 rtl:rotate-180" />
           </button>
         ))}
       </GlassGroup>

@@ -48,7 +48,7 @@ const SERVER_FIELDS: Record<string, keyof CompanyProfile> = {
 };
 
 const SELECT_CLASS =
-  "h-[46px] w-full cursor-pointer appearance-none bg-transparent text-[14px] text-zinc-950 outline-none";
+  "h-[46px] w-full cursor-pointer appearance-none bg-transparent text-[14px] text-white outline-none";
 
 function draftsOf(o: SetupOverview): BranchDraft[] {
   return o.branches.map((b) => ({ id: b.id, nameEn: b.nameEn, kind: b.kind, saved: { nameEn: b.nameEn, slug: b.slug } }));

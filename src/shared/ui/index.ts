@@ -102,6 +102,8 @@ export { EmptyState } from "./empty-state";
 export { ErrorState } from "./error-state";
 export { LoadingState } from "./loading-state";
 export { Bone, Skeleton, type SkeletonVariant } from "./skeleton";
+export { ScrollFlyIn } from "./scroll-fly-in";
+export { LiquidGlassTypewriter, type GlassWord } from "./liquid-glass-text";
 export { PermissionDenied } from "./permission-denied";
 export { QueryState } from "./query-state";
 export {

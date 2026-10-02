@@ -53,8 +53,8 @@ export function StepHero({
     <div className="flex flex-col items-center gap-3 text-center">
       <AppIcon icon={icon} tint={tint} />
       <div className="space-y-1">
-        <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-zinc-950">{title}</h2>
-        <p className="mx-auto max-w-sm text-[13px] leading-relaxed text-zinc-500">{subtitle}</p>
+        <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-white">{title}</h2>
+        <p className="mx-auto max-w-sm text-[13px] leading-relaxed text-white/55">{subtitle}</p>
       </div>
     </div>
   );
@@ -75,14 +75,14 @@ export function GlassGroup({
   return (
     <section className={cn("space-y-1.5", className)}>
       {title ? (
-        <h3 className="px-4 text-[11px] font-semibold uppercase tracking-[0.06em] text-zinc-500">
+        <h3 className="px-4 text-[11px] font-semibold uppercase tracking-[0.06em] text-white/55">
           {title}
         </h3>
       ) : null}
-      <div className="liquid-glass-group divide-y divide-zinc-900/[0.06] overflow-hidden rounded-[18px]">
+      <div className="liquid-glass-group divide-y divide-white/[0.08] overflow-hidden rounded-[18px]">
         {children}
       </div>
-      {footer ? <p className="px-4 text-[11px] leading-relaxed text-zinc-500">{footer}</p> : null}
+      {footer ? <p className="px-4 text-[11px] leading-relaxed text-white/55">{footer}</p> : null}
     </section>
   );
 }
@@ -101,13 +101,13 @@ export function GlassField({
   return (
     <div className="px-4">
       <div className="flex min-h-[46px] items-center gap-3">
-        <label htmlFor={id} className="w-[112px] shrink-0 text-[13px] font-medium text-zinc-900">
+        <label htmlFor={id} className="w-[112px] shrink-0 text-[13px] font-medium text-white/90">
           {label}
         </label>
         <div className="min-w-0 flex-1">{children}</div>
       </div>
       {error ? (
-        <p id={`${id}-error`} className="-mt-1 pb-2 ps-[124px] text-[11px] font-medium text-rose-600" role="alert">
+        <p id={`${id}-error`} className="-mt-1 pb-2 ps-[124px] text-[11px] font-medium text-rose-300" role="alert">
           {error}
         </p>
       ) : null}
@@ -123,8 +123,8 @@ export const GlassInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLI
         aria-invalid={invalid || undefined}
         aria-describedby={invalid && props.id ? `${props.id}-error` : undefined}
         className={cn(
-          "h-[46px] w-full bg-transparent text-[14px] text-zinc-950 outline-none placeholder:text-zinc-400 disabled:text-zinc-400",
-          invalid && "text-rose-600",
+          "h-[46px] w-full bg-transparent text-[14px] text-white outline-none placeholder:text-white/40 disabled:text-white/40",
+          invalid && "text-rose-300",
           className,
         )}
         {...props}
@@ -146,11 +146,11 @@ export const PillButton = forwardRef<HTMLButtonElement, PillProps>(function Pill
       ref={ref}
       type={type}
       className={cn(
-        "inline-flex h-11 items-center justify-center gap-2 rounded-full px-5 text-[14px] font-semibold tracking-[-0.01em] transition-all duration-200 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 focus-visible:ring-offset-2",
+        "inline-flex h-11 items-center justify-center gap-2 rounded-full px-5 text-[14px] font-semibold tracking-[-0.01em] transition-all duration-200 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0f24]",
         variant === "primary" &&
-          "bg-zinc-950 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_10px_22px_-12px_rgba(15,23,42,0.7)] hover:bg-zinc-800",
-        variant === "glass" && "glass-pill text-zinc-900 hover:bg-white/80",
-        variant === "plain" && "h-9 px-3 text-[13px] font-medium text-zinc-500 hover:text-zinc-900",
+          "bg-white text-zinc-950 shadow-[inset_0_-1px_0_rgba(15,23,42,0.08),0_12px_32px_-14px_rgba(186,230,253,0.55)] hover:bg-white/90",
+        variant === "glass" && "glass-pill text-white/90 hover:bg-white/[0.14]",
+        variant === "plain" && "h-9 px-3 text-[13px] font-medium text-white/55 hover:text-white/90",
         className,
       )}
       {...props}
@@ -177,7 +177,7 @@ export function ChoiceGrid<T extends string>({
       role="radiogroup"
       aria-label={label}
       className={cn(
-        "grid gap-1 rounded-[14px] bg-zinc-900/[0.05] p-1",
+        "grid gap-1 rounded-[14px] bg-white/[0.08] p-1",
         columns === 2 && "grid-cols-2",
         columns === 3 && "grid-cols-3",
         columns === 4 && "grid-cols-4",
@@ -195,8 +195,8 @@ export function ChoiceGrid<T extends string>({
             className={cn(
               "h-8 truncate rounded-[10px] px-2 text-[12px] font-semibold transition-all duration-200",
               active
-                ? "bg-white text-zinc-950 shadow-[0_1px_3px_rgba(15,23,42,0.14),0_0_0_0.5px_rgba(15,23,42,0.06)]"
-                : "text-zinc-500 hover:text-zinc-800",
+                ? "bg-white/[0.2] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_1px_3px_rgba(0,0,0,0.35)]"
+                : "text-white/55 hover:text-white/85",
             )}
           >
             {opt.label}

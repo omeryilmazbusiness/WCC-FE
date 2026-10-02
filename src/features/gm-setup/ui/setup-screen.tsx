@@ -1,55 +1,91 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { AnimatePresence, motion, useReducedMotion, type Variants } from "framer-motion";
 import { Rocket } from "lucide-react";
 import { createSetupRepository, type SetupOverview, type SetupStepKey } from "@/entities/setup";
 import { useRouter } from "@/shared/i18n/navigation";
+import { isRtl } from "@/shared/i18n/routing";
 import { routes } from "@/shared/config/routes";
 import { useApiQuery } from "@/shared/lib/use-api-query";
-import { ErrorState, LoadingState, SoftGradientBackground, useMutationFeedback } from "@/shared/ui";
+import { ErrorState, useMutationFeedback } from "@/shared/ui";
 import { initialStep, neighborStep, statusOf, stepOrder } from "../model/flow";
 import { AIStep } from "./ai-step";
 import { ChannelsStep } from "./channels-step";
 import { CompanyStep } from "./company-step";
 import { PillButton } from "./glass";
 import { SetupDone } from "./setup-done";
+import { SetupIntro } from "./setup-intro";
 import { StaffStep } from "./staff-step";
 import { StepDock } from "./step-dock";
 
 type Props = {
   /** Server-rendered overview; the screen fetches itself when it is missing. */
   initial: SetupOverview | null;
+  /** First visit: welcome + language choice before the steps. */
+  showIntro?: boolean;
 };
 
-export function SetupScreen({ initial }: Props) {
+export function SetupScreen({ initial, showIntro = false }: Props) {
   const t = useTranslations("setup");
   const repository = useMemo(() => createSetupRepository(), []);
   const query = useApiQuery(() => repository.get(), [repository], { enabled: initial === null });
+  const [intro, setIntro] = useState(showIntro);
 
-  if (initial) return <SetupFlow initial={initial} />;
-  if (query.data) return <SetupFlow initial={query.data} />;
+  function introDone() {
+    window.scrollTo({ top: 0 });
+    setIntro(false);
+  }
+
+  const overview = initial ?? query.data;
   return (
     <SetupFrame>
-      <div className="mx-auto flex min-h-dvh max-w-md items-center px-5">
-        {query.error ? (
-          <ErrorState className="w-full" title={t("loadError")} onRetry={() => void query.reload()} />
-        ) : (
-          <LoadingState className="w-full" label={t("loading")} />
-        )}
-      </div>
+      {intro ? (
+        <SetupIntro onDone={introDone} />
+      ) : (
+        <div key="flow" className="animate-setup-stage-in">
+          {overview ? (
+            <SetupFlow initial={overview} />
+          ) : (
+            <div className="mx-auto flex min-h-dvh max-w-md items-center justify-center px-5">
+              {query.error ? (
+                <ErrorState className="w-full" title={t("loadError")} onRetry={() => void query.reload()} />
+              ) : (
+                <span role="status" className="flex items-center gap-3 text-[13px] font-medium text-white/60">
+                  <span
+                    aria-hidden
+                    className="h-4 w-4 animate-spin rounded-full border-2 border-white/70 border-t-transparent motion-reduce:animate-none"
+                  />
+                  {t("loading")}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </SetupFrame>
   );
 }
 
+/** One night-aurora wallpaper behind the welcome and every step, so stages blend into each other. */
 function SetupFrame({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative isolate min-h-dvh">
-      <SoftGradientBackground className="fixed" />
+    <div className="setup-night relative isolate min-h-dvh bg-[#050816] text-white">
+      <div aria-hidden className="setup-aurora fixed inset-0 -z-10" />
       {children}
     </div>
   );
 }
+
+/** iOS-style push: the next card slides in from the reading direction and the previous one recedes. */
+const CARD_MOTION: Variants = {
+  enter: ({ dir, still }: Slide) => (still ? { opacity: 0 } : { opacity: 0, x: dir * 56, scale: 0.97, filter: "blur(10px)" }),
+  center: { opacity: 1, x: 0, scale: 1, filter: "blur(0px)" },
+  exit: ({ dir, still }: Slide) => (still ? { opacity: 0 } : { opacity: 0, x: dir * -56, scale: 0.97, filter: "blur(10px)" }),
+};
+
+type Slide = { dir: number; still: boolean };
 
 function SetupFlow({ initial }: { initial: SetupOverview }) {
   const t = useTranslations("setup");
@@ -57,8 +93,25 @@ function SetupFlow({ initial }: { initial: SetupOverview }) {
   const feedback = useMutationFeedback();
   const repository = useMemo(() => createSetupRepository(), []);
   const [overview, setOverview] = useState(initial);
-  const [step, setStep] = useState<SetupStepKey | null>(() => initialStep(initial));
+  const [step, setStepState] = useState<SetupStepKey | null>(() => initialStep(initial));
+  const [forward, setForward] = useState(true);
   const [leaving, setLeaving] = useState(false);
+  const still = useReducedMotion() ?? false;
+  const rtl = isRtl(useLocale());
+
+  const indexOf = useCallback(
+    (key: SetupStepKey | null, of: SetupOverview) => (key ? stepOrder(of).indexOf(key) : of.totalSteps),
+    [],
+  );
+
+  /** Opens a step (null = summary), remembering which way to slide. */
+  const setStep = useCallback(
+    (next: SetupStepKey | null, of: SetupOverview = overview) => {
+      setForward(indexOf(next, of) >= indexOf(step, of));
+      setStepState(next);
+    },
+    [indexOf, overview, step],
+  );
 
   const locked = useCallback(
     (key: SetupStepKey) => key !== "company" && statusOf(overview, "company") === "pending",
@@ -71,7 +124,7 @@ function SetupFlow({ initial }: { initial: SetupOverview }) {
   /** Saves progress and opens the following step, or the summary after the last one. */
   function advanced(next: SetupOverview, from: SetupStepKey) {
     setOverview(next);
-    setStep(next.completed ? null : neighborStep(next, from, 1));
+    setStep(next.completed ? null : neighborStep(next, from, 1), next);
   }
 
   async function later() {
@@ -86,15 +139,16 @@ function SetupFlow({ initial }: { initial: SetupOverview }) {
   }
 
   const position = step ? stepOrder(overview).indexOf(step) + 1 : overview.totalSteps;
+  const slide: Slide = { dir: (forward ? 1 : -1) * (rtl ? -1 : 1), still };
 
   return (
-    <SetupFrame>
+    <>
       <header className="mx-auto flex max-w-5xl items-center justify-between px-5 pt-5 sm:px-8 sm:pt-7">
         <div className="glass-pill flex h-10 items-center gap-2.5 rounded-full ps-1.5 pe-4">
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-950 text-white">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-zinc-950">
             <Rocket className="h-3.5 w-3.5" strokeWidth={2} />
           </span>
-          <span className="max-w-[180px] truncate text-[13px] font-semibold tracking-[-0.01em] text-zinc-900">
+          <span className="max-w-[180px] truncate text-[13px] font-semibold tracking-[-0.01em] text-white/90">
             {overview.company.nameEn || t("brand")}
           </span>
         </div>
@@ -111,21 +165,28 @@ function SetupFlow({ initial }: { initial: SetupOverview }) {
 
       <main className="mx-auto flex max-w-5xl flex-col items-center px-5 pb-16 pt-8 sm:px-8 sm:pt-10">
         <div className="mb-8 space-y-2 text-center">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-zinc-500">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-white/55">
             {step ? t("eyebrow", { current: position, total: overview.totalSteps }) : t("eyebrowDone")}
           </p>
-          <h1 className="text-[30px] font-semibold tracking-[-0.03em] text-zinc-950 sm:text-[34px]">
+          <h1 className="liquid-glass-text text-[34px] font-semibold leading-[1.15] tracking-[-0.035em] sm:text-[44px]">
             {t("title")}
           </h1>
         </div>
 
         <StepDock steps={overview.steps} active={step} onSelect={setStep} locked={locked} />
 
-        <section
-          key={step ?? "done"}
-          className="liquid-glass animate-setup-in mt-10 w-full max-w-[600px] rounded-[32px] p-5 sm:p-8"
-          data-testid={`setup-card-${step ?? "done"}`}
-        >
+        <AnimatePresence mode="wait" initial={false} custom={slide}>
+          <motion.section
+            key={step ?? "done"}
+            custom={slide}
+            variants={CARD_MOTION}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: still ? 0.15 : 0.42, ease: [0.32, 0.72, 0, 1] }}
+            className="liquid-glass mt-10 w-full max-w-[600px] rounded-[32px] p-5 sm:p-8"
+            data-testid={`setup-card-${step ?? "done"}`}
+          >
           {step === "company" ? (
             <CompanyStep
               overview={overview}
@@ -158,8 +219,9 @@ function SetupFlow({ initial }: { initial: SetupOverview }) {
           ) : (
             <SetupDone overview={overview} onEdit={setStep} onFinish={() => router.replace(routes.manager)} />
           )}
-        </section>
+          </motion.section>
+        </AnimatePresence>
       </main>
-    </SetupFrame>
+    </>
   );
 }

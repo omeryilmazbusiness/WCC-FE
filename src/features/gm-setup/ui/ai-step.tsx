@@ -73,10 +73,10 @@ export function AIStep({ repository, onBack, onDone }: Props) {
       {ready && !editing ? (
         <GlassGroup>
           <div className="flex items-center gap-3 px-4 py-3.5">
-            <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
+            <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-300" />
             <div className="min-w-0 flex-1">
-              <p className="text-[14px] font-semibold text-zinc-950">{t("connected")}</p>
-              <p className="truncate text-[12px] text-zinc-500">
+              <p className="text-[14px] font-semibold text-white">{t("connected")}</p>
+              <p className="truncate text-[12px] text-white/55">
                 {[AI_PROVIDERS.find((p) => p.id === setup.data?.provider)?.label, setup.data?.model, setup.data?.keyHint]
                   .filter(Boolean)
                   .join(" · ")}
@@ -104,12 +104,12 @@ export function AIStep({ repository, onBack, onDone }: Props) {
                     className={cn(
                       "flex min-h-[92px] flex-col items-center justify-center gap-1.5 rounded-[16px] px-2 py-3 text-center transition-all duration-200 active:scale-[0.98]",
                       active
-                        ? "bg-white text-zinc-950 shadow-[0_0_0_2px_rgba(14,165,233,0.55),0_8px_18px_-12px_rgba(15,23,42,0.4)]"
-                        : "bg-white/50 text-zinc-600 shadow-[0_0_0_0.5px_rgba(15,23,42,0.08)] hover:bg-white/80",
+                        ? "bg-white/[0.2] text-white shadow-[0_0_0_2px_rgba(14,165,233,0.55),0_8px_18px_-12px_rgba(15,23,42,0.4)]"
+                        : "bg-white/[0.06] text-white/65 shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.1)] hover:bg-white/[0.14]",
                     )}
                   >
                     <span className="text-[13px] font-semibold leading-tight">{t(`providers.${p.id}`)}</span>
-                    <span className="font-mono text-[10px] text-zinc-400">{p.hint}</span>
+                    <span className="font-mono text-[10px] text-white/40">{p.hint}</span>
                   </button>
                 );
               })}

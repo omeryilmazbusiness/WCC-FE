@@ -53,14 +53,14 @@ export function BranchesGroup({ drafts, errors, onChange }: Props) {
                   className="h-9"
                   data-testid="setup-branch-name"
                 />
-                <p className="truncate text-[11px] text-zinc-400" dir="ltr">
+                <p className="truncate text-[11px] text-white/40" dir="ltr">
                   /{draftSlug(d) || "…"}
                 </p>
               </div>
               <div
                 role="radiogroup"
                 aria-label={t("kind")}
-                className="grid shrink-0 grid-cols-2 gap-1 rounded-[12px] bg-zinc-900/[0.05] p-1"
+                className="grid shrink-0 grid-cols-2 gap-1 rounded-[12px] bg-white/[0.08] p-1"
               >
                 {(["main_center", "branch"] as const).map((kind) => {
                   const active = d.kind === kind;
@@ -79,8 +79,8 @@ export function BranchesGroup({ drafts, errors, onChange }: Props) {
                       className={cn(
                         "h-7 rounded-[9px] px-2.5 text-[11px] font-semibold transition-all duration-200",
                         active
-                          ? "bg-white text-zinc-950 shadow-[0_1px_3px_rgba(15,23,42,0.14),0_0_0_0.5px_rgba(15,23,42,0.06)]"
-                          : "text-zinc-500 hover:text-zinc-800 disabled:hover:text-zinc-500",
+                          ? "bg-white/[0.2] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_1px_3px_rgba(0,0,0,0.35)]"
+                          : "text-white/55 hover:text-white/85 disabled:hover:text-white/55",
                       )}
                       data-testid={`setup-branch-kind-${kind}`}
                     >
@@ -96,7 +96,7 @@ export function BranchesGroup({ drafts, errors, onChange }: Props) {
                     const rest = drafts.filter((_, j) => j !== i);
                     onChange(main ? withMainCenter(rest, 0) : rest);
                   }}
-                  className="glass-pill flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-zinc-500 hover:text-zinc-900"
+                  className="glass-pill flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white/55 hover:text-white/90"
                   aria-label={t("remove")}
                 >
                   <X className="h-3.5 w-3.5" />
@@ -104,7 +104,7 @@ export function BranchesGroup({ drafts, errors, onChange }: Props) {
               ) : null}
             </div>
             {error ? (
-              <p className="ps-11 pt-1 text-[11px] font-medium text-rose-600" role="alert">
+              <p className="ps-11 pt-1 text-[11px] font-medium text-rose-300" role="alert">
                 {t(`errors.${error}`)}
               </p>
             ) : null}
@@ -115,7 +115,7 @@ export function BranchesGroup({ drafts, errors, onChange }: Props) {
         <button
           type="button"
           onClick={() => onChange([...drafts, { id: "", nameEn: "", kind: drafts.length === 0 ? "main_center" : "branch" }])}
-          className="flex h-[46px] w-full items-center gap-3 px-4 text-[13px] font-semibold text-sky-600 transition-colors hover:bg-white/50"
+          className="flex h-[46px] w-full items-center gap-3 px-4 text-[13px] font-semibold text-sky-300 transition-colors hover:bg-white/[0.06]"
           data-testid="setup-add-branch"
         >
           <span className="flex h-8 w-8 items-center justify-center">

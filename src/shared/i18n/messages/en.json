@@ -1424,6 +1424,12 @@
       "subtitle": "Company, team, AI and channels in a few quick steps.",
       "cta": "Continue",
       "remaining": "Still open: {steps}"
+    },
+    "intro": {
+      "eyebrow": "Welcome to WODI Command Center",
+      "title": "Where every journey begins",
+      "subtitle": "A few quick steps and your agency is ready for take-off.",
+      "scrollHint": "Scroll to begin"
     }
   },
   "ai": {
