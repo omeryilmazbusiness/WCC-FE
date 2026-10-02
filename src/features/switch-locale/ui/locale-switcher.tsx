@@ -22,6 +22,37 @@ export function LocaleSwitcher({ surface = "light", compact = false }: Props) {
     router.replace(pathname, { locale: next });
   }
 
+  if (surface === "light" && compact) {
+    return (
+      <div
+        role="group"
+        aria-label={t("language")}
+        className="relative inline-flex h-8 items-center rounded-full bg-zinc-950/[0.05] p-0.5 text-[10.5px] font-semibold tracking-[0.06em]"
+        data-testid="locale-segmented"
+      >
+        {(["en", "ar"] as const).map((code) => {
+          const active = locale === code;
+          return (
+            <button
+              key={code}
+              type="button"
+              onClick={() => setLocale(code)}
+              aria-pressed={active}
+              className={cn(
+                "h-7 min-w-8 rounded-full px-2 uppercase transition-[background-color,color,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20",
+                active
+                  ? "bg-zinc-950 text-white shadow-[0_2px_6px_-2px_rgba(0,0,0,0.5)]"
+                  : "text-zinc-500 hover:text-zinc-950",
+              )}
+            >
+              {code}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <div
       role="group"

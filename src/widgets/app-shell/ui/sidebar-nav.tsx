@@ -42,7 +42,7 @@ export function SidebarNav({ groups, favorites, activeHref }: Props) {
   return (
     <nav
       aria-label={t("label")}
-      className="flex flex-1 flex-col gap-3 overflow-y-auto px-2.5 py-3"
+      className="flex flex-1 flex-col gap-3 scrollbar-none min-h-0 overflow-y-auto overscroll-contain [mask-image:linear-gradient(to_bottom,transparent,black_14px,black_calc(100%-14px),transparent)] px-2.5 py-3"
       data-testid="shell-nav"
       onDragOver={(e) => {
         if (drag?.origin !== "favorite" || !isNavDrag(e)) return;

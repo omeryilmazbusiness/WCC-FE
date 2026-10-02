@@ -1,7 +1,15 @@
 {
   "app": {
     "name": "WODI Command Center",
-    "shortName": "WCC"
+    "shortName": "WCC",
+    "roles": {
+      "gm": "General Manager",
+      "manager": "Manager",
+      "employee": "Agent",
+      "finance": "Finance",
+      "operations": "Operations",
+      "admin": "Administrator"
+    }
   },
   "nav": {
     "manager": "Manager",

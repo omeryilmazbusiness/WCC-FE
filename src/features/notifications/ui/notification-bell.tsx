@@ -101,16 +101,22 @@ export function NotificationBell({ surface = "dark" }: Props) {
         <IconButton
           label={t("title")}
           variant="ghost"
+          data-testid="notification-bell"
           className={cn(
             "relative",
             surface === "dark"
               ? "text-zinc-400 hover:bg-white/10 hover:text-white"
-              : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-950",
+              : "h-8 w-8 rounded-full text-zinc-600 transition-colors duration-200 hover:bg-zinc-950/[0.05] hover:text-zinc-950 focus-visible:ring-zinc-950/20 data-[state=open]:bg-zinc-950 data-[state=open]:text-white",
           )}
         >
-          <Bell className="h-4 w-4" strokeWidth={1.75} />
+          <Bell className={surface === "dark" ? "h-4 w-4" : "h-[15px] w-[15px]"} strokeWidth={surface === "dark" ? 1.75 : 1.9} />
           {unread > 0 ? (
-            <span className="absolute end-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+            <span
+              className={cn(
+                "absolute flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white",
+                surface === "dark" ? "end-1.5 top-1.5 bg-rose-500" : "-end-0.5 -top-0.5 bg-zinc-950 tabular-nums ring-2 ring-white",
+              )}
+            >
               {unread > 9 ? "9+" : unread}
             </span>
           ) : null}

@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Coins } from "lucide-react";
+import { ChartNoAxesColumnIncreasing } from "lucide-react";
 import {
   FX_LIVE_OPEN_MAX_AGE_MS,
   formatRate,
@@ -47,16 +47,22 @@ export function FxLiveIndicator() {
         title={t("trigger")}
         data-testid="fx-live-trigger"
         className={cn(
-          "relative inline-flex h-9 min-w-9 items-center justify-center gap-1.5 rounded-full px-2.5 text-zinc-500 transition-[background-color,color,box-shadow] duration-200 hover:bg-zinc-900/[0.05] hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
-          open &&
-            "bg-white text-zinc-950 shadow-[0_1px_3px_rgba(15,23,42,0.1),0_0_0_0.5px_rgba(15,23,42,0.08)]",
+          "group/fx relative inline-flex h-8 min-w-8 items-center justify-center gap-1.5 rounded-full ps-1 pe-1 text-zinc-600 transition-[background-color,color] duration-200 hover:bg-zinc-950/[0.05] hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20 sm:pe-3",
+          open && "bg-zinc-950 text-white hover:bg-zinc-950 hover:text-white",
         )}
       >
-        <Coins className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+        <span
+          className={cn(
+            "flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors",
+            open ? "bg-white/15" : "bg-zinc-950/[0.05] group-hover/fx:bg-white group-hover/fx:shadow-[0_1px_2px_rgba(0,0,0,0.08)]",
+          )}
+        >
+          <ChartNoAxesColumnIncreasing className="h-3.5 w-3.5" strokeWidth={2.1} />
+        </span>
         {rate ? (
           <span
             aria-hidden
-            className="hidden text-[13px] font-semibold tabular-nums text-zinc-700 sm:inline"
+            className={cn("hidden text-[12.5px] font-semibold tabular-nums tracking-tight sm:inline", open ? "text-white" : "text-zinc-900")}
           >
             <bdi dir="ltr">$ {rate}</bdi>
           </span>
@@ -64,7 +70,7 @@ export function FxLiveIndicator() {
         {top.stale ? (
           <span
             aria-hidden
-            className="absolute end-1 top-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-white"
+            className="absolute end-0.5 top-0.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-white"
             data-testid="fx-live-stale-dot"
           />
         ) : null}

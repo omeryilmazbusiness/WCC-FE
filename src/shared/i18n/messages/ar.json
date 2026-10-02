@@ -1,7 +1,15 @@
 {
   "app": {
     "name": "مركز قيادة وودي",
-    "shortName": "WCC"
+    "shortName": "WCC",
+    "roles": {
+      "gm": "المدير العام",
+      "manager": "مدير",
+      "employee": "موظف",
+      "finance": "المالية",
+      "operations": "العمليات",
+      "admin": "مسؤول النظام"
+    }
   },
   "nav": {
     "manager": "الإدارة",

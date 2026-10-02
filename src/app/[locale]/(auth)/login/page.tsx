@@ -2,7 +2,8 @@ import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import { LoginForm, SessionEndedNotice } from "@/features/auth-by-credentials";
 import { isSessionEndReason, SESSION_END_PARAM } from "@/shared/api/session-end";
-import { LoginScreen, MonogramIcon } from "@/widgets/login-screen";
+import { WCC_LOGO } from "@/shared/config/brand";
+import { LoginScreen, LogoIcon } from "@/widgets/login-screen";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -18,7 +19,7 @@ export default async function LoginPage({ params, searchParams }: Props) {
 
   return (
     <LoginScreen
-      icon={<MonogramIcon label={ta("shortName")} />}
+      icon={<LogoIcon src={WCC_LOGO} alt={ta("name")} />}
       title={t("genericTitle")}
       subtitle={t("subtitle")}
     >

@@ -462,3 +462,12 @@ html:has(.night-aurora) body {
   background: #ffffff;
   box-shadow: var(--shadow-lift);
 }
+
+/* Scrollable without a visible bar (wheel, touch and keyboard still scroll). */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
