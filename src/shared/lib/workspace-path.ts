@@ -47,9 +47,28 @@ function segmentsOf(path: string): string[] {
   return path.split("/").filter(Boolean);
 }
 
+/** Last segment of a company's sign-in page: `/{company}/login`. */
+const COMPANY_LOGIN_SEGMENT = "login";
+
+/** The company of a sign-in page path (`/acme/login` → `acme`), else null. */
+export function companyLoginSlug(pathWithoutLocale: string): string | null {
+  const segs = segmentsOf(pathWithoutLocale);
+  return segs.length === 2 && segs[1] === COMPANY_LOGIN_SEGMENT && isCompanySlug(segs[0]) ? segs[0] : null;
+}
+
+export function companyLoginPath(company: string): string {
+  return `/${company}/${COMPANY_LOGIN_SEGMENT}`;
+}
+
+/** Whether a value can be a company URL segment (shape only; existence is the backend's call). */
+export function isCompanySlug(value: string | null | undefined): value is string {
+  return Boolean(value) && SLUG.test(value as string) && !ROUTE_ROOTS.has(value as string);
+}
+
 /** Splits `/acme/main/bookings/1` into the workspace and `/bookings/1`. */
 export function splitWorkspace(pathWithoutLocale: string): SplitPath {
   const segs = segmentsOf(pathWithoutLocale);
+  if (companyLoginSlug(pathWithoutLocale)) return { workspace: null, rest: pathWithoutLocale };
   if (segs.length >= 2 && !ROUTE_ROOTS.has(segs[0]) && SLUG.test(segs[0]) && SLUG.test(segs[1])) {
     return {
       workspace: { company: segs[0], branch: segs[1] },

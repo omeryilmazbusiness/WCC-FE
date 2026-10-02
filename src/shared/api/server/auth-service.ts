@@ -40,10 +40,11 @@ export function hasTokens(res: BackendLoginResponse): res is BackendLoginRespons
   return Boolean(res.access_token && res.refresh_token);
 }
 
-export function backendLogin(email: string, password: string, meta: ClientMeta) {
+/** `company` limits the sign-in to that company's users (its own login page). */
+export function backendLogin(email: string, password: string, meta: ClientMeta, company?: string) {
   return backendJson<BackendLoginResponse>(AUTH_ENDPOINTS.login, {
     method: "POST",
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify(company ? { email, password, company } : { email, password }),
     meta,
   });
 }

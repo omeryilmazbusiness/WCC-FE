@@ -23,6 +23,7 @@ import {
 } from "../model/flow";
 import { BranchesGroup } from "./branches-group";
 import { ChoiceGrid, GlassField, GlassGroup, GlassInput, StepHero } from "./glass";
+import { LogoGroup } from "./logo-group";
 import { StepFooter } from "./step-footer";
 
 type Props = {
@@ -205,6 +206,8 @@ export function CompanyStep({ overview, repository, onSaved, onBack }: Props) {
         {field("nameAr", { dir: "rtl", lang: "ar" })}
         {field("legalName")}
       </GlassGroup>
+
+      <LogoGroup slug={overview.company.slug} name={form.nameEn || overview.company.nameEn} />
 
       <BranchesGroup
         drafts={drafts}

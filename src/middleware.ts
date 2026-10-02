@@ -1,19 +1,33 @@
 import createMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
-import { ACTIVE_BRANCH_HEADER, BRANCH_COOKIE, SESSION_COOKIE, WORKSPACE_HEADER } from "@/shared/api/session";
+import { ACTIVE_BRANCH_HEADER, BRANCH_COOKIE, COMPANY_COOKIE, SESSION_COOKIE, WORKSPACE_HEADER } from "@/shared/api/session";
 import { verifySession } from "@/shared/api/server/session-token";
 import { canAccessPath, homeFor } from "@/shared/config/permissions";
 import { routes } from "@/shared/config/routes";
 import { routing } from "@/shared/i18n/routing";
-import { formatWorkspaceRef, resolveBranch, splitWorkspace, withWorkspace } from "@/shared/lib/workspace-path";
+import {
+  companyLoginPath,
+  companyLoginSlug,
+  formatWorkspaceRef,
+  isCompanySlug,
+  resolveBranch,
+  splitWorkspace,
+  withWorkspace,
+} from "@/shared/lib/workspace-path";
 
 const intlMiddleware = createMiddleware(routing);
 
 const publicPaths = [routes.login];
 
+/** `?any=1` on `/login` opens the generic page even when a company is remembered. */
+const ANY_COMPANY_PARAM = "any";
+
 /**
  * UX route guard only: reads the HMAC-signed HttpOnly session snapshot written by the BFF.
  * The backend re-checks every permission (and the branch) on each API call.
+ *
+ * Each company signs in at `/{locale}/{company}/login`. Signed out, `/login` and every
+ * protected URL lead to the company in the URL or the remembered one, else the generic page.
  *
  * Signed-in pages live under `/{locale}/{company}/{branch}/...`: this rewrites them onto
  * the unprefixed app routes, passes the active branch id on, and redirects every other
@@ -27,7 +41,8 @@ export default async function middleware(req: NextRequest) {
   const { workspace: urlWorkspace, rest } = splitWorkspace(pathWithoutLocale);
 
   const session = await verifySession(req.cookies.get(SESSION_COOKIE)?.value);
-  const isPublic = publicPaths.some((p) => rest === p || rest.startsWith(`${p}/`));
+  const companyLogin = companyLoginSlug(pathWithoutLocale);
+  const isPublic = companyLogin !== null || publicPaths.some((p) => rest === p || rest.startsWith(`${p}/`));
 
   const redirectTo = (path: string, keepSearch = false) => {
     const url = req.nextUrl.clone();
@@ -37,8 +52,15 @@ export default async function middleware(req: NextRequest) {
   };
 
   if (!session) {
-    if ((isPublic && !urlWorkspace) || pathWithoutLocale === "/") return intlMiddleware(req);
-    return redirectTo(routes.login);
+    if (companyLogin) return intlMiddleware(req);
+    const remembered = req.cookies.get(COMPANY_COOKIE)?.value;
+    const company = urlWorkspace?.company ?? (isCompanySlug(remembered) ? remembered : null);
+    if (isPublic && !urlWorkspace) {
+      if (company && !req.nextUrl.searchParams.has(ANY_COMPANY_PARAM)) return redirectTo(companyLoginPath(company), true);
+      return intlMiddleware(req);
+    }
+    if (pathWithoutLocale === "/") return intlMiddleware(req);
+    return redirectTo(company ? companyLoginPath(company) : routes.login);
   }
 
   const ws = session.workspace;

@@ -7,7 +7,7 @@ import { VIEWER_REFRESHED_HEADER } from "./auth-contract";
 import { DedupingHttpClient } from "./deduping-http-client";
 import { BRANCH_SLUG_HEADER } from "./session";
 import { loginHref, sessionEndReason } from "./session-end";
-import { splitWorkspace } from "../lib/workspace-path";
+import { companyLoginSlug, splitWorkspace } from "../lib/workspace-path";
 
 export { ApiError } from "./api-error";
 
@@ -85,7 +85,8 @@ export class FetchHttpClient implements HttpClient {
 function redirectToLogin(err: ApiError) {
   if (typeof window === "undefined") return;
   const locale = window.location.pathname.match(/^\/(en|ar)(?=\/|$)/)?.[1] ?? "en";
-  if (window.location.pathname.startsWith(`/${locale}/login`)) return;
+  const path = window.location.pathname.slice(locale.length + 1);
+  if (path.startsWith("/login") || companyLoginSlug(path)) return;
   window.location.assign(loginHref(locale, sessionEndReason(err)));
 }
 

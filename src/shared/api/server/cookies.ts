@@ -1,5 +1,5 @@
 import type { NextResponse } from "next/server";
-import { ACCESS_COOKIE, ENROLLMENT_COOKIE, REFRESH_COOKIE, SESSION_COOKIE } from "../session";
+import { ACCESS_COOKIE, COMPANY_COOKIE, ENROLLMENT_COOKIE, REFRESH_COOKIE, SESSION_COOKIE } from "../session";
 import { serverEnv } from "./server-env";
 
 export type TokenSet = {
@@ -44,6 +44,14 @@ export function setEnrollmentCookie(res: NextResponse, token: string, expiresIn:
 
 export function clearEnrollmentCookie(res: NextResponse) {
   res.cookies.set(ENROLLMENT_COOKIE, "", { ...baseOptions(), maxAge: 0 });
+}
+
+const COMPANY_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
+/** Remembers the signed-in company (outlives the session on purpose); platform users clear it. */
+export function setCompanyCookie(res: NextResponse, companySlug: string | null | undefined) {
+  if (companySlug) res.cookies.set(COMPANY_COOKIE, companySlug, { ...baseOptions(), maxAge: COMPANY_COOKIE_MAX_AGE });
+  else res.cookies.set(COMPANY_COOKIE, "", { ...baseOptions(), maxAge: 0 });
 }
 
 export function clearAuthCookies(res: NextResponse) {

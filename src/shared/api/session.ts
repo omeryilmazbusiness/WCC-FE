@@ -7,6 +7,8 @@ export const REFRESH_COOKIE = "wcc_rt";
 /** HMAC-signed viewer snapshot used for UI routing; never for authorization. */
 export const SESSION_COOKIE = "wcc_session";
 export const ENROLLMENT_COOKIE = "wcc_mfa_setup";
+/** Company slug of the last sign-in; sends `/login` and expired sessions to that company's page. */
+export const COMPANY_COOKIE = "wcc_company";
 /** Last branch a company-wide viewer worked in (branch id); a routing hint only. */
 export const BRANCH_COOKIE = "wcc_branch";
 /** Request header the middleware sets on workspace pages: the active branch id. */

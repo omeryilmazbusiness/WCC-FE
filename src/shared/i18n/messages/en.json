@@ -84,7 +84,24 @@
     "mfaInvalid": "That code didn't work. Try again.",
     "mfaChallengeExpired": "Verification timed out — please sign in again.",
     "mfaSetupExpired": "Your setup session expired. Sign in again.",
-    "signedOutDevice": "You were signed out on this device. Please sign in again."
+    "signedOutDevice": "You were signed out on this device. Please sign in again.",
+    "signIn": "Sign in",
+    "welcomeTo": "Welcome to {company}",
+    "companySubtitle": "Sign in to your workspace",
+    "genericTitle": "Welcome back",
+    "emailPlaceholder": "name@company.com",
+    "passwordPlaceholder": "Required",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "notFoundTitle": "Workspace not found",
+    "notFoundBody": "Check the link you were given, or sign in from the main page.",
+    "unavailableTitle": "Service unavailable",
+    "unavailableBody": "We can't reach the service right now. Please try again in a moment.",
+    "retry": "Try again",
+    "otherWorkspace": "Not your workspace?",
+    "useAnotherWorkspace": "Sign in elsewhere",
+    "toMainSignIn": "Go to main sign-in",
+    "poweredBy": "by"
   },
   "admin": {
     "branch": "Branch",
@@ -1324,6 +1341,20 @@
           "name": "Enter 2–120 characters.",
           "duplicate": "Another branch already uses this name."
         }
+      },
+      "logo": {
+        "title": "Logo",
+        "hint": "Shown as the app icon on your team's sign-in page. PNG, JPEG or WebP, up to 512 KB. A square image works best.",
+        "upload": "Upload logo",
+        "change": "Change",
+        "remove": "Remove",
+        "uploading": "Uploading…",
+        "uploaded": "Logo updated",
+        "removed": "Logo removed",
+        "errorType": "Use a PNG, JPEG or WebP image.",
+        "errorSize": "The image must be 512 KB or smaller.",
+        "error": "The logo could not be saved. Please try again.",
+        "signInPage": "Sign-in page: {path}"
       }
     },
     "roles": {
@@ -2648,7 +2679,8 @@
         "city": "City",
         "gmName": "Full name",
         "gmEmail": "Email",
-        "gmPassword": "Temporary password"
+        "gmPassword": "Temporary password",
+        "logo": "Logo"
       },
       "slugHint": "Workspace URL: {path}. Leave empty to derive it from the name.",
       "gmHint": "The GM completes company details, branches and team on first sign-in.",
@@ -2679,8 +2711,17 @@
           "length": "Use 10–128 characters.",
           "mix": "Mix letters and digits.",
           "common": "This password is too easy to guess."
-        }
-      }
+        },
+        "logoType": "Use a PNG, JPEG or WebP image.",
+        "logoSize": "The image must be 512 KB or smaller."
+      },
+      "logoHint": "App icon on the company's sign-in page. PNG, JPEG or WebP, up to 512 KB. Optional; the GM can change it later.",
+      "logoChoose": "Choose logo",
+      "logoChange": "Change",
+      "logoRemove": "Remove",
+      "logoFailed": "The company was registered, but the logo couldn't be uploaded.",
+      "logoRetry": "Upload logo again",
+      "doneLogin": "Sign-in page"
     }
   },
   "tabs": {

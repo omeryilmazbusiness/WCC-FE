@@ -5,11 +5,10 @@ import { useTranslations } from "next-intl";
 import { ShieldCheck } from "lucide-react";
 import { isApiError, isNetworkError } from "@/shared/api/api-error";
 import type { LoginResult } from "@/shared/api/auth-contract";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
+import { cn } from "@/shared/lib/cn";
 import { verifyMfa } from "../model/auth-api";
 import { lockoutFrom, type Lockout } from "../model/lockout";
+import { GlassButton, GlassError, GlassLinkButton, glassInputClass } from "./glass-controls";
 
 type Props = {
   challenge: string;
@@ -57,57 +56,52 @@ export function MfaCodeStep({ challenge, onAuthenticated, onLockout, onBack }: P
   const inputId = "mfa-code";
 
   return (
-    <form onSubmit={submit} className="space-y-5" data-testid="mfa-step">
-      <div className="flex items-start gap-3 rounded-2xl bg-zinc-50 p-4">
-        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-950 text-white">
-          <ShieldCheck className="h-4 w-4" strokeWidth={1.75} />
+    <form onSubmit={submit} className="animate-setup-in space-y-5" data-testid="mfa-step">
+      <div className="flex flex-col items-center text-center">
+        <span className="inline-flex h-12 w-12 items-center justify-center rounded-[15px] bg-white/10 text-sky-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_0_0_0.5px_rgba(255,255,255,0.14)]">
+          <ShieldCheck className="h-5 w-5" strokeWidth={1.75} />
         </span>
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-zinc-950">{t("mfaTitle")}</p>
-          <p className="mt-0.5 text-sm font-medium text-zinc-500">
-            {mode === "totp" ? t("mfaSubtitle") : t("mfaRecoverySubtitle")}
-          </p>
-        </div>
+        <p className="mt-3 text-[17px] font-semibold text-white">{t("mfaTitle")}</p>
+        <p className="mt-1 text-[13px] font-medium text-white/55">
+          {mode === "totp" ? t("mfaSubtitle") : t("mfaRecoverySubtitle")}
+        </p>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor={inputId}>{mode === "totp" ? t("mfaCode") : t("mfaRecoveryCode")}</Label>
-        <Input
-          id={inputId}
-          autoFocus
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          inputMode={mode === "totp" ? "numeric" : "text"}
-          autoComplete="one-time-code"
-          pattern={mode === "totp" ? "[0-9 ]*" : undefined}
-          maxLength={mode === "totp" ? 7 : 32}
-          placeholder={mode === "totp" ? "123456" : "xxxx-xxxx"}
-          className={mode === "totp" ? "text-center font-mono text-lg tracking-[0.5em]" : "font-mono"}
-          aria-invalid={Boolean(error)}
-          aria-describedby={error ? `${inputId}-error` : undefined}
-        />
-        {error ? (
-          <p id={`${inputId}-error`} role="alert" className="text-sm text-[var(--destructive)]">
-            {error}
-          </p>
-        ) : null}
+        <label htmlFor={inputId} className="sr-only">
+          {mode === "totp" ? t("mfaCode") : t("mfaRecoveryCode")}
+        </label>
+        <div className="liquid-glass-group rounded-[18px] px-4 transition-shadow duration-200 focus-within:shadow-[inset_0_0_0_1px_rgba(125,211,252,0.45),0_0_0_4px_rgba(56,189,248,0.12)]">
+          <input
+            id={inputId}
+            autoFocus
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            inputMode={mode === "totp" ? "numeric" : "text"}
+            autoComplete="one-time-code"
+            pattern={mode === "totp" ? "[0-9 ]*" : undefined}
+            maxLength={mode === "totp" ? 7 : 32}
+            placeholder={mode === "totp" ? "123456" : "xxxx-xxxx"}
+            dir="ltr"
+            className={cn(
+              glassInputClass,
+              "h-14 text-center font-mono",
+              mode === "totp" ? "text-[22px] tracking-[0.5em]" : "text-[17px] tracking-wider",
+            )}
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? `${inputId}-error` : undefined}
+          />
+        </div>
+        {error ? <GlassError id={`${inputId}-error`}>{error}</GlassError> : null}
       </div>
 
-      <Button type="submit" className="w-full" disabled={!valid || submitting}>
+      <GlassButton type="submit" busy={submitting} disabled={!valid || submitting}>
         {t("mfaVerify")}
-      </Button>
+      </GlassButton>
 
-      <div className="flex items-center justify-between text-sm font-medium">
-        <button
-          type="button"
-          className="text-zinc-500 transition-colors hover:text-zinc-950"
-          onClick={() => onBack()}
-        >
-          {t("mfaBack")}
-        </button>
-        <button
-          type="button"
-          className="text-zinc-500 transition-colors hover:text-zinc-950"
+      <div className="flex items-center justify-between gap-3">
+        <GlassLinkButton onClick={() => onBack()}>{t("mfaBack")}</GlassLinkButton>
+        <GlassLinkButton
           onClick={() => {
             setMode(mode === "totp" ? "recovery" : "totp");
             setCode("");
@@ -115,7 +109,7 @@ export function MfaCodeStep({ challenge, onAuthenticated, onLockout, onBack }: P
           }}
         >
           {mode === "totp" ? t("mfaUseRecovery") : t("mfaUseTotp")}
-        </button>
+        </GlassLinkButton>
       </div>
     </form>
   );

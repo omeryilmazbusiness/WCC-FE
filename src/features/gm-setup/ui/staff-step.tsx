@@ -253,7 +253,7 @@ function NewProfileSheet({
 
   return (
     <Dialog open={open} onOpenChange={close}>
-      <DialogContent className="setup-night max-w-[440px] border-white/15 bg-[#0d1328]/90 text-white backdrop-blur-2xl [&>button:last-child]:text-white/55 [&>button:last-child]:hover:bg-white/10 [&>button:last-child]:hover:text-white" data-testid="setup-profile-sheet">
+      <DialogContent className="night-glass max-w-[440px] border-white/15 bg-[#0d1328]/90 text-white backdrop-blur-2xl [&>button:last-child]:text-white/55 [&>button:last-child]:hover:bg-white/10 [&>button:last-child]:hover:text-white" data-testid="setup-profile-sheet">
         <DialogHeader className="items-center text-center">
           <span
             className={cn(

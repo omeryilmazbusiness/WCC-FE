@@ -2,12 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ShieldAlert } from "lucide-react";
+import { Loader2, ShieldAlert } from "lucide-react";
 import type { MfaEnrollResponse } from "@/shared/api/auth-contract";
 import { isApiError } from "@/shared/api/api-error";
-import { Button } from "@/shared/ui/button";
 import { MfaEnrollFlow } from "@/shared/ui/mfa";
 import { confirmMfaSetup, startMfaSetup } from "../model/auth-api";
+import { GlassButton, GlassError, GlassNotice } from "./glass-controls";
 
 type Props = {
   onComplete: (home: string) => void;
@@ -43,29 +43,31 @@ export function MfaSetupStep({ onComplete, onBack }: Props) {
   }
 
   return (
-    <div className="space-y-6" data-testid="mfa-setup-step">
-      <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50/70 p-4" role="alert">
-        <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" strokeWidth={1.75} />
-        <p className="text-sm font-medium text-zinc-700">{t("enrollmentRequired")}</p>
-      </div>
+    <div className="animate-setup-in space-y-5" data-testid="mfa-setup-step">
+      <GlassNotice role="alert" tone="warning" icon={<ShieldAlert className="h-4 w-4" strokeWidth={1.75} />}>
+        {t("enrollmentRequired")}
+      </GlassNotice>
       {enrollment ? (
-        <MfaEnrollFlow
-          enrollment={enrollment}
-          confirm={confirm}
-          onCancel={() => onBack()}
-          onEnabled={() => home.current && onComplete(home.current)}
-        />
+        // The enrollment flow (QR, codes) is drawn for light surfaces.
+        <div className="rounded-[22px] bg-white p-4 text-zinc-950 shadow-[0_18px_40px_-20px_rgba(0,0,0,0.8)] [color-scheme:light] [--border:#e4e4e7]">
+          <MfaEnrollFlow
+            enrollment={enrollment}
+            confirm={confirm}
+            onCancel={() => onBack()}
+            onEnabled={() => home.current && onComplete(home.current)}
+          />
+        </div>
       ) : failed ? (
         <div className="space-y-3">
-          <p className="text-sm text-[var(--destructive)]" role="alert">
-            {t("enrollError")}
-          </p>
-          <Button type="button" variant="ghost" onClick={() => onBack()}>
+          <GlassError>{t("enrollError")}</GlassError>
+          <GlassButton type="button" onClick={() => onBack()}>
             {t("cancel")}
-          </Button>
+          </GlassButton>
         </div>
       ) : (
-        <p className="text-sm text-zinc-500">…</p>
+        <div className="flex justify-center py-6" aria-busy>
+          <Loader2 className="h-6 w-6 animate-spin text-white/70" strokeWidth={2} />
+        </div>
       )}
     </div>
   );

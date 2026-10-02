@@ -1,15 +1,21 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Building2, Copy, Plus, RefreshCw } from "lucide-react";
+import { AlertTriangle, Building2, Copy, ImageUp, Plus, RefreshCw, Trash2 } from "lucide-react";
 import {
   COMPANY_LIST_LIMIT,
   listCompanies,
   registerCompany,
   type PlatformCompany,
 } from "@/entities/company";
+import {
+  companyLogoUrl,
+  createCompanyBrandingApi,
+  logoProblem,
+  LOGO_TYPES,
+} from "@/entities/company-branding";
 import { generatePassword, passwordIssue, slugify } from "@/features/gm-setup";
 import { isApiError } from "@/shared/api/api-error";
 import { formatDateTime } from "@/shared/lib/format";
@@ -104,9 +110,12 @@ export function CompaniesAdminView() {
       {
         header: t("columns.company"),
         cell: ({ row }) => (
-          <div className="min-w-0">
-            <p className="truncate font-semibold text-zinc-950">{row.original.name_en}</p>
-            <p className="truncate font-mono text-[11px] text-zinc-500">/{row.original.slug}</p>
+          <div className="flex min-w-0 items-center gap-3">
+            <CompanyLogo company={row.original} />
+            <div className="min-w-0">
+              <p className="truncate font-semibold text-zinc-950">{row.original.name_en}</p>
+              <p className="truncate font-mono text-[11px] text-zinc-500">/{row.original.slug}</p>
+            </div>
           </div>
         ),
       },
@@ -192,6 +201,145 @@ export function CompaniesAdminView() {
   );
 }
 
+const LOGO_TILE =
+  "flex shrink-0 items-center justify-center overflow-hidden shadow-[0_0_0_0.5px_rgba(15,23,42,0.12),0_4px_10px_-6px_rgba(15,23,42,0.35)]";
+
+function MonogramTile({ name, className }: { name: string; className: string }) {
+  return (
+    <span
+      aria-hidden
+      className={`${LOGO_TILE} ${className} bg-[linear-gradient(145deg,#38bdf8_0%,#6366f1_52%,#a855f7_100%)] font-semibold text-white`}
+    >
+      {(name.trim()[0] ?? "?").toLocaleUpperCase()}
+    </span>
+  );
+}
+
+/** List thumbnail; falls back to the monogram when there is no (servable) logo. */
+function CompanyLogo({ company }: { company: PlatformCompany }) {
+  const [broken, setBroken] = useState(false);
+  const src = companyLogoUrl({ slug: company.slug, logoVersion: company.has_logo ? company.logo_version : null });
+  if (!src || broken) return <MonogramTile name={company.name_en} className="h-9 w-9 rounded-[10px] text-[14px]" />;
+  return (
+    <span className={`${LOGO_TILE} h-9 w-9 rounded-[10px] bg-white p-1`}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- versioned same-origin bytes */}
+      <img src={src} alt="" className="h-full w-full object-contain" onError={() => setBroken(true)} />
+    </span>
+  );
+}
+
+/** Picks a logo before the company exists; it is uploaded right after registration. */
+function LogoPicker({
+  file,
+  name,
+  error,
+  onPick,
+  onError,
+}: {
+  file: File | null;
+  name: string;
+  error: string | null;
+  onPick: (file: File | null) => void;
+  onError: (message: string | null) => void;
+}) {
+  const t = useTranslations("adminCompanies.form");
+  const input = useRef<HTMLInputElement>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!file) {
+      setPreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  function choose(e: React.ChangeEvent<HTMLInputElement>) {
+    const next = e.target.files?.[0];
+    e.target.value = "";
+    if (!next) return;
+    const issue = logoProblem(next);
+    if (issue) {
+      onError(t(issue === "type" ? "errors.logoType" : "errors.logoSize"));
+      return;
+    }
+    onError(null);
+    onPick(next);
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor="company-logo">{t("fields.logo")}</Label>
+      <div className="flex items-center gap-3">
+        {preview ? (
+          <span className={`${LOGO_TILE} h-14 w-14 rounded-[16px] bg-white p-1.5`} data-testid="company-logo-preview">
+            {/* eslint-disable-next-line @next/next/no-img-element -- local object URL preview */}
+            <img
+              src={preview}
+              alt=""
+              className="h-full w-full object-contain"
+              onError={() => {
+                onPick(null);
+                onError(t("errors.logoType"));
+              }}
+            />
+          </span>
+        ) : (
+          <MonogramTile name={name || "?"} className="h-14 w-14 rounded-[16px] text-[22px]" />
+        )}
+        <input
+          ref={input}
+          id="company-logo"
+          type="file"
+          accept={LOGO_TYPES.join(",")}
+          className="sr-only"
+          onChange={choose}
+          data-testid="company-logo-input"
+        />
+        <Button type="button" variant="outline" size="sm" onClick={() => input.current?.click()}>
+          <ImageUp className="h-4 w-4" />
+          {file ? t("logoChange") : t("logoChoose")}
+        </Button>
+        {file ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-rose-600 hover:text-rose-700"
+            onClick={() => {
+              onPick(null);
+              onError(null);
+            }}
+            data-testid="company-logo-remove"
+          >
+            <Trash2 className="h-4 w-4" />
+            {t("logoRemove")}
+          </Button>
+        ) : null}
+      </div>
+      {error ? (
+        <p role="alert" className="text-[12px] font-medium text-rose-600">
+          {error}
+        </p>
+      ) : (
+        <p className="text-[12px] text-zinc-500">{t("logoHint")}</p>
+      )}
+    </div>
+  );
+}
+
+type Done = {
+  companyId: string;
+  url: string;
+  loginPath: string;
+  email: string;
+  password: string;
+  /** Kept for a retry when the upload after registration failed. */
+  pendingLogo: File | null;
+};
+
 function RegisterDrawer({
   open,
   onOpenChange,
@@ -202,16 +350,45 @@ function RegisterDrawer({
   onRegistered: () => void;
 }) {
   const t = useTranslations("adminCompanies.form");
+  const locale = useLocale();
   const feedback = useMutationFeedback();
+  const branding = useMemo(() => createCompanyBrandingApi(), []);
   const [form, setForm] = useState<Form>(() => ({ ...EMPTY, gmPassword: generatePassword() }));
   const [errors, setErrors] = useState<Partial<Record<FieldKey, string>>>({});
+  const [logo, setLogo] = useState<File | null>(null);
+  const [logoError, setLogoError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState<{ url: string; email: string; password: string } | null>(null);
+  const [done, setDone] = useState<Done | null>(null);
 
   function reset() {
     setForm({ ...EMPTY, gmPassword: generatePassword() });
     setErrors({});
+    setLogo(null);
+    setLogoError(null);
     setDone(null);
+  }
+
+  /** True when uploaded; a failure leaves the company registered without a logo. */
+  async function uploadLogo(companyId: string, file: File): Promise<boolean> {
+    try {
+      await branding.uploadCompanyLogo(companyId, file);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async function retryLogo() {
+    if (!done?.pendingLogo) return;
+    setBusy(true);
+    const ok = await uploadLogo(done.companyId, done.pendingLogo);
+    setBusy(false);
+    if (ok) {
+      setDone({ ...done, pendingLogo: null });
+      onRegistered();
+    } else {
+      feedback.error(null, t("logoFailed"));
+    }
   }
 
   function set(key: FieldKey, value: string) {
@@ -240,10 +417,14 @@ function RegisterDrawer({
         city: form.city.trim() || undefined,
         gm: { full_name: form.gmName.trim(), email: form.gmEmail.trim(), password: form.gmPassword },
       });
+      const logoUploaded = logo ? await uploadLogo(out.company.id, logo) : true;
       setDone({
+        companyId: out.company.id,
         url: `/${out.company.slug}/${out.main_center.slug}`,
+        loginPath: `/${locale}/${out.company.slug}/login`,
         email: form.gmEmail.trim().toLowerCase(),
         password: form.gmPassword,
+        pendingLogo: logoUploaded ? null : logo,
       });
       feedback.success(t("created", { name: out.company.name_en }));
       onRegistered();
@@ -304,10 +485,32 @@ function RegisterDrawer({
               <Building2 className="h-5 w-5 text-emerald-600" />
               <p className="text-[14px] font-semibold text-emerald-900">{t("doneTitle")}</p>
             </div>
+            {done.pendingLogo ? (
+              <div
+                role="alert"
+                className="flex items-start gap-3 rounded-2xl bg-amber-50 p-4"
+                data-testid="company-logo-failed"
+              >
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                <div className="min-w-0 space-y-2">
+                  <p className="text-[13px] font-medium text-amber-900">{t("logoFailed")}</p>
+                  <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => void retryLogo()}>
+                    <ImageUp className="h-4 w-4" />
+                    {t("logoRetry")}
+                  </Button>
+                </div>
+              </div>
+            ) : null}
             <dl className="space-y-3 text-[13px]">
               <div>
                 <dt className="text-zinc-500">{t("doneUrl")}</dt>
                 <dd className="font-mono text-zinc-900">{done.url}</dd>
+              </div>
+              <div>
+                <dt className="text-zinc-500">{t("doneLogin")}</dt>
+                <dd className="font-mono text-zinc-900" data-testid="company-done-login">
+                  {done.loginPath}
+                </dd>
               </div>
               <div>
                 <dt className="text-zinc-500">{t("fields.gmEmail")}</dt>
@@ -343,6 +546,13 @@ function RegisterDrawer({
                 <h3 className="text-[12px] font-semibold uppercase tracking-[0.06em] text-zinc-500">
                   {t("groups.company")}
                 </h3>
+                <LogoPicker
+                  file={logo}
+                  name={form.nameEn}
+                  error={logoError}
+                  onPick={setLogo}
+                  onError={setLogoError}
+                />
                 {field("nameEn", { autoComplete: "organization", required: true })}
                 {field("nameAr", { dir: "rtl", lang: "ar" })}
                 {field("slug", {

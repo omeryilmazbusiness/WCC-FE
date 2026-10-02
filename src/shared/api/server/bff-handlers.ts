@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/shared/config/env";
 import { routes } from "@/shared/config/routes";
+import { isCompanySlug } from "@/shared/lib/workspace-path";
 import {
   ApiError,
   isApiError,
@@ -38,6 +39,7 @@ import {
   clearAuthCookies,
   clearEnrollmentCookie,
   sessionExpiresAt,
+  setCompanyCookie,
   setEnrollmentCookie,
   setSessionCookie,
   setTokenCookies,
@@ -108,6 +110,7 @@ async function authenticatedResponse(
   const res = NextResponse.json({ data: body });
   setTokenCookies(res, tokens);
   setSessionCookie(res, await signSession(viewer));
+  setCompanyCookie(res, viewer.workspace?.company.slug);
   return res;
 }
 
@@ -145,7 +148,7 @@ async function completeLogin(login: BackendLoginResponse, meta: ClientMeta): Pro
 export async function handleLogin(req: NextRequest): Promise<NextResponse> {
   const csrf = csrfError(req);
   if (csrf) return errorResponse(csrf);
-  const { email, password } = await readJson<{ email: string; password: string }>(req);
+  const { email, password, company } = await readJson<{ email: string; password: string; company: string }>(req);
   if (typeof email !== "string" || typeof password !== "string" || !email || !password) {
     return errorResponse(
       new ApiError({ status: 400, code: "validation_error", message: "Email and password are required" }),
@@ -153,7 +156,8 @@ export async function handleLogin(req: NextRequest): Promise<NextResponse> {
   }
   const meta = clientMetaFrom(req.headers);
   try {
-    return await completeLogin(await backendLogin(email, password, meta), meta);
+    const scope = typeof company === "string" && isCompanySlug(company) ? company : undefined;
+    return await completeLogin(await backendLogin(email, password, meta, scope), meta);
   } catch (err) {
     if (env.demoMode && isNetworkError(err)) {
       try {
@@ -231,6 +235,7 @@ export async function handleMfaSetupConfirm(req: NextRequest): Promise<NextRespo
     const res = NextResponse.json({ data: body });
     setTokenCookies(res, tokens);
     setSessionCookie(res, await signSession(viewer));
+    setCompanyCookie(res, viewer.workspace?.company.slug);
     clearEnrollmentCookie(res);
     return res;
   } catch (err) {

@@ -10,18 +10,10 @@ import type { LoginResult } from "@/shared/api/auth-contract";
 import { env } from "@/shared/config/env";
 import { routes } from "@/shared/config/routes";
 import { applyFieldErrors } from "@/shared/lib/form-errors";
-import { Button } from "@/shared/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/shared/ui/form";
-import { Input } from "@/shared/ui/input";
+import { Eye, EyeOff } from "lucide-react";
 import { login } from "../model/auth-api";
 import { lockoutFrom, type Lockout } from "../model/lockout";
+import { GlassButton, GlassError, GlassGroup, GlassRow, glassInputClass } from "./glass-controls";
 import { LockoutNotice } from "./lockout-notice";
 import { MfaCodeStep } from "./mfa-code-step";
 import { MfaSetupStep } from "./mfa-setup-step";
@@ -35,13 +27,19 @@ type FormValues = z.infer<typeof schema>;
 
 const DEMO_DEFAULTS: FormValues = { email: "manager@wodi.local", password: "ChangeMe123!" };
 
-export function LoginForm() {
+type Props = {
+  /** Set on a company's own login page: only that company's accounts may sign in. */
+  company?: string;
+};
+
+export function LoginForm({ company }: Props = {}) {
   const t = useTranslations("auth");
   const locale = useLocale();
   const [error, setError] = useState<string | null>(null);
   const [challenge, setChallenge] = useState<string | null>(null);
   const [lockout, setLockout] = useState<Lockout | null>(null);
   const [setupRequired, setSetupRequired] = useState(false);
+  const [revealed, setRevealed] = useState(false);
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: env.demoMode ? DEMO_DEFAULTS : { email: "", password: "" },
@@ -86,7 +84,7 @@ export function LoginForm() {
   async function onSubmit(values: FormValues) {
     setError(null);
     try {
-      handleResult(await login(values.email, values.password));
+      handleResult(await login(values.email, values.password, company));
     } catch (err) {
       const next = lockoutFrom(err);
       if (next) {
@@ -123,50 +121,55 @@ export function LoginForm() {
   }
 
   const locked = lockout !== null;
+  const { errors, isSubmitting } = form.formState;
+  const fieldError = errors.email?.message ?? errors.password?.message;
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-        {lockout ? <LockoutNotice lockout={lockout} onElapsed={clearLockout} /> : null}
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("email")}</FormLabel>
-              <FormControl>
-                <Input type="email" autoComplete="username" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("password")}</FormLabel>
-              <FormControl>
-                <Input type="password" autoComplete="current-password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {error ? (
-          <p className="text-sm text-[var(--destructive)]" role="alert">
-            {error}
-          </p>
-        ) : null}
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={form.formState.isSubmitting || locked}
-        >
-          {t("submit")}
-        </Button>
-      </form>
-    </Form>
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
+      {lockout ? <LockoutNotice lockout={lockout} onElapsed={clearLockout} /> : null}
+      <GlassGroup invalid={Boolean(fieldError || error)}>
+        <GlassRow label={t("email")} htmlFor="login-email">
+          <input
+            id="login-email"
+            type="email"
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
+            placeholder={t("emailPlaceholder")}
+            dir="ltr"
+            className={`${glassInputClass} rtl:text-right`}
+            aria-invalid={Boolean(errors.email)}
+            {...form.register("email")}
+          />
+        </GlassRow>
+        <GlassRow label={t("password")} htmlFor="login-password">
+          <input
+            id="login-password"
+            type={revealed ? "text" : "password"}
+            autoComplete="current-password"
+            placeholder={t("passwordPlaceholder")}
+            className={glassInputClass}
+            aria-invalid={Boolean(errors.password)}
+            {...form.register("password")}
+          />
+          <button
+            type="button"
+            onClick={() => setRevealed((v) => !v)}
+            aria-label={revealed ? t("hidePassword") : t("showPassword")}
+            aria-pressed={revealed}
+            className="-me-1.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white/45 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            {revealed ? <EyeOff className="h-4 w-4" strokeWidth={1.9} /> : <Eye className="h-4 w-4" strokeWidth={1.9} />}
+          </button>
+        </GlassRow>
+      </GlassGroup>
+      {fieldError ? <GlassError>{fieldError}</GlassError> : null}
+      {error ? <GlassError>{error}</GlassError> : null}
+      <div className="pt-2">
+        <GlassButton type="submit" busy={isSubmitting} disabled={isSubmitting || locked}>
+          {t("signIn")}
+        </GlassButton>
+      </div>
+    </form>
   );
 }

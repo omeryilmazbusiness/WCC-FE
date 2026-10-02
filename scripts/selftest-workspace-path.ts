@@ -10,7 +10,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   ROUTE_ROOTS,
+  companyLoginPath,
+  companyLoginSlug,
   formatWorkspaceRef,
+  isCompanySlug,
   isWorkspaceScoped,
   parseWorkspaceRef,
   resolveBranch,
@@ -37,7 +40,9 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
       d.name.startsWith("(")
         ? fs.readdirSync(path.join(localeDir, d.name), { withFileTypes: true }).filter((x) => x.isDirectory()).map((x) => x.name)
         : [d.name],
-    );
+    )
+    // `[company]/login` is the company sign-in page, not a route root.
+    .filter((name) => !name.startsWith("["));
   for (const root of new Set([...fromRoutes, ...fromApp])) {
     assert.ok(ROUTE_ROOTS.has(root), `ROUTE_ROOTS is missing "${root}"`);
     assert.ok(RESERVED_SLUGS.has(root), `RESERVED_SLUGS is missing "${root}"`);
@@ -66,6 +71,31 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
   assert.deepEqual(splitWorkspace(""), { workspace: null, rest: "/" });
   assert.equal(splitWorkspace("/Acme/main/manager").workspace, null);
   assert.equal(splitWorkspace("/acme/-bad-/manager").workspace, null);
+}
+
+// company sign-in pages: `/{company}/login` is never a workspace (`login` is no branch)
+{
+  assert.equal(companyLoginSlug("/acme/login"), "acme");
+  assert.equal(companyLoginSlug("/al-noor-travel/login/"), "al-noor-travel");
+  assert.equal(companyLoginSlug("/login"), null);
+  assert.equal(companyLoginSlug("/acme/main/login"), null);
+  assert.equal(companyLoginSlug("/admin/login"), null);
+  assert.equal(companyLoginSlug("/Acme/login"), null);
+  assert.equal(companyLoginSlug("/acme/logins"), null);
+  assert.deepEqual(splitWorkspace("/acme/login"), { workspace: null, rest: "/acme/login" });
+  assert.equal(companyLoginPath("acme"), "/acme/login");
+  assert.equal(isCompanySlug("acme"), true);
+  assert.equal(isCompanySlug("setup"), false);
+  assert.equal(isCompanySlug("../x"), false);
+  assert.equal(isCompanySlug(undefined), false);
+
+  // the backend refuses a branch slug that would shadow the sign-in page
+  const be = path.join(ROOT, "../wodi-crm-be/internal/domain/company/model.go");
+  if (fs.existsSync(be)) {
+    const src = fs.readFileSync(be, "utf8");
+    const start = src.indexOf("var reservedBranchSlugs");
+    assert.ok(start >= 0 && src.slice(start, src.indexOf("\n", start)).includes('"login"'), "backend must reserve branch slug login");
+  }
 }
 
 // withWorkspace / withoutWorkspace

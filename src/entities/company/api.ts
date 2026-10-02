@@ -13,6 +13,9 @@ export type PlatformCompany = {
   branch_count: number;
   user_count: number;
   gm_email: string;
+  has_logo: boolean;
+  /** Changes with every logo upload; `null` without a logo. */
+  logo_version: string | null;
 };
 
 export type RegisterCompanyInput = {

@@ -71,8 +71,8 @@ export function SetupScreen({ initial, showIntro = false }: Props) {
 /** One night-aurora wallpaper behind the welcome and every step, so stages blend into each other. */
 function SetupFrame({ children }: { children: React.ReactNode }) {
   return (
-    <div className="setup-night relative isolate min-h-dvh bg-[#050816] text-white">
-      <div aria-hidden className="setup-aurora fixed inset-0 -z-10" />
+    <div className="night-glass relative isolate min-h-dvh bg-[#050816] text-white">
+      <div aria-hidden className="night-aurora fixed inset-0 -z-10" />
       {children}
     </div>
   );
