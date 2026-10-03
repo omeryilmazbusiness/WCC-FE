@@ -2737,10 +2737,11 @@
   },
   "notificationCenter": {
     "title": "Notification center",
-    "subtitle": "Grouped alerts — drill into a group, acknowledge or resolve. Updates live.",
+    "subtitle": "Everything that needs your attention, in one place. Updates live.",
     "live": "Live",
     "offline": "Reconnecting…",
-    "groups": "Notification groups",
+    "groups": "Notification categories",
+    "categories": "Categories",
     "allKinds": "All notifications",
     "count": "{count, plural, =0 {No notifications} one {# notification} other {# notifications}}",
     "statusFilter": "Status",
@@ -2751,6 +2752,64 @@
       "resolved": "Resolved"
     },
     "openRecord": "Open",
+    "acknowledge": "Acknowledge",
+    "resolve": "Resolve",
+    "acknowledgeAll": "Acknowledge all",
+    "unread": "New",
+    "repeated": "{count, plural, one {Happened once} other {Happened # times}}",
+    "days": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "earlier": "Earlier"
+    },
+    "stats": {
+      "open": "New",
+      "openHint": "Show only alerts nobody has acknowledged yet",
+      "acknowledged": "Seen",
+      "acknowledgedHint": "Show alerts that are acknowledged but not resolved",
+      "critical": "Critical",
+      "criticalHint": "New alerts of a critical kind"
+    },
+    "empty": {
+      "active": {
+        "title": "You're all caught up",
+        "body": "Nothing needs your attention right now. New alerts appear here instantly."
+      },
+      "open": {
+        "title": "No new alerts",
+        "body": "Every alert has been acknowledged."
+      },
+      "acknowledged": {
+        "title": "Nothing waiting",
+        "body": "No acknowledged alerts are waiting to be resolved."
+      },
+      "resolved": {
+        "title": "No resolved alerts yet",
+        "body": "Alerts you resolve are kept here for reference."
+      }
+    },
+    "kinds": {
+      "message_sla_breached": "Reply overdue",
+      "message_sla_warning": "Reply due soon",
+      "lead_no_follow_up": "Lead follow-up",
+      "task_overdue": "Overdue task",
+      "task_escalated": "Escalated task",
+      "task_reminder": "Task reminder",
+      "payment_overdue": "Overdue payment",
+      "payment_due": "Payment due",
+      "document_missing": "Missing document",
+      "document_expiring": "Document expiring",
+      "passport_expiring": "Passport expiring",
+      "visa_follow_up": "Visa follow-up",
+      "target_behind": "Target behind",
+      "integration_unhealthy": "Integration issue",
+      "booking_confirmed": "Booking confirmed",
+      "supplier_unconfirmed": "Supplier unconfirmed",
+      "report_ready": "Report ready",
+      "import_completed": "Import finished",
+      "ai_summary": "AI summary",
+      "ai_lost_leads": "AI lost-lead insights"
+    },
     "settingsHint": "Thresholds, SLA A/B and escalation rules are managed in",
     "settingsLink": "admin settings"
   },

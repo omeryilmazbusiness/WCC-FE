@@ -9,6 +9,23 @@ export type {
 } from "./model";
 export { notificationHref, toneFromSeverity } from "./model";
 export {
+  groupNotificationsByDay,
+  notificationDay,
+  notificationTimestamp,
+  summarizeNotificationGroups,
+  type NotificationDay,
+  type NotificationDaySection,
+  type NotificationTotals,
+} from "./lib/feed";
+export {
+  NOTIFICATION_KIND_LOOK,
+  NOTIFICATION_SEVERITY_LOOK,
+  NOTIFICATION_STATUS_LOOK,
+  notificationKindKey,
+  notificationLook,
+  type NotificationLook,
+} from "./ui/notification-look";
+export {
   createNotificationRepository,
   type NotificationRepository,
 } from "./api";

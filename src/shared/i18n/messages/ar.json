@@ -2737,10 +2737,11 @@
   },
   "notificationCenter": {
     "title": "مركز الإشعارات",
-    "subtitle": "تنبيهات مجمّعة — افتح المجموعة، أكّد الاستلام أو أغلق. تحديث مباشر.",
+    "subtitle": "كل ما يحتاج انتباهك في مكان واحد. تحديث مباشر.",
     "live": "مباشر",
     "offline": "جارٍ إعادة الاتصال…",
-    "groups": "مجموعات الإشعارات",
+    "groups": "فئات الإشعارات",
+    "categories": "الفئات",
     "allKinds": "كل الإشعارات",
     "count": "{count, plural, =0 {لا توجد إشعارات} one {إشعار واحد} two {إشعاران} few {# إشعارات} many {# إشعارًا} other {# إشعار}}",
     "statusFilter": "الحالة",
@@ -2751,6 +2752,64 @@
       "resolved": "مغلقة"
     },
     "openRecord": "فتح",
+    "acknowledge": "تأكيد الاستلام",
+    "resolve": "إغلاق",
+    "acknowledgeAll": "تأكيد استلام الكل",
+    "unread": "جديد",
+    "repeated": "{count, plural, one {حدث مرة واحدة} two {حدث مرتين} few {حدث # مرات} many {حدث # مرة} other {حدث # مرة}}",
+    "days": {
+      "today": "اليوم",
+      "yesterday": "أمس",
+      "earlier": "سابقًا"
+    },
+    "stats": {
+      "open": "جديدة",
+      "openHint": "اعرض التنبيهات التي لم يؤكد أحد استلامها بعد",
+      "acknowledged": "تمت رؤيتها",
+      "acknowledgedHint": "اعرض التنبيهات المؤكدة التي لم تُغلق بعد",
+      "critical": "حرجة",
+      "criticalHint": "تنبيهات جديدة من نوع حرج"
+    },
+    "empty": {
+      "active": {
+        "title": "لا يوجد ما يتطلب انتباهك",
+        "body": "لا شيء يحتاج إلى إجراء الآن. تظهر التنبيهات الجديدة هنا فورًا."
+      },
+      "open": {
+        "title": "لا توجد تنبيهات جديدة",
+        "body": "تم تأكيد استلام كل التنبيهات."
+      },
+      "acknowledged": {
+        "title": "لا شيء بانتظارك",
+        "body": "لا توجد تنبيهات مؤكدة بانتظار الإغلاق."
+      },
+      "resolved": {
+        "title": "لا توجد تنبيهات مغلقة بعد",
+        "body": "تُحفظ التنبيهات التي تغلقها هنا للرجوع إليها."
+      }
+    },
+    "kinds": {
+      "message_sla_breached": "تأخر الرد",
+      "message_sla_warning": "موعد الرد يقترب",
+      "lead_no_follow_up": "متابعة عميل محتمل",
+      "task_overdue": "مهمة متأخرة",
+      "task_escalated": "مهمة مُصعّدة",
+      "task_reminder": "تذكير بمهمة",
+      "payment_overdue": "دفعة متأخرة",
+      "payment_due": "دفعة مستحقة",
+      "document_missing": "مستند ناقص",
+      "document_expiring": "مستند قارب على الانتهاء",
+      "passport_expiring": "جواز قارب على الانتهاء",
+      "visa_follow_up": "متابعة التأشيرة",
+      "target_behind": "تأخر عن الهدف",
+      "integration_unhealthy": "مشكلة في التكامل",
+      "booking_confirmed": "تأكيد حجز",
+      "supplier_unconfirmed": "مورد غير مؤكد",
+      "report_ready": "التقرير جاهز",
+      "import_completed": "اكتمل الاستيراد",
+      "ai_summary": "ملخص الذكاء الاصطناعي",
+      "ai_lost_leads": "رؤى الذكاء الاصطناعي للعملاء المفقودين"
+    },
     "settingsHint": "العتبات وSLA أ/ب وقواعد التصعيد تُدار في",
     "settingsLink": "إعدادات النظام"
   },
