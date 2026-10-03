@@ -8,13 +8,13 @@ import {
   notificationHref,
   notificationLook,
   notificationTimestamp,
+  useKindLabel,
   type AppNotification,
 } from "@/entities/notification";
 import { Link } from "@/shared/i18n/navigation";
 import { cn } from "@/shared/lib/cn";
 import { formatDateTime, formatRelativeTime } from "@/shared/lib/format";
 import { TONES } from "@/shared/ui";
-import { useKindLabel } from "../model/use-kind-label";
 
 type Props = {
   notification: AppNotification;

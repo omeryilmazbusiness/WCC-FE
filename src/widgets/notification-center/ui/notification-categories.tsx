@@ -2,11 +2,10 @@
 
 import { useTranslations } from "next-intl";
 import { ChevronRight, Layers, type LucideIcon } from "lucide-react";
-import { notificationLook, type NotificationGroup, type NotificationTotals } from "@/entities/notification";
+import { notificationLook, useKindLabel, type NotificationGroup, type NotificationTotals } from "@/entities/notification";
 import { cn } from "@/shared/lib/cn";
 import { formatRelativeTime } from "@/shared/lib/format";
 import { TONES, type Tone } from "@/shared/ui";
-import { useKindLabel } from "../model/use-kind-label";
 
 type Props = {
   groups: readonly NotificationGroup[];

@@ -3,12 +3,11 @@
 import { useMemo } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Settings2 } from "lucide-react";
-import { createNotificationRepository, type NotificationRepository } from "@/entities/notification";
+import { createNotificationRepository, useKindLabel, type NotificationRepository } from "@/entities/notification";
 import { useCan } from "@/entities/viewer";
 import { routes } from "@/shared/config/routes";
 import { Link } from "@/shared/i18n/navigation";
 import { Pager, QueryState, Screen, SegmentedControl } from "@/shared/ui";
-import { useKindLabel } from "../model/use-kind-label";
 import {
   NOTIFICATION_STATUS_FILTERS,
   useNotificationCenter,

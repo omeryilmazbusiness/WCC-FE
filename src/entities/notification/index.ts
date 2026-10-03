@@ -25,6 +25,7 @@ export {
   notificationLook,
   type NotificationLook,
 } from "./ui/notification-look";
+export { useKindLabel } from "./ui/use-kind-label";
 export {
   createNotificationRepository,
   type NotificationRepository,

@@ -3,43 +3,15 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   createNotificationRepository,
-  notificationHref,
-  toneFromSeverity,
   type AppNotification,
   type NotificationPreference,
 } from "@/entities/notification";
 import { useRealtime, useRealtimeStatus } from "@/shared/lib/use-realtime";
 
-export type BellItem = {
-  id: string;
-  title: string;
-  body: string;
-  createdAt: string;
-  read: boolean;
-  href?: string;
-  tone?: "default" | "warning" | "critical" | "success";
-  status: AppNotification["status"];
-  kind: string;
-};
-
-function toBellItem(n: AppNotification): BellItem {
-  return {
-    id: n.id,
-    title: n.title,
-    body: n.body,
-    createdAt: n.createdAt,
-    read: n.status !== "open",
-    href: notificationHref(n) || undefined,
-    tone: toneFromSeverity(n.severity),
-    status: n.status,
-    kind: n.kind,
-  };
-}
-
 const repo = createNotificationRepository();
 
 export function useNotifications() {
-  const [items, setItems] = useState<BellItem[]>([]);
+  const [items, setItems] = useState<AppNotification[]>([]);
   const [unread, setUnread] = useState(0);
   const [prefs, setPrefs] = useState<NotificationPreference | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,7 +23,7 @@ export function useNotifications() {
         repo.list(),
         repo.unreadCount(),
       ]);
-      setItems(list.map(toBellItem));
+      setItems(list);
       setUnread(count);
       setError(null);
     } catch (err) {

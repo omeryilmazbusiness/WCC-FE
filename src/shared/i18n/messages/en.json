@@ -1272,7 +1272,7 @@
   "notifications": {
     "title": "Notifications",
     "empty": "You're all caught up",
-    "markAllRead": "Ack all",
+    "markAllRead": "Mark all read",
     "dismiss": "Dismiss",
     "acknowledge": "Acknowledge",
     "resolve": "Resolve",
@@ -1284,7 +1284,12 @@
     "push": "Push alerts",
     "savePrefs": "Save",
     "cancel": "Cancel",
-    "viewAll": "Open notification center"
+    "viewAll": "Open notification center",
+    "unread": "Unread",
+    "unreadCount": "{count, plural, one {# new alert} other {# new alerts}}",
+    "allRead": "Nothing new — you're up to date",
+    "emptyBody": "New alerts about tasks, leads, payments and reports will appear here.",
+    "back": "Back"
   },
   "reports": {
     "title": "Reports",
