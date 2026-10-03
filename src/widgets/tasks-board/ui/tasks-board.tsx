@@ -24,6 +24,7 @@ import { CreateTaskDialog } from "@/features/create-task";
 import { useDragScroll } from "@/shared/lib/use-drag-scroll";
 import { Screen, SearchFilterBar, useMutationFeedback, useToast } from "@/shared/ui";
 import { TaskColumn, type DropState } from "./task-column";
+import { TaskDetailDrawer } from "./task-detail-drawer";
 import { TaskTable } from "./task-table";
 import { TasksHeader, type TaskViewMode } from "./tasks-header";
 import { TasksStats, type StatFilter } from "./tasks-stats";
@@ -67,6 +68,14 @@ export function TasksBoard({ repository, initialTasks, assigneeId, managerMode }
   const [statFilter, setStatFilter] = useState<StatFilter>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [dragging, setDragging] = useState<Task | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const detailTask = useMemo(() => tasks.find((x) => x.id === detailId) ?? null, [tasks, detailId]);
+
+  function openDetail(task: Task) {
+    setDetailId(task.id);
+    setDetailOpen(true);
+  }
 
   useEffect(() => setTasks(initialTasks), [initialTasks]);
   useEffect(() => {
@@ -281,6 +290,7 @@ export function TasksBoard({ repository, initialTasks, assigneeId, managerMode }
               dropState={dropStateFor(status)}
               draggingId={dragging?.id ?? null}
               onChanged={upsert}
+              onOpenTask={openDetail}
               onDropTask={(id, s) => void handleDrop(id, s)}
               onDragStart={setDragging}
               onDragEnd={() => setDragging(null)}
@@ -293,11 +303,21 @@ export function TasksBoard({ repository, initialTasks, assigneeId, managerMode }
           locale={locale}
           repository={repository}
           onChanged={upsert}
+          onOpen={openDetail}
           selectable={managerMode}
           selectedIds={selected}
           onSelectionChange={setSelected}
         />
       )}
+
+      <TaskDetailDrawer
+        task={detailTask}
+        locale={locale}
+        repository={repository}
+        open={detailOpen && detailTask !== null}
+        onOpenChange={setDetailOpen}
+        onChanged={upsert}
+      />
     </Screen>
   );
 }

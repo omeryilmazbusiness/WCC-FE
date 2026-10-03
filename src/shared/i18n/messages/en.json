@@ -577,7 +577,7 @@
     "title": "My work today",
     "subtitle": "One queue for tasks, pipeline, and your target pace",
     "tasksTitle": "My Work Today",
-    "tasksBody": "Prioritized queue — overdue and escalated first. Complete or reschedule here.",
+    "tasksBody": "Prioritized queue — overdue and escalated first. Complete or cancel here.",
     "openTasks": "All tasks",
     "queueEmpty": "Nothing due right now",
     "queueEmptyHint": "New follow-ups appear when leads are created.",
@@ -618,8 +618,9 @@
     "emptyHint": "Clear filters or create a new task.",
     "emptyColumn": "Drop tasks here",
     "complete": "Complete",
-    "reschedule": "Reschedule",
-    "rescheduleTitle": "Reschedule task",
+    "cancelTask": "Cancel task",
+    "cancelTaskTitle": "Cancel this task?",
+    "cancelReason": "Reason (optional)",
     "dueAt": "Due at",
     "due": "Due",
     "overdue": "Overdue",
@@ -631,7 +632,7 @@
     "bulkAssignHint": "Reassign {count} selected tasks to one owner.",
     "bulkAssignedTitle": "Tasks reassigned",
     "completedTitle": "Task completed",
-    "rescheduledTitle": "Task rescheduled",
+    "cancelledTitle": "Task cancelled",
     "actionError": "Could not update task",
     "invalidMoveTitle": "Invalid status jump",
     "invalidMoveBody": "That transition is not allowed.",
@@ -692,12 +693,28 @@
     "card": {
       "noDue": "No deadline"
     },
+    "detail": {
+      "description": "Description",
+      "noDescription": "No description added",
+      "outcomeDone": "Completion note",
+      "outcomeCancelled": "Cancellation reason",
+      "details": "Details",
+      "related": "Linked record",
+      "standalone": "Standalone task",
+      "open": "Open",
+      "created": "Created",
+      "completed": "Completed",
+      "updated": "Last updated"
+    },
     "create": {
       "title": "New task",
       "hint": "Set what needs doing, how important it is and when it is due.",
       "titlePlaceholder": "e.g. Send the visa checklist to the Al-Harbi family",
+      "descriptionPlaceholder": "Add the context, steps or notes the assignee needs",
+      "optional": "optional",
       "fields": {
         "title": "Task",
+        "description": "Description",
         "priority": "Importance",
         "kind": "Type",
         "due": "Deadline",
@@ -719,6 +736,9 @@
         "title": {
           "required": "Enter what needs to be done",
           "tooLong": "Keep it under {max} characters"
+        },
+        "description": {
+          "tooLong": "Keep the description under {max} characters"
         },
         "due": {
           "invalid": "Pick a valid date and time",

@@ -26,6 +26,7 @@ type Props = {
   locale: string;
   repository: TaskRepository;
   onChanged: (task: Task) => void;
+  onOpen?: (task: Task) => void;
   selectable?: boolean;
   selectedIds?: string[];
   onSelectionChange?: (ids: string[]) => void;
@@ -36,6 +37,7 @@ export function TaskTable({
   locale,
   repository,
   onChanged,
+  onOpen,
   selectable,
   selectedIds = [],
   onSelectionChange,
@@ -78,9 +80,21 @@ export function TaskTable({
             <div className="flex min-w-0 items-center gap-3">
               <IconTile icon={look.icon} tone={look.tone} size="lg" />
               <div className="min-w-0">
-                <p dir="auto" className="truncate font-semibold text-zinc-950">
-                  {task.title}
-                </p>
+                {onOpen ? (
+                  <button
+                    type="button"
+                    dir="auto"
+                    onClick={() => onOpen(task)}
+                    className="block max-w-full truncate text-start font-semibold text-zinc-950 hover:underline focus-visible:underline focus-visible:outline-none"
+                    data-testid="task-row-open"
+                  >
+                    {task.title}
+                  </button>
+                ) : (
+                  <p dir="auto" className="truncate font-semibold text-zinc-950">
+                    {task.title}
+                  </p>
+                )}
                 {hasRelatedRecord(task) ? (
                   <Link href={hrefForRelated(task)} className="text-xs font-medium text-sky-700 hover:underline">
                     {relatedText(task)}
@@ -141,7 +155,7 @@ export function TaskTable({
       },
     );
     return cols;
-  }, [t, relatedText, locale, repository, onChanged, selectable, selectedIds, onSelectionChange]);
+  }, [t, relatedText, locale, repository, onChanged, onOpen, selectable, selectedIds, onSelectionChange]);
 
   return <DataTable columns={columns} data={tasks} emptyMessage={t("empty")} />;
 }

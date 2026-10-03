@@ -14,6 +14,7 @@ import {
   type Task,
 } from "../src/entities/task/model.ts";
 import {
+  TASK_DESCRIPTION_MAX,
   TASK_TITLE_MAX,
   freshTaskDraft,
   resolveDue,
@@ -35,6 +36,7 @@ function task(over: Partial<Task>): Task {
     id: over.id ?? Math.random().toString(36).slice(2),
     branchId: "b",
     title: "Task",
+    description: "",
     kind: "custom",
     status: "open",
     priority: "minor",
@@ -106,15 +108,16 @@ const board = [
   task({ id: "1", title: "Call Omar", priority: "critical", dueAt: "2026-10-01T08:00:00.000Z", kind: "followup" }),
   task({ id: "2", title: "Passport scan", priority: "major", kind: "document", assigneeId: "u2", assigneeName: "Omar Saleh" }),
   task({ id: "3", title: "Deposit", priority: "critical", status: "done", kind: "payment", dueAt: "2026-09-01T08:00:00.000Z" }),
-  task({ id: "4", title: "Visa list", relatedType: "booking", relatedId: "bk-1", relatedLabel: "Al-Harbi family" }),
+  task({ id: "4", title: "Visa list", description: "Ask for hotel letters", relatedType: "booking", relatedId: "bk-1", relatedLabel: "Al-Harbi family" }),
 ];
 
 test("stats: only active tasks count", () => {
   assert.deepEqual(summarizeTasks(board, NOW), { open: 3, overdue: 1, critical: 1 });
 });
 
-test("filter: search across title, related record and assignee", () => {
+test("filter: search across title, description, related record and assignee", () => {
   assert.deepEqual(filterTasks(board, { q: "harbi" }, NOW).map((t) => t.id), ["4"]);
+  assert.deepEqual(filterTasks(board, { q: "hotel letter" }, NOW).map((t) => t.id), ["4"]);
   assert.deepEqual(filterTasks(board, { q: "omar" }, NOW).map((t) => t.id), ["1", "2"]);
   assert.deepEqual(filterTasks(board, { q: "  " }, NOW).length, 4);
 });
@@ -166,10 +169,14 @@ test("due custom: parses local date/time and rejects impossible dates", () => {
 });
 
 test("validate: produces the repository input with importance and ISO deadline", () => {
-  const { errors, input } = validateTaskDraft(draft({ title: "  Send   visa list ", priority: "critical", kind: "document" }), NOW);
+  const { errors, input } = validateTaskDraft(
+    draft({ title: "  Send   visa list ", description: "  Include the\nhotel letter  ", priority: "critical", kind: "document" }),
+    NOW,
+  );
   assert.deepEqual(errors, {});
   assert.deepEqual(input, {
     title: "Send visa list",
+    description: "Include the\nhotel letter",
     kind: "document",
     priority: "critical",
     assigneeId: "u1",
@@ -183,6 +190,14 @@ test("validate: title required and length-limited (by characters)", () => {
   assert.equal(validateTaskDraft(draft({ title: "   " }), NOW).errors.title, "required");
   assert.equal(validateTaskDraft(draft({ title: "x".repeat(TASK_TITLE_MAX + 1) }), NOW).errors.title, "tooLong");
   assert.equal(validateTaskDraft(draft({ title: "ع".repeat(TASK_TITLE_MAX) }), NOW).errors.title, undefined);
+});
+
+test("validate: description is optional and length-limited (by characters)", () => {
+  assert.equal(validateTaskDraft(draft({ description: "" }), NOW).input?.description, "");
+  assert.equal(validateTaskDraft(draft({ description: "ع".repeat(TASK_DESCRIPTION_MAX) }), NOW).errors.description, undefined);
+  const long = validateTaskDraft(draft({ description: "x".repeat(TASK_DESCRIPTION_MAX + 1) }), NOW);
+  assert.equal(long.errors.description, "tooLong");
+  assert.equal(long.input, null);
 });
 
 test("validate: past or invalid deadline and missing assignee are rejected", () => {

@@ -13,7 +13,7 @@ import {
   type TaskRepository,
 } from "@/entities/task";
 import { CompleteTaskButton } from "@/features/complete-task";
-import { RescheduleTaskDialog } from "@/features/reschedule-task";
+import { CancelTaskDialog } from "@/features/cancel-task";
 import { Link } from "@/shared/i18n/navigation";
 import { initials } from "@/shared/lib/avatar";
 import { cn } from "@/shared/lib/cn";
@@ -31,6 +31,7 @@ type Props = {
   showAssignee: boolean;
   dragging: boolean;
   onChanged: (task: Task) => void;
+  onOpen: (task: Task) => void;
   onDragStart: (task: Task) => void;
   onDragEnd: () => void;
 };
@@ -41,7 +42,7 @@ const ACTION =
 const DUE_FORMAT: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" };
 
 /** A task on the board: what, how important, when it is due and who owns it. */
-export function TaskCard({ task, locale, repository, canWrite, showAssignee, dragging, onChanged, onDragStart, onDragEnd }: Props) {
+export function TaskCard({ task, locale, repository, canWrite, showAssignee, dragging, onChanged, onOpen, onDragStart, onDragEnd }: Props) {
   const t = useTranslations("tasks");
   const relatedText = useRelatedText();
   const kind = TASK_KIND_LOOK[task.kind] ?? TASK_KIND_LOOK.custom;
@@ -62,12 +63,18 @@ export function TaskCard({ task, locale, repository, canWrite, showAssignee, dra
         onDragStart(task);
       }}
       onDragEnd={onDragEnd}
+      onClick={(e) => {
+        const target = e.target as HTMLElement;
+        // Dialogs opened from the card portal out of it but still bubble through React.
+        if (!e.currentTarget.contains(target) || target.closest("a,button,input,textarea")) return;
+        onOpen(task);
+      }}
       data-testid="task-card"
       data-task={task.id}
       data-priority={task.priority}
       className={cn(
-        "group relative rounded-[20px] bg-white p-3.5 shadow-[0_0_0_1px_rgba(15,23,42,0.05),0_1px_2px_rgba(15,23,42,0.03)] transition-[box-shadow,transform] duration-200",
-        actionable && "cursor-grab active:cursor-grabbing",
+        "group relative cursor-pointer rounded-[20px] bg-white p-3.5 shadow-[0_0_0_1px_rgba(15,23,42,0.05),0_1px_2px_rgba(15,23,42,0.03)] transition-[box-shadow,transform] duration-200",
+        actionable && "active:cursor-grabbing",
         "hover:-translate-y-px hover:shadow-[0_0_0_1px_rgba(15,23,42,0.07),0_14px_30px_-18px_rgba(15,23,42,0.35)]",
         overdue && "shadow-[0_0_0_1px_rgba(244,63,94,0.28),0_1px_2px_rgba(15,23,42,0.03)]",
         dragging && "rotate-1 opacity-50",
@@ -81,17 +88,26 @@ export function TaskCard({ task, locale, repository, canWrite, showAssignee, dra
           <KindIcon className="h-[18px] w-[18px]" strokeWidth={2.1} />
         </span>
         <div className="min-w-0 flex-1">
-          <p
+          <button
+            type="button"
             dir="auto"
             title={task.title}
+            onClick={() => onOpen(task)}
             className={cn(
-              "line-clamp-2 text-[14px] font-semibold leading-5 tracking-tight",
+              "line-clamp-2 w-full rounded-md text-start text-[14px] font-semibold leading-5 tracking-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/15",
               closed ? "text-zinc-400 line-through decoration-zinc-300" : "text-zinc-900",
             )}
+            data-testid="task-card-open"
           >
             {task.title}
-          </p>
-          <p className="mt-0.5 truncate text-[12px] text-zinc-400">{t(`kinds.${task.kind}`)}</p>
+          </button>
+          {task.description ? (
+            <p dir="auto" className="mt-0.5 line-clamp-2 text-start text-[12px] leading-[1.125rem] text-zinc-500" data-testid="task-card-description">
+              {task.description}
+            </p>
+          ) : (
+            <p className="mt-0.5 truncate text-[12px] text-zinc-400">{t(`kinds.${task.kind}`)}</p>
+          )}
         </div>
         <PriorityPill priority={task.priority} label={t(`priorities.${task.priority}`)} muted={closed} />
       </div>
@@ -165,7 +181,7 @@ export function TaskCard({ task, locale, repository, canWrite, showAssignee, dra
                 "[@media(hover:hover)]:group-hover:pointer-events-auto [@media(hover:hover)]:group-hover:opacity-100",
               )}
             >
-              <RescheduleTaskDialog task={task} repository={repository} onChanged={onChanged} iconOnly className={ACTION} />
+              <CancelTaskDialog task={task} repository={repository} onChanged={onChanged} iconOnly className={ACTION} />
               <CompleteTaskButton
                 task={task}
                 repository={repository}

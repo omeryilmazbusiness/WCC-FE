@@ -110,7 +110,7 @@ API-backed via `createBookingRepository()` with memory demo fallback.
 |------|--------|
 | T-079 My Tasks list + Kanban | Done |
 | T-080 Manager team tasks view | Done |
-| T-081 Task create/complete/reschedule/reassign | Done |
+| T-081 Task create/complete/cancel/reassign | Done |
 | T-082 Overdue/escalated badges + deep-link | Done |
 | T-083 Bulk assignment UI | Done |
 

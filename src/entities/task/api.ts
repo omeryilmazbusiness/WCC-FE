@@ -24,7 +24,7 @@ export interface TaskRepository {
   getById(id: string): Promise<Task>;
   create(input: TaskCreateInput): Promise<Task>;
   complete(id: string, outcome?: string): Promise<Task>;
-  reschedule(id: string, dueAt: string | null): Promise<Task>;
+  cancel(id: string, reason?: string): Promise<Task>;
   changeStatus(id: string, status: TaskStatus): Promise<Task>;
   assign(id: string, assigneeId: string, assigneeName?: string): Promise<Task>;
   bulkAssign(
@@ -70,6 +70,7 @@ function mapTask(raw: Raw): Task {
     id: String(raw.id),
     branchId: String(raw.branchId ?? raw.branch_id ?? ""),
     title: String(raw.title ?? ""),
+    description: String(raw.description ?? ""),
     kind: String(raw.kind ?? "custom") as TaskKind,
     status: String(raw.status ?? "open") as TaskStatus,
     priority: normalizeTaskPriority(raw.priority),
@@ -148,6 +149,7 @@ export class ApiTaskRepository implements TaskRepository {
         method: "POST",
         body: JSON.stringify({
           title: input.title,
+          description: input.description ?? "",
           kind: input.kind,
           priority: input.priority ?? "minor",
           assignee_id: input.assigneeId || undefined,
@@ -173,11 +175,11 @@ export class ApiTaskRepository implements TaskRepository {
     );
   }
 
-  async reschedule(id: string, dueAt: string | null): Promise<Task> {
+  async cancel(id: string, reason = ""): Promise<Task> {
     return mapTask(
-      await this.http.request<Raw>(`/tasks/${id}/reschedule`, {
+      await this.http.request<Raw>(`/tasks/${id}/cancel`, {
         method: "POST",
-        body: JSON.stringify({ due_at: dueAt }),
+        body: JSON.stringify({ reason }),
       }),
     );
   }
@@ -262,6 +264,7 @@ const store: Task[] = [
     id: "task-1",
     branchId: BRANCH,
     title: "Follow up Ahmet WhatsApp quote",
+    description: "Share the Umrah package quote on WhatsApp and confirm travel dates for 4 travellers.",
     kind: "followup",
     status: "open",
     priority: "minor",
@@ -282,6 +285,7 @@ const store: Task[] = [
     id: "task-2",
     branchId: BRANCH,
     title: "Collect passport — Fatima",
+    description: "",
     kind: "document",
     status: "in_progress",
     priority: "major",
@@ -302,6 +306,7 @@ const store: Task[] = [
     id: "task-3",
     branchId: BRANCH,
     title: "Collect deposit payment",
+    description: "30% deposit due before the hotel block is released.",
     kind: "payment",
     status: "open",
     priority: "critical",
@@ -322,6 +327,7 @@ const store: Task[] = [
     id: "task-4",
     branchId: BRANCH,
     title: "Call Omar — proposal follow-up",
+    description: "",
     kind: "followup",
     status: "open",
     priority: "major",
@@ -408,6 +414,7 @@ export class MemoryTaskRepository implements TaskRepository {
       id: `task-${crypto.randomUUID()}`,
       branchId: input.branchId ?? BRANCH,
       title: input.title,
+      description: input.description ?? "",
       kind: input.kind,
       status: "open",
       priority: input.priority ?? "minor",
@@ -435,16 +442,11 @@ export class MemoryTaskRepository implements TaskRepository {
     return clone(row);
   }
 
-  async reschedule(id: string, dueAt: string | null): Promise<Task> {
-    const t = store.find((x) => x.id === id);
-    if (!t) throw new Error("task not found");
-    if (t.status === "done" || t.status === "cancelled") {
-      throw new Error("cannot reschedule closed task");
-    }
-    t.dueAt = dueAt;
-    t.escalatedAt = null;
-    t.updatedAt = nowIso();
-    return clone(t);
+  async cancel(id: string, reason = ""): Promise<Task> {
+    await this.changeStatus(id, "cancelled");
+    const row = store.find((x) => x.id === id)!;
+    row.outcome = reason;
+    return clone(row);
   }
 
   async changeStatus(id: string, status: TaskStatus): Promise<Task> {

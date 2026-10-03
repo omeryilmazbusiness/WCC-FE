@@ -3,12 +3,16 @@ import type { TaskCreateInput, TaskKind, TaskPriority } from "@/entities/task";
 /** Mirrors the API limit on task titles. */
 export const TASK_TITLE_MAX = 200;
 
+/** Mirrors the API limit on task descriptions. */
+export const TASK_DESCRIPTION_MAX = 4000;
+
 export type DuePreset = "today" | "tomorrow" | "in3days" | "nextWeek" | "custom" | "none";
 
 export const DUE_PRESETS: DuePreset[] = ["today", "tomorrow", "in3days", "nextWeek", "custom", "none"];
 
 export type TaskDraft = {
   title: string;
+  description: string;
   kind: TaskKind;
   priority: TaskPriority;
   duePreset: DuePreset;
@@ -22,6 +26,7 @@ export type TaskDraft = {
 
 export type DraftErrors = Partial<{
   title: "required" | "tooLong";
+  description: "tooLong";
   due: "invalid" | "past";
   assignee: "required";
 }>;
@@ -93,6 +98,7 @@ export function freshTaskDraft(now: Date, assignee: { id: string; name: string }
   const tomorrow = atLocal(now, 1, MORNING_HOUR);
   return {
     title: "",
+    description: "",
     kind: "custom",
     priority: "minor",
     duePreset: "tomorrow",
@@ -113,6 +119,9 @@ export function validateTaskDraft(
   if (!title) errors.title = "required";
   else if ([...title].length > TASK_TITLE_MAX) errors.title = "tooLong";
 
+  const description = draft.description.trim();
+  if ([...description].length > TASK_DESCRIPTION_MAX) errors.description = "tooLong";
+
   const due = resolveDue(draft, now);
   if (due === "invalid") errors.due = "invalid";
   else if (due && due.getTime() <= now.getTime()) errors.due = "past";
@@ -124,6 +133,7 @@ export function validateTaskDraft(
     errors,
     input: {
       title,
+      description,
       kind: draft.kind,
       priority: draft.priority,
       assigneeId: draft.assigneeId,

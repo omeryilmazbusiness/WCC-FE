@@ -21,6 +21,7 @@ type Props = {
   dropState: DropState;
   draggingId: string | null;
   onChanged: (task: Task) => void;
+  onOpenTask: (task: Task) => void;
   onDropTask: (taskId: string, status: TaskStatus) => void;
   onDragStart: (task: Task) => void;
   onDragEnd: () => void;
@@ -37,6 +38,7 @@ export function TaskColumn({
   dropState,
   draggingId,
   onChanged,
+  onOpenTask,
   onDropTask,
   onDragStart,
   onDragEnd,
@@ -118,6 +120,7 @@ export function TaskColumn({
             showAssignee={showAssignee}
             dragging={draggingId === task.id}
             onChanged={onChanged}
+            onOpen={onOpenTask}
             onDragStart={onDragStart}
             onDragEnd={() => {
               resetOver();

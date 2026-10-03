@@ -31,11 +31,13 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Textarea,
   TONES,
   useMutationFeedback,
 } from "@/shared/ui";
 import {
   DUE_PRESETS,
+  TASK_DESCRIPTION_MAX,
   TASK_TITLE_MAX,
   freshTaskDraft,
   resolveDue,
@@ -54,7 +56,7 @@ type Props = {
 
 type Owner = { id: string; name: string };
 
-/** Manual task: title, kind, importance, deadline and assignee in one sheet. */
+/** Manual task: title, description, kind, importance, deadline and assignee in one sheet. */
 export function CreateTaskDialog({ repository, onCreated, canAssignOthers, trigger }: Props) {
   const allowed = useCan("tasks.write");
   const t = useTranslations("tasks.create");
@@ -123,6 +125,7 @@ export function CreateTaskDialog({ repository, onCreated, canAssignOthers, trigg
       ? null
       : formatDate(due, locale, { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
   const titleLength = [...draft.title.trim()].length;
+  const descriptionLength = [...draft.description.trim()].length;
 
   return (
     <Dialog
@@ -174,6 +177,38 @@ export function CreateTaskDialog({ repository, onCreated, canAssignOthers, trigg
               data-testid="create-task-title"
             />
             {errors.title ? <FieldError>{t(`errors.title.${errors.title}`, { max: TASK_TITLE_MAX })}</FieldError> : null}
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex items-baseline justify-between gap-2">
+              <Label htmlFor="task-description">
+                {t("fields.description")} <span className="font-normal text-zinc-400">· {t("optional")}</span>
+              </Label>
+              {descriptionLength > 0 ? (
+                <span
+                  className={cn(
+                    "text-[11px] tabular-nums",
+                    descriptionLength > TASK_DESCRIPTION_MAX ? "text-rose-600" : "text-zinc-400",
+                  )}
+                >
+                  {descriptionLength}/{TASK_DESCRIPTION_MAX}
+                </span>
+              ) : null}
+            </div>
+            <Textarea
+              id="task-description"
+              dir="auto"
+              rows={4}
+              placeholder={t("descriptionPlaceholder")}
+              value={draft.description}
+              onChange={(e) => update({ description: e.target.value })}
+              aria-invalid={Boolean(errors.description)}
+              className="min-h-[104px] resize-y text-[14px] leading-relaxed"
+              data-testid="create-task-description"
+            />
+            {errors.description ? (
+              <FieldError>{t("errors.description.tooLong", { max: TASK_DESCRIPTION_MAX })}</FieldError>
+            ) : null}
           </div>
 
           <fieldset>

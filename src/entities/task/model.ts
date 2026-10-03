@@ -45,6 +45,8 @@ export type Task = {
   id: string;
   branchId: string;
   title: string;
+  /** Free-text detail; empty when the creator left it out. */
+  description: string;
   kind: TaskKind;
   status: TaskStatus;
   priority: TaskPriority;
@@ -65,6 +67,7 @@ export type Task = {
 
 export type TaskCreateInput = {
   title: string;
+  description?: string;
   kind: TaskKind;
   /** Defaults to minor. */
   priority?: TaskPriority;
@@ -174,6 +177,7 @@ export function filterTasks(tasks: Task[], f: TaskFilter, now = new Date()): Tas
     if (!q) return true;
     return (
       task.title.toLowerCase().includes(q) ||
+      task.description.toLowerCase().includes(q) ||
       task.relatedLabel.toLowerCase().includes(q) ||
       task.assigneeName.toLowerCase().includes(q) ||
       task.kind.includes(q)

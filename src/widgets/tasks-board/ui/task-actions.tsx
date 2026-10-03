@@ -2,7 +2,7 @@
 
 import type { Task, TaskRepository } from "@/entities/task";
 import { CompleteTaskButton } from "@/features/complete-task";
-import { RescheduleTaskDialog } from "@/features/reschedule-task";
+import { CancelTaskDialog } from "@/features/cancel-task";
 
 type Props = {
   task: Task;
@@ -20,7 +20,7 @@ export function TaskActions({ task, repository, onChanged }: Props) {
         onChanged={onChanged}
         compact
       />
-      <RescheduleTaskDialog
+      <CancelTaskDialog
         task={task}
         repository={repository}
         onChanged={onChanged}

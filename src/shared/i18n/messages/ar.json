@@ -577,7 +577,7 @@
     "title": "عمل اليوم",
     "subtitle": "قائمة واحدة للمهام وخط المبيعات وهدفك",
     "tasksTitle": "عمل اليوم",
-    "tasksBody": "قائمة أولوية — المتأخر والمصعّد أولاً. أكمل أو أعد الجدولة من هنا.",
+    "tasksBody": "قائمة أولوية — المتأخر والمصعّد أولاً. أكمل أو ألغِ من هنا.",
     "openTasks": "كل المهام",
     "queueEmpty": "لا يوجد مستحق الآن",
     "queueEmptyHint": "تظهر المتابعات عند إنشاء عملاء محتملين.",
@@ -618,8 +618,9 @@
     "emptyHint": "امسح عوامل التصفية أو أنشئ مهمة جديدة.",
     "emptyColumn": "أسقط المهام هنا",
     "complete": "إكمال",
-    "reschedule": "إعادة جدولة",
-    "rescheduleTitle": "إعادة جدولة المهمة",
+    "cancelTask": "إلغاء المهمة",
+    "cancelTaskTitle": "إلغاء هذه المهمة؟",
+    "cancelReason": "السبب (اختياري)",
     "dueAt": "الاستحقاق",
     "due": "الاستحقاق",
     "overdue": "متأخر",
@@ -631,7 +632,7 @@
     "bulkAssignHint": "أعد تعيين {count} مهمة مختارة لمالك واحد.",
     "bulkAssignedTitle": "أُعيد تعيين المهام",
     "completedTitle": "اكتملت المهمة",
-    "rescheduledTitle": "أُعيدت جدولة المهمة",
+    "cancelledTitle": "أُلغيت المهمة",
     "actionError": "تعذر تحديث المهمة",
     "invalidMoveTitle": "انتقال غير صالح",
     "invalidMoveBody": "هذا الانتقال غير مسموح.",
@@ -692,12 +693,28 @@
     "card": {
       "noDue": "بلا موعد"
     },
+    "detail": {
+      "description": "الوصف",
+      "noDescription": "لم تتم إضافة وصف",
+      "outcomeDone": "ملاحظة الإنجاز",
+      "outcomeCancelled": "سبب الإلغاء",
+      "details": "التفاصيل",
+      "related": "السجل المرتبط",
+      "standalone": "مهمة مستقلة",
+      "open": "فتح",
+      "created": "تاريخ الإنشاء",
+      "completed": "تاريخ الإنجاز",
+      "updated": "آخر تحديث"
+    },
     "create": {
       "title": "مهمة جديدة",
       "hint": "حدّد ما يجب فعله ومدى أهميته وموعد استحقاقه.",
       "titlePlaceholder": "مثال: أرسل قائمة متطلبات التأشيرة لعائلة الحربي",
+      "descriptionPlaceholder": "أضف السياق أو الخطوات أو الملاحظات التي يحتاجها المكلّف",
+      "optional": "اختياري",
       "fields": {
         "title": "المهمة",
+        "description": "الوصف",
         "priority": "الأهمية",
         "kind": "النوع",
         "due": "الموعد النهائي",
@@ -719,6 +736,9 @@
         "title": {
           "required": "اكتب ما يجب إنجازه",
           "tooLong": "اجعلها أقل من {max} حرفاً"
+        },
+        "description": {
+          "tooLong": "اجعل الوصف أقل من {max} حرفاً"
         },
         "due": {
           "invalid": "اختر تاريخاً ووقتاً صالحين",
