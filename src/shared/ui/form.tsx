@@ -54,7 +54,7 @@ export function FormMessage({ className }: { className?: string }) {
     : undefined;
   if (!error?.message) return null;
   return (
-    <p className={cn("text-sm text-[var(--destructive)]", className)}>
+    <p role="alert" className={cn("text-sm text-[var(--destructive)]", className)}>
       {String(error.message)}
     </p>
   );

@@ -4,6 +4,14 @@ export type {
   LeadCreateInput,
   LeadUpdateInput,
   TripInterest,
+  LeadProfile,
+  LeadService,
+  CabinClass,
+  BoardType,
+  TripPreference,
+  LeadSegment,
+  LeadPriority,
+  LeadIntent,
   ChangeStageInput,
   ConvertLeadInput,
   ConvertLeadResult,
@@ -22,7 +30,30 @@ export {
   conversionPath,
   emptyTripInterest,
   hasTripInterest,
+  emptyLeadProfile,
+  suggestedPriority,
+  LEAD_SERVICES,
+  CABIN_CLASSES,
+  BOARD_TYPES,
+  TRIP_PREFERENCES,
+  FLIGHT_PREFERENCES,
+  LEAD_SEGMENTS,
+  LEAD_PRIORITIES,
+  LEAD_INTENTS,
+  MAX_CHILD_AGE,
+  MAX_CHILDREN,
+  MAX_FLEX_DAYS,
 } from "./model";
+export {
+  SERVICE_LOOK,
+  SEGMENT_LOOK,
+  PRIORITY_LOOK,
+  INTENT_LOOK,
+  CABIN_LOOK,
+  BOARD_LOOK,
+  PREFERENCE_LOOK,
+  type Look,
+} from "./ui/profile-look";
 export {
   pipelineValue,
   valueFromBudgets,
@@ -47,7 +78,13 @@ export {
   type LeadSort,
 } from "./lib/query";
 export { LEAD_STAGE_LOOK, stageLook, type StageLook } from "./ui/stage-look";
-export { LEAD_SOURCE_KINDS, leadSourceKind, type LeadSourceKind } from "./lib/source";
+export {
+  LEAD_SOURCE_KINDS,
+  LEAD_SOURCE_PRESETS,
+  leadSourceKind,
+  type LeadSourceKind,
+  type LeadSourcePreset,
+} from "./lib/source";
 export { LEAD_SOURCE_LOOK, type SourceLook } from "./ui/source-look";
 export type { LeadRepository, LeadPage } from "./api";
 export {

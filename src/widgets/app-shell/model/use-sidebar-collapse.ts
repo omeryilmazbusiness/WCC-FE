@@ -24,7 +24,8 @@ export function useSidebarCollapse(initial: boolean) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() !== "b" || !(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey) return;
+      // Autofill dispatches keydown events without a key.
+      if (e.key?.toLowerCase() !== "b" || !(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey) return;
       if (isEditable(e.target)) return;
       e.preventDefault();
       toggle();

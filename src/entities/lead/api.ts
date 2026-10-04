@@ -13,8 +13,17 @@ import {
   type LeadOwner,
   type LeadStage,
   type LeadUpdateInput,
+  type LeadProfile,
   type StageHistoryItem,
   type TripInterest,
+  BOARD_TYPES,
+  CABIN_CLASSES,
+  LEAD_INTENTS,
+  LEAD_PRIORITIES,
+  LEAD_SEGMENTS,
+  LEAD_SERVICES,
+  TRIP_PREFERENCES,
+  emptyLeadProfile,
   emptyTripInterest,
 } from "./model";
 import {
@@ -56,29 +65,93 @@ function numOrNull(v: unknown): number | null {
   return typeof v === "number" && Number.isFinite(v) ? v : null;
 }
 
+function strOrNull(v: unknown): string | null {
+  return typeof v === "string" && v ? v : null;
+}
+
+/** Keeps the entries of `raw` that belong to `allowed`. */
+function pickList<T extends string>(raw: unknown, allowed: readonly T[]): T[] {
+  return Array.isArray(raw) ? raw.filter((v): v is T => allowed.includes(v as T)) : [];
+}
+
+function pickOne<T extends string>(raw: unknown, allowed: readonly T[]): T | "" {
+  return allowed.includes(raw as T) ? (raw as T) : "";
+}
+
 function mapInterest(raw: unknown): TripInterest {
   if (!raw || typeof raw !== "object") return emptyTripInterest();
   const r = raw as Record<string, unknown>;
   return {
-    travelDate: typeof r.travel_date === "string" && r.travel_date ? r.travel_date : null,
+    services: pickList(r.services, LEAD_SERVICES),
+    origin: String(r.origin ?? ""),
+    destination: String(r.destination ?? ""),
+    travelDate: strOrNull(r.travel_date),
+    returnDate: strOrNull(r.return_date),
+    flexDays: numOrNull(r.flex_days) ?? 0,
     travelWindow: String(r.travel_window ?? ""),
+    adults: numOrNull(r.adults) ?? 0,
+    childAges: Array.isArray(r.child_ages) ? r.child_ages.filter((a): a is number => typeof a === "number") : [],
+    infants: numOrNull(r.infants) ?? 0,
     paxCount: numOrNull(r.pax_count),
+    cabinClass: pickOne(r.cabin_class, CABIN_CLASSES),
+    boardType: pickOne(r.board_type, BOARD_TYPES),
+    preferences: pickList(r.preferences, TRIP_PREFERENCES),
     budgetAmount: numOrNull(r.budget_amount),
     budgetCurrency: String(r.budget_currency ?? ""),
-    packageId: typeof r.package_id === "string" && r.package_id ? r.package_id : null,
+    packageId: strOrNull(r.package_id),
     packageInterest: String(r.package_interest ?? ""),
   };
 }
 
 function interestBody(t: TripInterest) {
   return {
+    services: t.services,
+    origin: t.origin,
+    destination: t.destination,
     travel_date: t.travelDate || null,
+    return_date: t.returnDate || null,
+    flex_days: t.flexDays,
     travel_window: t.travelWindow,
+    adults: t.adults,
+    child_ages: t.childAges,
+    infants: t.infants,
     pax_count: t.paxCount,
+    cabin_class: t.cabinClass,
+    board_type: t.boardType,
+    preferences: t.preferences,
     budget_amount: t.budgetAmount,
     budget_currency: t.budgetCurrency,
     package_id: t.packageId || null,
     package_interest: t.packageInterest,
+  };
+}
+
+function mapProfile(raw: unknown): LeadProfile {
+  const empty = emptyLeadProfile();
+  if (!raw || typeof raw !== "object") return empty;
+  const r = raw as Record<string, unknown>;
+  return {
+    email: String(r.email ?? ""),
+    segment: pickOne(r.segment, LEAD_SEGMENTS) || empty.segment,
+    companyName: String(r.company_name ?? ""),
+    taxNumber: String(r.tax_number ?? ""),
+    taxOffice: String(r.tax_office ?? ""),
+    priority: pickOne(r.priority, LEAD_PRIORITIES) || empty.priority,
+    intent: pickOne(r.intent, LEAD_INTENTS),
+    nextFollowUpAt: strOrNull(r.next_follow_up_at),
+  };
+}
+
+function profileBody(p: LeadProfile) {
+  return {
+    email: p.email,
+    segment: p.segment,
+    company_name: p.companyName,
+    tax_number: p.taxNumber,
+    tax_office: p.taxOffice,
+    priority: p.priority,
+    intent: p.intent,
+    next_follow_up_at: p.nextFollowUpAt,
   };
 }
 
@@ -96,6 +169,7 @@ function mapLead(raw: ApiLead): Lead {
     lostReasonCode: String(raw.lostReasonCode ?? raw.lost_reason_code ?? ""),
     lostReason: String(raw.lostReason ?? raw.lost_reason ?? ""),
     notes: String(raw.notes ?? ""),
+    profile: mapProfile(raw.profile),
     interest: mapInterest(raw.interest),
     noFollowUp: Boolean(raw.noFollowUp ?? raw.no_follow_up ?? false),
     convertedBookingId: (raw.convertedBookingId ??
@@ -197,6 +271,7 @@ export class ApiLeadRepository implements LeadRepository {
           notes: input.notes ?? "",
           owner_id: input.ownerId,
           customer_id: input.customerId || null,
+          profile: input.profile ? profileBody(input.profile) : undefined,
           interest: input.interest ? interestBody(input.interest) : undefined,
         }),
       }),
@@ -211,6 +286,7 @@ export class ApiLeadRepository implements LeadRepository {
           full_name: input.fullName,
           phone: input.phone,
           notes: input.notes,
+          profile: input.profile ? profileBody(input.profile) : undefined,
           interest: input.interest ? interestBody(input.interest) : undefined,
         }),
       }),
@@ -313,7 +389,7 @@ function nowIso() {
   return new Date().toISOString();
 }
 
-const seed: Omit<Lead, "interest">[] = [
+const seed: Omit<Lead, "interest" | "profile">[] = [
   {
     id: "lead-1",
     branchId: "11111111-1111-1111-1111-111111111111",
@@ -397,7 +473,7 @@ const seed: Omit<Lead, "interest">[] = [
   },
 ];
 
-const store: Lead[] = seed.map((l) => ({ ...l, interest: emptyTripInterest() }));
+const store: Lead[] = seed.map((l) => ({ ...l, profile: emptyLeadProfile(), interest: emptyTripInterest() }));
 const deletedIds = new Set<string>();
 
 function matchesQuery(l: Lead, query: LeadQuery): boolean {
@@ -414,6 +490,8 @@ function matchesQuery(l: Lead, query: LeadQuery): boolean {
   return (
     l.fullName.toLowerCase().includes(q) ||
     l.phone.includes(q) ||
+    l.profile.email.includes(q) ||
+    l.profile.companyName.toLowerCase().includes(q) ||
     l.source.toLowerCase().includes(q) ||
     l.ownerName.toLowerCase().includes(q)
   );
@@ -494,6 +572,7 @@ export class MemoryLeadRepository implements LeadRepository {
       lostReasonCode: "",
       lostReason: "",
       notes: input.notes?.trim() ?? "",
+      profile: input.profile ?? emptyLeadProfile(),
       interest: input.interest ?? emptyTripInterest(),
       noFollowUp: false,
       createdAt: nowIso(),
@@ -519,6 +598,7 @@ export class MemoryLeadRepository implements LeadRepository {
     if (input.fullName !== undefined) lead.fullName = input.fullName.trim();
     if (input.phone !== undefined) lead.phone = input.phone.trim();
     if (input.notes !== undefined) lead.notes = input.notes;
+    if (input.profile) lead.profile = { ...input.profile };
     if (input.interest) lead.interest = { ...input.interest };
     lead.updatedAt = nowIso();
     return lead;

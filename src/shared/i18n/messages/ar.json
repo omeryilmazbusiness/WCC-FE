@@ -1077,6 +1077,178 @@
       "restored": "{count, plural, one {تمت استعادة العميل المحتمل} other {تمت استعادة # عملاء محتملين}}",
       "error": "تعذّر الحذف",
       "restoreError": "تعذّرت الاستعادة"
+    },
+    "leadForm": {
+      "createTitle": "عميل محتمل جديد",
+      "createSubtitle": "من يطلب، وماذا يحتاج، ومتى نتابع معه",
+      "editTitle": "تعديل العميل المحتمل",
+      "editSubtitle": "حافظ على تحديث الطلب والخطوة التالية",
+      "submitCreate": "إنشاء العميل المحتمل",
+      "submitEdit": "حفظ التغييرات",
+      "stageNote": "يبدأ في مرحلة {stage}",
+      "sections": {
+        "contact": {
+          "title": "التواصل",
+          "hint": "من يطلب وكيف نصل إليه"
+        },
+        "scope": {
+          "title": "نطاق الرحلة",
+          "hint": "الخدمات والمسار والتواريخ"
+        },
+        "travellers": {
+          "title": "المسافرون والدرجة",
+          "hint": "أعمار الأطفال والدرجة تغيّر السعر"
+        },
+        "preferences": {
+          "title": "الميزانية والتفضيلات",
+          "hint": "تأهيل الطلب"
+        },
+        "pipeline": {
+          "title": "مسار المبيعات",
+          "hint": "المصدر والمسؤول ودرجة الاستعجال والخطوة التالية"
+        }
+      },
+      "fields": {
+        "fullName": "الاسم الكامل",
+        "fullNamePh": "مثال: أحمد الحربي",
+        "phone": "الهاتف (واتساب)",
+        "phoneHint": "بالصيغة الدولية — العروض والتذاكر تُرسل عبر واتساب",
+        "email": "البريد الإلكتروني",
+        "emailHint": "للعروض الرسمية والتأكيدات والفواتير",
+        "segment": "نوع العميل",
+        "companyName": "اسم الشركة",
+        "taxNumber": "الرقم الضريبي",
+        "taxOffice": "مكتب الضرائب",
+        "services": "الخدمات",
+        "origin": "من",
+        "destination": "إلى",
+        "placePh": "مدينة أو دولة",
+        "swap": "تبديل من وإلى",
+        "iataHint": "تُحفظ الرحلات الجوية برموز المطارات IATA، مثل IST → JFK",
+        "departure": "الذهاب",
+        "return": "العودة",
+        "flex": "مرونة التاريخ",
+        "travelWindow": "أو فترة",
+        "travelWindowPh": "مثال: مارس 2027، رمضان",
+        "adults": "البالغون",
+        "adultsHint": "12 سنة فأكثر",
+        "children": "الأطفال",
+        "childrenHint": "من 2 إلى 17 سنة",
+        "childAgesHint": "أعمار الأطفال تؤثر على أسعار الطيران والفنادق",
+        "childAge": "الطفل {n}",
+        "childAgeOption": "{age, plural, one {سنة واحدة} two {سنتان} few {# سنوات} many {# سنة} other {# سنة}}",
+        "infants": "الرضّع",
+        "infantsHint": "أقل من سنتين — رضيع لكل بالغ",
+        "decrease": "إنقاص",
+        "increase": "زيادة",
+        "total": "{count, plural, one {مسافر واحد} two {مسافران} few {# مسافرين} many {# مسافرًا} other {# مسافر}}",
+        "cabin": "درجة المقصورة",
+        "board": "نوع الإقامة",
+        "budget": "الميزانية التقديرية",
+        "currency": "العملة",
+        "package": "الباقة",
+        "packageNone": "لم يتم اختيار باقة",
+        "packageInterest": "ما الذي يريده",
+        "packageInterestPh": "مثال: عمرة 5 نجوم، 10 ليالٍ",
+        "preferences": "طلبات وقيود خاصة",
+        "intent": "نية الشراء",
+        "source": "مصدر العميل",
+        "sourceOtherPh": "من أين جاء هذا العميل؟",
+        "owner": "المسؤول",
+        "customer": "العميل",
+        "priority": "درجة الاستعجال",
+        "prioritySuggested": "السفر خلال 48 ساعة",
+        "followUp": "المتابعة التالية",
+        "notes": "ملاحظات",
+        "notesPh": "أي شيء يجب أن يعرفه الفريق"
+      },
+      "segments": {
+        "b2c": "فرد (B2C)",
+        "b2b": "شركة (B2B)"
+      },
+      "services": {
+        "flight": "طيران",
+        "hotel": "فندق",
+        "tour": "باقة سياحية",
+        "visa": "تأشيرة",
+        "transfer": "نقل VIP",
+        "other": "أخرى"
+      },
+      "flex": {
+        "exact": "تواريخ محددة",
+        "days": "± {n, plural, one {يوم واحد} two {يومان} few {# أيام} many {# يومًا} other {# يوم}}"
+      },
+      "cabins": {
+        "economy": "اقتصادية",
+        "premium_economy": "اقتصادية مميزة",
+        "business": "رجال الأعمال",
+        "first": "الأولى"
+      },
+      "boards": {
+        "room_only": "غرفة فقط",
+        "bed_breakfast": "مبيت وإفطار",
+        "half_board": "نصف إقامة",
+        "full_board": "إقامة كاملة",
+        "all_inclusive": "شامل كليًا",
+        "ultra_all_inclusive": "شامل كليًا فاخر"
+      },
+      "preferences": {
+        "direct_flight": "رحلات مباشرة فقط",
+        "extra_baggage": "أمتعة إضافية",
+        "use_miles": "استخدام الأميال",
+        "seat_selection": "اختيار المقعد",
+        "special_meal": "وجبة خاصة",
+        "accessibility": "احتياجات ذوي الإعاقة"
+      },
+      "intents": {
+        "ready": "سيشتري اليوم",
+        "comparing": "يقارن الأسعار",
+        "planning": "يخطط لاحقًا"
+      },
+      "priorities": {
+        "high": "عالية",
+        "medium": "متوسطة",
+        "low": "منخفضة"
+      },
+      "priorityHints": {
+        "high": "السفر خلال 24–48 ساعة",
+        "medium": "متابعة عادية",
+        "low": "بدون استعجال"
+      },
+      "sources": {
+        "web_widget": "أداة الموقع",
+        "whatsapp": "واتساب",
+        "instagram": "إنستغرام",
+        "meta_ads": "إعلانات ميتا",
+        "google_ads": "إعلانات جوجل",
+        "referral": "إحالة",
+        "phone": "مكالمة هاتفية",
+        "email": "البريد الإلكتروني",
+        "walkin": "زيارة للمكتب",
+        "other": "أخرى"
+      },
+      "followUpQuick": {
+        "hour": "بعد ساعة",
+        "tomorrow": "غدًا 10:00",
+        "days3": "بعد 3 أيام",
+        "week": "الأسبوع القادم"
+      },
+      "errors": {
+        "fullName": "أدخل حرفين على الأقل",
+        "phone": "أدخل رقم الهاتف",
+        "owner": "اختر المسؤول",
+        "email": "أدخل بريدًا إلكترونيًا صالحًا",
+        "companyName": "اسم الشركة مطلوب لعملاء الشركات",
+        "taxNumber": "استخدم من 4 إلى 20 حرفًا أو رقمًا",
+        "returnDate": "لا يمكن أن تكون العودة قبل الذهاب",
+        "adults": "يجب أن يسافر بالغ واحد على الأقل",
+        "pax": "حتى 500 مسافر",
+        "infants": "رضيع واحد لكل بالغ",
+        "childAge": "اختر عمر كل طفل",
+        "budget": "أدخل مبلغًا مثل 12500 أو 12500.50",
+        "currency": "استخدم رمزًا من 3 أحرف، مثل TRY",
+        "currencyRequired": "اختر عملة للميزانية"
+      }
     }
   },
   "packages": {

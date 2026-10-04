@@ -1077,6 +1077,178 @@
       "restored": "{count, plural, one {Lead restored} other {# leads restored}}",
       "error": "Could not delete",
       "restoreError": "Could not restore"
+    },
+    "leadForm": {
+      "createTitle": "New lead",
+      "createSubtitle": "Who is asking, what they need and when to follow up",
+      "editTitle": "Edit lead",
+      "editSubtitle": "Keep the request and next step up to date",
+      "submitCreate": "Create lead",
+      "submitEdit": "Save changes",
+      "stageNote": "Starts in {stage}",
+      "sections": {
+        "contact": {
+          "title": "Contact",
+          "hint": "Who is asking and how to reach them"
+        },
+        "scope": {
+          "title": "Travel scope",
+          "hint": "Services, route and dates"
+        },
+        "travellers": {
+          "title": "Travellers & class",
+          "hint": "Children's ages and class change the price"
+        },
+        "preferences": {
+          "title": "Budget & preferences",
+          "hint": "Qualify the request"
+        },
+        "pipeline": {
+          "title": "Pipeline",
+          "hint": "Source, owner, urgency and the next step"
+        }
+      },
+      "fields": {
+        "fullName": "Full name",
+        "fullNamePh": "e.g. Ayşe Yılmaz",
+        "phone": "Phone (WhatsApp)",
+        "phoneHint": "International format — quotes and tickets go out on WhatsApp",
+        "email": "Email",
+        "emailHint": "For formal quotes, confirmations and invoices",
+        "segment": "Customer type",
+        "companyName": "Company name",
+        "taxNumber": "Tax number",
+        "taxOffice": "Tax office",
+        "services": "Services",
+        "origin": "From",
+        "destination": "To",
+        "placePh": "City or country",
+        "swap": "Swap from and to",
+        "iataHint": "Flights are stored as IATA airport codes, e.g. IST → JFK",
+        "departure": "Departure",
+        "return": "Return",
+        "flex": "Date flexibility",
+        "travelWindow": "Or a period",
+        "travelWindowPh": "e.g. March 2027, Ramadan",
+        "adults": "Adults",
+        "adultsHint": "12 years and over",
+        "children": "Children",
+        "childrenHint": "2–17 years",
+        "childAgesHint": "Child ages affect flight and hotel prices",
+        "childAge": "Child {n}",
+        "childAgeOption": "{age, plural, one {# year} other {# years}}",
+        "infants": "Infants",
+        "infantsHint": "Under 2 — one per adult",
+        "decrease": "Decrease",
+        "increase": "Increase",
+        "total": "{count, plural, one {# traveller} other {# travellers}}",
+        "cabin": "Cabin class",
+        "board": "Board type",
+        "budget": "Estimated budget",
+        "currency": "Currency",
+        "package": "Package",
+        "packageNone": "No package selected",
+        "packageInterest": "What they want",
+        "packageInterestPh": "e.g. 5-star Umrah, 10 nights",
+        "preferences": "Special requests & constraints",
+        "intent": "Buying intent",
+        "source": "Lead source",
+        "sourceOtherPh": "Where did this lead come from?",
+        "owner": "Owner",
+        "customer": "Customer",
+        "priority": "Urgency",
+        "prioritySuggested": "Departure within 48 hours",
+        "followUp": "Next follow-up",
+        "notes": "Notes",
+        "notesPh": "Anything the team should know"
+      },
+      "segments": {
+        "b2c": "Individual (B2C)",
+        "b2b": "Corporate (B2B)"
+      },
+      "services": {
+        "flight": "Flight",
+        "hotel": "Hotel",
+        "tour": "Tour package",
+        "visa": "Visa",
+        "transfer": "VIP transfer",
+        "other": "Other"
+      },
+      "flex": {
+        "exact": "Exact dates",
+        "days": "± {n, plural, one {# day} other {# days}}"
+      },
+      "cabins": {
+        "economy": "Economy",
+        "premium_economy": "Premium",
+        "business": "Business",
+        "first": "First"
+      },
+      "boards": {
+        "room_only": "Room only",
+        "bed_breakfast": "Bed & breakfast",
+        "half_board": "Half board",
+        "full_board": "Full board",
+        "all_inclusive": "All inclusive",
+        "ultra_all_inclusive": "Ultra all inclusive"
+      },
+      "preferences": {
+        "direct_flight": "Direct flights only",
+        "extra_baggage": "Extra baggage",
+        "use_miles": "Use miles",
+        "seat_selection": "Seat selection",
+        "special_meal": "Special meal",
+        "accessibility": "Accessibility needs"
+      },
+      "intents": {
+        "ready": "Buying today",
+        "comparing": "Comparing prices",
+        "planning": "Planning ahead"
+      },
+      "priorities": {
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "priorityHints": {
+        "high": "Travel within 24–48 hours",
+        "medium": "Normal follow-up",
+        "low": "No rush"
+      },
+      "sources": {
+        "web_widget": "Web widget",
+        "whatsapp": "WhatsApp",
+        "instagram": "Instagram",
+        "meta_ads": "Meta ads",
+        "google_ads": "Google ads",
+        "referral": "Referral",
+        "phone": "Phone call",
+        "email": "Email",
+        "walkin": "Walk-in",
+        "other": "Other"
+      },
+      "followUpQuick": {
+        "hour": "In 1 hour",
+        "tomorrow": "Tomorrow 10:00",
+        "days3": "In 3 days",
+        "week": "Next week"
+      },
+      "errors": {
+        "fullName": "Enter at least 2 characters",
+        "phone": "Enter a phone number",
+        "owner": "Choose an owner",
+        "email": "Enter a valid email",
+        "companyName": "Company name is required for corporate leads",
+        "taxNumber": "Use 4–20 letters or digits",
+        "returnDate": "Return can't be before departure",
+        "adults": "At least one adult must travel",
+        "pax": "Up to 500 travellers",
+        "infants": "One infant per adult",
+        "childAge": "Pick each child's age",
+        "budget": "Enter an amount like 12500 or 12500.50",
+        "currency": "Use a 3-letter code, e.g. TRY",
+        "currencyRequired": "Choose a currency for the budget"
+      }
     }
   },
   "packages": {

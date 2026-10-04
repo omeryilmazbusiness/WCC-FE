@@ -3,8 +3,11 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
+  Armchair,
   ArrowRight,
   BellOff,
+  CalendarClock,
+  Mail,
   BellRing,
   CalendarDays,
   CalendarPlus,
@@ -28,6 +31,9 @@ import {
 import {
   hasTripInterest,
   LEAD_SOURCE_LOOK,
+  PREFERENCE_LOOK,
+  PRIORITY_LOOK,
+  SEGMENT_LOOK,
   leadSourceKind,
   stageLook,
   type Lead,
@@ -145,6 +151,7 @@ type DetailProps = {
 
 function LeadDetail({ lead, locale, history, packageLabel, repository, onChanged, onDelete }: DetailProps) {
   const t = useTranslations("pipeline");
+  const tf = useTranslations("pipeline.leadForm");
   const feedback = useMutationFeedback();
   const canWrite = useCan("leads.write");
   const [editing, setEditing] = useState(false);
@@ -154,12 +161,28 @@ function LeadDetail({ lead, locale, history, packageLabel, repository, onChanged
   const sourceKind = leadSourceKind(lead.source);
   const source = LEAD_SOURCE_LOOK[sourceKind];
   const sourceLabel = sourceKind === "other" ? lead.source : t(`card.sources.${sourceKind}`);
-  const { interest } = lead;
+  const { interest, profile } = lead;
   const isOpen = lead.stage !== "won" && lead.stage !== "lost";
+  const dates = [interest.travelDate, interest.returnDate].filter(Boolean).map((d) => formatDay(d!, locale)).join(" – ");
+  const paxParts = [
+    interest.adults ? `${interest.adults} ${tf("fields.adults")}` : "",
+    interest.childAges.length ? `${interest.childAges.length} ${tf("fields.children")} (${interest.childAges.join(", ")})` : "",
+    interest.infants ? `${interest.infants} ${tf("fields.infants")}` : "",
+  ].filter(Boolean);
+  const classes = [
+    interest.cabinClass ? tf(`cabins.${interest.cabinClass}`) : "",
+    interest.boardType ? tf(`boards.${interest.boardType}`) : "",
+  ].filter(Boolean);
   const trip = tripFacts({
-    travel: interest.travelDate ? formatDay(interest.travelDate, locale) : interest.travelWindow,
-    travelHint: interest.travelDate ? interest.travelWindow : "",
-    pax: interest.paxCount ? String(interest.paxCount) : "",
+    route: interest.origin || interest.destination ? `${interest.origin || "—"} → ${interest.destination || "—"}` : "",
+    services: interest.services.map((s) => tf(`services.${s}`)).join(" · "),
+    travel: dates || interest.travelWindow,
+    travelHint: [interest.flexDays ? tf("flex.days", { n: interest.flexDays }) : "", dates ? interest.travelWindow : ""]
+      .filter(Boolean)
+      .join(" · "),
+    pax: interest.paxCount ? tf("fields.total", { count: interest.paxCount }) : "",
+    paxHint: paxParts.join(" · "),
+    classes: classes.join(" · "),
     budget:
       interest.budgetAmount != null && interest.budgetCurrency
         ? formatMoney(interest.budgetAmount, locale, interest.budgetCurrency)
@@ -167,12 +190,16 @@ function LeadDetail({ lead, locale, history, packageLabel, repository, onChanged
     pkg: packageLabel || interest.packageInterest,
     pkgHint: packageLabel && interest.packageInterest ? interest.packageInterest : "",
     labels: {
+      route: tf("sections.scope.title"),
       travel: t("fields.travelDate"),
       pax: t("fields.travellers"),
+      classes: tf("fields.cabin"),
       budget: t("fields.budget"),
       pkg: t("fields.package"),
     },
   });
+  const priority = PRIORITY_LOOK[profile.priority];
+  const segment = SEGMENT_LOOK[profile.segment];
 
   async function toggleFollowUp() {
     setTogglingFollowUp(true);
@@ -271,6 +298,20 @@ function LeadDetail({ lead, locale, history, packageLabel, repository, onChanged
               {trip.map(({ key, wide, ...fact }) => (
                 <TripTile key={key} {...fact} className={wide ? "col-span-2" : undefined} />
               ))}
+              {interest.preferences.length ? (
+                <div className="col-span-2 flex flex-wrap gap-1.5" data-testid="lead-detail-preferences">
+                  {interest.preferences.map((p) => {
+                    const look = PREFERENCE_LOOK[p];
+                    const Icon = look.icon;
+                    return (
+                      <span key={p} className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11.5px] font-semibold", TONES[look.tone].soft)}>
+                        <Icon className="h-3.5 w-3.5" strokeWidth={2.4} aria-hidden />
+                        {tf(`preferences.${p}`)}
+                      </span>
+                    );
+                  })}
+                </div>
+              ) : null}
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2.5 rounded-2xl border border-dashed border-zinc-200 px-4 py-5 text-center">
@@ -309,6 +350,40 @@ function LeadDetail({ lead, locale, history, packageLabel, repository, onChanged
                     trigger={<RowButton icon={Repeat2} label={t("detail.change")} />}
                   />
                 ) : null
+              }
+            />
+            <Row
+              leading={<IconTile icon={priority.icon} tone={priority.tone} size="lg" />}
+              label={tf("fields.priority")}
+              value={tf(`priorities.${profile.priority}`)}
+              hint={profile.intent ? `${tf("fields.intent")}: ${tf(`intents.${profile.intent}`)}` : undefined}
+              testId="lead-detail-priority"
+            />
+            {profile.nextFollowUpAt ? (
+              <Row
+                leading={<IconTile icon={CalendarClock} tone="amber" size="lg" />}
+                label={tf("fields.followUp")}
+                value={formatDateTime(profile.nextFollowUpAt, locale)}
+                hint={formatRelativeTime(profile.nextFollowUpAt, locale)}
+                testId="lead-detail-next-follow-up"
+              />
+            ) : null}
+            {profile.email ? (
+              <Row
+                leading={<IconTile icon={Mail} tone="violet" size="lg" />}
+                label={tf("fields.email")}
+                value={profile.email}
+                action={<RowAnchor href={`mailto:${profile.email}`} label={t("detail.open")} />}
+              />
+            ) : null}
+            <Row
+              leading={<IconTile icon={segment.icon} tone={segment.tone} size="lg" />}
+              label={tf("fields.segment")}
+              value={profile.segment === "b2b" && profile.companyName ? profile.companyName : tf(`segments.${profile.segment}`)}
+              hint={
+                profile.segment === "b2b"
+                  ? [tf("segments.b2b"), profile.taxNumber, profile.taxOffice].filter(Boolean).join(" · ")
+                  : undefined
               }
             />
             <Row
@@ -481,18 +556,25 @@ type TripFact = {
 };
 
 function tripFacts(v: {
+  route: string;
+  services: string;
   travel: string;
   travelHint: string;
   pax: string;
+  paxHint: string;
+  classes: string;
   budget: string;
   pkg: string;
   pkgHint: string;
-  labels: { travel: string; pax: string; budget: string; pkg: string };
+  labels: { route: string; travel: string; pax: string; classes: string; budget: string; pkg: string };
 }): TripFact[] {
-  const paired = Boolean(v.travel && v.pax);
   const facts: TripFact[] = [];
-  if (v.travel) facts.push({ key: "travel", icon: CalendarDays, tone: "sky", label: v.labels.travel, value: v.travel, hint: v.travelHint, wide: !paired });
-  if (v.pax) facts.push({ key: "pax", icon: UsersRound, tone: "violet", label: v.labels.pax, value: v.pax, wide: !paired });
+  if (v.route || v.services) {
+    facts.push({ key: "route", icon: Plane, tone: "indigo", label: v.labels.route, value: v.route || v.services, hint: v.route ? v.services : "", wide: true });
+  }
+  if (v.travel) facts.push({ key: "travel", icon: CalendarDays, tone: "sky", label: v.labels.travel, value: v.travel, hint: v.travelHint, wide: true });
+  if (v.pax) facts.push({ key: "pax", icon: UsersRound, tone: "violet", label: v.labels.pax, value: v.pax, hint: v.paxHint, wide: !v.classes });
+  if (v.classes) facts.push({ key: "classes", icon: Armchair, tone: "teal", label: v.labels.classes, value: v.classes, wide: !v.pax });
   if (v.budget) facts.push({ key: "budget", icon: Wallet, tone: "emerald", label: v.labels.budget, value: v.budget, wide: true });
   if (v.pkg) facts.push({ key: "pkg", icon: Package, tone: "amber", label: v.labels.pkg, value: v.pkg, hint: v.pkgHint, wide: true });
   return facts;
@@ -581,6 +663,7 @@ function Row({
   hint,
   muted,
   action,
+  testId,
 }: {
   leading: ReactNode;
   label: string;
@@ -588,9 +671,10 @@ function Row({
   hint?: string;
   muted?: boolean;
   action?: ReactNode;
+  testId?: string;
 }) {
   return (
-    <div className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
+    <div className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0" data-testid={testId}>
       {leading}
       <div className="min-w-0 flex-1">
         <p className="truncate text-[11px] font-medium text-zinc-400">{label}</p>
@@ -618,6 +702,15 @@ function RowButton({
       <Icon className="h-3.5 w-3.5" aria-hidden />
       {label}
     </button>
+  );
+}
+
+function RowAnchor({ href, label }: { href: string; label: string }) {
+  return (
+    <a href={href} className={rowActionClass}>
+      {label}
+      <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden />
+    </a>
   );
 }
 

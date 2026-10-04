@@ -6,7 +6,7 @@ import type { LeadPrefill } from "@/features/create-lead";
 /** Names the backend gives a lead it opened for an unknown sender. */
 const PLACEHOLDER_NAMES = new Set(["", "unknown contact"]);
 
-function draftInterest(d: LeadDraft): TripInterest {
+function draftInterest(d: LeadDraft): Partial<TripInterest> {
   return {
     travelDate: d.travelDate || null,
     travelWindow: d.travelWindow,
@@ -59,6 +59,7 @@ export function mergeDraftIntoLead(lead: Lead, d: LeadDraft): LeadPrefill {
     phone: lead.phone,
     notes,
     interest: {
+      ...i,
       travelDate: pick("travel_date", d.travelDate || null, i.travelDate),
       travelWindow: pick("travel_window", d.travelWindow, i.travelWindow),
       paxCount: pick("pax_count", d.paxCount, i.paxCount),

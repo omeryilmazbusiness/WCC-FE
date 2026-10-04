@@ -23,6 +23,24 @@ const MATCHERS: [LeadSourceKind, RegExp][] = [
   ["web", /web|site|online|google|\bseo\b|\bads?\b|\bform\b|landing|موقع/i],
 ];
 
+/**
+ * Channels offered as one-tap choices when a lead is created. `value` is what
+ * is stored (the source stays free text); each maps back to its kind.
+ */
+export const LEAD_SOURCE_PRESETS = [
+  { id: "web_widget", value: "Web widget" },
+  { id: "whatsapp", value: "WhatsApp" },
+  { id: "instagram", value: "Instagram" },
+  { id: "meta_ads", value: "Meta ads" },
+  { id: "google_ads", value: "Google ads" },
+  { id: "referral", value: "Referral" },
+  { id: "phone", value: "Phone" },
+  { id: "email", value: "Email" },
+  { id: "walkin", value: "Walk-in" },
+] as const;
+
+export type LeadSourcePreset = (typeof LEAD_SOURCE_PRESETS)[number];
+
 /** Groups the free-text lead source into a known channel so it can get an icon and label. */
 export function leadSourceKind(source: string | null | undefined): LeadSourceKind {
   const text = source?.trim() ?? "";
