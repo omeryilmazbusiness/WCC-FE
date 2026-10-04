@@ -1,7 +1,7 @@
 import { forwardRef, type InputHTMLAttributes } from "react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/shared/lib/cn";
-import { Input } from "@/shared/ui";
+import { Input } from "./input";
 
 type Props = InputHTMLAttributes<HTMLInputElement> & { icon: LucideIcon; iconClassName?: string };
 

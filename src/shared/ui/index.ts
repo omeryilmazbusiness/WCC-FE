@@ -146,3 +146,6 @@ export {
 } from "./use-describe-error";
 export { useMutationFeedback } from "./use-mutation-feedback";
 export { MaskedSecret } from "./masked-secret";
+export { FormSection, GroupLabel } from "./form-section";
+export { IconInput } from "./icon-input";
+export { InfoRow, InfoSection, infoActionClass } from "./info-section";

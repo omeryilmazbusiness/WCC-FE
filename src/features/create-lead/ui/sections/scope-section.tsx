@@ -4,12 +4,10 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { useTranslations } from "next-intl";
 import { ArrowLeftRight, CalendarRange, MapPin, PlaneLanding, PlaneTakeoff } from "lucide-react";
 import { LEAD_SERVICES, SERVICE_LOOK } from "@/entities/lead";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage, Input } from "@/shared/ui";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage, Input, FormSection, GroupLabel, IconInput } from "@/shared/ui";
 import { needsCabin, type LeadFormValues } from "../../model/form";
 import { useAiField } from "../parts/ai-fields";
 import { ChoiceChips } from "../parts/choice-chips";
-import { FormSection, GroupLabel } from "../parts/form-section";
-import { IconInput } from "../parts/icon-input";
 
 const FLEX_PRESETS = [0, 1, 2, 3, 7];
 

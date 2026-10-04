@@ -4,12 +4,10 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { useTranslations } from "next-intl";
 import { Contact, Landmark, Mail, MessageCircle, Receipt, UserRound } from "lucide-react";
 import { LEAD_SEGMENTS, SEGMENT_LOOK } from "@/entities/lead";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/shared/ui";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage, FormSection, GroupLabel, IconInput } from "@/shared/ui";
 import type { LeadFormValues } from "../../model/form";
 import { useAiField } from "../parts/ai-fields";
 import { ChoiceChips } from "../parts/choice-chips";
-import { FormSection, GroupLabel } from "../parts/form-section";
-import { IconInput } from "../parts/icon-input";
 
 export function ContactSection() {
   const t = useTranslations("pipeline.leadForm");

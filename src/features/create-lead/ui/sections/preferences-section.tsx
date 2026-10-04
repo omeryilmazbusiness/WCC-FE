@@ -23,12 +23,13 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  FormSection,
+  GroupLabel,
+  IconInput,
 } from "@/shared/ui";
 import { needsCabin, type LeadFormValues } from "../../model/form";
 import { useAiField } from "../parts/ai-fields";
 import { ChoiceChips } from "../parts/choice-chips";
-import { FormSection, GroupLabel } from "../parts/form-section";
-import { IconInput } from "../parts/icon-input";
 
 const NONE = "__none__";
 const CURRENCIES = ["TRY", "USD", "EUR", "GBP", "SAR", "AED", "SYP", "EGP", "PKR", "IDR", "MYR"];

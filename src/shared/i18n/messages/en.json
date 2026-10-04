@@ -764,8 +764,8 @@
   },
   "customers": {
     "title": "Customers",
-    "subtitle": "Search and open Customer 360",
-    "searchPlaceholder": "Search by name, phone, or passport",
+    "subtitle": "Profiles, travel documents and the full relationship in one place",
+    "searchPlaceholder": "Search by name, phone, email or passport",
     "create": "New customer",
     "empty": "No customers yet",
     "emptyHint": "Try clearing filters or create a new customer.",
@@ -855,7 +855,262 @@
     "createdToastBody": "The record is ready in Customer 360.",
     "passportUnchanged": "unchanged ({masked})",
     "passportUnchangedHint": "Leave empty to keep the current passport number.",
-    "anonymized": "Anonymized"
+    "anonymized": "Anonymized",
+    "emptyFiltered": "No customers match",
+    "emptyFilteredHint": "Try another search or clear the filters.",
+    "truncated": "Showing the first {count} matches — refine the search to narrow down.",
+    "quick": {
+      "label": "Quick filters",
+      "all": "Customers",
+      "passport": "Passport needs action",
+      "incomplete": "Incomplete profiles",
+      "recent": "Added this month"
+    },
+    "view": {
+      "label": "View",
+      "cards": "Cards",
+      "table": "Table"
+    },
+    "card": {
+      "completeness": "Profile {pct}% complete",
+      "noPassport": "No passport",
+      "call": "Call",
+      "whatsapp": "WhatsApp",
+      "email": "E-mail",
+      "open": "Profile"
+    },
+    "passportStatus": {
+      "missing": "No passport",
+      "valid": "Passport valid",
+      "expiring": "Passport expiring",
+      "expired": "Passport expired"
+    },
+    "form": {
+      "createTitle": "New customer",
+      "createSubtitle": "Create a traveller profile. Only the name and phone are required.",
+      "editTitle": "Edit profile",
+      "editSubtitle": "Keep contact details and travel documents up to date.",
+      "submitCreate": "Create customer",
+      "submitEdit": "Save changes",
+      "createError": "Could not create customer",
+      "saveError": "Could not save customer",
+      "sections": {
+        "identity": {
+          "title": "Identity",
+          "hint": "Name as on the passport, date of birth and nationality"
+        },
+        "contact": {
+          "title": "Contact",
+          "hint": "How the team reaches the customer"
+        },
+        "documents": {
+          "title": "Travel documents",
+          "hint": "Stored encrypted; shown masked to the team"
+        },
+        "notes": {
+          "title": "Care & notes",
+          "hint": "Special assistance and internal notes"
+        }
+      },
+      "fields": {
+        "fullName": "Full name (Latin)",
+        "fullNamePh": "As written in the passport",
+        "fullNameAr": "Full name (Arabic)",
+        "dateOfBirth": "Date of birth",
+        "nationality": "Nationality",
+        "nationalityPh": "e.g. Saudi Arabia",
+        "phone": "Mobile / WhatsApp",
+        "email": "E-mail",
+        "passportNo": "Passport number",
+        "passportKeep": "Unchanged ({masked})",
+        "passportKeepHint": "Leave empty to keep the current number.",
+        "passportExpiresAt": "Passport expiry",
+        "passportExpiredHint": "This passport has expired.",
+        "passportExpiringHint": "Less than 6 months left (expires {date}).",
+        "specialRequirements": "Special assistance",
+        "specialRequirementsPh": "Wheelchair, diet, medical needs…",
+        "notes": "Internal notes",
+        "notesPh": "Visible to the team only"
+      },
+      "errors": {
+        "fullName": "Enter the customer's full name.",
+        "phone": "Enter a valid phone number.",
+        "email": "Enter a valid e-mail address.",
+        "date": "Enter a valid date.",
+        "expiryBeforeBirth": "Expiry must be after the date of birth."
+      },
+      "duplicates": {
+        "title": "{count, plural, one {A similar profile already exists} other {# similar profiles already exist}}",
+        "reasons": {
+          "phone": "Same phone",
+          "email": "Same e-mail",
+          "passport": "Same passport",
+          "name_fuzzy": "Similar name"
+        }
+      }
+    },
+    "profile": {
+      "back": "Customers",
+      "loadError": "Could not load customer",
+      "edit": "Edit",
+      "age": "{age} years",
+      "since": "Customer since {date}",
+      "anonymized": "Anonymized",
+      "call": "Call",
+      "whatsapp": "WhatsApp",
+      "email": "E-mail",
+      "write": "Write",
+      "newBooking": "New booking",
+      "updated": "Profile updated",
+      "merged": "Customers merged",
+      "mergedBanner": "This profile was merged into another customer.",
+      "openMerged": "Open the current profile",
+      "anonymizedBanner": "Personal data of this customer was erased (KVKK). History is kept for reporting.",
+      "tabsLabel": "Profile sections",
+      "tabs": {
+        "overview": "Overview",
+        "family": "Family",
+        "bookings": "Bookings",
+        "payments": "Payments",
+        "documents": "Documents",
+        "tasks": "Tasks",
+        "activity": "Activity"
+      },
+      "stats": {
+        "bookings": "Bookings",
+        "paid": "Paid",
+        "moreCurrencies": "+{count} more currencies",
+        "openTasks": "Open tasks",
+        "lastActivity": "Last activity {time}",
+        "completeness": "Profile complete"
+      },
+      "sections": {
+        "personal": "Personal information",
+        "documents": "Travel documents",
+        "notes": "Care & notes",
+        "completeness": "Profile checklist",
+        "family": "Family & companions",
+        "recent": "Recent activity"
+      },
+      "fields": {
+        "phone": "Mobile / WhatsApp",
+        "email": "E-mail",
+        "nationality": "Nationality",
+        "dateOfBirth": "Date of birth",
+        "nameAr": "Arabic name",
+        "passport": "Passport number",
+        "passportExpiry": "Passport expiry",
+        "specialRequirements": "Special assistance",
+        "notes": "Internal notes"
+      },
+      "notSet": "Not set",
+      "noRequirements": "No special assistance needed",
+      "noNotes": "No notes yet",
+      "passportExpiredHint": "Expired — renew before booking travel",
+      "passportExpiringHint": "Less than 6 months of validity left",
+      "complete": "Everything operations needs is on file.",
+      "missingHint": "{count, plural, one {# detail is missing} other {# details are missing}} before the next trip.",
+      "missing": {
+        "phone": "Phone number",
+        "email": "E-mail address",
+        "nationality": "Nationality",
+        "passport": "Passport number",
+        "passportExpiry": "Passport expiry date",
+        "dateOfBirth": "Date of birth",
+        "nameAr": "Arabic name"
+      },
+      "completeProfile": "Complete the profile",
+      "seeAll": "See all",
+      "familyEmpty": "No companions linked yet.",
+      "recentEmpty": "Nothing has happened yet.",
+      "empty": {
+        "payments": "No payments yet",
+        "documents": "No documents yet",
+        "tasks": "No tasks yet",
+        "activity": "No activity yet"
+      },
+      "menu": {
+        "label": "More actions",
+        "linkCompanion": "Link companion",
+        "merge": "Merge duplicate",
+        "export": "Export data (KVKK)",
+        "anonymize": "Anonymize"
+      },
+      "family": {
+        "add": "Add companion",
+        "count": "{count, plural, one {# companion} other {# companions}}",
+        "empty": "No companions linked",
+        "emptyHint": "Link a spouse, children or travel partners to book them together.",
+        "linked": "Companion linked",
+        "removed": "Companion removed",
+        "unlink": "Unlink {name}",
+        "unlinkTitle": "Unlink companion?",
+        "unlinkBody": "{name} stays a customer; only the family link is removed.",
+        "unlinkConfirm": "Unlink"
+      },
+      "bookings": {
+        "count": "{count, plural, one {# booking} other {# bookings}}",
+        "empty": "No bookings yet",
+        "emptyHint": "Create a booking or convert one of the customer's leads.",
+        "pax": "{count, plural, one {# traveller} other {# travellers}}",
+        "total": "Total",
+        "paid": "Paid",
+        "balance": "Balance",
+        "settled": "Settled",
+        "paidPct": "{pct}% paid"
+      }
+    },
+    "timeline": {
+      "payment": "Payment {amount}",
+      "booking": "Booking #{ref}",
+      "balance": "Balance {amount}",
+      "source": "via {source}",
+      "kinds": {
+        "lead": "Lead",
+        "booking": "Booking",
+        "payment": "Payment",
+        "document": "Document",
+        "task": "Task",
+        "other": "Activity"
+      },
+      "methods": {
+        "cash": "Cash",
+        "card": "Card",
+        "bank_transfer": "Bank transfer",
+        "transfer": "Bank transfer",
+        "online": "Online",
+        "cheque": "Cheque",
+        "other": "Other"
+      },
+      "documentKinds": {
+        "passport": "Passport",
+        "visa": "Visa",
+        "receipt": "Receipt",
+        "photo": "Photo",
+        "other": "Other"
+      },
+      "status": {
+        "open": "Open",
+        "in_progress": "In progress",
+        "done": "Done",
+        "cancelled": "Cancelled",
+        "new": "New",
+        "contacted": "Contacted",
+        "qualified": "Qualified",
+        "proposal": "Proposal",
+        "paid": "Paid",
+        "won": "Won",
+        "lost": "Lost",
+        "draft": "Draft",
+        "quoted": "Quoted",
+        "option_hold": "On hold",
+        "confirmed": "Confirmed",
+        "partially_paid": "Partially paid",
+        "ready": "Ready",
+        "travelled": "Travelled",
+        "completed": "Completed"
+      }
+    }
   },
   "pipeline": {
     "title": "CRM Pipeline",

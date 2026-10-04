@@ -31,6 +31,8 @@ type Props = {
   defaultCustomerId?: string;
   defaultDepartureId?: string;
   onCreated?: (bookingId: string) => void;
+  /** Replaces the default button. */
+  trigger?: React.ReactElement;
 };
 
 export function CreateBookingDialog({
@@ -38,6 +40,7 @@ export function CreateBookingDialog({
   defaultCustomerId,
   defaultDepartureId,
   onCreated,
+  trigger,
 }: Props) {
   const allowed = useCan("bookings.write");
   const t = useTranslations("bookings");
@@ -99,7 +102,7 @@ export function CreateBookingDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button type="button">{t("create")}</Button>
+        {trigger ?? <Button type="button">{t("create")}</Button>}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

@@ -29,12 +29,13 @@ import {
   SelectValue,
   Textarea,
   TONES,
+  FormSection,
+  GroupLabel,
+  IconInput,
 } from "@/shared/ui";
 import { toLocalDateTime, type LeadFormValues } from "../../model/form";
 import { useAiField } from "../parts/ai-fields";
 import { ChoiceChips } from "../parts/choice-chips";
-import { FormSection, GroupLabel } from "../parts/form-section";
-import { IconInput } from "../parts/icon-input";
 
 const NONE = "__none__";
 const OTHER = "__other__";

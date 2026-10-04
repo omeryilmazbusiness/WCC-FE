@@ -5,11 +5,10 @@ import { useTranslations } from "next-intl";
 import { Baby, PersonStanding, Smile, UsersRound } from "lucide-react";
 import { BOARD_LOOK, BOARD_TYPES, CABIN_CLASSES, CABIN_LOOK, MAX_CHILD_AGE, MAX_CHILDREN } from "@/entities/lead";
 import { cn } from "@/shared/lib/cn";
-import { FormField, FormMessage, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui";
+import { FormField, FormMessage, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, FormSection, GroupLabel } from "@/shared/ui";
 import { needsBoard, needsCabin, type LeadFormValues } from "../../model/form";
 import { useAiField } from "../parts/ai-fields";
 import { ChoiceChips } from "../parts/choice-chips";
-import { FormSection, GroupLabel } from "../parts/form-section";
 import { Stepper } from "../parts/stepper";
 
 const MAX_ADULTS = 99;

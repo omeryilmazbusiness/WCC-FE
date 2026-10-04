@@ -50,6 +50,7 @@ function mapCustomer(raw: ApiCustomer): Customer {
     passportNo,
     passportLast4: String(raw.passportLast4 ?? raw.passport_last4 ?? "") || maskedLast4(passportNo),
     dateOfBirth: (raw.dateOfBirth ?? raw.date_of_birth ?? null) as string | null,
+    passportExpiresAt: (raw.passportExpiresAt ?? raw.passport_expires_at ?? null) as string | null,
     preferences:
       prefs && typeof prefs === "object" && !Array.isArray(prefs)
         ? (prefs as Record<string, unknown>)
@@ -100,6 +101,7 @@ export class ApiCustomerRepository implements CustomerRepository {
         nationality: input.nationality ?? "",
         passport_no: input.passportNo ?? "",
         date_of_birth: input.dateOfBirth || null,
+        passport_expires_at: input.passportExpiresAt || null,
         special_requirements: input.specialRequirements ?? "",
         notes: input.notes ?? "",
       }),
@@ -126,6 +128,8 @@ export class ApiCustomerRepository implements CustomerRepository {
         passport_no: passportPatchValue(input.passportNo),
         date_of_birth: input.dateOfBirth,
         clear_dob: input.clearDob,
+        passport_expires_at: input.passportExpiresAt,
+        clear_passport_expires_at: input.clearPassportExpiry,
         special_requirements: input.specialRequirements,
         notes: input.notes,
         preferences: input.preferences,
@@ -280,6 +284,7 @@ export class MemoryCustomerRepository implements CustomerRepository {
       passportNo: toMaskedSecret(input.passportNo),
       passportLast4: maskedLast4(toMaskedSecret(input.passportNo)),
       dateOfBirth: input.dateOfBirth,
+      passportExpiresAt: input.passportExpiresAt ?? null,
       specialRequirements: input.specialRequirements ?? "",
       notes: input.notes ?? "",
       isActive: true,
@@ -313,6 +318,7 @@ export class MemoryCustomerRepository implements CustomerRepository {
           passportNo,
           passportLast4: passportNo ? maskedLast4(passportNo) : undefined,
           dateOfBirth: input.clearDob ? null : input.dateOfBirth,
+          passportExpiresAt: input.clearPassportExpiry ? null : input.passportExpiresAt,
           specialRequirements: input.specialRequirements,
           notes: input.notes,
         }).filter(([, v]) => v !== undefined),

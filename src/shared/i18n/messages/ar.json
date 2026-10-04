@@ -764,8 +764,8 @@
   },
   "customers": {
     "title": "العملاء",
-    "subtitle": "بحث وفتح ملف العميل 360",
-    "searchPlaceholder": "ابحث بالاسم أو الهاتف أو جواز السفر",
+    "subtitle": "الملفات الشخصية ووثائق السفر والعلاقة الكاملة في مكان واحد",
+    "searchPlaceholder": "ابحث بالاسم أو الهاتف أو البريد أو الجواز",
     "create": "عميل جديد",
     "empty": "لا يوجد عملاء بعد",
     "emptyHint": "جرّب مسح عوامل التصفية أو أنشئ عميلاً جديداً.",
@@ -855,7 +855,262 @@
     "createdToastBody": "السجل جاهز في ملف العميل 360.",
     "passportUnchanged": "بدون تغيير ({masked})",
     "passportUnchangedHint": "اتركه فارغًا للإبقاء على رقم الجواز الحالي.",
-    "anonymized": "مجهول الهوية"
+    "anonymized": "مجهول الهوية",
+    "emptyFiltered": "لا يوجد عملاء مطابقون",
+    "emptyFilteredHint": "جرّب بحثًا آخر أو امسح عوامل التصفية.",
+    "truncated": "يتم عرض أول {count} نتيجة — حسّن البحث لتضييق النتائج.",
+    "quick": {
+      "label": "تصفية سريعة",
+      "all": "العملاء",
+      "passport": "جواز يحتاج إجراء",
+      "incomplete": "ملفات غير مكتملة",
+      "recent": "أُضيفوا هذا الشهر"
+    },
+    "view": {
+      "label": "العرض",
+      "cards": "بطاقات",
+      "table": "جدول"
+    },
+    "card": {
+      "completeness": "اكتمال الملف {pct}%",
+      "noPassport": "لا يوجد جواز",
+      "call": "اتصال",
+      "whatsapp": "واتساب",
+      "email": "البريد",
+      "open": "الملف"
+    },
+    "passportStatus": {
+      "missing": "لا يوجد جواز",
+      "valid": "الجواز ساري",
+      "expiring": "الجواز يقترب من الانتهاء",
+      "expired": "الجواز منتهي"
+    },
+    "form": {
+      "createTitle": "عميل جديد",
+      "createSubtitle": "أنشئ ملف مسافر. الاسم والهاتف فقط مطلوبان.",
+      "editTitle": "تعديل الملف",
+      "editSubtitle": "حافظ على تحديث بيانات الاتصال ووثائق السفر.",
+      "submitCreate": "إنشاء العميل",
+      "submitEdit": "حفظ التغييرات",
+      "createError": "تعذّر إنشاء العميل",
+      "saveError": "تعذّر حفظ العميل",
+      "sections": {
+        "identity": {
+          "title": "الهوية",
+          "hint": "الاسم كما في الجواز وتاريخ الميلاد والجنسية"
+        },
+        "contact": {
+          "title": "التواصل",
+          "hint": "كيف يتواصل الفريق مع العميل"
+        },
+        "documents": {
+          "title": "وثائق السفر",
+          "hint": "تُخزَّن مشفّرة وتظهر للفريق مقنّعة"
+        },
+        "notes": {
+          "title": "الرعاية والملاحظات",
+          "hint": "المساعدة الخاصة والملاحظات الداخلية"
+        }
+      },
+      "fields": {
+        "fullName": "الاسم الكامل (لاتيني)",
+        "fullNamePh": "كما هو مكتوب في الجواز",
+        "fullNameAr": "الاسم الكامل (عربي)",
+        "dateOfBirth": "تاريخ الميلاد",
+        "nationality": "الجنسية",
+        "nationalityPh": "مثال: السعودية",
+        "phone": "الجوال / واتساب",
+        "email": "البريد الإلكتروني",
+        "passportNo": "رقم الجواز",
+        "passportKeep": "بدون تغيير ({masked})",
+        "passportKeepHint": "اتركه فارغًا للإبقاء على الرقم الحالي.",
+        "passportExpiresAt": "تاريخ انتهاء الجواز",
+        "passportExpiredHint": "انتهت صلاحية هذا الجواز.",
+        "passportExpiringHint": "تبقّى أقل من 6 أشهر (ينتهي في {date}).",
+        "specialRequirements": "مساعدة خاصة",
+        "specialRequirementsPh": "كرسي متحرك، نظام غذائي، احتياجات طبية…",
+        "notes": "ملاحظات داخلية",
+        "notesPh": "مرئية للفريق فقط"
+      },
+      "errors": {
+        "fullName": "أدخل الاسم الكامل للعميل.",
+        "phone": "أدخل رقم هاتف صالحًا.",
+        "email": "أدخل بريدًا إلكترونيًا صالحًا.",
+        "date": "أدخل تاريخًا صالحًا.",
+        "expiryBeforeBirth": "يجب أن يكون تاريخ الانتهاء بعد تاريخ الميلاد."
+      },
+      "duplicates": {
+        "title": "{count, plural, one {يوجد ملف مشابه بالفعل} other {توجد # ملفات مشابهة بالفعل}}",
+        "reasons": {
+          "phone": "نفس الهاتف",
+          "email": "نفس البريد",
+          "passport": "نفس الجواز",
+          "name_fuzzy": "اسم مشابه"
+        }
+      }
+    },
+    "profile": {
+      "back": "العملاء",
+      "loadError": "تعذّر تحميل العميل",
+      "edit": "تعديل",
+      "age": "{age} سنة",
+      "since": "عميل منذ {date}",
+      "anonymized": "مُخفى الهوية",
+      "call": "اتصال",
+      "whatsapp": "واتساب",
+      "email": "البريد",
+      "write": "مراسلة",
+      "newBooking": "حجز جديد",
+      "updated": "تم تحديث الملف",
+      "merged": "تم دمج العملاء",
+      "mergedBanner": "تم دمج هذا الملف في عميل آخر.",
+      "openMerged": "افتح الملف الحالي",
+      "anonymizedBanner": "تم محو البيانات الشخصية لهذا العميل (KVKK). يُحتفظ بالسجل لأغراض التقارير.",
+      "tabsLabel": "أقسام الملف",
+      "tabs": {
+        "overview": "نظرة عامة",
+        "family": "العائلة",
+        "bookings": "الحجوزات",
+        "payments": "المدفوعات",
+        "documents": "المستندات",
+        "tasks": "المهام",
+        "activity": "النشاط"
+      },
+      "stats": {
+        "bookings": "الحجوزات",
+        "paid": "المدفوع",
+        "moreCurrencies": "+{count} عملات أخرى",
+        "openTasks": "مهام مفتوحة",
+        "lastActivity": "آخر نشاط {time}",
+        "completeness": "اكتمال الملف"
+      },
+      "sections": {
+        "personal": "المعلومات الشخصية",
+        "documents": "وثائق السفر",
+        "notes": "الرعاية والملاحظات",
+        "completeness": "قائمة اكتمال الملف",
+        "family": "العائلة والمرافقون",
+        "recent": "آخر النشاطات"
+      },
+      "fields": {
+        "phone": "الجوال / واتساب",
+        "email": "البريد الإلكتروني",
+        "nationality": "الجنسية",
+        "dateOfBirth": "تاريخ الميلاد",
+        "nameAr": "الاسم بالعربية",
+        "passport": "رقم الجواز",
+        "passportExpiry": "تاريخ انتهاء الجواز",
+        "specialRequirements": "مساعدة خاصة",
+        "notes": "ملاحظات داخلية"
+      },
+      "notSet": "غير محدد",
+      "noRequirements": "لا حاجة لمساعدة خاصة",
+      "noNotes": "لا توجد ملاحظات بعد",
+      "passportExpiredHint": "منتهي — يجب التجديد قبل حجز السفر",
+      "passportExpiringHint": "تبقّى أقل من 6 أشهر على الصلاحية",
+      "complete": "كل ما تحتاجه العمليات متوفر.",
+      "missingHint": "{count, plural, one {ينقص تفصيل واحد} other {تنقص # تفاصيل}} قبل الرحلة القادمة.",
+      "missing": {
+        "phone": "رقم الهاتف",
+        "email": "البريد الإلكتروني",
+        "nationality": "الجنسية",
+        "passport": "رقم الجواز",
+        "passportExpiry": "تاريخ انتهاء الجواز",
+        "dateOfBirth": "تاريخ الميلاد",
+        "nameAr": "الاسم بالعربية"
+      },
+      "completeProfile": "أكمل الملف",
+      "seeAll": "عرض الكل",
+      "familyEmpty": "لا يوجد مرافقون مرتبطون بعد.",
+      "recentEmpty": "لم يحدث شيء بعد.",
+      "empty": {
+        "payments": "لا توجد مدفوعات بعد",
+        "documents": "لا توجد مستندات بعد",
+        "tasks": "لا توجد مهام بعد",
+        "activity": "لا يوجد نشاط بعد"
+      },
+      "menu": {
+        "label": "إجراءات أخرى",
+        "linkCompanion": "ربط مرافق",
+        "merge": "دمج ملف مكرر",
+        "export": "تصدير البيانات (KVKK)",
+        "anonymize": "إخفاء الهوية"
+      },
+      "family": {
+        "add": "إضافة مرافق",
+        "count": "{count, plural, one {مرافق واحد} other {# مرافقين}}",
+        "empty": "لا يوجد مرافقون مرتبطون",
+        "emptyHint": "اربط الزوج أو الأبناء أو شركاء السفر لحجزهم معًا.",
+        "linked": "تم ربط المرافق",
+        "removed": "تمت إزالة المرافق",
+        "unlink": "إلغاء ربط {name}",
+        "unlinkTitle": "إلغاء ربط المرافق؟",
+        "unlinkBody": "يبقى {name} عميلًا؛ تتم إزالة رابط العائلة فقط.",
+        "unlinkConfirm": "إلغاء الربط"
+      },
+      "bookings": {
+        "count": "{count, plural, one {حجز واحد} other {# حجوزات}}",
+        "empty": "لا توجد حجوزات بعد",
+        "emptyHint": "أنشئ حجزًا أو حوّل أحد العملاء المحتملين لهذا العميل.",
+        "pax": "{count, plural, one {مسافر واحد} other {# مسافرين}}",
+        "total": "الإجمالي",
+        "paid": "المدفوع",
+        "balance": "المتبقي",
+        "settled": "مسدَّد",
+        "paidPct": "مدفوع {pct}%"
+      }
+    },
+    "timeline": {
+      "payment": "دفعة {amount}",
+      "booking": "حجز #{ref}",
+      "balance": "المتبقي {amount}",
+      "source": "عبر {source}",
+      "kinds": {
+        "lead": "عميل محتمل",
+        "booking": "حجز",
+        "payment": "دفعة",
+        "document": "مستند",
+        "task": "مهمة",
+        "other": "نشاط"
+      },
+      "methods": {
+        "cash": "نقدًا",
+        "card": "بطاقة",
+        "bank_transfer": "تحويل بنكي",
+        "transfer": "تحويل بنكي",
+        "online": "عبر الإنترنت",
+        "cheque": "شيك",
+        "other": "أخرى"
+      },
+      "documentKinds": {
+        "passport": "جواز سفر",
+        "visa": "تأشيرة",
+        "receipt": "إيصال",
+        "photo": "صورة",
+        "other": "أخرى"
+      },
+      "status": {
+        "open": "مفتوحة",
+        "in_progress": "قيد التنفيذ",
+        "done": "منجزة",
+        "cancelled": "ملغاة",
+        "new": "جديد",
+        "contacted": "تم التواصل",
+        "qualified": "مؤهل",
+        "proposal": "عرض",
+        "paid": "مدفوع",
+        "won": "ناجح",
+        "lost": "خاسر",
+        "draft": "مسودة",
+        "quoted": "مسعّر",
+        "option_hold": "محجوز مؤقتًا",
+        "confirmed": "مؤكد",
+        "partially_paid": "مدفوع جزئيًا",
+        "ready": "جاهز",
+        "travelled": "سافر",
+        "completed": "مكتمل"
+      }
+    }
   },
   "pipeline": {
     "title": "خط مبيعات CRM",

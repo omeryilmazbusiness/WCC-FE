@@ -1,30 +1,32 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { useLocale, useTranslations } from "next-intl";
-import type { ColumnDef } from "@tanstack/react-table";
+import { useState, type ReactElement, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import {
-  createCustomerRepository,
-  type CompanionLink,
-  type Customer,
-  type TimelineItem,
-} from "@/entities/customer";
-import { BookingStatusChip, createBookingRepository, type Booking } from "@/entities/booking";
+  ArrowLeft,
+  CalendarPlus,
+  FileText,
+  GitMerge,
+  History,
+  LayoutGrid,
+  ListTodo,
+  Plane,
+  ShieldOff,
+  UsersRound,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
+import type { TimelineItem } from "@/entities/customer";
 import { useCan } from "@/entities/viewer";
-import { EditCustomerDialog } from "@/features/edit-customer";
-import { MergeCustomerDialog } from "@/features/merge-customer";
-import { LinkCompanionDialog } from "@/features/link-companion";
-import { formatDate, formatDateTime, formatMoney } from "@/shared/lib/format";
-import { Link } from "@/shared/i18n/navigation";
+import { CreateBookingDialog } from "@/features/create-booking";
+import { CustomerFormDialog } from "@/features/customer-form";
 import { routes } from "@/shared/config/routes";
+import { Link, useRouter } from "@/shared/i18n/navigation";
+import { cn } from "@/shared/lib/cn";
 import {
-  Badge,
-  Button,
-  DataTable,
+  Bone,
   EmptyState,
   LoadingState,
-  MaskedSecret,
-  PageHeader,
   QueryState,
   Screen,
   Tabs,
@@ -33,173 +35,46 @@ import {
   TabsTrigger,
   useMutationFeedback,
 } from "@/shared/ui";
-import { PrivacyMenu } from "./privacy-menu";
-
-const repo = createCustomerRepository();
-const bookingRepo = createBookingRepository();
+import { bookingRepository, customerRepository, useCustomer360 } from "../model/use-customer-360";
+import { useProfileTab, type ProfileTab } from "../model/use-profile-tab";
+import { BookingsTab } from "./bookings-tab";
+import { CustomerActionsMenu } from "./customer-actions-menu";
+import { FamilyTab } from "./family-tab";
+import { OverviewTab } from "./overview-tab";
+import { ProfileHero, QuickActionButton } from "./profile-hero";
+import { TimelineList } from "./timeline-list";
 
 type Props = { customerId: string };
 
+const TAB_ICON: Record<ProfileTab, LucideIcon> = {
+  overview: LayoutGrid,
+  family: UsersRound,
+  bookings: Plane,
+  payments: Wallet,
+  documents: FileText,
+  tasks: ListTodo,
+  activity: History,
+};
+
+/** Customer profile: hero with the essentials, then one tab per area of the relationship. */
 export function Customer360View({ customerId }: Props) {
-  const t = useTranslations("customers");
+  const t = useTranslations("customers.profile");
   const tc = useTranslations("common");
-  const tb = useTranslations("bookings");
-  const locale = useLocale();
   const feedback = useMutationFeedback();
+  const router = useRouter();
   const canWrite = useCan("customers.write");
-  const canBookings = useCan("bookings.read");
+  const canWriteBookings = useCan("bookings.write");
   const canRevealPii = useCan("pii.read");
-  const [customer, setCustomer] = useState<Customer | null>(null);
-  const [timeline, setTimeline] = useState<TimelineItem[]>([]);
-  const [companions, setCompanions] = useState<CompanionLink[]>([]);
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [error, setError] = useState<unknown>(null);
-  const [tab, setTab] = useState("identity");
+  const data = useCustomer360(customerId);
+  const [tab, selectTab] = useProfileTab();
+  const [editing, setEditing] = useState(false);
+  const customer = data.customer.data;
 
-  const refresh = useCallback(async () => {
-    try {
-      setError(null);
-      const [c, tl, comps, bks] = await Promise.all([
-        repo.getById(customerId),
-        repo.timeline(customerId),
-        repo.listCompanions(customerId),
-        canBookings ? bookingRepo.list({ customerId }) : Promise.resolve<Booking[]>([]),
-      ]);
-      setCustomer(c);
-      setTimeline(tl);
-      setCompanions(comps);
-      setBookings(bks);
-    } catch (err) {
-      setError(err);
-    }
-  }, [customerId, canBookings]);
-
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  const companionColumns = useMemo<ColumnDef<CompanionLink>[]>(
-    () => [
-      {
-        id: "name",
-        header: t("name"),
-        cell: ({ row }) => {
-          const name =
-            row.original.Companion?.fullName ??
-            row.original.companion?.full_name ??
-            row.original.companion_id;
-          return (
-            <Link
-              href={routes.customer(row.original.companion_id)}
-              className="font-semibold underline-offset-4 hover:underline"
-            >
-              {name}
-            </Link>
-          );
-        },
-      },
-      { accessorKey: "relation", header: t("relation") },
-      {
-        id: "actions",
-        header: tc("actions"),
-        cell: ({ row }) =>
-          canWrite ? (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={async () => {
-                try {
-                  await repo.unlinkCompanion(customerId, row.original.companion_id);
-                  feedback.success(t("companionRemoved"));
-                  void refresh();
-                } catch (err) {
-                  feedback.error(err);
-                }
-              }}
-            >
-              {t("unlink")}
-            </Button>
-          ) : null,
-      },
-    ],
-    [t, tc, customerId, feedback, refresh, canWrite],
-  );
-
-  const timelineColumns = useMemo<ColumnDef<TimelineItem>[]>(
-    () => [
-      {
-        accessorKey: "occurred_at",
-        header: t("when"),
-        cell: ({ row }) => formatDateTime(row.original.occurred_at, locale),
-      },
-      {
-        accessorKey: "kind",
-        header: t("kind"),
-        cell: ({ row }) => <Badge>{row.original.kind}</Badge>,
-      },
-      {
-        accessorKey: "title",
-        header: t("titleLabel"),
-        cell: ({ row }) =>
-          row.original.kind === "booking" ? (
-            <Link
-              href={routes.booking(row.original.id)}
-              className="font-semibold underline-offset-4 hover:underline"
-            >
-              {row.original.title}
-            </Link>
-          ) : (
-            row.original.title
-          ),
-      },
-      {
-        accessorKey: "status",
-        header: t("status"),
-        cell: ({ row }) => row.original.status || "—",
-      },
-    ],
-    [t, locale],
-  );
-
-  const bookingColumns = useMemo<ColumnDef<Booking>[]>(
-    () => [
-      {
-        accessorKey: "id",
-        header: tb("fields.id"),
-        cell: ({ row }) => (
-          <Link
-            href={routes.booking(row.original.id)}
-            className="font-semibold underline-offset-4 hover:underline"
-          >
-            {row.original.id.slice(0, 8)}
-          </Link>
-        ),
-      },
-      {
-        accessorKey: "status",
-        header: tb("fields.status"),
-        cell: ({ row }) => <BookingStatusChip status={row.original.status} />,
-      },
-      { accessorKey: "paxCount", header: tb("fields.pax") },
-      {
-        id: "balance",
-        header: tb("fields.balance"),
-        cell: ({ row }) =>
-          formatMoney(row.original.balanceAmt, locale, row.original.currency),
-      },
-    ],
-    [tb, locale],
-  );
-
-  if (error) {
+  if (data.customer.error && !customer) {
     return (
       <Screen>
-        <QueryState
-          error={error}
-          errorTitle={t("loadError")}
-          retryLabel={tc("retry")}
-          onRetry={() => void refresh()}
-        >
+        <BackLink label={t("back")} />
+        <QueryState error={data.customer.error} errorTitle={t("loadError")} retryLabel={tc("retry")} onRetry={() => void data.customer.reload()}>
           {null}
         </QueryState>
       </Screen>
@@ -208,211 +83,212 @@ export function Customer360View({ customerId }: Props) {
   if (!customer) {
     return (
       <Screen>
+        <BackLink label={t("back")} />
         <LoadingState variant="detail" label={tc("loading")} />
       </Screen>
     );
   }
 
+  const anonymized = Boolean(customer.anonymizedAt);
+  const byKind = (kind: string) => data.timeline.filter((i) => i.kind === kind);
+  const payments = byKind("payment");
+  const documents = byKind("document");
+  const tasks = byKind("task");
+  const counts: Partial<Record<ProfileTab, number>> = {
+    family: data.companions.length,
+    bookings: data.canBookings ? data.bookings.length : undefined,
+    payments: payments.length,
+    documents: documents.length,
+    tasks: data.stats.openTasks || undefined,
+  };
+  const tabs = (["overview", "family", "bookings", "payments", "documents", "tasks", "activity"] as const).filter(
+    (k) => k !== "bookings" || data.canBookings,
+  );
+
+  const bookingDialog = (trigger: ReactElement) =>
+    canWriteBookings && !anonymized ? (
+      <CreateBookingDialog
+        repository={bookingRepository}
+        defaultCustomerId={customer.id}
+        onCreated={(bookingId) => router.push(routes.booking(bookingId))}
+        trigger={trigger}
+      />
+    ) : null;
+
   return (
-    <Screen>
-      <PageHeader
-        title={customer.fullName}
-        description={customer.fullNameAr || undefined}
-        actions={
-          <div className="flex flex-wrap gap-2">
-            {customer.anonymizedAt ? (
-              <Badge className="self-center bg-zinc-900 normal-case text-white">{t("anonymized")}</Badge>
-            ) : null}
-            {canWrite ? (
-              <>
-                <EditCustomerDialog
-                  customer={customer}
-                  repository={repo}
-                  onSaved={() => {
-                    feedback.success(t("updatedToast"));
-                    void refresh();
-                  }}
-                />
-                <MergeCustomerDialog
-                  target={customer}
-                  repository={repo}
-                  onMerged={() => {
-                    feedback.success(t("mergedToast"));
-                    void refresh();
-                  }}
-                />
-                <LinkCompanionDialog
-                  customerId={customer.id}
-                  repository={repo}
-                  onLinked={() => {
-                    feedback.success(t("companionLinked"));
-                    void refresh();
-                  }}
-                />
-              </>
-            ) : null}
-            <PrivacyMenu customer={customer} repository={repo} onAnonymized={() => void refresh()} />
-          </div>
+    <Screen data-testid="customer-360">
+      <BackLink label={t("back")} />
+
+      {customer.mergedIntoId ? (
+        <Banner icon={GitMerge} tone="violet">
+          {t("mergedBanner")}{" "}
+          <Link href={routes.customer(customer.mergedIntoId)} className="font-semibold underline underline-offset-4">
+            {t("openMerged")}
+          </Link>
+        </Banner>
+      ) : null}
+      {anonymized ? <Banner icon={ShieldOff} tone="zinc">{t("anonymizedBanner")}</Banner> : null}
+
+      <ProfileHero
+        customer={customer}
+        stats={data.stats}
+        canWrite={canWrite}
+        onEdit={() => setEditing(true)}
+        bookingAction={bookingDialog(<QuickActionButton icon={CalendarPlus} tone="sky" label={t("newBooking")} data-testid="customer-new-booking" />)}
+        menu={
+          <CustomerActionsMenu
+            customer={customer}
+            repository={customerRepository}
+            onLinked={() => {
+              feedback.success(t("family.linked"));
+              void data.refreshCompanions();
+            }}
+            onMerged={() => {
+              feedback.success(t("merged"));
+              void data.reloadAll();
+            }}
+            onAnonymized={() => void data.reloadAll()}
+          />
         }
       />
 
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="flex h-auto flex-wrap gap-1">
-          <TabsTrigger value="identity">{t("identity")}</TabsTrigger>
-          <TabsTrigger value="family">{t("family")}</TabsTrigger>
-          <TabsTrigger value="bookings">{t("bookings")}</TabsTrigger>
-          <TabsTrigger value="history">{t("history")}</TabsTrigger>
-          <TabsTrigger value="conversations">{t("conversations")}</TabsTrigger>
-          <TabsTrigger value="docs">{t("docs")}</TabsTrigger>
-          <TabsTrigger value="payments">{t("payments")}</TabsTrigger>
-          <TabsTrigger value="tasks">{t("tasksTab")}</TabsTrigger>
-          <TabsTrigger value="notes">{t("notes")}</TabsTrigger>
-          <TabsTrigger value="activity">{t("activity")}</TabsTrigger>
-        </TabsList>
+      <Tabs value={tab} onValueChange={selectTab} className="mt-5">
+        <div className="-mx-1 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <TabsList className="h-auto w-max min-w-full gap-1 rounded-[22px] p-1.5" aria-label={t("tabsLabel")}>
+            {tabs.map((key) => {
+              const Icon = TAB_ICON[key];
+              const count = counts[key];
+              return (
+                <TabsTrigger
+                  key={key}
+                  value={key}
+                  className="group gap-2 rounded-2xl px-3.5 py-2.5 text-[13.5px]"
+                  data-testid={`customer-tab-${key}`}
+                >
+                  <Icon className="h-[18px] w-[18px]" strokeWidth={2.1} aria-hidden />
+                  {t(`tabs.${key}`)}
+                  {count ? (
+                    <span className="rounded-full bg-zinc-100 px-1.5 py-px text-[11px] font-semibold tabular-nums text-zinc-500 group-data-[state=active]:bg-white/20 group-data-[state=active]:text-white">
+                      {count}
+                    </span>
+                  ) : null}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+        </div>
 
-        <TabsContent value="identity" className="mt-4">
-          <dl className="grid grid-cols-1 gap-x-10 gap-y-6 rounded-[24px] border border-zinc-200/80 bg-white p-6 text-sm sm:grid-cols-2 md:grid-cols-3">
-            <Field label={t("phone")} value={customer.phone} />
-            <Field label={t("email")} value={customer.email || "—"} />
-            <Field label={t("nationality")} value={customer.nationality || "—"} />
-            <Field
-              label={t("passport")}
-              value={
-                <MaskedSecret
-                  id={customer.id}
-                  masked={customer.passportNo}
-                  canReveal={canRevealPii}
-                  onReveal={() => repo.revealPassport(customer.id)}
-                />
-              }
-            />
-            <Field
-              label={t("dob")}
-              value={
-                customer.dateOfBirth
-                  ? formatDate(customer.dateOfBirth, locale)
-                  : "—"
-              }
-            />
-            <Field
-              label={t("specialReq")}
-              value={customer.specialRequirements || "—"}
-            />
-            <Field
-              label={t("notes")}
-              value={customer.notes || "—"}
-              className="col-span-full"
-            />
-          </dl>
+        <TabsContent value="overview" className="mt-4">
+          <OverviewTab
+            customer={customer}
+            repository={customerRepository}
+            canRevealPii={canRevealPii}
+            canWrite={canWrite}
+            companions={data.companions}
+            timeline={data.timeline}
+            onEdit={() => setEditing(true)}
+            onOpenTab={selectTab}
+          />
         </TabsContent>
 
         <TabsContent value="family" className="mt-4">
-          {companions.length === 0 ? (
-            <EmptyState title={t("familyEmpty")} description={t("familyEmptyHint")} />
+          {data.companionsLoading ? (
+            <ListSkeleton />
           ) : (
-            <DataTable columns={companionColumns} data={companions} />
+            <FamilyTab
+              customerId={customer.id}
+              companions={data.companions}
+              repository={customerRepository}
+              canWrite={canWrite && !anonymized}
+              onChanged={() => void data.refreshCompanions()}
+            />
           )}
         </TabsContent>
 
-        <TabsContent value="bookings" className="mt-4">
-          {bookings.length === 0 ? (
-            <EmptyState title={t("bookingsEmpty")} description={t("bookingsEmptyHint")} />
-          ) : (
-            <DataTable columns={bookingColumns} data={bookings} />
-          )}
-        </TabsContent>
+        {data.canBookings ? (
+          <TabsContent value="bookings" className="mt-4">
+            {data.bookingsLoading ? (
+              <ListSkeleton />
+            ) : (
+              <BookingsTab
+                bookings={data.bookings}
+                action={bookingDialog(
+                  <button
+                    type="button"
+                    className="inline-flex h-10 items-center gap-2 rounded-2xl bg-zinc-950 px-4 text-[13px] font-semibold text-white transition hover:bg-zinc-800"
+                  >
+                    <CalendarPlus className="h-4 w-4" aria-hidden />
+                    {t("newBooking")}
+                  </button>,
+                )}
+              />
+            )}
+          </TabsContent>
+        ) : null}
 
-        <TabsContent value="history" className="mt-4">
-          <TimelineTable
-            items={timeline.filter((i) => i.kind === "lead" || i.kind === "booking")}
-            columns={timelineColumns}
-            empty={t("historyEmpty")}
-          />
-        </TabsContent>
-
-        <TabsContent value="conversations" className="mt-4">
-          <EmptyState
-            title={t("conversationsEmpty")}
-            description={t("conversationsHint")}
-          />
-          <Link
-            href={routes.inbox}
-            className="mt-3 inline-block text-xs font-semibold text-sky-700 hover:underline"
-          >
-            {t("openInbox")}
-          </Link>
-        </TabsContent>
-
-        <TabsContent value="docs" className="mt-4">
-          <TimelineTable
-            items={timeline.filter((i) => i.kind === "document")}
-            columns={timelineColumns}
-            empty={t("docsEmpty")}
-          />
-        </TabsContent>
-
-        <TabsContent value="payments" className="mt-4">
-          <TimelineTable
-            items={timeline.filter((i) => i.kind === "payment")}
-            columns={timelineColumns}
-            empty={t("paymentsEmpty")}
-          />
-        </TabsContent>
-
-        <TabsContent value="tasks" className="mt-4">
-          <TimelineTable
-            items={timeline.filter((i) => i.kind === "task")}
-            columns={timelineColumns}
-            empty={t("tasksEmpty")}
-          />
-        </TabsContent>
-
-        <TabsContent value="notes" className="mt-4">
-          <div className="rounded-[24px] border border-zinc-200/80 bg-white p-6 text-sm font-medium text-zinc-700 whitespace-pre-wrap">
-            {customer.notes || t("notesEmpty")}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="activity" className="mt-4">
-          <TimelineTable
-            items={timeline}
-            columns={timelineColumns}
-            empty={t("activityEmpty")}
-          />
-        </TabsContent>
+        <TimelineTab value="payments" loading={data.timelineLoading} items={payments} icon={Wallet} empty={t("empty.payments")} />
+        <TimelineTab value="documents" loading={data.timelineLoading} items={documents} icon={FileText} empty={t("empty.documents")} />
+        <TimelineTab value="tasks" loading={data.timelineLoading} items={tasks} icon={ListTodo} empty={t("empty.tasks")} />
+        <TimelineTab value="activity" loading={data.timelineLoading} items={data.timeline} icon={History} empty={t("empty.activity")} />
       </Tabs>
+
+      <CustomerFormDialog
+        repository={customerRepository}
+        customer={customer}
+        open={editing}
+        onOpenChange={setEditing}
+        onSaved={({ customer: saved }) => {
+          data.customer.setData(saved);
+          feedback.success(t("updated"));
+          void data.customer.refresh();
+        }}
+      />
     </Screen>
   );
 }
 
-function TimelineTable({
-  items,
-  columns,
-  empty,
-}: {
-  items: TimelineItem[];
-  columns: ColumnDef<TimelineItem>[];
-  empty: string;
-}) {
-  if (items.length === 0) return <EmptyState title={empty} />;
-  return <DataTable columns={columns} data={items} />;
+function TimelineTab({ value, loading, items, icon, empty }: { value: ProfileTab; loading: boolean; items: TimelineItem[]; icon: LucideIcon; empty: string }) {
+  return (
+    <TabsContent value={value} className="mt-4">
+      {loading ? <ListSkeleton /> : items.length === 0 ? <EmptyState icon={icon} title={empty} /> : <TimelineList items={items} data-testid={`customer-${value}`} />}
+    </TabsContent>
+  );
 }
 
-function Field({
-  label,
-  value,
-  className,
-}: {
-  label: string;
-  value: ReactNode;
-  className?: string;
-}) {
+function ListSkeleton() {
   return (
-    <div className={className}>
-      <dt className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-        {label}
-      </dt>
-      <dd className="mt-1.5 text-[15px] font-medium text-zinc-950">{value}</dd>
+    <div className="space-y-2.5" aria-hidden>
+      {[0, 1, 2].map((i) => (
+        <Bone key={i} className="h-[72px] rounded-[24px]" />
+      ))}
+    </div>
+  );
+}
+
+function BackLink({ label }: { label: string }) {
+  return (
+    <Link
+      href={routes.customers}
+      className="mb-3 inline-flex h-9 items-center gap-1.5 rounded-xl px-2 text-[13px] font-semibold text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900"
+      data-testid="customer-back"
+    >
+      <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden />
+      {label}
+    </Link>
+  );
+}
+
+function Banner({ icon: Icon, tone, children }: { icon: LucideIcon; tone: "violet" | "zinc"; children: ReactNode }) {
+  return (
+    <div
+      className={cn(
+        "mb-3 flex items-center gap-2.5 rounded-[20px] px-4 py-3 text-[13px] font-medium",
+        tone === "violet" ? "bg-violet-50 text-violet-900" : "bg-zinc-100 text-zinc-700",
+      )}
+      role="status"
+    >
+      <Icon className="h-4 w-4 shrink-0" aria-hidden />
+      <p>{children}</p>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { Customer, CustomerRepository } from "@/entities/customer";
 import { useCan } from "@/entities/viewer";
+import { useControllableOpen } from "@/shared/lib/use-controllable-open";
 import {
   Button,
   Dialog,
@@ -20,14 +21,18 @@ type Props = {
   target: Customer;
   repository: CustomerRepository;
   onMerged?: (customer: Customer) => void;
+  /** Replaces the default trigger; omit with `open` to control the dialog from outside. */
+  trigger?: React.ReactElement;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
-export function MergeCustomerDialog({ target, repository, onMerged }: Props) {
+export function MergeCustomerDialog({ target, repository, onMerged, trigger, open: openProp, onOpenChange }: Props) {
   const allowed = useCan("customers.write");
   const t = useTranslations("customers");
   const tc = useTranslations("common");
   const feedback = useMutationFeedback();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen, controlled] = useControllableOpen(openProp, onOpenChange);
   const [query, setQuery] = useState("");
   const [candidates, setCandidates] = useState<Customer[]>([]);
   const [sourceId, setSourceId] = useState<string | null>(null);
@@ -75,11 +80,15 @@ export function MergeCustomerDialog({ target, repository, onMerged }: Props) {
         }
       }}
     >
-      <DialogTrigger asChild>
-        <Button type="button" variant="outline">
-          {t("merge")}
-        </Button>
-      </DialogTrigger>
+      {trigger || !controlled ? (
+        <DialogTrigger asChild>
+          {trigger ?? (
+            <Button type="button" variant="outline">
+              {t("merge")}
+            </Button>
+          )}
+        </DialogTrigger>
+      ) : null}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t("mergeTitle")}</DialogTitle>
