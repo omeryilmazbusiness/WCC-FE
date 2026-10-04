@@ -7,11 +7,16 @@ import type {
 } from "@/shared/api/auth-contract";
 
 /** All calls hit same-origin BFF routes; tokens are set as HttpOnly cookies there. */
-/** `company` scopes the sign-in to that company's login page (others' accounts are rejected). */
-export function login(email: string, password: string, company?: string): Promise<LoginResult> {
+/**
+ * `company` scopes the sign-in to that company's login page, `platform` to the platform
+ * admin page; accounts that do not belong there are rejected.
+ */
+export type LoginScope = { company?: string; platform?: boolean };
+
+export function login(email: string, password: string, scope: LoginScope = {}): Promise<LoginResult> {
   return bffHttp.request<LoginResult>("/auth/login", {
     method: "POST",
-    body: JSON.stringify(company ? { email, password, company } : { email, password }),
+    body: JSON.stringify({ email, password, ...scope }),
   });
 }
 

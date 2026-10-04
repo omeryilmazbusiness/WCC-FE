@@ -9,6 +9,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  PLATFORM_LOGIN_PATH,
+  PLATFORM_SIGN_IN,
   ROUTE_ROOTS,
   companyLoginPath,
   companyLoginSlug,
@@ -16,6 +18,7 @@ import {
   isCompanySlug,
   isWorkspaceScoped,
   parseWorkspaceRef,
+  rememberedLoginPath,
   resolveBranch,
   splitWorkspace,
   withWorkspace,
@@ -96,6 +99,20 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
     const start = src.indexOf("var reservedBranchSlugs");
     assert.ok(start >= 0 && src.slice(start, src.indexOf("\n", start)).includes('"login"'), "backend must reserve branch slug login");
   }
+}
+
+// platform admin sign-in page: `/platform/login` is neither a company page nor a workspace
+{
+  assert.equal(PLATFORM_LOGIN_PATH, routes.platformLogin);
+  assert.equal(companyLoginSlug("/platform/login"), null);
+  assert.deepEqual(splitWorkspace("/platform/login"), { workspace: null, rest: "/platform/login" });
+  assert.equal(isCompanySlug(PLATFORM_SIGN_IN), false);
+  assert.equal(isWorkspaceScoped("/platform/login"), false);
+  assert.equal(withWorkspace("/platform/login", { company: "acme", branch: "main" }), "/platform/login");
+  assert.equal(rememberedLoginPath(PLATFORM_SIGN_IN), "/platform/login");
+  assert.equal(rememberedLoginPath("acme"), "/acme/login");
+  assert.equal(rememberedLoginPath("setup"), null);
+  assert.equal(rememberedLoginPath(undefined), null);
 }
 
 // withWorkspace / withoutWorkspace

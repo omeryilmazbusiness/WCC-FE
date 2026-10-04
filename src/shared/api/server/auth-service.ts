@@ -40,11 +40,16 @@ export function hasTokens(res: BackendLoginResponse): res is BackendLoginRespons
   return Boolean(res.access_token && res.refresh_token);
 }
 
-/** `company` limits the sign-in to that company's users (its own login page). */
-export function backendLogin(email: string, password: string, meta: ClientMeta, company?: string) {
+/**
+ * The sign-in page used: `company` admits only that company's users, `platform` only
+ * platform admins; neither is the generic page (company users only).
+ */
+export type LoginScope = { company?: string; platform?: boolean };
+
+export function backendLogin(email: string, password: string, meta: ClientMeta, scope: LoginScope = {}) {
   return backendJson<BackendLoginResponse>(AUTH_ENDPOINTS.login, {
     method: "POST",
-    body: JSON.stringify(company ? { email, password, company } : { email, password }),
+    body: JSON.stringify({ email, password, ...scope }),
     meta,
   });
 }

@@ -98,6 +98,8 @@
     "welcomeTo": "مرحبًا بك في {company}",
     "companySubtitle": "سجّل الدخول إلى مساحة عملك",
     "genericTitle": "مرحبًا بعودتك",
+    "platformTitle": "لوحة المنصة",
+    "platformSubtitle": "سجّل الدخول بصفتك مسؤول المنصة",
     "emailPlaceholder": "name@company.com",
     "passwordPlaceholder": "مطلوب",
     "showPassword": "إظهار كلمة المرور",

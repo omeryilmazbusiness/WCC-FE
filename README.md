@@ -501,6 +501,9 @@ Demo mode only (`NEXT_PUBLIC_DEMO_MODE=true` with the backend unreachable); othe
 | `ops@wodi.local` | `ChangeMe123!` | `/workspace` |
 | `admin@wodi.local` | `ChangeMe123!` | `/admin/users` |
 
+Against the backend, platform admins sign in at `/{locale}/platform/login` only; company accounts use
+`/{locale}/{company}/login` or the generic `/{locale}/login`.
+
 ## F1–F8 coverage
 
 | Task | Status |

@@ -98,6 +98,8 @@
     "welcomeTo": "Welcome to {company}",
     "companySubtitle": "Sign in to your workspace",
     "genericTitle": "Welcome back",
+    "platformTitle": "Platform console",
+    "platformSubtitle": "Sign in as a platform administrator",
     "emailPlaceholder": "name@company.com",
     "passwordPlaceholder": "Required",
     "showPassword": "Show password",

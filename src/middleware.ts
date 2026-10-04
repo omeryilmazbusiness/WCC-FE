@@ -9,7 +9,7 @@ import {
   companyLoginPath,
   companyLoginSlug,
   formatWorkspaceRef,
-  isCompanySlug,
+  rememberedLoginPath,
   resolveBranch,
   splitWorkspace,
   withWorkspace,
@@ -17,7 +17,7 @@ import {
 
 const intlMiddleware = createMiddleware(routing);
 
-const publicPaths = [routes.login];
+const publicPaths = [routes.login, routes.platformLogin];
 
 /** `?any=1` on `/login` opens the generic page even when a company is remembered. */
 const ANY_COMPANY_PARAM = "any";
@@ -26,8 +26,9 @@ const ANY_COMPANY_PARAM = "any";
  * UX route guard only: reads the HMAC-signed HttpOnly session snapshot written by the BFF.
  * The backend re-checks every permission (and the branch) on each API call.
  *
- * Each company signs in at `/{locale}/{company}/login`. Signed out, `/login` and every
- * protected URL lead to the company in the URL or the remembered one, else the generic page.
+ * Each company signs in at `/{locale}/{company}/login`, platform admins at `/{locale}/platform/login`.
+ * Signed out, `/login` and every protected URL lead to the company in the URL or the remembered
+ * sign-in page, else the generic page.
  *
  * Signed-in pages live under `/{locale}/{company}/{branch}/...`: this rewrites them onto
  * the unprefixed app routes, passes the active branch id on, and redirects every other
@@ -53,14 +54,17 @@ export default async function middleware(req: NextRequest) {
 
   if (!session) {
     if (companyLogin) return intlMiddleware(req);
-    const remembered = req.cookies.get(COMPANY_COOKIE)?.value;
-    const company = urlWorkspace?.company ?? (isCompanySlug(remembered) ? remembered : null);
+    const signIn = urlWorkspace
+      ? companyLoginPath(urlWorkspace.company)
+      : rememberedLoginPath(req.cookies.get(COMPANY_COOKIE)?.value);
     if (isPublic && !urlWorkspace) {
-      if (company && !req.nextUrl.searchParams.has(ANY_COMPANY_PARAM)) return redirectTo(companyLoginPath(company), true);
+      if (signIn && rest !== routes.platformLogin && !req.nextUrl.searchParams.has(ANY_COMPANY_PARAM)) {
+        return redirectTo(signIn, true);
+      }
       return intlMiddleware(req);
     }
     if (pathWithoutLocale === "/") return intlMiddleware(req);
-    return redirectTo(company ? companyLoginPath(company) : routes.login);
+    return redirectTo(signIn ?? routes.login);
   }
 
   const ws = session.workspace;

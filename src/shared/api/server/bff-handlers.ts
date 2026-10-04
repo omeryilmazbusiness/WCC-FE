@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/shared/config/env";
 import { routes } from "@/shared/config/routes";
-import { isCompanySlug } from "@/shared/lib/workspace-path";
+import { isCompanySlug, PLATFORM_SIGN_IN } from "@/shared/lib/workspace-path";
 import {
   ApiError,
   isApiError,
@@ -96,6 +96,11 @@ async function readJson<T>(req: NextRequest): Promise<Partial<T>> {
   return (await req.json().catch(() => ({}))) as Partial<T>;
 }
 
+/** The sign-in page to remember for the viewer: their company, or the platform page for admins. */
+function signInOf(viewer: ViewerSession): string | undefined {
+  return viewer.workspace?.company.slug ?? (viewer.user.role === "admin" ? PLATFORM_SIGN_IN : undefined);
+}
+
 async function authenticatedResponse(
   tokens: TokenSet,
   viewer: ViewerSession,
@@ -110,7 +115,7 @@ async function authenticatedResponse(
   const res = NextResponse.json({ data: body });
   setTokenCookies(res, tokens);
   setSessionCookie(res, await signSession(viewer));
-  setCompanyCookie(res, viewer.workspace?.company.slug);
+  setCompanyCookie(res, signInOf(viewer));
   return res;
 }
 
@@ -148,7 +153,12 @@ async function completeLogin(login: BackendLoginResponse, meta: ClientMeta): Pro
 export async function handleLogin(req: NextRequest): Promise<NextResponse> {
   const csrf = csrfError(req);
   if (csrf) return errorResponse(csrf);
-  const { email, password, company } = await readJson<{ email: string; password: string; company: string }>(req);
+  const { email, password, company, platform } = await readJson<{
+    email: string;
+    password: string;
+    company: string;
+    platform: boolean;
+  }>(req);
   if (typeof email !== "string" || typeof password !== "string" || !email || !password) {
     return errorResponse(
       new ApiError({ status: 400, code: "validation_error", message: "Email and password are required" }),
@@ -156,7 +166,12 @@ export async function handleLogin(req: NextRequest): Promise<NextResponse> {
   }
   const meta = clientMetaFrom(req.headers);
   try {
-    const scope = typeof company === "string" && isCompanySlug(company) ? company : undefined;
+    const scope =
+      platform === true
+        ? { platform: true }
+        : typeof company === "string" && isCompanySlug(company)
+          ? { company }
+          : {};
     return await completeLogin(await backendLogin(email, password, meta, scope), meta);
   } catch (err) {
     if (env.demoMode && isNetworkError(err)) {
@@ -235,7 +250,7 @@ export async function handleMfaSetupConfirm(req: NextRequest): Promise<NextRespo
     const res = NextResponse.json({ data: body });
     setTokenCookies(res, tokens);
     setSessionCookie(res, await signSession(viewer));
-    setCompanyCookie(res, viewer.workspace?.company.slug);
+    setCompanyCookie(res, signInOf(viewer));
     clearEnrollmentCookie(res);
     return res;
   } catch (err) {

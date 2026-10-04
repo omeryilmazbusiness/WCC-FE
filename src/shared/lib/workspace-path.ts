@@ -29,10 +29,23 @@ export const ROUTE_ROOTS: ReadonlySet<string> = new Set([
   "admin",
   "rooming",
   "flights",
+  "platform",
 ]);
 
 /** Pages outside any workspace (reached before a session exists). */
-const UNSCOPED_ROOTS: ReadonlySet<string> = new Set(["login"]);
+const UNSCOPED_ROOTS: ReadonlySet<string> = new Set(["login", "platform"]);
+
+/** Remembered sign-in value of platform admins, who belong to no company. */
+export const PLATFORM_SIGN_IN = "platform";
+
+/** Platform admins sign in here (`routes.platformLogin`); every other account at its company's page. */
+export const PLATFORM_LOGIN_PATH = `/${PLATFORM_SIGN_IN}/login`;
+
+/** Sign-in page of a remembered value (company slug or {@link PLATFORM_SIGN_IN}), else null. */
+export function rememberedLoginPath(value: string | null | undefined): string | null {
+  if (value === PLATFORM_SIGN_IN) return PLATFORM_LOGIN_PATH;
+  return isCompanySlug(value) ? companyLoginPath(value) : null;
+}
 
 const SLUG = /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/;
 

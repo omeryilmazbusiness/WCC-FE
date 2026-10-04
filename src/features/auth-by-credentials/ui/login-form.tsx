@@ -30,9 +30,11 @@ const DEMO_DEFAULTS: FormValues = { email: "manager@wodi.local", password: "Chan
 type Props = {
   /** Set on a company's own login page: only that company's accounts may sign in. */
   company?: string;
+  /** Set on the platform sign-in page: only platform admins may sign in. */
+  platform?: boolean;
 };
 
-export function LoginForm({ company }: Props = {}) {
+export function LoginForm({ company, platform }: Props = {}) {
   const t = useTranslations("auth");
   const locale = useLocale();
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +86,7 @@ export function LoginForm({ company }: Props = {}) {
   async function onSubmit(values: FormValues) {
     setError(null);
     try {
-      handleResult(await login(values.email, values.password, company));
+      handleResult(await login(values.email, values.password, platform ? { platform } : { company }));
     } catch (err) {
       const next = lockoutFrom(err);
       if (next) {

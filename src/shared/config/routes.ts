@@ -4,6 +4,7 @@
  */
 export const routes = {
   login: "/login",
+  platformLogin: "/platform/login",
   security: "/security",
   manager: "/manager",
   workspace: "/workspace",

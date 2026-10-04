@@ -83,7 +83,7 @@ export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
   "api", "app", "admin", "auth", "login", "logout", "setup", "manager", "workspace", "pipeline",
   "inbox", "tasks", "notifications", "customers", "packages", "bookings", "finance", "targets",
   "reports", "suppliers", "rooming", "integrations", "security", "settings", "import-export",
-  "missing-docs", "flights", "static", "public", "assets", "en", "ar", "www", "help", "support", "status",
+  "missing-docs", "flights", "static", "public", "assets", "en", "ar", "www", "help", "support", "status", "platform",
 ]);
 
 /** Countries offered first in the location picker (ISO 3166-1 alpha-2). */

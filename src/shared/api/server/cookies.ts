@@ -48,9 +48,12 @@ export function clearEnrollmentCookie(res: NextResponse) {
 
 const COMPANY_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
-/** Remembers the signed-in company (outlives the session on purpose); platform users clear it. */
-export function setCompanyCookie(res: NextResponse, companySlug: string | null | undefined) {
-  if (companySlug) res.cookies.set(COMPANY_COOKIE, companySlug, { ...baseOptions(), maxAge: COMPANY_COOKIE_MAX_AGE });
+/**
+ * Remembers the sign-in page (outlives the session on purpose): the company slug, or
+ * `PLATFORM_SIGN_IN` for platform admins.
+ */
+export function setCompanyCookie(res: NextResponse, signIn: string | null | undefined) {
+  if (signIn) res.cookies.set(COMPANY_COOKIE, signIn, { ...baseOptions(), maxAge: COMPANY_COOKIE_MAX_AGE });
   else res.cookies.set(COMPANY_COOKIE, "", { ...baseOptions(), maxAge: 0 });
 }
 
