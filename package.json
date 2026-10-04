@@ -12,6 +12,8 @@
     "typecheck": "tsc --noEmit",
     "test:i18n": "node scripts/check-i18n-keys.mjs",
     "test:setup-flow": "node --experimental-strip-types scripts/selftest-setup-flow.ts",
+    "test:geo": "node --experimental-strip-types scripts/selftest-geo.ts",
+    "geo:build": "python3 scripts/build-geo.py",
     "test:workspace-path": "node --experimental-strip-types scripts/selftest-workspace-path.ts",
     "test:sessions": "node --experimental-strip-types scripts/selftest-sessions.ts",
     "test:privacy": "node --experimental-strip-types scripts/selftest-privacy.ts",

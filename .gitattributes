@@ -1,0 +1,2 @@
+public/geo/** linguist-generated=true -diff
+src/entities/geo/model/countries.generated.ts linguist-generated=true

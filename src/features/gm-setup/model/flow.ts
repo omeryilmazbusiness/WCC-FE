@@ -14,16 +14,10 @@ import type {
 export const STAFF_ROLES = ["manager", "employee", "finance", "operations"] as const;
 export type StaffRole = (typeof STAFF_ROLES)[number];
 
-export const CURRENCY_CHOICES = ["USD", "SAR", "EUR", "TRY"] as const;
+export const CURRENCY_CHOICES = ["USD", "SYP", "SAR", "EUR", "TRY"] as const;
 
-export const TIMEZONE_CHOICES = [
-  "Asia/Riyadh",
-  "Asia/Dubai",
-  "Europe/Istanbul",
-  "Asia/Damascus",
-  "Africa/Cairo",
-  "Europe/London",
-] as const;
+/** Backend `company.DefaultTimezone`, used until a catalogued country is chosen. */
+export const DEFAULT_TIMEZONE = "Asia/Riyadh";
 
 export function stepOrder(o: SetupOverview): SetupStepKey[] {
   return o.steps.map((s) => s.key);
@@ -85,12 +79,6 @@ export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
   "reports", "suppliers", "rooming", "integrations", "security", "settings", "import-export",
   "missing-docs", "flights", "static", "public", "assets", "en", "ar", "www", "help", "support", "status", "platform",
 ]);
-
-/** Countries offered first in the location picker (ISO 3166-1 alpha-2). */
-export const COUNTRY_CHOICES = [
-  "SA", "AE", "TR", "EG", "JO", "KW", "QA", "BH", "OM", "IQ", "SY", "LB", "MA", "DZ", "TN",
-  "PK", "ID", "MY", "GB", "DE", "FR", "NL", "US",
-] as const;
 
 /** Instant hints for required fields; the backend stays authoritative. */
 export function companyHints(c: CompanyProfile): CompanyFieldErrors {

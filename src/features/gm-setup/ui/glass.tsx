@@ -169,7 +169,7 @@ export function ChoiceGrid<T extends string>({
   value: T;
   options: { value: T; label: string }[];
   onChange: (value: T) => void;
-  columns: 2 | 3 | 4;
+  columns: 2 | 3 | 4 | 5;
   label: string;
 }) {
   return (
@@ -181,6 +181,7 @@ export function ChoiceGrid<T extends string>({
         columns === 2 && "grid-cols-2",
         columns === 3 && "grid-cols-3",
         columns === 4 && "grid-cols-4",
+        columns === 5 && "grid-cols-5",
       )}
     >
       {options.map((opt) => {

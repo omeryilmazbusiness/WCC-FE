@@ -488,6 +488,36 @@ SAR, TRY, AED, EGP without an official quote, LBP, stale derived GBP / JOD); ref
 Tests: `npm run test:fx-live` (decimal multiply / divide / rounding, significant digits and Arabic digits,
 pinned-first ordering, derived / stale badges, board health, attribution, mapper tolerance, adopt errors, keys).
 
+## Locations (setup → company)
+
+Country and city are searchable comboboxes (`features/gm-setup/ui/glass-combobox.tsx`, WAI-ARIA combobox)
+sorted with `Intl.Collator` in the UI locale; country names come from `Intl.DisplayNames`, city names in English
+with the Arabic name in `ar`. Every country is listed; for cities the 50 best-known of the country are listed
+before typing, and typing searches all of them (at most 100 rows rendered; better-known places first within a
+match). Search ignores case, accents and Arabic letter forms. The time zone is not asked: it follows the city (or
+the country's capital) and is saved with the company.
+
+City files are ordered by prominence: log₁₀(population) + log₁₀(number of languages naming the place), so
+metropolis districts and bot-translated villages rank below well-known cities. Names: the English name, except
+when the local spelling only adds diacritics the country's own language uses (Şanlıurfa, İzmir; but Tartus, not
+Ţarţūs). A repeated name gets its region ("Gölbaşı, Adıyaman") unless one place is 10× larger than its namesakes
+("Houston").
+
+**Data.** Every country and every populated place with 500+ inhabitants or an administrative seat from
+[GeoNames](https://www.geonames.org) `cities500` (246 countries, ~220k cities), built into static files — no
+runtime API, key, quota or server cost. `src/entities/geo/model/countries.generated.ts` holds the countries;
+`public/geo/<version>/cities/<CC>.json` (~5.7 MB total, US ≈ 730 KB before compression, 225 of 246 under 50 KB) is fetched only when a country
+is chosen and served `Cache-Control: immutable`, so a refresh must bump `VERSION` in the script.
+
+**Slices.** `entities/geo`: the `GeoCatalog` port, `createStaticGeoCatalog({version, rows, load})` (one request per
+country, failures retried), `staticGeoCatalog` (default wiring), option / search / time zone helpers and
+`useCities`. `CompanyStep` takes `geo?: GeoCatalog`, so another source only needs a new implementation.
+
+Refresh: `pnpm geo:build [--cache DIR]` (downloads ~220 MB from GeoNames into the cache). Tests: `pnpm test:geo`.
+
+Location data © GeoNames, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); the setup
+form credits it next to the location fields.
+
 ## Demo login
 
 Demo mode only (`NEXT_PUBLIC_DEMO_MODE=true` with the backend unreachable); otherwise log in against `wodi-crm-be`:

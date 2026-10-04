@@ -3,6 +3,15 @@
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Building2 } from "lucide-react";
+import {
+  cityOptions,
+  countryOptions,
+  staticGeoCatalog,
+  timezoneFor,
+  useCities,
+  type GeoCatalog,
+  type GeoOption,
+} from "@/entities/geo";
 import type { CompanyProfile, SetupOverview, SetupRepository } from "@/entities/setup";
 import { createBranch, updateBranch } from "@/entities/identity";
 import { useRefreshViewer } from "@/entities/viewer";
@@ -10,9 +19,8 @@ import { useActiveBranch } from "@/features/branch-scope";
 import { isApiError } from "@/shared/api/api-error";
 import { useMutationFeedback } from "@/shared/ui";
 import {
-  COUNTRY_CHOICES,
   CURRENCY_CHOICES,
-  TIMEZONE_CHOICES,
+  DEFAULT_TIMEZONE,
   branchDraftHints,
   companyHints,
   companySlug,
@@ -23,6 +31,7 @@ import {
 } from "../model/flow";
 import { BranchesGroup } from "./branches-group";
 import { ChoiceGrid, GlassField, GlassGroup, GlassInput, StepHero } from "./glass";
+import { GlassCombobox } from "./glass-combobox";
 import { LogoGroup } from "./logo-group";
 import { StepFooter } from "./step-footer";
 
@@ -31,6 +40,8 @@ type Props = {
   repository: SetupRepository;
   onSaved: (next: SetupOverview) => void;
   onBack: (() => void) | null;
+  /** Location catalogue; the static GeoNames files by default. */
+  geo?: GeoCatalog;
 };
 
 const SERVER_FIELDS: Record<string, keyof CompanyProfile> = {
@@ -45,17 +56,16 @@ const SERVER_FIELDS: Record<string, keyof CompanyProfile> = {
   city: "city",
   address: "address",
   currency: "currency",
-  timezone: "timezone",
 };
 
-const SELECT_CLASS =
-  "h-[46px] w-full cursor-pointer appearance-none bg-transparent text-[14px] text-white outline-none";
+/** Best-known cities listed before typing; every other city is found by search. */
+const SUGGESTED_CITIES = 50;
 
 function draftsOf(o: SetupOverview): BranchDraft[] {
   return o.branches.map((b) => ({ id: b.id, nameEn: b.nameEn, kind: b.kind, saved: { nameEn: b.nameEn, slug: b.slug } }));
 }
 
-export function CompanyStep({ overview, repository, onSaved, onBack }: Props) {
+export function CompanyStep({ overview, repository, onSaved, onBack, geo = staticGeoCatalog }: Props) {
   const t = useTranslations("setup.company");
   const locale = useLocale();
   const feedback = useMutationFeedback();
@@ -63,8 +73,11 @@ export function CompanyStep({ overview, repository, onSaved, onBack }: Props) {
   const activeBranch = useActiveBranch();
   const [form, setForm] = useState<CompanyProfile>(() => ({
     ...overview.company,
-    timezone: overview.company.timezone || TIMEZONE_CHOICES[0],
+    timezone:
+      overview.company.timezone ||
+      timezoneFor(geo.countries(), [], overview.company.country, "", DEFAULT_TIMEZONE),
   }));
+  const { cities: cityList, status: cityStatus, reload: reloadCities } = useCities(geo, form.country);
   const [drafts, setDrafts] = useState<BranchDraft[]>(() => draftsOf(overview));
   const [errors, setErrors] = useState<CompanyFieldErrors>({});
   const [branchErrors, setBranchErrors] = useState<BranchDraftErrors>({});
@@ -74,26 +87,41 @@ export function CompanyStep({ overview, repository, onSaved, onBack }: Props) {
 
   const currencyOptions = useMemo(() => {
     const base: string[] = [...CURRENCY_CHOICES];
-    const list = base.includes(form.currency) ? base : [form.currency, ...base.slice(0, 3)];
+    const list = base.includes(form.currency) ? base : [form.currency, ...base.slice(0, base.length - 1)];
     return list.map((c) => ({ value: c, label: c }));
   }, [form.currency]);
 
-  const timezoneOptions = useMemo(() => {
-    const base: string[] = [...TIMEZONE_CHOICES];
-    return base.includes(form.timezone) ? base : [form.timezone, ...base];
-  }, [form.timezone]);
+  const countries = useMemo(() => countryOptions(geo.countries(), locale, form.country), [geo, locale, form.country]);
+  const cities = useMemo(() => cityOptions(cityList, locale, form.city), [cityList, locale, form.city]);
 
-  const countryOptions = useMemo(() => {
-    const names = new Intl.DisplayNames([locale], { type: "region" });
-    const codes: string[] = [...COUNTRY_CHOICES];
-    if (form.country && !codes.includes(form.country)) codes.unshift(form.country);
-    return codes.map((code) => ({ code, label: names.of(code) ?? code }));
-  }, [locale, form.country]);
+  function clearError(...keys: (keyof CompanyProfile)[]) {
+    if (!keys.some((k) => errors[k])) return;
+    setErrors((prev) => {
+      const next = { ...prev };
+      for (const k of keys) delete next[k];
+      return next;
+    });
+  }
 
   function set<K extends keyof CompanyProfile>(key: K, value: CompanyProfile[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
-    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
-    if (key === "nameEn" && errors.slug) setErrors((prev) => ({ ...prev, slug: undefined }));
+    clearError(key, ...(key === "nameEn" ? (["slug"] as const) : []));
+  }
+
+  /** The time zone follows the location: the country's on a new country (city cleared), then the city's. */
+  function chooseCountry(country: string) {
+    setForm((prev) => ({
+      ...prev,
+      country,
+      city: "",
+      timezone: timezoneFor(geo.countries(), [], country, "", prev.timezone),
+    }));
+    clearError("country", "city");
+  }
+
+  function chooseCity(city: string) {
+    setForm((prev) => ({ ...prev, city, timezone: timezoneFor(geo.countries(), cityList, prev.country, city, prev.timezone) }));
+    clearError("city");
   }
 
   function message(key: keyof CompanyProfile, raw?: string): string | undefined {
@@ -183,6 +211,27 @@ export function CompanyStep({ overview, repository, onSaved, onBack }: Props) {
     </GlassField>
   );
 
+  const picker = (
+    key: "country" | "city",
+    options: readonly GeoOption[],
+    onChange: (value: string) => void,
+    extra: Partial<React.ComponentProps<typeof GlassCombobox>> = {},
+  ) => (
+    <GlassField id={`setup-${key}`} label={t(`fields.${key}`)} error={message(key, errors[key])}>
+      <GlassCombobox
+        id={`setup-${key}`}
+        value={form[key]}
+        options={options}
+        onChange={onChange}
+        placeholder={t(`placeholders.${key}`)}
+        invalid={Boolean(errors[key])}
+        noMatches={t("picker.noMatches")}
+        moreMatches={(count) => t("picker.moreMatches", { count })}
+        {...extra}
+      />
+    </GlassField>
+  );
+
   return (
     <form
       className="space-y-6"
@@ -219,26 +268,16 @@ export function CompanyStep({ overview, repository, onSaved, onBack }: Props) {
       />
 
       <GlassGroup title={t("groups.location")} footer={t("locationHint")}>
-        <GlassField id="setup-country" label={t("fields.country")} error={message("country", errors.country)}>
-          <select
-            id="setup-country"
-            value={form.country}
-            onChange={(e) => set("country", e.target.value)}
-            className={SELECT_CLASS}
-            aria-invalid={Boolean(errors.country) || undefined}
-            data-testid="setup-field-country"
-          >
-            <option value="" disabled>
-              {t("placeholders.country")}
-            </option>
-            {countryOptions.map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-        </GlassField>
-        {field("city", { autoComplete: "address-level2", required: true })}
+        {picker("country", countries, chooseCountry, { suggest: countries.length })}
+        {picker("city", cities, chooseCity, {
+          suggest: SUGGESTED_CITIES,
+          typeToSearch: (count) => t("picker.topCities", { shown: SUGGESTED_CITIES, count }),
+          disabled: !form.country,
+          loading: cityStatus === "loading",
+          status: cityStatus === "error" ? t("picker.citiesUnavailable") : undefined,
+          onRetry: reloadCities,
+          retryLabel: t("picker.retry"),
+        })}
         {field("address", { autoComplete: "street-address", required: true })}
       </GlassGroup>
 
@@ -253,27 +292,12 @@ export function CompanyStep({ overview, repository, onSaved, onBack }: Props) {
           <div className="py-2">
             <ChoiceGrid
               label={t("fields.currency")}
-              columns={4}
+              columns={5}
               value={form.currency}
               options={currencyOptions}
               onChange={(v) => set("currency", v)}
             />
           </div>
-        </GlassField>
-        <GlassField id="setup-timezone" label={t("fields.timezone")} error={message("timezone", errors.timezone)}>
-          <select
-            id="setup-timezone"
-            value={form.timezone}
-            onChange={(e) => set("timezone", e.target.value)}
-            className={SELECT_CLASS}
-            data-testid="setup-field-timezone"
-          >
-            {timezoneOptions.map((tz) => (
-              <option key={tz} value={tz}>
-                {tz.replace(/_/g, " ")}
-              </option>
-            ))}
-          </select>
         </GlassField>
       </GlassGroup>
 

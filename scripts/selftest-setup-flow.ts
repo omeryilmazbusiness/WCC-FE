@@ -1,10 +1,11 @@
 /**
- * Self-test: GM setup flow rules (navigation, hints, branches, password policy).
+ * Self-test: GM setup flow rules (navigation, hints, branches, password policy, currencies).
  * Run: pnpm test:setup-flow
  */
 
 import assert from "node:assert/strict";
 import {
+  CURRENCY_CHOICES,
   branchDraftHints,
   companyHints,
   companySlug,
@@ -155,6 +156,11 @@ function overview(patch: Partial<SetupOverview> = {}): SetupOverview {
   assert.equal(passwordIssue("1234567891"), "mix");
   assert.equal(passwordIssue("password123"), "common");
   assert.equal(passwordIssue("Sahra2026Trip"), null);
+}
+
+// currencies offered in the preferences
+{
+  assert.ok((CURRENCY_CHOICES as readonly string[]).includes("SYP"), "Syrian pound is offered");
 }
 
 console.log("selftest-setup-flow: OK");

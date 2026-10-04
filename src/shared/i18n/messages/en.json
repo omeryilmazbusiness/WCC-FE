@@ -1404,7 +1404,6 @@
         "city": "City",
         "address": "Address",
         "currency": "Currency",
-        "timezone": "Time zone",
         "slug": "Web address"
       },
       "placeholders": {
@@ -1414,11 +1413,10 @@
         "email": "hello@company.com",
         "phone": "+966 5x xxx xxxx",
         "website": "company.com",
-        "country": "SA",
-        "city": "Riyadh",
+        "country": "Choose a country",
+        "city": "Choose a city",
         "address": "Street, district",
         "currency": "USD",
-        "timezone": "Asia/Riyadh",
         "slug": "al-noor"
       },
       "preferencesHint": "Used for prices, reports and reminders. You can change these later.",
@@ -1430,17 +1428,23 @@
         "phone": "Enter a valid phone number.",
         "website": "Enter a valid website.",
         "country": "Choose a country.",
-        "city": "Enter the city.",
+        "city": "Choose a city.",
         "address": "Enter the address.",
         "currency": "Use a 3-letter currency code.",
-        "timezone": "Choose a valid time zone.",
         "slug": "2–48 lowercase letters, digits or dashes.",
         "slugTaken": "This address is already taken."
       },
       "save": "Save & continue",
       "saveError": "Couldn't save the company",
       "slugHint": "Your team works at {path}. The address follows the English company name and branch names.",
-      "locationHint": "Country, city and address are required.",
+      "locationHint": "Country, city and address are required. The time zone follows the location. Location data: GeoNames.",
+      "picker": {
+        "noMatches": "No matches",
+        "moreMatches": "{count} more — keep typing to narrow down",
+        "topCities": "Top {shown} cities — type to search all {count, number}",
+        "citiesUnavailable": "Couldn't load cities.",
+        "retry": "Retry"
+      },
       "branches": {
         "title": "Branches",
         "hint": "Every company has one main center. Staff belong to exactly one branch.",
