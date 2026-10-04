@@ -59,6 +59,7 @@ function harness(scripts: Script[]) {
   const statuses: RealtimeStatus[] = [];
   const signals: RealtimeSignal[] = [];
   let cleared = 0;
+  let cancels = 0;
   const fakeFetch = (async (_url: string, init?: RequestInit) => {
     connects.push(connects.length);
     const script = scripts.shift() ?? { hang: true };
@@ -73,23 +74,39 @@ function harness(scripts: Script[]) {
           ctrl.close();
         }
       },
+      cancel() {
+        cancels++;
+      },
     });
     return new Response(body, { status: script.status ?? 200 });
   }) as typeof fetch;
   const conn = new RealtimeConnection({
     url: "/api/proxy/stream",
     fetch: fakeFetch,
-    sleep: async (ms) => {
-      sleeps.push(ms);
+    sleep: async (ms, signal) => {
+      if (ms !== GRACE_MS) {
+        sleeps.push(ms);
+        return;
+      }
+      await new Promise<void>((resolve, reject) => {
+        const t = setTimeout(resolve, ms);
+        signal.addEventListener("abort", () => {
+          clearTimeout(t);
+          reject(new Error("aborted"));
+        });
+      });
     },
     random: () => 0.5,
     beforeDispatch: () => cleared++,
     baseDelayMs: 1000,
     maxDelayMs: 8000,
+    expiryGraceMs: GRACE_MS,
   });
   conn.onStatus((s) => statuses.push(s));
-  return { conn, connects, sleeps, statuses, signals, cleared: () => cleared };
+  return { conn, connects, sleeps, statuses, signals, cleared: () => cleared, cancels: () => cancels };
 }
+
+const GRACE_MS = 20;
 
 const tick = () => new Promise((r) => setTimeout(r, 5));
 
@@ -135,13 +152,29 @@ async function backoffThenRecovers() {
 
 async function expiredReconnectsImmediately() {
   const h = harness([
-    { chunks: ["event: ready\ndata: {}\n\n", "event: expired\ndata: {}\n\n"], hang: true },
+    { chunks: ["event: ready\ndata: {}\n\n", "event: expired\ndata: {}\n\n"] },
     { hang: true, chunks: ["event: ready\ndata: {}\n\n"] },
   ]);
   const off = h.conn.subscribe(() => undefined);
   await tick();
   assert.equal(h.connects.length, 2, "token expiry → new stream");
   assert.deepEqual(h.sleeps, [], "no delay after expiry");
+  assert.equal(h.cancels(), 0, "a stream the server ended after expiry is not cancelled");
+  off();
+}
+
+async function expiredHangingStreamIsCancelledAfterGrace() {
+  const h = harness([
+    { chunks: ["event: ready\ndata: {}\n\n", "event: expired\ndata: {}\n\n"], hang: true },
+    { hang: true, chunks: ["event: ready\ndata: {}\n\n"] },
+  ]);
+  const off = h.conn.subscribe(() => undefined);
+  await tick();
+  assert.equal(h.connects.length, 1, "waits for the server to end the response");
+  await new Promise((r) => setTimeout(r, GRACE_MS * 3));
+  assert.equal(h.connects.length, 2, "reconnects once the grace period ran out");
+  assert.equal(h.cancels(), 1, "the held-open response is cancelled");
+  assert.deepEqual(h.sleeps, [], "no backoff after expiry");
   off();
 }
 
@@ -172,6 +205,7 @@ topics();
 await deliversSignalsAndSharesOneStream();
 await backoffThenRecovers();
 await expiredReconnectsImmediately();
+await expiredHangingStreamIsCancelledAfterGrace();
 await cleanCloseWaitsBaseDelay();
 await unauthorizedStops();
 console.log("realtime selftest OK");

@@ -54,6 +54,28 @@ async function ttl() {
   assert.equal(inner.calls.length, 2, "refetched once TTL elapsed");
 }
 
+async function slowRequestStaysShared() {
+  const { inner, http } = setup();
+  clock = 0;
+  let finish!: (v: unknown) => void;
+  inner.request = <T,>(path: string) => {
+    inner.calls.push(`GET ${path}`);
+    return new Promise<T>((r) => (finish = r as (v: unknown) => void));
+  };
+  const first = http.request("/flights/search");
+  clock = 5000;
+  const second = http.request("/flights/search");
+  assert.equal(inner.calls.length, 1, "a request slower than the TTL is still shared");
+  finish({ ok: true });
+  assert.equal(await first, await second);
+  clock = 6999;
+  await http.request("/flights/search");
+  assert.equal(inner.calls.length, 1, "TTL counts from the response, not the request");
+  clock = 7000;
+  void http.request("/flights/search");
+  assert.equal(inner.calls.length, 2, "refetched once TTL after the response elapsed");
+}
+
 async function mutationsClear() {
   const { inner, http } = setup();
   clock = 0;
@@ -123,6 +145,7 @@ async function boundedMemory() {
 
 await concurrentGetsShareOneRequest();
 await ttl();
+await slowRequestStaysShared();
 await mutationsClear();
 await failuresNotRemembered();
 await signalBypasses();

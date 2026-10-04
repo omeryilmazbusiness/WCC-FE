@@ -4,6 +4,14 @@ export const FLIGHTS_UNAVAILABLE_CODE = "flights_unavailable";
 /** Shorter terms return nothing from the backend. */
 export const PLACE_MIN_TERM = 2;
 
+/**
+ * Autocomplete term for what is typed in a place field. The ` (IST)` suffix of a chosen
+ * place, even half-deleted while editing, is not part of the name the directory knows.
+ */
+export function placeQuery(text: string): string {
+  return text.replace(/(\s*\([^()]*\)?)+\s*$/, "").replace(/\s+/g, " ").trim();
+}
+
 export type PlaceType = "city" | "airport";
 
 export type Place = {

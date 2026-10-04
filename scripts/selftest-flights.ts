@@ -11,6 +11,7 @@ import {
   mapOffer,
   mapPlaces,
   mapSearchResult,
+  placeQuery,
   safeBookingUrl,
   searchQueryString,
   sortOffers,
@@ -257,7 +258,19 @@ function url() {
   assert.equal(readFormParams(new URLSearchParams(`from=IST&fromName=${"a".repeat(200)}`), TODAY).origin?.label.length, 80);
 }
 
+function placeQueries() {
+  assert.equal(placeQuery("Manhattan (MHK)"), "Manhattan", "chosen place suffix is dropped");
+  assert.equal(placeQuery("Manhattan (MHK"), "Manhattan", "half-deleted suffix is dropped");
+  assert.equal(placeQuery("Manhattan ("), "Manhattan");
+  assert.equal(placeQuery("Istanbul Airport, Istanbul (IST)"), "Istanbul Airport, Istanbul");
+  assert.equal(placeQuery("  new   york "), "new york", "whitespace collapsed");
+  assert.equal(placeQuery("anka"), "anka");
+  assert.equal(placeQuery("(IST)"), "");
+  assert.equal(placeQuery("Manhattan (MHK) (MHK"), "Manhattan", "repeated suffixes are dropped");
+}
+
 mappers();
+placeQueries();
 display();
 validation();
 passengers();

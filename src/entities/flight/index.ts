@@ -21,6 +21,7 @@ export {
   mapPlace,
   mapPlaces,
   mapSearchResult,
+  placeQuery,
   safeBookingUrl,
   searchQueryString,
   sortOffers,

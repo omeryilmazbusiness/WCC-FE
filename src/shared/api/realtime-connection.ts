@@ -83,6 +83,8 @@ export type RealtimeDeps = {
   beforeDispatch?: (s: RealtimeSignal) => void;
   baseDelayMs?: number;
   maxDelayMs?: number;
+  /** After `expired`, how long the server gets to end the response before it is cancelled. */
+  expiryGraceMs?: number;
 };
 
 type Listener = (s: RealtimeSignal) => void;
@@ -214,19 +216,48 @@ export class RealtimeConnection {
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
+    let finished = false;
     try {
       for (;;) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          finished = true;
+          break;
+        }
         parser.push(decoder.decode(value, { stream: true }));
-        if (expired) break;
+        if (expired) {
+          // The server ends the response after `expired`; cancelling first would
+          // abort a request that is about to complete on its own.
+          finished = await this.drain(reader, signal);
+          break;
+        }
       }
     } catch {
       // network drop or abort; handled by the caller
     } finally {
-      reader.cancel().catch(() => undefined);
+      if (!finished) reader.cancel().catch(() => undefined);
     }
     if (expired) return "expired";
     return opened ? "opened" : "failed";
+  }
+
+  /** Reads until the server closes the stream; false when the grace period ran out first. */
+  private async drain(reader: ReadableStreamDefaultReader<Uint8Array>, signal: AbortSignal): Promise<boolean> {
+    const grace = new AbortController();
+    const abort = () => grace.abort();
+    signal.addEventListener("abort", abort, { once: true });
+    const timedOut = this.deps
+      .sleep(this.deps.expiryGraceMs ?? 3_000, grace.signal)
+      .then(() => true as const, () => true as const);
+    try {
+      for (;;) {
+        const next = await Promise.race([reader.read(), timedOut]);
+        if (next === true) return false;
+        if (next.done) return true;
+      }
+    } finally {
+      grace.abort();
+      signal.removeEventListener("abort", abort);
+    }
   }
 }

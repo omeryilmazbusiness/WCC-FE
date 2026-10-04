@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { useTranslations } from "next-intl";
 import { Building2, Loader2, PlaneLanding, PlaneTakeoff } from "lucide-react";
-import { PLACE_MIN_TERM, type FlightRepository, type Place } from "@/entities/flight";
+import { PLACE_MIN_TERM, placeQuery, type FlightRepository, type Place } from "@/entities/flight";
 import { cn } from "@/shared/lib/cn";
 import { useDebouncedValue } from "@/shared/lib/use-debounced-value";
 import { Input } from "@/shared/ui";
@@ -65,33 +65,38 @@ export function PlaceCombobox({
   }, [value]);
 
   const term = text.trim();
-  const debounced = useDebouncedValue(term, DEBOUNCE_MS);
+  const query = placeQuery(text);
+  const debounced = useDebouncedValue(query, DEBOUNCE_MS);
 
+  // Superseded lookups are left to finish (the repository remembers them) and ignored
+  // here, so typing never aborts requests mid-flight.
   useEffect(() => {
-    if (!open || debounced.length < PLACE_MIN_TERM || (value && debounced === display(value))) {
+    if (!open || debounced.length < PLACE_MIN_TERM || (value && debounced === placeQuery(display(value)))) {
       setPlaces([]);
       setLoading(false);
       return;
     }
-    const ctrl = new AbortController();
+    let current = true;
     setLoading(true);
     setFailed(false);
     repository
-      .places(debounced, locale, ctrl.signal)
+      .places(debounced, locale)
       .then((next) => {
-        if (ctrl.signal.aborted) return;
+        if (!current) return;
         setPlaces(next);
         setActive(next.length ? 0 : -1);
       })
       .catch(() => {
-        if (ctrl.signal.aborted) return;
+        if (!current) return;
         setPlaces([]);
         setFailed(true);
       })
       .finally(() => {
-        if (!ctrl.signal.aborted) setLoading(false);
+        if (current) setLoading(false);
       });
-    return () => ctrl.abort();
+    return () => {
+      current = false;
+    };
   }, [debounced, open, locale, repository, value]);
 
   function choose(place: Place) {
@@ -140,7 +145,7 @@ export function PlaceCombobox({
     }
   }
 
-  const showList = open && term.length >= PLACE_MIN_TERM && (places.length > 0 || loading || failed || debounced === term);
+  const showList = open && query.length >= PLACE_MIN_TERM && (places.length > 0 || loading || failed || debounced === query);
   const landing = icon === "landing";
 
   return (

@@ -248,6 +248,7 @@ export function FlightsBoard() {
 
   const search = useApiQuery(() => (params ? repo.search(params) : Promise.reject(new Error("no search"))), [repo, key], {
     enabled: params !== null,
+    cacheKey: params ? ["flights.search", key] : undefined,
   });
   const result = params ? search.data : undefined;
   const offers = useMemo(() => (result ? sortOffers(result.offers, sort) : []), [result, sort]);

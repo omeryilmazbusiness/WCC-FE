@@ -46,6 +46,10 @@ export class QueryCache {
     }
   }
 
+  delete(key: string): void {
+    this.entries.delete(key);
+  }
+
   clear(): void {
     this.entries.clear();
   }

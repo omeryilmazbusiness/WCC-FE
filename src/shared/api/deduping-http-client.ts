@@ -8,13 +8,14 @@ export type DedupingOptions = {
   now?: () => number;
 };
 
-type Entry = { at: number; value: Promise<unknown> };
+/** `at` is null while the request is in flight; the TTL counts from settlement. */
+type Entry = { at: number | null; value: Promise<unknown> };
 
 const isRead = (init: HttpRequestInit) => (init.method ?? "GET") === "GET" && init.body == null;
 
 /**
- * Decorates an `HttpClient`: identical in-flight GETs share one request and successful
- * results are reused for `ttlMs`. Any mutation clears everything so reads after a write
+ * Decorates an `HttpClient`: identical in-flight GETs share one request however long it
+ * takes, and successful results are reused for `ttlMs` after they arrive. Any mutation clears everything so reads after a write
  * are always fresh; failures are never remembered. Identical in-flight `raw()` GETs also
  * share one request, but their responses are never kept once settled (downloads can be large).
  */
@@ -38,13 +39,19 @@ export class DedupingHttpClient implements HttpClient {
     }
     const key = path;
     const hit = this.entries.get(key);
-    if (hit && this.now() - hit.at < this.options.ttlMs) return hit.value as Promise<T>;
+    if (hit && (hit.at === null || this.now() - hit.at < this.options.ttlMs)) return hit.value as Promise<T>;
 
     const value = this.inner.request<T>(path, init);
-    this.remember(key, value);
-    value.catch(() => {
-      if (this.entries.get(key)?.value === value) this.entries.delete(key);
-    });
+    const entry: Entry = { at: null, value };
+    this.remember(key, entry);
+    value.then(
+      () => {
+        entry.at = this.now();
+      },
+      () => {
+        if (this.entries.get(key) === entry) this.entries.delete(key);
+      },
+    );
     return value;
   }
 
@@ -72,9 +79,9 @@ export class DedupingHttpClient implements HttpClient {
     this.rawInFlight.clear();
   }
 
-  private remember(key: string, value: Promise<unknown>) {
+  private remember(key: string, entry: Entry) {
     this.entries.delete(key);
-    this.entries.set(key, { at: this.now(), value });
+    this.entries.set(key, entry);
     while (this.entries.size > this.options.maxEntries) {
       const oldest = this.entries.keys().next().value;
       if (oldest === undefined) break;
