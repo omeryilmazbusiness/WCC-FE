@@ -169,7 +169,7 @@ export const DEFAULT_FAVORITES: readonly GuardedRoute[] = [
   routes.workspace,
   routes.inbox,
   routes.tasks,
-  routes.notifications,
+  routes.pipeline,
 ];
 
 function canSee(item: NavItem, permissions: readonly string[]): boolean {
