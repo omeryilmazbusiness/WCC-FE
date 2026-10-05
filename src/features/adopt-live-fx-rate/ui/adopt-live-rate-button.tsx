@@ -18,10 +18,11 @@ type Props = {
   kind: FxLiveKind;
   /** No usable live quote for this kind. */
   disabled?: boolean;
+  onAdopted?: () => void;
 };
 
 /** Saves the live mid as today's accounting rate (`fx.manage`); first click arms, second confirms. */
-export function AdoptLiveRateButton({ currency, kind, disabled }: Props) {
+export function AdoptLiveRateButton({ currency, kind, disabled, onAdopted }: Props) {
   const t = useTranslations("fxLive");
   const canManage = useCan("fx.manage");
   const { push } = useToast();
@@ -46,6 +47,7 @@ export function AdoptLiveRateButton({ currency, kind, disabled }: Props) {
     try {
       await repo.adoptLive({ currency, kind, side: "mid" });
       feedback.success(t("adopted", values));
+      onAdopted?.();
     } catch (err) {
       const failure = classifyAdoptError(err);
       if (failure === "exists") push({ title: t("adoptExists", values), tone: "info" });

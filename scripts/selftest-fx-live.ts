@@ -378,6 +378,7 @@ function i18n() {
     "src/widgets/app-shell/ui/fx-live-indicator.tsx",
     "src/widgets/app-shell/ui/fx-live-panel.tsx",
     "src/entities/fx-live/ui/live-fx-quote-table.tsx",
+    "src/entities/fx-live/ui/live-fx-sources.tsx",
     "src/features/refresh-live-fx/ui/refresh-live-fx-button.tsx",
     "src/features/adopt-live-fx-rate/ui/adopt-live-rate-button.tsx",
   ];

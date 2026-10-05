@@ -4104,7 +4104,49 @@
       "convert": "Convert",
       "notFound": "No {from}/{to} rate for that date.",
       "rateLine": "Rate {rate} · effective {date}",
-      "error": "Could not convert"
+      "error": "Could not convert",
+      "result": "Converted",
+      "swap": "Swap currencies",
+      "converting": "Converting…",
+      "samePair": "Pick two different currencies"
+    },
+    "backToFinance": "Finance",
+    "emptyHint": "Accounting rates convert bookings and payments into your reporting currency. Add one per pair and day, or adopt a live quote.",
+    "summary": {
+      "label": "Rate status",
+      "pairs": "{count, plural, one {# pair} other {# pairs}}",
+      "upToDate": "{count} of {total} updated today",
+      "stale": "{count, plural, one {# pair needs a rate} other {# pairs need a rate}}"
+    },
+    "pairs": {
+      "title": "Latest rates",
+      "showAll": "Show all {count} pairs",
+      "showLess": "Show fewer",
+      "showHistory": "Show {pair} history",
+      "addToday": "Add today's {pair} rate",
+      "perUnit": "{quote} per 1 {base}",
+      "today": "Today",
+      "daysAgo": "{days, plural, one {# day ago} other {# days ago}}",
+      "changeHint": "Change vs. the previous rate",
+      "direction": {
+        "up": "Up",
+        "down": "Down",
+        "flat": "Unchanged"
+      },
+      "firstRate": "First rate"
+    },
+    "live": {
+      "title": "Live market",
+      "adoptHint": "Tap the book icon twice to save a live mid rate as today's accounting rate."
+    },
+    "history": {
+      "title": "Rate history",
+      "subtitle": "Every stored accounting rate",
+      "count": "{count, plural, =0 {No rates} one {# rate} other {# rates}}",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "quickPairs": "Quick pair filters",
+      "allPairs": "All pairs"
     }
   },
   "fxLive": {

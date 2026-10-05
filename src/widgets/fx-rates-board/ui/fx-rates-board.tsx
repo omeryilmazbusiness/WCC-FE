@@ -1,85 +1,67 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useLocale, useTranslations } from "next-intl";
-import { ChevronLeft, ChevronRight, Pencil, Plus } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
+import { ArrowLeftRight, ChevronLeft, CircleCheck, Clock3, Layers, Plus } from "lucide-react";
 import {
-  FX_PAGE_SIZE,
   createFxRepository,
-  formatFxRate,
-  normalizeCurrency,
-  type FxFilters,
+  freshness,
+  localToday,
+  pairSnapshots,
   type FxRate,
 } from "@/entities/fx";
+import { useCurrencyName } from "@/entities/fx-live";
 import { Can } from "@/entities/viewer";
 import { FxConverter } from "@/features/convert-currency";
-import { DeleteFxRateButton, FxRateDialog } from "@/features/manage-fx-rates";
+import { FxRateDialog } from "@/features/manage-fx-rates";
+import { routes } from "@/shared/config/routes";
+import { Link } from "@/shared/i18n/navigation";
 import { cn } from "@/shared/lib/cn";
-import { formatDateTime, formatDay, formatNumber } from "@/shared/lib/format";
 import { useApiQuery } from "@/shared/lib/use-api-query";
-import {
-  Button,
-  Input,
-  Label,
-  PageHeader,
-  QueryState,
-  Screen,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/shared/ui";
+import { Button, ErrorState, PageHeader, Screen, TONES } from "@/shared/ui";
+import { useRateFilters } from "../model/use-rate-filters";
+import { LiveMarketCard } from "./live-market-card";
+import { PairCard } from "./pair-card";
+import { RateHistory } from "./rate-history";
 
-const FILTER_DEBOUNCE_MS = 350;
+/** Rows read for the pair overview; matches the API's page-size cap. */
+const SNAPSHOT_LIMIT = 100;
+/** History rows per page. */
+const HISTORY_PAGE_SIZE = 10;
+/** Pair cards shown before "Show all". */
+const PAIR_PREVIEW = 8;
 
+type DialogState = { rate?: FxRate; defaults?: { base: string; quote: string } };
+
+/** Accounting FX rates: latest per pair, converter, live market and the full history. */
 export function FxRatesBoard() {
   const t = useTranslations("fx");
-  const locale = useLocale();
   const [repo] = useState(() => createFxRepository());
-  const [baseInput, setBaseInput] = useState("");
-  const [quoteInput, setQuoteInput] = useState("");
-  const [pair, setPair] = useState({ base: "", quote: "" });
-  const [fromDay, setFromDay] = useState("");
-  const [toDay, setToDay] = useState("");
-  const [offset, setOffset] = useState(0);
-  const [dialog, setDialog] = useState<{ rate?: FxRate } | null>(null);
+  const [today] = useState(() => localToday());
+  const [dialog, setDialog] = useState<DialogState | null>(null);
+  const [showAllPairs, setShowAllPairs] = useState(false);
+  const currencyName = useCurrencyName();
+  const filters = useRateFilters();
 
-  useEffect(() => {
-    const base = normalizeCurrency(baseInput);
-    const quote = normalizeCurrency(quoteInput);
-    if (base === pair.base && quote === pair.quote) return;
-    const timer = window.setTimeout(() => {
-      setPair({ base, quote });
-      setOffset(0);
-    }, FILTER_DEBOUNCE_MS);
-    return () => window.clearTimeout(timer);
-  }, [baseInput, quoteInput, pair.base, pair.quote]);
-
-  const filters = useMemo<FxFilters>(
-    () => ({
-      base: pair.base || undefined,
-      quote: pair.quote || undefined,
-      from: fromDay || undefined,
-      to: toDay || undefined,
-    }),
-    [pair.base, pair.quote, fromDay, toDay],
-  );
-  const rates = useApiQuery(() => repo.list(filters, { limit: FX_PAGE_SIZE, offset }), [repo, filters, offset], {
-    cacheKey: ["fx-rates", filters, offset],
+  const snapshot = useApiQuery(() => repo.list({}, { limit: SNAPSHOT_LIMIT, offset: 0 }), [repo], {
+    cacheKey: ["fx-rates", "snapshot"],
   });
-  const page = rates.data;
-  const rows = page?.items ?? [];
-  const isFiltered = Object.values(filters).some(Boolean);
+  const history = useApiQuery(
+    () => repo.list(filters.filters, { limit: HISTORY_PAGE_SIZE, offset: filters.page * HISTORY_PAGE_SIZE }),
+    [repo, filters.filters, filters.page],
+    { cacheKey: ["fx-rates", filters.filters, filters.page, HISTORY_PAGE_SIZE] },
+  );
 
-  function resetFilters() {
-    setBaseInput("");
-    setQuoteInput("");
-    setPair({ base: "", quote: "" });
-    setFromDay("");
-    setToDay("");
-    setOffset(0);
+  const pairs = useMemo(() => pairSnapshots(snapshot.data?.items ?? []), [snapshot.data]);
+  const visiblePairs = showAllPairs ? pairs : pairs.slice(0, PAIR_PREVIEW);
+  const upToDate = pairs.filter((p) => freshness(p.latest.effectiveDate, today) === "today").length;
+  const stale = pairs.filter((p) => freshness(p.latest.effectiveDate, today) === "stale").length;
+  const currencies = useMemo(() => [...new Set(pairs.flatMap((p) => [p.base, p.quote]))].sort(), [pairs]);
+  const first = pairs[0];
+
+  function refresh() {
+    void snapshot.refresh();
+    void history.refresh();
   }
 
   return (
@@ -88,196 +70,142 @@ export function FxRatesBoard() {
         title={t("title")}
         description={t("subtitle")}
         actions={
-          <Can perm="fx.manage">
-            <Button type="button" onClick={() => setDialog({})} data-testid="fx-rate-add">
-              <Plus className="h-4 w-4" />
-              {t("add")}
+          <>
+            <Button asChild variant="secondary">
+              <Link href={routes.finance}>
+                <ChevronLeft className="h-4 w-4 rtl:rotate-180" aria-hidden />
+                {t("backToFinance")}
+              </Link>
             </Button>
-          </Can>
+            <Can perm="fx.manage">
+              <Button type="button" onClick={() => setDialog({})} data-testid="fx-rate-add">
+                <Plus className="h-4 w-4" aria-hidden />
+                {t("add")}
+              </Button>
+            </Can>
+          </>
         }
       />
 
-      <FxConverter repository={repo} />
+      {pairs.length > 0 ? (
+        <ul className="flex flex-wrap gap-2" aria-label={t("summary.label")} data-testid="fx-summary">
+          <SummaryPill icon={Layers} tone="zinc" label={t("summary.pairs", { count: pairs.length })} />
+          <SummaryPill icon={CircleCheck} tone="emerald" label={t("summary.upToDate", { count: upToDate, total: pairs.length })} />
+          {stale > 0 ? <SummaryPill icon={Clock3} tone="amber" label={t("summary.stale", { count: stale })} /> : null}
+        </ul>
+      ) : null}
 
-      <div className="grid gap-3 rounded-[24px] border border-zinc-200/80 bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="fx-filter-base">{t("filters.base")}</Label>
-          <Input
-            id="fx-filter-base"
-            dir="ltr"
-            maxLength={3}
-            placeholder="USD"
-            value={baseInput}
-            onChange={(e) => setBaseInput(e.target.value.toUpperCase())}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="fx-filter-quote">{t("filters.quote")}</Label>
-          <Input
-            id="fx-filter-quote"
-            dir="ltr"
-            maxLength={3}
-            placeholder="SAR"
-            value={quoteInput}
-            onChange={(e) => setQuoteInput(e.target.value.toUpperCase())}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="fx-filter-from">{t("filters.from")}</Label>
-          <Input
-            id="fx-filter-from"
-            type="date"
-            value={fromDay}
-            max={toDay || undefined}
-            onChange={(e) => {
-              setFromDay(e.target.value);
-              setOffset(0);
-            }}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="fx-filter-to">{t("filters.to")}</Label>
-          <Input
-            id="fx-filter-to"
-            type="date"
-            value={toDay}
-            min={fromDay || undefined}
-            onChange={(e) => {
-              setToDay(e.target.value);
-              setOffset(0);
-            }}
-          />
-        </div>
-        {isFiltered ? (
-          <div className="sm:col-span-full">
-            <Button type="button" variant="ghost" size="sm" onClick={resetFilters}>
-              {t("filters.reset")}
-            </Button>
+      <section aria-label={t("pairs.title")} className="@container" data-testid="fx-pairs">
+        {snapshot.loading && !snapshot.data ? (
+          <div className="grid gap-3.5 @xl:grid-cols-2 @4xl:grid-cols-3 @5xl:grid-cols-4" aria-hidden>
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="h-[184px] animate-pulse rounded-[28px] bg-zinc-100" />
+            ))}
           </div>
-        ) : null}
+        ) : snapshot.error && !snapshot.data ? (
+          <ErrorState title={t("loadError")} onRetry={() => void snapshot.reload()} />
+        ) : pairs.length === 0 ? (
+          <EmptyPairs onAdd={() => setDialog({})} />
+        ) : (
+          <>
+            <div className="grid gap-3.5 @xl:grid-cols-2 @4xl:grid-cols-3 @5xl:grid-cols-4">
+              {visiblePairs.map((p) => (
+                <PairCard
+                  key={p.pair}
+                  snapshot={p}
+                  today={today}
+                  currencyName={currencyName}
+                  selected={filters.activePair === p.pair}
+                  onSelect={() => filters.togglePair(p.base, p.quote)}
+                  onAddToday={() => setDialog({ defaults: { base: p.base, quote: p.quote } })}
+                />
+              ))}
+            </div>
+            {pairs.length > PAIR_PREVIEW ? (
+              <div className="mt-3 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setShowAllPairs((v) => !v)}
+                  className="h-9 rounded-full px-4 text-[13px] font-semibold text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-950"
+                >
+                  {showAllPairs ? t("pairs.showLess") : t("pairs.showAll", { count: pairs.length })}
+                </button>
+              </div>
+            ) : null}
+          </>
+        )}
+      </section>
+
+      <div className="@container">
+        <div className="grid items-stretch gap-3.5 @4xl:grid-cols-5">
+        {snapshot.data || snapshot.error ? (
+          <FxConverter
+            repository={repo}
+            defaultFrom={first?.base ?? "USD"}
+            defaultTo={first?.quote ?? "SAR"}
+            currencies={currencies}
+            className="@4xl:col-span-3"
+          />
+        ) : (
+          <div className="min-h-[320px] animate-pulse rounded-[28px] bg-zinc-100 @4xl:col-span-3" aria-hidden />
+        )}
+        <LiveMarketCard onAdopted={refresh} className="@4xl:col-span-2" />
+        </div>
       </div>
 
-      <QueryState
-        loadingVariant="table"
-        loading={rates.loading && !page}
-        error={rates.error}
-        errorTitle={t("loadError")}
-        onRetry={() => void rates.reload()}
-        empty={rows.length === 0}
-        emptyTitle={isFiltered ? t("emptyFiltered") : t("empty")}
-      >
-        <div
-          className={cn(
-            "rounded-[24px] border border-zinc-200/80 bg-white transition-opacity",
-            rates.loading && "opacity-60",
-          )}
-        >
-          <Table data-testid="fx-rates-table">
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead>{t("columns.pair")}</TableHead>
-                <TableHead>{t("columns.rate")}</TableHead>
-                <TableHead>{t("columns.effectiveDate")}</TableHead>
-                <TableHead>{t("columns.source")}</TableHead>
-                <TableHead>{t("columns.createdBy")}</TableHead>
-                <TableHead>{t("columns.createdAt")}</TableHead>
-                <Can perm="fx.manage">
-                  <TableHead className="w-24">
-                    <span className="sr-only">{t("columns.actions")}</span>
-                  </TableHead>
-                </Can>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((rate) => (
-                <TableRow key={rate.id} data-testid="fx-rate-row">
-                  <TableCell>
-                    <bdi dir="ltr" className="font-mono text-xs font-semibold text-zinc-900">
-                      {rate.base}/{rate.quote}
-                    </bdi>
-                  </TableCell>
-                  <TableCell>
-                    <bdi dir="ltr" className="font-mono text-sm tabular-nums text-zinc-900" title={rate.rate}>
-                      {formatFxRate(rate.rate)}
-                    </bdi>
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">{formatDay(rate.effectiveDate, locale)}</TableCell>
-                  <TableCell>{rate.source || "—"}</TableCell>
-                  <TableCell>{rate.createdBy || "—"}</TableCell>
-                  <TableCell className="whitespace-nowrap text-zinc-500">
-                    {rate.createdAt ? formatDateTime(rate.createdAt, locale) : "—"}
-                  </TableCell>
-                  <Can perm="fx.manage">
-                    <TableCell>
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          aria-label={t("edit")}
-                          onClick={() => setDialog({ rate })}
-                          data-testid="fx-rate-edit"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <DeleteFxRateButton rate={rate} repository={repo} onDeleted={() => void rates.reload()} />
-                      </div>
-                    </TableCell>
-                  </Can>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-
-        {page ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-zinc-500">
-            <span>
-              {t("pagination.summary", {
-                from: formatNumber(page.offset + 1, locale),
-                to: formatNumber(page.offset + rows.length, locale),
-                total: formatNumber(page.total, locale),
-              })}
-            </span>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={page.offset === 0 || rates.loading}
-                onClick={() => setOffset(Math.max(0, page.offset - page.limit))}
-              >
-                <ChevronLeft className="h-3.5 w-3.5 rtl:-scale-x-100" />
-                {t("pagination.previous")}
-              </Button>
-              <span className="tabular-nums">
-                {t("pagination.page", { page: page.page, pages: Math.max(1, page.totalPages) })}
-              </span>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={page.page >= page.totalPages || rates.loading}
-                onClick={() => setOffset(page.offset + page.limit)}
-              >
-                {t("pagination.next")}
-                <ChevronRight className="h-3.5 w-3.5 rtl:-scale-x-100" />
-              </Button>
-            </div>
-          </div>
-        ) : null}
-      </QueryState>
+      <RateHistory
+        query={history}
+        filters={filters}
+        pairs={pairs}
+        repository={repo}
+        today={today}
+        onEdit={(rate) => setDialog({ rate })}
+        onChanged={refresh}
+      />
 
       {dialog ? (
         <FxRateDialog
-          key={dialog.rate?.id ?? "new"}
+          key={dialog.rate?.id ?? `new-${dialog.defaults?.base ?? ""}${dialog.defaults?.quote ?? ""}`}
           repository={repo}
           rate={dialog.rate}
+          defaults={dialog.defaults}
           open
           onOpenChange={(open) => !open && setDialog(null)}
-          onSaved={() => void rates.reload()}
+          onSaved={refresh}
         />
       ) : null}
     </Screen>
+  );
+}
+
+function SummaryPill({ icon: Icon, tone, label }: { icon: typeof Layers; tone: "zinc" | "emerald" | "amber"; label: string }) {
+  return (
+    <li className={cn("flex h-9 items-center gap-2 rounded-full ps-1.5 pe-3.5 text-[13px] font-semibold", TONES[tone].soft)}>
+      <span className={cn("flex h-6 w-6 items-center justify-center rounded-full", TONES[tone].solid)} aria-hidden>
+        <Icon className="h-3.5 w-3.5" strokeWidth={2.4} />
+      </span>
+      {label}
+    </li>
+  );
+}
+
+function EmptyPairs({ onAdd }: { onAdd: () => void }) {
+  const t = useTranslations("fx");
+  return (
+    <div className="flex flex-col items-center gap-4 rounded-[28px] border border-dashed border-zinc-200 bg-gradient-to-b from-zinc-50 to-white px-6 py-12 text-center">
+      <span className={cn("flex h-16 w-16 items-center justify-center rounded-[22px]", TONES.indigo.gradient)} aria-hidden>
+        <ArrowLeftRight className="h-8 w-8" strokeWidth={2} />
+      </span>
+      <div className="max-w-md space-y-1">
+        <p className="text-[17px] font-semibold tracking-tight text-zinc-950">{t("empty")}</p>
+        <p className="text-[13.5px] text-zinc-500">{t("emptyHint")}</p>
+      </div>
+      <Can perm="fx.manage">
+        <Button type="button" onClick={onAdd} data-testid="fx-empty-add">
+          <Plus className="h-4 w-4" aria-hidden />
+          {t("add")}
+        </Button>
+      </Can>
+    </div>
   );
 }

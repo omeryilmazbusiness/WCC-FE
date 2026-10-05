@@ -2,14 +2,14 @@
 
 import { useId, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { ChevronDown, ChevronRight, ChevronsUpDown, Info, TriangleAlert } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronsUpDown, TriangleAlert } from "lucide-react";
 import {
   FX_LIVE_KINDS,
   LiveFxQuoteTable,
+  LiveFxSources,
   baseCurrencyOptions,
   boardHealth,
   divideDecimal,
-  footerSources,
   orderQuotes,
   rebaseQuotes,
   useCurrencyName,
@@ -89,10 +89,8 @@ export function FxLivePanel({ state, kind, onKindChange, base, onBaseChange, tit
   const canManage = useCan("fx.manage");
   const canReadRates = useCan("payments.read");
   const othersId = useId();
-  const disclaimerId = useId();
   const baseId = useId();
   const [showOthers, setShowOthers] = useState(false);
-  const [showDisclaimer, setShowDisclaimer] = useState(false);
   const { board, error, loading, reload, replace } = state;
 
   const local = board?.localCurrency ?? "SYP";
@@ -285,48 +283,7 @@ export function FxLivePanel({ state, kind, onKindChange, base, onBaseChange, tit
             <ChevronRight className="h-4 w-4 text-zinc-400 rtl:-scale-x-100" strokeWidth={2} />
           </Link>
         ) : null}
-        <div className="flex items-start gap-2">
-          <p className="min-w-0 flex-1 leading-5" data-testid="fx-live-sources">
-            <span className="font-medium text-zinc-600">{t("sources")}: </span>
-            {footerSources(board?.sources ?? []).map((source, i) => (
-              <span key={source.id || source.name}>
-                {i > 0 ? " · " : null}
-                {source.url ? (
-                  <a
-                    href={source.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-zinc-700 underline-offset-2 hover:text-zinc-950 hover:underline"
-                  >
-                    {source.attribution || source.name}
-                  </a>
-                ) : (
-                  source.attribution || source.name
-                )}
-                {!source.ok ? (
-                  <span className="text-amber-700" title={source.error || undefined}>
-                    {" "}
-                    ({t("sourceUnavailable")})
-                  </span>
-                ) : null}
-              </span>
-            ))}
-          </p>
-          <button
-            type="button"
-            aria-expanded={showDisclaimer}
-            aria-controls={disclaimerId}
-            aria-label={t("disclaimer")}
-            title={t("disclaimer")}
-            onClick={() => setShowDisclaimer((v) => !v)}
-            className="rounded-full p-0.5 text-zinc-400 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
-          >
-            <Info className="h-3.5 w-3.5" strokeWidth={1.75} />
-          </button>
-        </div>
-        <p id={disclaimerId} hidden={!showDisclaimer} className="leading-5">
-          {board?.disclaimer || t("disclaimerFallback")}
-        </p>
+        <LiveFxSources board={board} />
       </footer>
     </>
   );

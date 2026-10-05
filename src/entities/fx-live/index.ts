@@ -45,3 +45,4 @@ export {
   type FxLiveRepository,
 } from "./api";
 export { LiveFxQuoteTable, useCurrencyName } from "./ui/live-fx-quote-table";
+export { LiveFxSources } from "./ui/live-fx-sources";

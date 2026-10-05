@@ -27,3 +27,11 @@ export function minorToInput(minor: number): string {
   const fraction = String(abs % MINOR_PER_MAJOR).padStart(MINOR_DIGITS, "0");
   return `${sign}${whole}.${fraction}`;
 }
+
+/** Narrow symbols like "£" are shared by SYP, EGP, LBP and GBP, so only unambiguous ones are used. */
+const UNAMBIGUOUS_SYMBOLS: Record<string, string> = { USD: "$", EUR: "€", GBP: "£", TRY: "₺", JPY: "¥", INR: "₹" };
+
+/** A short glyph for an ISO 4217 code; falls back to the code itself. */
+export function currencySymbol(code: string): string {
+  return UNAMBIGUOUS_SYMBOLS[code] ?? code;
+}

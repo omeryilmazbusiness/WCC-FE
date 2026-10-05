@@ -19,6 +19,7 @@
     "test:privacy": "node --experimental-strip-types scripts/selftest-privacy.ts",
     "test:booking-finance": "node --experimental-strip-types scripts/selftest-booking-finance.ts",
     "test:fx-live": "node --experimental-strip-types scripts/selftest-fx-live.ts",
+    "test:fx": "node --experimental-strip-types scripts/selftest-fx.ts",
     "test:http": "node --experimental-strip-types scripts/selftest-http-dedupe.ts",
     "test:realtime": "node --experimental-strip-types scripts/selftest-realtime.ts",
     "test:adminconfig": "node --experimental-strip-types scripts/selftest-adminconfig.ts",

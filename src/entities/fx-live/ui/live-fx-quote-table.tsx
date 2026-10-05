@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { formatDate, toIntlLocale } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/cn";
+import { currencySymbol } from "@/shared/lib/money";
 import { formatRate } from "../lib/decimal";
 import { quoteBadges, type FxLiveKind, type FxLiveQuote } from "../model";
 
@@ -35,13 +36,6 @@ export function useCurrencyName(): (code: string) => string {
       }
     };
   }, [locale]);
-}
-
-/** Narrow symbols like "£" are shared by SYP, EGP, LBP and GBP, so only unambiguous ones are used. */
-const UNAMBIGUOUS_SYMBOLS: Record<string, string> = { USD: "$", EUR: "€", GBP: "£", TRY: "₺", JPY: "¥", INR: "₹" };
-
-export function currencySymbol(code: string): string {
-  return UNAMBIGUOUS_SYMBOLS[code] ?? code;
 }
 
 export function CurrencyGlyph({ code, className }: { code: string; className?: string }) {

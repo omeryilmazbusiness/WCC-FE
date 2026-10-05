@@ -5,15 +5,17 @@ import { useTranslations } from "next-intl";
 import { Trash2 } from "lucide-react";
 import type { FxRate, FxRepository } from "@/entities/fx";
 import { useCan } from "@/entities/viewer";
-import { Button, ConfirmDialog, useMutationFeedback } from "@/shared/ui";
+import { cn } from "@/shared/lib/cn";
+import { ConfirmDialog, IconButton, useMutationFeedback } from "@/shared/ui";
 
 type Props = {
   rate: FxRate;
   repository: FxRepository;
   onDeleted: () => void;
+  className?: string;
 };
 
-export function DeleteFxRateButton({ rate, repository, onDeleted }: Props) {
+export function DeleteFxRateButton({ rate, repository, onDeleted, className }: Props) {
   const t = useTranslations("fx");
   const allowed = useCan("fx.manage");
   const feedback = useMutationFeedback();
@@ -38,16 +40,17 @@ export function DeleteFxRateButton({ rate, repository, onDeleted }: Props) {
 
   return (
     <>
-      <Button
+      <IconButton
         type="button"
-        size="sm"
         variant="ghost"
-        aria-label={t("delete")}
+        label={t("delete")}
+        title={t("delete")}
         onClick={() => setOpen(true)}
+        className={cn("h-9 w-9 rounded-full text-zinc-400 hover:bg-rose-50 hover:text-rose-600", className)}
         data-testid="fx-rate-delete"
       >
-        <Trash2 className="h-3.5 w-3.5" />
-      </Button>
+        <Trash2 className="h-4 w-4" strokeWidth={2} />
+      </IconButton>
       <ConfirmDialog
         open={open}
         onOpenChange={setOpen}

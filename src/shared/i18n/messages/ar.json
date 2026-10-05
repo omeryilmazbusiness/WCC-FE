@@ -4104,7 +4104,49 @@
       "convert": "تحويل",
       "notFound": "لا يوجد سعر {from}/{to} لذلك التاريخ.",
       "rateLine": "السعر {rate} · ساري من {date}",
-      "error": "تعذر التحويل"
+      "error": "تعذر التحويل",
+      "result": "المبلغ المحوّل",
+      "swap": "تبديل العملتين",
+      "converting": "جارٍ التحويل…",
+      "samePair": "اختر عملتين مختلفتين"
+    },
+    "backToFinance": "المالية",
+    "emptyHint": "تحوّل أسعار المحاسبة الحجوزات والمدفوعات إلى عملة التقارير. أضف سعرًا لكل زوج ويوم، أو اعتمد سعرًا مباشرًا.",
+    "summary": {
+      "label": "حالة الأسعار",
+      "pairs": "{count, plural, zero {لا أزواج} one {زوج واحد} two {زوجان} few {# أزواج} many {# زوجًا} other {# زوج}}",
+      "upToDate": "{count} من {total} محدّثة اليوم",
+      "stale": "{count, plural, one {زوج يحتاج إلى سعر} two {زوجان يحتاجان إلى سعر} few {# أزواج تحتاج إلى سعر} many {# زوجًا يحتاج إلى سعر} other {# زوج يحتاج إلى سعر}}"
+    },
+    "pairs": {
+      "title": "أحدث الأسعار",
+      "showAll": "عرض جميع الأزواج ({count})",
+      "showLess": "عرض أقل",
+      "showHistory": "عرض سجل {pair}",
+      "addToday": "إضافة سعر {pair} لليوم",
+      "perUnit": "{quote} لكل 1 {base}",
+      "today": "اليوم",
+      "daysAgo": "{days, plural, zero {اليوم} one {منذ يوم} two {منذ يومين} few {منذ # أيام} many {منذ # يومًا} other {منذ # يوم}}",
+      "changeHint": "التغير مقارنة بالسعر السابق",
+      "direction": {
+        "up": "ارتفاع",
+        "down": "انخفاض",
+        "flat": "دون تغيير"
+      },
+      "firstRate": "أول سعر"
+    },
+    "live": {
+      "title": "السوق المباشر",
+      "adoptHint": "انقر أيقونة الدفتر مرتين لحفظ السعر الوسطي المباشر كسعر محاسبة لليوم."
+    },
+    "history": {
+      "title": "سجل الأسعار",
+      "subtitle": "جميع أسعار المحاسبة المحفوظة",
+      "count": "{count, plural, zero {لا أسعار} one {سعر واحد} two {سعران} few {# أسعار} many {# سعرًا} other {# سعر}}",
+      "today": "اليوم",
+      "yesterday": "أمس",
+      "quickPairs": "فلاتر الأزواج السريعة",
+      "allPairs": "كل الأزواج"
     }
   },
   "fxLive": {
