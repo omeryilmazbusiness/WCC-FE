@@ -41,6 +41,47 @@ export function isTaskPriority(value: unknown): value is TaskPriority {
   return TASK_PRIORITIES.includes(value as TaskPriority);
 }
 
+/** Catalogue package (and optional departure) a task is about; codes are API enrichment. */
+export type TaskPackageLink = {
+  packageId: string;
+  packageCode: string;
+  packageName: string;
+  packageNameAr: string;
+  departureId: string | null;
+  departureCode: string;
+  /** YYYY-MM-DD. */
+  departDate: string | null;
+};
+
+/** Ids the API accepts to set a task's package link; both null clears it. */
+export type TaskPackageInput = { packageId: string | null; departureId: string | null };
+
+/** Reads the API's `package` object; null when the task has no package. */
+export function mapTaskPackageLink(raw: unknown): TaskPackageLink | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  const packageId = String(r.package_id ?? r.packageId ?? "");
+  if (!packageId) return null;
+  const departureId = r.departure_id ?? r.departureId;
+  const departDate = r.depart_date ?? r.departDate;
+  return {
+    packageId,
+    packageCode: String(r.package_code ?? r.packageCode ?? ""),
+    packageName: String(r.package_name ?? r.packageName ?? ""),
+    packageNameAr: String(r.package_name_ar ?? r.packageNameAr ?? ""),
+    departureId: departureId ? String(departureId) : null,
+    departureCode: String(r.departure_code ?? r.departureCode ?? ""),
+    departDate: departDate ? String(departDate).slice(0, 10) : null,
+  };
+}
+
+/** "CODE · Name" in the reader's language, with the departure code appended when set. */
+export function packageLinkLabel(link: TaskPackageLink, locale: string): string {
+  const name = locale === "ar" && link.packageNameAr ? link.packageNameAr : link.packageName;
+  const head = [link.packageCode, name].filter(Boolean).join(" · ");
+  return link.departureCode ? `${head} · ${link.departureCode}` : head;
+}
+
 export type Task = {
   id: string;
   branchId: string;
@@ -58,6 +99,8 @@ export type Task = {
   relatedId: string;
   relatedLabel: string;
   customerId?: string | null;
+  /** Package the task is about, independent of the related record. */
+  pkg?: TaskPackageLink | null;
   dueAt: string | null;
   escalatedAt: string | null;
   createdAt: string;
@@ -78,6 +121,8 @@ export type TaskCreateInput = {
   relatedId?: string;
   relatedLabel?: string;
   customerId?: string | null;
+  packageId?: string | null;
+  departureId?: string | null;
   dueAt?: string | null;
   branchId?: string;
 };
@@ -180,6 +225,7 @@ export function filterTasks(tasks: Task[], f: TaskFilter, now = new Date()): Tas
       task.description.toLowerCase().includes(q) ||
       task.relatedLabel.toLowerCase().includes(q) ||
       task.assigneeName.toLowerCase().includes(q) ||
+      Boolean(task.pkg && `${task.pkg.packageCode} ${task.pkg.packageName} ${task.pkg.packageNameAr}`.toLowerCase().includes(q)) ||
       task.kind.includes(q)
     );
   });

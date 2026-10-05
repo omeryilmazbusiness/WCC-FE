@@ -12,6 +12,8 @@ export type LeadQuery = {
   q?: string;
   ownerId?: string;
   customerId?: string;
+  /** Leads interested in this catalogue package. */
+  packageId?: string;
   stage?: LeadStage;
   source?: string;
   noFollowUp?: boolean;
@@ -72,6 +74,7 @@ export function leadQueryParams(query: LeadQuery): URLSearchParams {
   if (q) sp.set("q", q);
   if (query.ownerId) sp.set("owner_id", query.ownerId);
   if (query.customerId) sp.set("customer_id", query.customerId);
+  if (query.packageId) sp.set("package_id", query.packageId);
   if (query.stage) sp.set("stage", query.stage);
   if (query.source) sp.set("source", query.source);
   if (query.noFollowUp) sp.set("no_follow_up", "true");

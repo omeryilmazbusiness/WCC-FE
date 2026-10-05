@@ -22,6 +22,19 @@ export type TaskDraft = {
   dueTime: string;
   assigneeId: string;
   assigneeName: string;
+  /** Catalogue package the task is about; departure only with a package. */
+  packageId: string | null;
+  departureId: string | null;
+};
+
+/** Record and package a task opens against, e.g. from a lead or a package page. */
+export type TaskContext = {
+  relatedType?: string;
+  relatedId?: string;
+  relatedLabel?: string;
+  customerId?: string | null;
+  packageId?: string | null;
+  departureId?: string | null;
 };
 
 export type DraftErrors = Partial<{
@@ -94,7 +107,7 @@ export function resolveDue(
   }
 }
 
-export function freshTaskDraft(now: Date, assignee: { id: string; name: string }): TaskDraft {
+export function freshTaskDraft(now: Date, assignee: { id: string; name: string }, context: TaskContext = {}): TaskDraft {
   const tomorrow = atLocal(now, 1, MORNING_HOUR);
   return {
     title: "",
@@ -106,6 +119,8 @@ export function freshTaskDraft(now: Date, assignee: { id: string; name: string }
     dueTime: toLocalTime(tomorrow),
     assigneeId: assignee.id,
     assigneeName: assignee.name,
+    packageId: context.packageId || null,
+    departureId: context.packageId ? context.departureId || null : null,
   };
 }
 
@@ -113,6 +128,7 @@ export function freshTaskDraft(now: Date, assignee: { id: string; name: string }
 export function validateTaskDraft(
   draft: TaskDraft,
   now: Date,
+  context: TaskContext = {},
 ): { errors: DraftErrors; input: TaskCreateInput | null } {
   const errors: DraftErrors = {};
   const title = draft.title.trim().replace(/\s+/g, " ");
@@ -139,6 +155,15 @@ export function validateTaskDraft(
       assigneeId: draft.assigneeId,
       assigneeName: draft.assigneeName,
       dueAt: due ? due.toISOString() : null,
+      ...(context.relatedType && context.relatedId
+        ? {
+            relatedType: context.relatedType,
+            relatedId: context.relatedId,
+            relatedLabel: context.relatedLabel,
+            customerId: context.customerId ?? null,
+          }
+        : {}),
+      ...(draft.packageId ? { packageId: draft.packageId, departureId: draft.departureId } : {}),
     },
   };
 }

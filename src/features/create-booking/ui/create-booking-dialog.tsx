@@ -6,6 +6,7 @@ import type { BookingRepository } from "@/entities/booking";
 import { createCustomerRepository } from "@/entities/customer";
 import { createTourPackageRepository } from "@/entities/tourpackage";
 import { useCan } from "@/entities/viewer";
+import { PackagePicker, pickOf, type PackagePick } from "@/features/package-link";
 import { useRouter } from "@/shared/i18n/navigation";
 import { routes } from "@/shared/config/routes";
 import {
@@ -30,6 +31,8 @@ type Props = {
   repository: BookingRepository;
   defaultCustomerId?: string;
   defaultDepartureId?: string;
+  /** Preselects a package; its soonest bookable departure is suggested. */
+  defaultPackageId?: string;
   onCreated?: (bookingId: string) => void;
   /** Replaces the default button. */
   trigger?: React.ReactElement;
@@ -39,6 +42,7 @@ export function CreateBookingDialog({
   repository,
   defaultCustomerId,
   defaultDepartureId,
+  defaultPackageId,
   onCreated,
   trigger,
 }: Props) {
@@ -50,32 +54,34 @@ export function CreateBookingDialog({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [customerId, setCustomerId] = useState(defaultCustomerId ?? "");
-  const [departureId, setDepartureId] = useState(defaultDepartureId ?? "");
+  const [pick, setPick] = useState<PackagePick>(() => pickOf(defaultPackageId, defaultDepartureId));
+  const departureId = pick.departureId ?? "";
   const [pax, setPax] = useState("2");
   const [busy, setBusy] = useState(false);
   const custRepo = useMemo(() => createCustomerRepository(), []);
   const pkgRepo = useMemo(() => createTourPackageRepository(), []);
   const [customers, setCustomers] = useState<{ id: string; label: string }[]>([]);
-  const [deps, setDeps] = useState<{ id: string; label: string }[]>([]);
 
   useEffect(() => {
     if (!open) return;
-    void (async () => {
-      const list = await custRepo.search("");
+    let alive = true;
+    void custRepo.search("").then((list) => {
+      if (!alive) return;
       setCustomers(list.slice(0, 40).map((c) => ({ id: c.id, label: c.fullName })));
-      if (!customerId && list[0]) setCustomerId(list[0].id);
-      const packages = await pkgRepo.listPackages();
-      const rows: { id: string; label: string }[] = [];
-      for (const p of packages) {
-        const dlist = await pkgRepo.listDepartures(p.id);
-        for (const d of dlist) {
-          rows.push({ id: d.id, label: `${p.code} · ${d.code} · ${d.departDate}` });
-        }
-      }
-      setDeps(rows);
-      if (!departureId && rows[0]) setDepartureId(rows[0].id);
-    })();
-  }, [open, custRepo, pkgRepo, customerId, departureId]);
+      setCustomerId((cur) => cur || list[0]?.id || "");
+    });
+    if (defaultDepartureId && !defaultPackageId) {
+      void pkgRepo
+        .getDeparture(defaultDepartureId)
+        .then((d) => {
+          if (alive) setPick(pickOf(d.packageId, d.id));
+        })
+        .catch(() => undefined);
+    }
+    return () => {
+      alive = false;
+    };
+  }, [open, custRepo, pkgRepo, defaultDepartureId, defaultPackageId]);
 
   async function submit() {
     if (!customerId || !departureId) return;
@@ -104,7 +110,7 @@ export function CreateBookingDialog({
       <DialogTrigger asChild>
         {trigger ?? <Button type="button">{t("create")}</Button>}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[92vh] max-w-xl overflow-y-auto" data-testid="create-booking-dialog">
         <DialogHeader>
           <DialogTitle>{t("createTitle")}</DialogTitle>
           <DialogDescription>{t("createHint")}</DialogDescription>
@@ -131,18 +137,7 @@ export function CreateBookingDialog({
             <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-500">
               {t("fields.departure")}
             </p>
-            <Select value={departureId} onValueChange={setDepartureId}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {deps.map((d) => (
-                  <SelectItem key={d.id} value={d.id}>
-                    {d.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <PackagePicker value={pick} onChange={setPick} requireDeparture testId="create-booking-package" />
           </div>
           <div>
             <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-500">
@@ -154,7 +149,7 @@ export function CreateBookingDialog({
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               {tc("cancel")}
             </Button>
-            <Button type="button" disabled={busy} onClick={() => void submit()}>
+            <Button type="button" disabled={busy || !departureId || !customerId} onClick={() => void submit()} data-testid="create-booking-submit">
               {t("create")}
             </Button>
           </div>

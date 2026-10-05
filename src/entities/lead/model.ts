@@ -109,6 +109,10 @@ export type TripInterest = {
   budgetAmount: number | null;
   budgetCurrency: string;
   packageId: string | null;
+  /** Code and names of packageId, filled in by the API (read only). */
+  packageCode?: string;
+  packageName?: string;
+  packageNameAr?: string;
   packageInterest: string;
 };
 

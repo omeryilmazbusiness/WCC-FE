@@ -11,6 +11,7 @@ import {
   CircleSlash,
   IdCard,
   Link2,
+  Package,
   RefreshCw,
   Siren,
   type LucideIcon,
@@ -22,12 +23,15 @@ import {
   hasRelatedRecord,
   isTaskClosed,
   isTaskOverdue,
+  packageLinkLabel,
   type Task,
   type TaskRepository,
 } from "@/entities/task";
 import { useCan } from "@/entities/viewer";
 import { CancelTaskDialog } from "@/features/cancel-task";
 import { CompleteTaskButton } from "@/features/complete-task";
+import { LinkPackageDialog } from "@/features/package-link";
+import { routes } from "@/shared/config/routes";
 import { Link } from "@/shared/i18n/navigation";
 import { initials } from "@/shared/lib/avatar";
 import { cn } from "@/shared/lib/cn";
@@ -225,6 +229,35 @@ function TaskDetail({ task, locale, repository, onChanged }: DetailProps) {
               />
             )}
             <Row
+              leading={<IconTile icon={Package} tone={task.pkg ? "amber" : "zinc"} size="lg" />}
+              label={t("detail.package")}
+              value={task.pkg ? packageLinkLabel(task.pkg, locale) : t("detail.noPackage")}
+              hint={task.pkg?.departDate ? formatDate(`${task.pkg.departDate}T00:00:00`, locale) : undefined}
+              muted={!task.pkg}
+              testId="task-detail-package"
+              action={
+                <span className="flex shrink-0 items-center gap-1.5">
+                  {task.pkg ? (
+                    <Link href={routes.package(task.pkg.packageId)} className={rowActionClass} data-testid="task-detail-package-open">
+                      {t("detail.open")}
+                      <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden />
+                    </Link>
+                  ) : null}
+                  {canWrite && !closed ? (
+                    <LinkPackageDialog
+                      value={{ packageId: task.pkg?.packageId ?? null, departureId: task.pkg?.departureId ?? null }}
+                      onSave={async (pick) => onChanged(await repository.linkPackage(task.id, pick))}
+                      trigger={
+                        <button type="button" className={rowActionClass} data-testid="task-detail-package-link">
+                          {task.pkg ? t("detail.changePackage") : t("detail.linkPackage")}
+                        </button>
+                      }
+                    />
+                  ) : null}
+                </span>
+              }
+            />
+            <Row
               leading={<IconTile icon={CalendarPlus} tone="zinc" size="lg" />}
               label={t("detail.created")}
               value={formatDateTime(task.createdAt, locale)}
@@ -360,6 +393,7 @@ function Row({
   hint,
   muted,
   action,
+  testId,
 }: {
   leading: ReactNode;
   label: string;
@@ -367,9 +401,10 @@ function Row({
   hint?: string;
   muted?: boolean;
   action?: ReactNode;
+  testId?: string;
 }) {
   return (
-    <div className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
+    <div className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0" data-testid={testId}>
       {leading}
       <div className="min-w-0 flex-1">
         <p className="truncate text-[11px] font-medium text-zinc-400">{label}</p>

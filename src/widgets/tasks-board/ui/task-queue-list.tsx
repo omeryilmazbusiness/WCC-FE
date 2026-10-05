@@ -8,6 +8,7 @@ import {
   type TaskRepository,
 } from "@/entities/task";
 import { hrefForRelated } from "@/shared/lib/related-href";
+import { PackageLinkChip } from "@/features/package-link";
 import { Link } from "@/shared/i18n/navigation";
 import { EmptyState, StageBadge, TASK_STATUS_TONES } from "@/shared/ui";
 import { cn } from "@/shared/lib/cn";
@@ -80,6 +81,15 @@ export function TaskQueueList({
                   >
                     {relatedText(task)}
                   </Link>
+                ) : null}
+                {task.pkg ? (
+                  <PackageLinkChip
+                    packageId={task.pkg.packageId}
+                    code={task.pkg.packageCode}
+                    departureCode={task.pkg.departureCode}
+                    compact
+                    className="mt-1.5"
+                  />
                 ) : null}
                 {task.dueAt ? (
                   <p className="mt-1 text-[11px] font-medium tabular-nums text-zinc-400">

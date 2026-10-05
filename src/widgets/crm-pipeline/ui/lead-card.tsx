@@ -53,7 +53,8 @@ export function LeadCard({ lead, locale, repository, canWrite, dragging, onChang
     interest.budgetAmount != null && interest.budgetCurrency
       ? formatMoneyWhole(interest.budgetAmount, locale, interest.budgetCurrency)
       : "";
-  const hasTrip = Boolean(travel || interest.paxCount || budget || interest.packageInterest);
+  const linkedPackage = interest.packageId ? interest.packageCode || interest.packageName || "" : "";
+  const hasTrip = Boolean(travel || interest.paxCount || budget || linkedPackage || interest.packageInterest);
   const hasFlags = lead.noFollowUp || Boolean(lead.convertedBookingId);
   const sourceKind = leadSourceKind(lead.source);
   const source = LEAD_SOURCE_LOOK[sourceKind];
@@ -113,6 +114,9 @@ export function LeadCard({ lead, locale, repository, canWrite, dragging, onChang
               <Chip icon={UsersRound} tone="violet" label={t("card.travellers")} value={String(interest.paxCount)} />
             ) : null}
             {budget ? <Chip icon={Wallet} tone="emerald" label={t("card.budget")} value={budget} /> : null}
+            {linkedPackage ? (
+              <Chip icon={Package} tone="amber" label={t("card.package")} value={linkedPackage} filled testId="lead-card-package" />
+            ) : null}
             {interest.packageInterest ? (
               <Chip icon={Package} tone="amber" label={t("card.package")} value={interest.packageInterest} className="max-w-full" />
             ) : null}
@@ -208,6 +212,7 @@ function Chip({
   value,
   filled,
   className,
+  testId,
 }: {
   icon: LucideIcon;
   tone: Tone;
@@ -215,9 +220,11 @@ function Chip({
   value: string;
   filled?: boolean;
   className?: string;
+  testId?: string;
 }) {
   return (
     <span
+      data-testid={testId}
       title={label === value ? label : `${label}: ${value}`}
       className={cn(
         "inline-flex h-7 min-w-0 items-center gap-1.5 rounded-full ps-1 pe-2.5 text-[12px] font-medium",

@@ -706,7 +706,11 @@
       "open": "Open",
       "created": "Created",
       "completed": "Completed",
-      "updated": "Last updated"
+      "updated": "Last updated",
+      "package": "Package",
+      "noPackage": "No package linked",
+      "linkPackage": "Link package",
+      "changePackage": "Change"
     },
     "create": {
       "title": "New task",
@@ -722,7 +726,8 @@
         "due": "Deadline",
         "date": "Date",
         "time": "Time",
-        "assignee": "Assignee"
+        "assignee": "Assignee",
+        "package": "Package"
       },
       "presets": {
         "today": "Today",
@@ -751,7 +756,8 @@
       "submit": "Create task",
       "saving": "Creating…",
       "created": "Task created",
-      "error": "Could not create the task"
+      "error": "Could not create the task",
+      "linkedTo": "Linked to {type}: {label}"
     },
     "related": {
       "lead": "Lead",
@@ -1276,7 +1282,10 @@
       "notes": "Notes",
       "addTrip": "Add trip details",
       "leadCreated": "Lead created",
-      "moreActions": "Actions"
+      "moreActions": "Actions",
+      "noPackage": "No package linked",
+      "linkPackage": "Link package",
+      "newTask": "New task for this lead"
     },
     "stats": {
       "open": "Open leads",
@@ -1508,8 +1517,8 @@
   },
   "packages": {
     "title": "Packages",
-    "subtitle": "Product templates and dated departures with live capacity",
-    "searchPlaceholder": "Search by code or name…",
+    "subtitle": "Umrah & Hajj products — hotels, pricing matrix, logistics and departures",
+    "searchPlaceholder": "Search by code, name, hotel or airline",
     "createPackage": "New package",
     "createPackageHint": "Reusable Hajj/Umrah product template",
     "createDeparture": "New departure",
@@ -1582,6 +1591,492 @@
       "capacity": "Capacity",
       "basePrice": "Base price",
       "currency": "Currency"
+    },
+    "newPackage": "New package",
+    "emptyFiltered": "No packages match",
+    "emptyFilteredHint": "Try another search or clear the filters.",
+    "quick": {
+      "all": "All packages",
+      "umrah": "Umrah",
+      "hajj": "Hajj",
+      "open": "Open for sale",
+      "soon": "Departing in 30 days"
+    },
+    "view": {
+      "label": "View",
+      "cards": "Cards",
+      "table": "Table"
+    },
+    "card": {
+      "from": "from",
+      "perPerson": "per person",
+      "nights": "{n} nights",
+      "days": "{n} days",
+      "split": "Makkah {makkah} · Madinah {madinah}",
+      "quota": "{reserved} / {total} reserved",
+      "remaining": "{n} left",
+      "noQuota": "No quota set",
+      "nextDeparture": "Next departure",
+      "noDeparture": "No departure scheduled",
+      "noPrice": "No price yet",
+      "open": "Open",
+      "salesOpen": "On sale",
+      "salesClosed": "Sales closed",
+      "inactive": "Inactive",
+      "ready": "{pct}% ready"
+    },
+    "kind": {
+      "umrah": "Umrah",
+      "hajj": "Hajj"
+    },
+    "kindHint": {
+      "umrah": "Year-round pilgrimage",
+      "hajj": "Dhul Hijjah season"
+    },
+    "category": {
+      "economy": "Economy",
+      "standard": "Standard",
+      "luxury": "Luxury",
+      "boutique": "Boutique",
+      "ramadan_first15": "Ramadan · first 15",
+      "ramadan_last15": "Ramadan · last 15",
+      "ramadan_full": "Ramadan · full month",
+      "semester": "Semester",
+      "short": "Short Hajj",
+      "long": "Long Hajj",
+      "special_mujamala": "Special visa · Mujamala",
+      "special_commercial": "Special visa · Commercial"
+    },
+    "categoryHint": {
+      "economy": "Best value",
+      "standard": "Balanced comfort",
+      "luxury": "Haram-front 5★",
+      "boutique": "Small, curated group",
+      "ramadan_first15": "Days 1–15",
+      "ramadan_last15": "Laylat al-Qadr nights",
+      "ramadan_full": "All 30 days",
+      "semester": "School holiday",
+      "short": "About 2 weeks",
+      "long": "About 4 weeks",
+      "special_mujamala": "Courtesy visa",
+      "special_commercial": "Commercial quota"
+    },
+    "transport": {
+      "flight_scheduled": "Scheduled flight",
+      "flight_charter": "Charter",
+      "road": "By road"
+    },
+    "transportHint": {
+      "flight_scheduled": "Regular airline seats",
+      "flight_charter": "Chartered aircraft",
+      "road": "Coach overland"
+    },
+    "board": {
+      "bb": "Bed & breakfast",
+      "hb": "Half board",
+      "fb": "Full board",
+      "tabldot": "Tabldot",
+      "buffet": "Open buffet"
+    },
+    "boardShort": {
+      "bb": "BB",
+      "hb": "HB",
+      "fb": "FB",
+      "tabldot": "Tabldot",
+      "buffet": "Buffet"
+    },
+    "access": {
+      "walking": "Walking",
+      "shuttle": "Shuttle"
+    },
+    "routing": {
+      "direct": "Direct",
+      "connecting": "Connecting"
+    },
+    "intercity": {
+      "haramain_train": "Haramain train",
+      "bus": "Bus"
+    },
+    "visa": {
+      "UMRAH_VISA": "Umrah visa",
+      "TOURIST_VISA": "Tourist visa",
+      "PERSONAL_VISIT": "Personal visit",
+      "HAJJ_VISA": "Hajj visa",
+      "BUSINESS_VISIT": "Business visit"
+    },
+    "kit": {
+      "ihram": "Ihram",
+      "luggage": "Luggage set",
+      "prayer_book": "Prayer book",
+      "zamzam": "Zamzam 5 L"
+    },
+    "ziyarat": {
+      "thawr": "Mount Thawr",
+      "arafat": "Arafat",
+      "muzdalifah": "Muzdalifah",
+      "mina": "Mina",
+      "hira": "Cave of Hira",
+      "jannat_al_mualla": "Jannat al-Mu'alla",
+      "uhud": "Mount Uhud",
+      "qiblatayn": "Masjid al-Qiblatayn",
+      "seven_mosques": "Seven Mosques",
+      "quba": "Masjid Quba",
+      "baqi": "Jannat al-Baqi"
+    },
+    "zone": {
+      "markaziyya_north": "Markaziyya North",
+      "markaziyya_south": "Markaziyya South",
+      "markaziyya_west": "Markaziyya West",
+      "markaziyya_east": "Markaziyya East",
+      "outside_central": "Outside central area"
+    },
+    "city": {
+      "none": "—",
+      "makkah": "Makkah",
+      "madinah": "Madinah",
+      "jeddah": "Jeddah",
+      "transit": "Transit"
+    },
+    "tier": {
+      "QUAD": "Quad",
+      "TRIPLE": "Triple",
+      "DOUBLE": "Double",
+      "SINGLE": "Single",
+      "INFANT": "Infant 0–2",
+      "CHILD_2_6": "Child 2–6 (no bed)",
+      "CHILD_6_11_BED": "Child 6–11 with bed",
+      "CHILD_6_11_NOBED": "Child 6–11 no bed"
+    },
+    "tierHint": {
+      "QUAD": "4 per room",
+      "TRIPLE": "3 per room",
+      "DOUBLE": "2 per room",
+      "SINGLE": "Private room",
+      "INFANT": "Shares parents' bed",
+      "CHILD_2_6": "Shares parents' bed",
+      "CHILD_6_11_BED": "Own bed",
+      "CHILD_6_11_NOBED": "Shares a bed"
+    },
+    "cost": {
+      "flight": "Flight",
+      "hotel": "Hotels",
+      "visa": "Visa",
+      "transfer": "Transfers",
+      "guidance": "Guidance",
+      "gifts": "Gifts & kit"
+    },
+    "steps": {
+      "identity": {
+        "title": "Package",
+        "hint": "Type, code, duration, quota and transport"
+      },
+      "hotels": {
+        "title": "Hotels",
+        "hint": "Makkah and Madinah stays"
+      },
+      "pricing": {
+        "title": "Pricing",
+        "hint": "Room & age matrix, costs and markup"
+      },
+      "logistics": {
+        "title": "Logistics",
+        "hint": "Flights, PNR, train or bus, transfers"
+      },
+      "services": {
+        "title": "Services",
+        "hint": "Guide, visa, kit and ziyarat"
+      },
+      "itinerary": {
+        "title": "Itinerary",
+        "hint": "Day-by-day programme"
+      },
+      "requirements": {
+        "title": "Requirements",
+        "hint": "Passport, vaccination, photo, mahram"
+      }
+    },
+    "form": {
+      "createTitle": "New package",
+      "createSubtitle": "Build the full product sheet. Only the package step is required to save.",
+      "editTitle": "Edit package",
+      "editSubtitle": "Changes apply to new bookings; existing bookings keep their prices.",
+      "stepOf": "Step {n} of {total}",
+      "back": "Back",
+      "next": "Next",
+      "create": "Create package",
+      "save": "Save changes",
+      "createdTitle": "Package created",
+      "savedTitle": "Package saved",
+      "saveError": "Could not save the package",
+      "fixErrors": "Check the highlighted fields",
+      "identity": {
+        "kind": "Pilgrimage",
+        "category": "Category",
+        "code": "Package code",
+        "codeHint": "Letters, digits and dashes, e.g. UMR-2026-RAM-01",
+        "suggest": "Suggest",
+        "nameEn": "Name (English)",
+        "nameEnPh": "Ramadan Umrah · Last 15 nights",
+        "nameAr": "Name (Arabic)",
+        "description": "Short description",
+        "descriptionPh": "What makes this package special",
+        "duration": "Duration",
+        "days": "days",
+        "nightsSummary": "{days} days · {nights} nights",
+        "transport": "Transport",
+        "quota": "Quota",
+        "quotaHint": "Total seats you plan to sell; 0 = use departure capacity",
+        "seats": "seats",
+        "currency": "Base currency",
+        "currencyHint": "Prices and costs are kept in this currency and converted live",
+        "salesOpen": "Open for sale",
+        "salesOpenHint": "Agents can book departures of this package"
+      },
+      "hotels": {
+        "makkah": "Makkah hotel",
+        "madinah": "Madinah hotel",
+        "makkahHint": "Near Masjid al-Haram",
+        "madinahHint": "Near Al-Masjid an-Nabawi",
+        "name": "Hotel name",
+        "namePh": "e.g. Swissôtel Al Maqam",
+        "stars": "Stars",
+        "distance": "Distance to Haram",
+        "meters": "m",
+        "access": "Access",
+        "shuttleMinutes": "Shuttle time",
+        "minutes": "min",
+        "zone": "Zone",
+        "zonePh": "Select a zone",
+        "board": "Board",
+        "checkIn": "Check-in",
+        "checkOut": "Check-out",
+        "nights": "Nights",
+        "nightsFromDates": "{n} nights from the dates",
+        "useDates": "Use dates",
+        "split": "Stay plan",
+        "splitSummary": "Makkah {makkah} + Madinah {madinah} = {total} of {max} nights",
+        "overflow": "The stay is longer than the package",
+        "noMadinah": "Set Madinah nights to 0 for a Makkah-only package"
+      },
+      "pricing": {
+        "matrix": "Pricing matrix",
+        "matrixHint": "Per-person sale prices in {currency}. Empty rows are not offered.",
+        "rooms": "Room type",
+        "ages": "Children",
+        "price": "Price",
+        "convert": "Live conversion",
+        "convertHint": "Converted at today's mid rate via USD",
+        "fxUnavailable": "Live rates are unavailable right now",
+        "orderWarning": "{tiers}: larger rooms are usually cheaper per person",
+        "costs": "Cost breakdown",
+        "costsHint": "Net cost per person in {currency} — only visible to staff",
+        "markup": "Markup",
+        "total": "Net cost",
+        "suggested": "Suggested price",
+        "apply": "Apply to Double",
+        "margin": "Margin",
+        "marginOf": "{pct}% margin on {tier}",
+        "belowCost": "{tier} is below cost"
+      },
+      "logistics": {
+        "flights": "Flights",
+        "flightsHint": "Airline, routing, PNR and block seats",
+        "airline": "Airline",
+        "airlinePh": "Airline name",
+        "routing": "Routing",
+        "outbound": "Outbound",
+        "inbound": "Return",
+        "route": "Route",
+        "routePh": "IST-JED",
+        "flightNo": "Flight no.",
+        "date": "Date",
+        "pnr": "Group PNR",
+        "blockSeats": "Block seats",
+        "ground": "Ground transport",
+        "groundHint": "Between cities and to the hotels",
+        "intercity": "Makkah ⇄ Madinah",
+        "busClass": "Bus class",
+        "busClassPh": "2024–2026 VIP Neoplan",
+        "airportMeet": "Airport meet & greet",
+        "airportMeetHint": "Representative at arrivals",
+        "hotelTransfers": "Hotel transfers",
+        "hotelTransfersHint": "Airport ⇄ hotel and between hotels",
+        "road": "This package travels by road — no flights to plan."
+      },
+      "services": {
+        "guidance": "Guidance",
+        "guidanceHint": "Who leads the group",
+        "leader": "Guide / Irshad leader",
+        "leaderPh": "Sheikh name",
+        "femaleGuide": "Female guide",
+        "femaleGuideHint": "For women-only sessions and Rawdah visits",
+        "visa": "Visa & insurance",
+        "visaHint": "Nusuk-compatible visa type",
+        "healthInsurance": "Health insurance",
+        "healthInsuranceHint": "Included in the package price",
+        "kit": "Pilgrim kit",
+        "kitHint": "Gifts handed out before departure",
+        "ziyaratMakkah": "Makkah ziyarat",
+        "ziyaratMadinah": "Madinah ziyarat",
+        "ziyaratHint": "Guided visits included in the programme",
+        "lines": "Included & excluded",
+        "linesHint": "One item per line, shown on the offer",
+        "included": "Included",
+        "includedPh": "Return flights\nVisa fees",
+        "excluded": "Not included",
+        "excludedPh": "Personal expenses\nQurbani"
+      },
+      "itinerary": {
+        "title": "Day-by-day programme",
+        "hint": "{count} of {days} days planned",
+        "generate": "Generate from stay plan",
+        "regenerate": "Replace with a fresh template",
+        "addDay": "Add day",
+        "day": "Day",
+        "dayN": "Day {n}",
+        "city": "City",
+        "dayTitle": "Title",
+        "details": "Details",
+        "detailsPh": "Times, meeting point, notes",
+        "remove": "Remove day",
+        "empty": "No days yet",
+        "emptyHint": "Generate a template from the hotels and transport, then fine-tune it."
+      },
+      "requirements": {
+        "title": "Mandatory checks",
+        "hint": "Enforced when travellers are added to a booking",
+        "passport": "Passport validity",
+        "passportHint": "Valid at least this many months after departure",
+        "months": "months",
+        "meningitis": "Meningitis vaccine (ACYW135)",
+        "meningitisHint": "Certificate required for the visa",
+        "photo": "Biometric photo",
+        "photoHint": "White background, recent",
+        "mahram": "Mahram rule",
+        "mahramHint": "Women under the age limit travel with a mahram",
+        "mahramAge": "Age limit",
+        "years": "years",
+        "checker": "Traveller check",
+        "checkerHint": "Try a traveller against these rules",
+        "passportExpiry": "Passport expires",
+        "dob": "Date of birth",
+        "gender": "Gender",
+        "male": "Male",
+        "female": "Female",
+        "departDate": "Departure",
+        "allClear": "Eligible — nothing missing"
+      },
+      "errors": {
+        "code": "Use 2–32 letters, digits or dashes",
+        "name": "Enter at least 3 characters",
+        "duration": "1–60 days",
+        "capacity": "0–10,000 seats",
+        "category": "Pick a category for this type",
+        "nights": "Makkah + Madinah nights exceed the duration",
+        "checkOut": "Check-out must be after check-in",
+        "distance": "0–50,000 m",
+        "route": "Use airport codes, e.g. IST-JED or IST-MED-JED",
+        "inbound": "Return is before the outbound flight",
+        "money": "Enter a valid amount",
+        "markup": "0–300%",
+        "dayTitle": "Give the day a title",
+        "dayRange": "Outside the package duration",
+        "dayDuplicate": "This day is already planned",
+        "passportMonths": "0–24 months",
+        "stay": "Dates don’t match the planned nights"
+      }
+    },
+    "template": {
+      "arrival": "Arrival, ihram at the miqat & first Umrah",
+      "arrivalDetails": "Meet at the airport, transfer to the hotel, perform Umrah with the guide.",
+      "makkahDay": "Worship at Masjid al-Haram",
+      "makkahZiyarat": "Makkah ziyarat",
+      "transferTrain": "Haramain train to Madinah",
+      "transferBus": "Coach transfer to Madinah",
+      "madinahDay": "Worship at Al-Masjid an-Nabawi",
+      "madinahZiyarat": "Madinah ziyarat & Rawdah",
+      "farewell": "Farewell tawaf & return",
+      "farewellDetails": "Check-out, farewell tawaf, transfer to the airport."
+    },
+    "eligibility": {
+      "passport_missing": "No passport on file",
+      "passport_short": "Passport must be valid until {date}",
+      "mahram": "Needs a mahram on the booking",
+      "mahram_unknown": "Check the mahram rule (gender unknown)",
+      "meningitis": "Meningitis certificate (ACYW135)",
+      "photo": "Biometric photo on white background"
+    },
+    "readiness": {
+      "title": "Ready to sell",
+      "makkahHotel": "Makkah hotel",
+      "madinahHotel": "Madinah hotel",
+      "flights": "Flights",
+      "visa": "Visa",
+      "pricing": "Room prices",
+      "itinerary": "Itinerary",
+      "costs": "Cost breakdown"
+    },
+    "detail": {
+      "edit": "Edit",
+      "tabs": {
+        "overview": "Overview",
+        "hotels": "Hotels",
+        "pricing": "Pricing",
+        "logistics": "Logistics",
+        "services": "Services",
+        "itinerary": "Itinerary",
+        "requirements": "Requirements",
+        "departures": "Departures",
+        "links": "Linked work"
+      },
+      "stats": {
+        "quota": "Quota",
+        "reserved": "Reserved",
+        "remaining": "Remaining",
+        "departures": "Departures",
+        "from": "From"
+      },
+      "notSet": "Not set",
+      "none": "None",
+      "yes": "Yes",
+      "no": "No",
+      "incomplete": "Missing: {items}",
+      "complete": "Product sheet complete",
+      "stay": "Stay",
+      "distanceM": "{n} m to Haram",
+      "shuttle": "Shuttle · {n} min",
+      "convertTo": "Show in",
+      "priceTable": "Per-person prices",
+      "noPrices": "No prices yet",
+      "noPricesHint": "Add room prices in the pricing step.",
+      "noHotel": "No hotel yet",
+      "noItinerary": "No programme yet",
+      "noItineraryHint": "Generate one from the stay plan in the editor.",
+      "costShare": "{pct}% of cost",
+      "leader": "Group leader"
+    },
+    "links": {
+      "stats": {
+        "openLeads": "Interested leads",
+        "openTasks": "Open tasks",
+        "overdue": "Overdue tasks",
+        "bookings": "Bookings",
+        "pax": "{n, plural, one {# traveller} other {# travellers}}"
+      },
+      "tasks": {
+        "title": "Tasks",
+        "new": "New task",
+        "empty": "No tasks are linked to this package yet."
+      },
+      "leads": {
+        "title": "Interested leads",
+        "empty": "No leads have picked this package yet."
+      },
+      "bookings": {
+        "title": "Bookings",
+        "empty": "No bookings on this package's departures yet."
+      },
+      "locked": "You don't have access to this list."
     }
   },
   "bookings": {
@@ -3483,5 +3978,34 @@
       "window": "±3 days around your time",
       "secure": "Secure booking on Aviasales"
     }
+  },
+  "packageLink": {
+    "empty": "Link a package",
+    "emptyHint": "Search the catalogue by code, name or hotel",
+    "missing": "Linked package unavailable",
+    "change": "Change",
+    "clear": "Remove package",
+    "search": "Search packages",
+    "close": "Close",
+    "loading": "Loading…",
+    "noMatches": "No package matches this search",
+    "noPackages": "No packages in the catalogue yet",
+    "nights": "{n, plural, one {# night} other {# nights}}",
+    "from": "from {price}",
+    "inactive": "Inactive",
+    "salesClosed": "Sales closed",
+    "departure": "Departure",
+    "anyDeparture": "Any departure",
+    "anyDepartureHint": "Not decided yet",
+    "noDepartures": "No upcoming departures for this package",
+    "seatsLeft": "{n, plural, one {# seat left} other {# seats left}}",
+    "full": "Full",
+    "linkTitle": "Link a package",
+    "linkHint": "Pick the package, and optionally the departure, this record is about.",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saved": "Package linked",
+    "unlinked": "Package removed",
+    "error": "Could not update the package link"
   }
 }

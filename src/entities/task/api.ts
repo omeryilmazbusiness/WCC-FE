@@ -7,17 +7,23 @@ import {
   type Task,
   type TaskCreateInput,
   type TaskKind,
+  mapTaskPackageLink,
+  type TaskPackageInput,
   type TaskStatus,
 } from "./model";
 
+export type TaskListParams = {
+  q?: string;
+  status?: string;
+  assigneeId?: string;
+  overdue?: boolean;
+  escalated?: boolean;
+  packageId?: string;
+  departureId?: string;
+};
+
 export interface TaskRepository {
-  list(params?: {
-    q?: string;
-    status?: string;
-    assigneeId?: string;
-    overdue?: boolean;
-    escalated?: boolean;
-  }): Promise<Task[]>;
+  list(params?: TaskListParams): Promise<Task[]>;
   listMine(assigneeId?: string): Promise<Task[]>;
   listToday(assigneeId: string): Promise<Task[]>;
   listByRelated(relatedType: string, relatedId: string): Promise<Task[]>;
@@ -27,6 +33,8 @@ export interface TaskRepository {
   cancel(id: string, reason?: string): Promise<Task>;
   changeStatus(id: string, status: TaskStatus): Promise<Task>;
   assign(id: string, assigneeId: string, assigneeName?: string): Promise<Task>;
+  /** Sets or clears the package (and departure) the task is about. */
+  linkPackage(id: string, input: TaskPackageInput): Promise<Task>;
   bulkAssign(
     taskIds: string[],
     assigneeId: string,
@@ -81,6 +89,7 @@ function mapTask(raw: Raw): Task {
     relatedId,
     relatedLabel: linked ? label : "",
     customerId: (raw.customerId ?? raw.customer_id ?? null) as string | null,
+    pkg: mapTaskPackageLink(raw.package),
     dueAt: (raw.dueAt ?? raw.due_at ?? null) as string | null,
     escalatedAt: (raw.escalatedAt ?? raw.escalated_at ?? null) as string | null,
     createdAt: String(raw.createdAt ?? raw.created_at ?? ""),
@@ -92,19 +101,15 @@ function mapTask(raw: Raw): Task {
 export class ApiTaskRepository implements TaskRepository {
   constructor(private readonly http: HttpClient) {}
 
-  async list(params: {
-    q?: string;
-    status?: string;
-    assigneeId?: string;
-    overdue?: boolean;
-    escalated?: boolean;
-  } = {}): Promise<Task[]> {
+  async list(params: TaskListParams = {}): Promise<Task[]> {
     const sp = new URLSearchParams();
     if (params.q) sp.set("q", params.q);
     if (params.status) sp.set("status", params.status);
     if (params.assigneeId) sp.set("assignee_id", params.assigneeId);
     if (params.overdue) sp.set("overdue", "true");
     if (params.escalated) sp.set("escalated", "true");
+    if (params.packageId) sp.set("package_id", params.packageId);
+    if (params.departureId) sp.set("departure_id", params.departureId);
     sp.set("limit", "100");
     const qs = sp.toString();
     const data = await this.http.request<Raw[]>(`/tasks${qs ? `?${qs}` : ""}`);
@@ -156,6 +161,7 @@ export class ApiTaskRepository implements TaskRepository {
           ...(input.relatedType && input.relatedId
             ? { related_type: input.relatedType, related_id: input.relatedId }
             : {}),
+          ...(input.packageId ? { package_id: input.packageId, departure_id: input.departureId || null } : {}),
           due_at: input.dueAt ?? null,
         }),
       }),
@@ -201,6 +207,15 @@ export class ApiTaskRepository implements TaskRepository {
       }),
     );
     return assigneeName ? { ...task, assigneeName } : task;
+  }
+
+  async linkPackage(id: string, input: TaskPackageInput): Promise<Task> {
+    return mapTask(
+      await this.http.request<Raw>(`/tasks/${id}/package`, {
+        method: "PUT",
+        body: JSON.stringify({ package_id: input.packageId, departure_id: input.packageId ? input.departureId : null }),
+      }),
+    );
   }
 
   async bulkAssign(taskIds: string[], assigneeId: string, assigneeName?: string): Promise<Task[]> {
@@ -350,16 +365,12 @@ function clone(t: Task): Task {
 }
 
 export class MemoryTaskRepository implements TaskRepository {
-  async list(params: {
-    q?: string;
-    status?: string;
-    assigneeId?: string;
-    overdue?: boolean;
-    escalated?: boolean;
-  } = {}): Promise<Task[]> {
+  async list(params: TaskListParams = {}): Promise<Task[]> {
     return store
       .filter((t) => {
         if (params.status && t.status !== params.status) return false;
+        if (params.packageId && t.pkg?.packageId !== params.packageId) return false;
+        if (params.departureId && t.pkg?.departureId !== params.departureId) return false;
         if (params.assigneeId && t.assigneeId !== params.assigneeId) return false;
         if (params.escalated && !t.escalatedAt) return false;
         if (params.overdue) {
@@ -425,6 +436,17 @@ export class MemoryTaskRepository implements TaskRepository {
       relatedId: input.relatedId ?? "",
       relatedLabel: input.relatedLabel ?? "",
       customerId: input.customerId ?? null,
+      pkg: input.packageId
+        ? {
+            packageId: input.packageId,
+            packageCode: "",
+            packageName: "",
+            packageNameAr: "",
+            departureId: input.departureId ?? null,
+            departureCode: "",
+            departDate: null,
+          }
+        : null,
       dueAt: input.dueAt ?? null,
       escalatedAt: null,
       createdAt: stamp,
@@ -474,6 +496,26 @@ export class MemoryTaskRepository implements TaskRepository {
     }
     t.assigneeId = assigneeId;
     if (assigneeName) t.assigneeName = assigneeName;
+    t.updatedAt = nowIso();
+    return clone(t);
+  }
+
+  async linkPackage(id: string, input: TaskPackageInput): Promise<Task> {
+    const t = store.find((x) => x.id === id);
+    if (!t) throw new Error("task not found");
+    if (t.status === "done" || t.status === "cancelled") throw new Error("cannot relink closed task");
+    if (input.departureId && !input.packageId) throw new Error("departure needs a package");
+    t.pkg = input.packageId
+      ? {
+          packageId: input.packageId,
+          packageCode: "",
+          packageName: "",
+          packageNameAr: "",
+          departureId: input.departureId,
+          departureCode: "",
+          departDate: null,
+        }
+      : null;
     t.updatedAt = nowIso();
     return clone(t);
   }

@@ -38,7 +38,9 @@
     "test:flights": "node --experimental-strip-types scripts/selftest-flights.ts",
     "test:customers": "node --experimental-strip-types scripts/selftest-customer-profile.ts",
     "test:tasks": "node --experimental-strip-types scripts/selftest-tasks.ts",
-    "test:notifications": "node --experimental-strip-types scripts/selftest-notifications.ts"
+    "test:notifications": "node --experimental-strip-types scripts/selftest-notifications.ts",
+    "test:packages": "node --experimental-strip-types scripts/selftest-packages.ts",
+    "test:package-links": "node --experimental-strip-types scripts/selftest-package-links.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

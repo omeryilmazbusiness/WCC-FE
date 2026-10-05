@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { CalendarClock, CalendarOff, ListPlus, Loader2 } from "lucide-react";
+import { CalendarClock, CalendarOff, Link2, ListPlus, Loader2 } from "lucide-react";
 import { createLeadRepository } from "@/entities/lead";
 import {
   TASK_KIND_LOOK,
@@ -13,6 +13,7 @@ import {
   type TaskRepository,
 } from "@/entities/task";
 import { useCan, useViewer } from "@/entities/viewer";
+import { PackagePicker } from "@/features/package-link";
 import { initials } from "@/shared/lib/avatar";
 import { cn } from "@/shared/lib/cn";
 import { formatDate } from "@/shared/lib/format";
@@ -43,6 +44,7 @@ import {
   resolveDue,
   validateTaskDraft,
   type DraftErrors,
+  type TaskContext,
   type TaskDraft,
 } from "../model/draft";
 
@@ -51,13 +53,15 @@ type Props = {
   onCreated: (task: Task) => void;
   /** Lets the creator hand the task to a teammate; otherwise it is assigned to them. */
   canAssignOthers?: boolean;
+  /** Opens the task against a record and/or package (lead, booking, package page). */
+  context?: TaskContext;
   trigger: ReactNode;
 };
 
 type Owner = { id: string; name: string };
 
 /** Manual task: title, description, kind, importance, deadline and assignee in one sheet. */
-export function CreateTaskDialog({ repository, onCreated, canAssignOthers, trigger }: Props) {
+export function CreateTaskDialog({ repository, onCreated, canAssignOthers, context, trigger }: Props) {
   const allowed = useCan("tasks.write");
   const t = useTranslations("tasks.create");
   const tt = useTranslations("tasks");
@@ -67,7 +71,7 @@ export function CreateTaskDialog({ repository, onCreated, canAssignOthers, trigg
   const feedback = useMutationFeedback();
   const self = useMemo<Owner>(() => ({ id: user.id, name: user.fullName }), [user.id, user.fullName]);
   const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState<TaskDraft>(() => freshTaskDraft(new Date(), self));
+  const [draft, setDraft] = useState<TaskDraft>(() => freshTaskDraft(new Date(), self, context));
   const [errors, setErrors] = useState<DraftErrors>({});
   const [submitting, setSubmitting] = useState(false);
   const [owners, setOwners] = useState<Owner[]>([self]);
@@ -95,12 +99,12 @@ export function CreateTaskDialog({ repository, onCreated, canAssignOthers, trigg
   }
 
   function reset() {
-    setDraft(freshTaskDraft(new Date(), self));
+    setDraft(freshTaskDraft(new Date(), self, context));
     setErrors({});
   }
 
   async function submit() {
-    const { errors: found, input } = validateTaskDraft(draft, new Date());
+    const { errors: found, input } = validateTaskDraft(draft, new Date(), context);
     setErrors(found);
     if (!input) return;
     setSubmitting(true);
@@ -132,7 +136,7 @@ export function CreateTaskDialog({ repository, onCreated, canAssignOthers, trigg
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        if (!next) reset();
+        reset();
       }}
     >
       <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -157,6 +161,18 @@ export function CreateTaskDialog({ repository, onCreated, canAssignOthers, trigg
             void submit();
           }}
         >
+          {context?.relatedType && context.relatedId ? (
+            <p
+              className="flex items-center gap-2 rounded-2xl bg-zinc-50 px-3 py-2.5 text-[12.5px] font-medium text-zinc-600 ring-1 ring-zinc-200/70"
+              data-testid="create-task-related"
+            >
+              <Link2 className={cn("h-4 w-4 shrink-0", TONES.indigo.text)} aria-hidden />
+              <span className="truncate">
+                {t("linkedTo", { type: tt(`related.${context.relatedType}`), label: context.relatedLabel || context.relatedId.slice(0, 8) })}
+              </span>
+            </p>
+          ) : null}
+
           <div className="space-y-1.5">
             <div className="flex items-baseline justify-between gap-2">
               <Label htmlFor="task-title">{t("fields.title")}</Label>
@@ -345,6 +361,15 @@ export function CreateTaskDialog({ repository, onCreated, canAssignOthers, trigg
               )}
             </p>
           </section>
+
+          <PackagePicker
+            value={{ packageId: draft.packageId, departureId: draft.departureId }}
+            onChange={(pick) => update({ packageId: pick.packageId, departureId: pick.departureId })}
+            withDeparture
+            label={t("fields.package")}
+            hint={t("optional")}
+            testId="create-task-package"
+          />
 
           <div className="space-y-1.5">
             <Label htmlFor="task-assignee">{t("fields.assignee")}</Label>

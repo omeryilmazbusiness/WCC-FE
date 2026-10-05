@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormContext, useWatch } from "react-hook-form";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Package, Wallet } from "lucide-react";
 import {
   FLIGHT_PREFERENCES,
@@ -10,7 +10,7 @@ import {
   PREFERENCE_LOOK,
   TRIP_PREFERENCES,
 } from "@/entities/lead";
-import type { TourPackage } from "@/entities/tourpackage";
+import { PackagePicker } from "@/features/package-link";
 import { cn } from "@/shared/lib/cn";
 import {
   FormControl,
@@ -34,9 +34,8 @@ import { ChoiceChips } from "../parts/choice-chips";
 const NONE = "__none__";
 const CURRENCIES = ["TRY", "USD", "EUR", "GBP", "SAR", "AED", "SYP", "EGP", "PKR", "IDR", "MYR"];
 
-export function PreferencesSection({ packages }: { packages: TourPackage[] }) {
+export function PreferencesSection() {
   const t = useTranslations("pipeline.leadForm");
-  const locale = useLocale();
   const form = useFormContext<LeadFormValues>();
   const [services, currency] = useWatch({ control: form.control, name: ["services", "budgetCurrency"] });
   const budget = useAiField("budget_amount");
@@ -92,7 +91,7 @@ export function PreferencesSection({ packages }: { packages: TourPackage[] }) {
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="space-y-4">
         <FormField
           control={form.control}
           name="packageId"
@@ -102,21 +101,13 @@ export function PreferencesSection({ packages }: { packages: TourPackage[] }) {
                 {t("fields.package")}
                 {pkg.badge}
               </FormLabel>
-              <Select value={field.value || NONE} onValueChange={(v) => field.onChange(v === NONE ? "" : v)}>
-                <FormControl>
-                  <SelectTrigger className={cn("h-12", pkg.ring)}>
-                    <SelectValue />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value={NONE}>{t("fields.packageNone")}</SelectItem>
-                  {packages.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.code} · {locale === "ar" && p.nameAr ? p.nameAr : p.nameEn}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className={cn("rounded-[22px]", pkg.ring)}>
+                <PackagePicker
+                  value={{ packageId: field.value || null, departureId: null }}
+                  onChange={(pick) => field.onChange(pick.packageId ?? "")}
+                  testId="lead-form-package"
+                />
+              </div>
               <FormMessage />
             </FormItem>
           )}

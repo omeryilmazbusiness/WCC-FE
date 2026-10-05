@@ -2,9 +2,19 @@
 
 import * as React from "react";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
+import { useLocale } from "next-intl";
+import { isRtl } from "@/shared/i18n/routing";
 import { cn } from "@/shared/lib/cn";
 
-export const Tabs = TabsPrimitive.Root;
+/** Radix renders `dir="ltr"` on the root unless told otherwise, which would flip RTL pages back. */
+export const Tabs = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Root>
+>(({ dir, ...props }, ref) => {
+  const locale = useLocale();
+  return <TabsPrimitive.Root ref={ref} dir={dir ?? (isRtl(locale) ? "rtl" : "ltr")} {...props} />;
+});
+Tabs.displayName = TabsPrimitive.Root.displayName;
 
 export const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,

@@ -48,10 +48,8 @@ export function FormControl({ children }: { children: React.ReactNode }) {
 
 export function FormMessage({ className }: { className?: string }) {
   const { name } = React.useContext(FormFieldContext);
-  const { formState } = useFormContext();
-  const error = name
-    ? (formState.errors as Record<string, { message?: string }>)[name]
-    : undefined;
+  const { formState, getFieldState } = useFormContext();
+  const error = name ? getFieldState(name, formState).error : undefined;
   if (!error?.message) return null;
   return (
     <p role="alert" className={cn("text-sm text-[var(--destructive)]", className)}>

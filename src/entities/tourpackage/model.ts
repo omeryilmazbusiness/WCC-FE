@@ -1,3 +1,18 @@
+import type { PackageCategory, PackageKind, PackageSpec, TransportMode } from "./spec";
+
+export type PackageStats = {
+  departures: number;
+  reserved: number;
+  departureSeats: number;
+  remaining: number;
+  nextDepartDate: string | null;
+  /** Cheapest active room price per person (minor units); 0 when none. */
+  fromPrice: number;
+  fromCurrency: string;
+  costTotal: number;
+  suggestedPrice: number;
+};
+
 export type TourPackage = {
   id: string;
   branchId: string;
@@ -6,6 +21,15 @@ export type TourPackage = {
   nameAr: string;
   description: string;
   isActive: boolean;
+  salesOpen: boolean;
+  kind: PackageKind;
+  category: PackageCategory | string;
+  durationDays: number;
+  transportMode: TransportMode | string;
+  capacityTotal: number;
+  baseCurrency: string;
+  spec: PackageSpec;
+  stats: PackageStats;
   createdAt: string;
   updatedAt: string;
 };
@@ -60,19 +84,34 @@ export type DepartureReadiness = {
   pricing_locked: boolean;
 };
 
-export type CreatePackageInput = {
+export type PackageHeaderInput = {
+  kind?: PackageKind;
+  category?: string;
+  durationDays?: number;
+  transportMode?: string;
+  capacityTotal?: number;
+  baseCurrency?: string;
+  salesOpen?: boolean;
+};
+
+export type CreatePackageInput = PackageHeaderInput & {
   code: string;
   nameEn: string;
   nameAr?: string;
   description?: string;
+  spec?: PackageSpec;
+  /** Replaces the pricing matrix in the same request. */
+  tiers?: TierInput[];
 };
 
-export type UpdatePackageInput = {
+export type UpdatePackageInput = PackageHeaderInput & {
   code?: string;
   nameEn?: string;
   nameAr?: string;
   description?: string;
   isActive?: boolean;
+  spec?: PackageSpec;
+  tiers?: TierInput[];
 };
 
 export type CreateDepartureInput = {
@@ -113,4 +152,17 @@ export type TierInput = {
 export function departureRemaining(d: Departure): number {
   if (typeof d.remaining === "number") return d.remaining;
   return Math.max(0, d.capacityTotal - d.capacitySold);
+}
+
+/** Seats still sellable: package quota when set, otherwise departure seats. */
+export function packageRemaining(p: Pick<TourPackage, "capacityTotal" | "stats">): number {
+  const total = p.capacityTotal > 0 ? p.capacityTotal : p.stats.departureSeats;
+  return Math.max(0, total - p.stats.reserved);
+}
+
+/** Share of the quota already reserved, 0–100. */
+export function packageFillPct(p: Pick<TourPackage, "capacityTotal" | "stats">): number {
+  const total = p.capacityTotal > 0 ? p.capacityTotal : p.stats.departureSeats;
+  if (total <= 0) return 0;
+  return Math.min(100, Math.round((p.stats.reserved / total) * 100));
 }

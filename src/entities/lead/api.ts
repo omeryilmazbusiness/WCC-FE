@@ -99,6 +99,9 @@ function mapInterest(raw: unknown): TripInterest {
     budgetAmount: numOrNull(r.budget_amount),
     budgetCurrency: String(r.budget_currency ?? ""),
     packageId: strOrNull(r.package_id),
+    packageCode: String(r.package_code ?? ""),
+    packageName: String(r.package_name ?? ""),
+    packageNameAr: String(r.package_name_ar ?? ""),
     packageInterest: String(r.package_interest ?? ""),
   };
 }
@@ -480,6 +483,7 @@ function matchesQuery(l: Lead, query: LeadQuery): boolean {
   if (deletedIds.has(l.id)) return false;
   if (query.ownerId && l.ownerId !== query.ownerId) return false;
   if (query.customerId && l.customerId !== query.customerId) return false;
+  if (query.packageId && l.interest.packageId !== query.packageId) return false;
   if (query.stage && l.stage !== query.stage) return false;
   if (query.source && l.source.toLowerCase() !== query.source.toLowerCase()) return false;
   if (query.noFollowUp && !l.noFollowUp) return false;

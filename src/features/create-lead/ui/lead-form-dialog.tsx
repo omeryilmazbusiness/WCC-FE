@@ -7,7 +7,6 @@ import { useTranslations } from "next-intl";
 import { Check, PencilLine, Sparkles, UserPlus } from "lucide-react";
 import type { Lead, LeadOwner, LeadRepository } from "@/entities/lead";
 import { createCustomerRepository } from "@/entities/customer";
-import { createTourPackageRepository, type TourPackage } from "@/entities/tourpackage";
 import {
   Button,
   Dialog,
@@ -60,7 +59,6 @@ export function LeadFormDialog({ repository, open, onOpenChange, lead, prefill, 
   const schema = useMemo(() => makeLeadSchema((key) => tf(key), creating), [tf, creating]);
   const [owners, setOwners] = useState<LeadOwner[]>([]);
   const [customers, setCustomers] = useState<{ id: string; name: string }[]>([]);
-  const [packages, setPackages] = useState<TourPackage[]>([]);
   const form = useForm<LeadFormValues>({
     resolver: zodResolver(schema),
     defaultValues: toLeadFormValues(lead, prefill),
@@ -73,10 +71,6 @@ export function LeadFormDialog({ repository, open, onOpenChange, lead, prefill, 
 
   useEffect(() => {
     if (!open) return;
-    void createTourPackageRepository()
-      .listPackages(true)
-      .then(setPackages)
-      .catch(() => setPackages([]));
     if (!creating) return;
     void repository
       .listOwners()
@@ -170,7 +164,7 @@ export function LeadFormDialog({ repository, open, onOpenChange, lead, prefill, 
                 <ContactSection />
                 <ScopeSection />
                 <TravellersSection />
-                <PreferencesSection packages={packages} />
+                <PreferencesSection />
                 <PipelineSection creating={creating} owners={owners} customers={customers} />
               </div>
             </AiFieldsProvider>

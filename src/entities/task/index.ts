@@ -4,6 +4,8 @@ export type {
   TaskKind,
   TaskPriority,
   TaskCreateInput,
+  TaskPackageLink,
+  TaskPackageInput,
   TaskStats,
   TaskFilter,
 } from "./model";
@@ -22,6 +24,8 @@ export {
   isDueToday,
   groupTasksByStatus,
   normalizeTaskPriority,
+  mapTaskPackageLink,
+  packageLinkLabel,
   summarizeTasks,
 } from "./model";
 export {
@@ -32,6 +36,7 @@ export {
 } from "./ui/task-look";
 export {
   type TaskRepository,
+  type TaskListParams,
   MemoryTaskRepository,
   ApiTaskRepository,
   getMemoryTaskRepository,

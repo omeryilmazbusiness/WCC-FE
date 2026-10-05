@@ -200,14 +200,10 @@ export function PipelineTable({
             interest.budgetAmount != null && interest.budgetCurrency
               ? formatMoneyWhole(interest.budgetAmount, locale, interest.budgetCurrency)
               : "";
-          if (!budget && !interest.packageInterest) return <Muted>—</Muted>;
-          return (
-            <Fact
-              icon={<IconTile icon={Wallet} tone="emerald" />}
-              value={budget || "—"}
-              sub={interest.packageInterest || null}
-            />
-          );
+          const pkg = interest.packageId ? interest.packageCode || interest.packageName || "" : "";
+          const sub = [pkg, interest.packageInterest].filter(Boolean).join(" · ");
+          if (!budget && !sub) return <Muted>—</Muted>;
+          return <Fact icon={<IconTile icon={Wallet} tone="emerald" />} value={budget || "—"} sub={sub || null} />;
         },
       },
       {

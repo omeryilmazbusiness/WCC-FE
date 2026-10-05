@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   Armchair,
@@ -15,6 +15,7 @@ import {
   CircleX,
   History,
   IdCard,
+  ListPlus,
   MapPinned,
   Package,
   PencilLine,
@@ -40,13 +41,15 @@ import {
   type LeadRepository,
   type StageHistoryItem,
 } from "@/entities/lead";
-import { createTourPackageRepository } from "@/entities/tourpackage";
+import { createTaskRepository } from "@/entities/task";
 import { useCan } from "@/entities/viewer";
 import { AssignLeadDialog } from "@/features/assign-lead";
 import { LeadStageMenu } from "@/features/change-lead-stage";
 import { ConvertLeadDialog } from "@/features/convert-lead";
 import { LeadFormDialog } from "@/features/create-lead";
+import { CreateTaskDialog } from "@/features/create-task";
 import { LeadPriorityBadge } from "@/features/lead-priority";
+import { LinkPackageDialog, packageOptionLabel, usePackageCatalog } from "@/features/package-link";
 import { routes } from "@/shared/config/routes";
 import { Link } from "@/shared/i18n/navigation";
 import { initials } from "@/shared/lib/avatar";
@@ -79,28 +82,20 @@ type Props = {
 export function LeadDetailDrawer({ lead, open, onOpenChange, repository, onChanged, onDelete }: Props) {
   const locale = useLocale();
   const [history, setHistory] = useState<StageHistoryItem[]>([]);
-  const [packageLabel, setPackageLabel] = useState("");
-  const packageId = lead?.interest.packageId ?? null;
-
-  useEffect(() => {
-    if (!packageId || !open) {
-      setPackageLabel("");
-      return;
-    }
-    let cancelled = false;
-    void createTourPackageRepository()
-      .listPackages(false)
-      .then((rows) => {
-        const p = rows.find((r) => r.id === packageId);
-        if (!cancelled) setPackageLabel(p ? `${p.code} · ${locale === "ar" && p.nameAr ? p.nameAr : p.nameEn}` : "");
-      })
-      .catch(() => {
-        if (!cancelled) setPackageLabel("");
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [packageId, open, locale]);
+  const interest = lead?.interest;
+  const packageId = interest?.packageId ?? null;
+  const needsCatalog = open && Boolean(packageId) && !interest?.packageCode;
+  const { byId } = usePackageCatalog(needsCatalog);
+  let packageLabel = "";
+  if (packageId && interest?.packageCode) {
+    packageLabel = packageOptionLabel(
+      { code: interest.packageCode, nameEn: interest.packageName ?? "", nameAr: interest.packageNameAr ?? "" },
+      locale,
+    );
+  } else if (packageId) {
+    const p = byId.get(packageId);
+    packageLabel = p ? packageOptionLabel(p, locale) : "";
+  }
 
   const leadId = lead?.id ?? null;
   const updatedAt = lead?.updatedAt;
@@ -200,6 +195,8 @@ function LeadDetail({ lead, locale, history, packageLabel, repository, onChanged
   });
   const priority = PRIORITY_LOOK[profile.priority];
   const segment = SEGMENT_LOOK[profile.segment];
+  const tasks = useMemo(() => createTaskRepository(), []);
+  const canCreateTask = useCan("tasks.write");
 
   async function toggleFollowUp() {
     setTogglingFollowUp(true);
@@ -350,6 +347,35 @@ function LeadDetail({ lead, locale, history, packageLabel, repository, onChanged
                     trigger={<RowButton icon={Repeat2} label={t("detail.change")} />}
                   />
                 ) : null
+              }
+            />
+            <Row
+              leading={<IconTile icon={Package} tone={interest.packageId ? "amber" : "zinc"} size="lg" />}
+              label={t("fields.package")}
+              value={interest.packageId ? packageLabel || "…" : t("detail.noPackage")}
+              hint={interest.packageId && interest.packageInterest ? interest.packageInterest : undefined}
+              muted={!interest.packageId}
+              testId="lead-detail-package"
+              action={
+                <span className="flex shrink-0 items-center gap-1.5">
+                  {interest.packageId ? <RowLink href={routes.package(interest.packageId)} label={t("detail.open")} /> : null}
+                  {canWrite ? (
+                    <LinkPackageDialog
+                      value={{ packageId: interest.packageId, departureId: null }}
+                      withDeparture={false}
+                      onSave={async (pick) =>
+                        onChanged(await repository.update(lead.id, { interest: { ...interest, packageId: pick.packageId } }))
+                      }
+                      trigger={
+                        <RowButton
+                          icon={interest.packageId ? Repeat2 : Package}
+                          label={interest.packageId ? t("detail.change") : t("detail.linkPackage")}
+                          testId="lead-detail-package-link"
+                        />
+                      }
+                    />
+                  ) : null}
+                </span>
               }
             />
             <Row
@@ -510,6 +536,30 @@ function LeadDetail({ lead, locale, history, packageLabel, repository, onChanged
             >
               <Trash2 className="h-4 w-4" aria-hidden />
             </button>
+          ) : null}
+          {canCreateTask ? (
+            <CreateTaskDialog
+              repository={tasks}
+              onCreated={() => undefined}
+              context={{
+                relatedType: "lead",
+                relatedId: lead.id,
+                relatedLabel: lead.fullName,
+                customerId: lead.customerId,
+                packageId: interest.packageId,
+              }}
+              trigger={
+                <button
+                  type="button"
+                  aria-label={t("detail.newTask")}
+                  title={t("detail.newTask")}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-100 transition hover:bg-indigo-100"
+                  data-testid="lead-detail-new-task"
+                >
+                  <ListPlus className="h-4 w-4" aria-hidden />
+                </button>
+              }
+            />
           ) : null}
           <ConvertLeadDialog
             lead={lead}

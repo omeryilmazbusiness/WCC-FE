@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { conversionPath, type Lead, type LeadRepository } from "@/entities/lead";
-import { createTourPackageRepository } from "@/entities/tourpackage";
 import { useCan } from "@/entities/viewer";
+import { PackagePicker, pickOf, type PackagePick } from "@/features/package-link";
 import { useRouter } from "@/shared/i18n/navigation";
 import { routes } from "@/shared/config/routes";
 import {
@@ -16,11 +16,6 @@ import {
   DialogTitle,
   DialogTrigger,
   Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   useToast,
   useMutationFeedback,
 } from "@/shared/ui";
@@ -41,31 +36,11 @@ export function ConvertLeadDialog({ lead, repository, onConverted, trigger }: Pr
   const feedback = useMutationFeedback();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [departureId, setDepartureId] = useState("");
-  const [pax, setPax] = useState("2");
+  const [pick, setPick] = useState<PackagePick>(() => pickOf(lead.interest.packageId));
+  const [pax, setPax] = useState(() => String(lead.interest.paxCount || 2));
   const [amount, setAmount] = useState("0");
   const [busy, setBusy] = useState(false);
-  const pkgRepo = useMemo(() => createTourPackageRepository(), []);
-  const [deps, setDeps] = useState<{ id: string; label: string }[]>([]);
-
-  useEffect(() => {
-    if (!open) return;
-    void (async () => {
-      const packages = await pkgRepo.listPackages();
-      const rows: { id: string; label: string }[] = [];
-      for (const p of packages) {
-        const list = await pkgRepo.listDepartures(p.id);
-        for (const d of list) {
-          rows.push({
-            id: d.id,
-            label: `${p.code} · ${d.code} · ${d.departDate}`,
-          });
-        }
-      }
-      setDeps(rows);
-      if (rows[0]) setDepartureId(rows[0].id);
-    })();
-  }, [open, pkgRepo]);
+  const departureId = pick.departureId ?? "";
 
   if (lead.convertedBookingId) return null;
   if (!conversionPath(lead.stage)) return null;
@@ -102,7 +77,16 @@ export function ConvertLeadDialog({ lead, repository, onConverted, trigger }: Pr
   if (!allowed) return null;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (next) {
+          setPick(pickOf(lead.interest.packageId));
+          setPax(String(lead.interest.paxCount || 2));
+        }
+      }}
+    >
       <DialogTrigger asChild>
         {trigger ?? (
           <Button type="button" size="sm">
@@ -110,7 +94,7 @@ export function ConvertLeadDialog({ lead, repository, onConverted, trigger }: Pr
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[92vh] max-w-xl overflow-y-auto" data-testid="convert-lead-dialog">
         <DialogHeader>
           <DialogTitle>{t("convertTitle")}</DialogTitle>
           <DialogDescription>
@@ -118,23 +102,14 @@ export function ConvertLeadDialog({ lead, repository, onConverted, trigger }: Pr
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
-          <div>
-            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-              {t("fields.departure")}
-            </p>
-            <Select value={departureId} onValueChange={setDepartureId}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {deps.map((d) => (
-                  <SelectItem key={d.id} value={d.id}>
-                    {d.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <PackagePicker
+            value={pick}
+            onChange={setPick}
+            requireDeparture
+            required={false}
+            label={t("fields.departure")}
+            testId="convert-lead-package"
+          />
           <div>
             <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-500">
               {t("fields.pax")}
@@ -151,7 +126,7 @@ export function ConvertLeadDialog({ lead, repository, onConverted, trigger }: Pr
             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
               {tc("cancel")}
             </Button>
-            <Button type="button" disabled={busy} onClick={() => void confirm()}>
+            <Button type="button" disabled={busy || !departureId} onClick={() => void confirm()} data-testid="convert-lead-submit">
               {t("convert")}
             </Button>
           </div>

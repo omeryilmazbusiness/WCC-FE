@@ -19,6 +19,7 @@ import { initials } from "@/shared/lib/avatar";
 import { cn } from "@/shared/lib/cn";
 import { formatDate, formatRelativeTime } from "@/shared/lib/format";
 import { hrefForRelated } from "@/shared/lib/related-href";
+import { PackageLinkChip } from "@/features/package-link";
 import { TONES, type Tone } from "@/shared/ui";
 import { useRelatedText } from "../model/use-related-text";
 
@@ -146,6 +147,16 @@ export function TaskCard({ task, locale, repository, canWrite, showAssignee, dra
               {relatedText(task)}
             </span>
           </Link>
+        ) : null}
+        {task.pkg ? (
+          <PackageLinkChip
+            packageId={task.pkg.packageId}
+            code={task.pkg.packageCode}
+            name={task.pkg.packageName}
+            departureCode={task.pkg.departureCode}
+            compact
+            className="h-7"
+          />
         ) : null}
       </div>
 

@@ -706,7 +706,11 @@
       "open": "فتح",
       "created": "تاريخ الإنشاء",
       "completed": "تاريخ الإنجاز",
-      "updated": "آخر تحديث"
+      "updated": "آخر تحديث",
+      "package": "الباقة",
+      "noPackage": "لا توجد باقة مرتبطة",
+      "linkPackage": "ربط باقة",
+      "changePackage": "تغيير"
     },
     "create": {
       "title": "مهمة جديدة",
@@ -722,7 +726,8 @@
         "due": "الموعد النهائي",
         "date": "التاريخ",
         "time": "الوقت",
-        "assignee": "المكلّف"
+        "assignee": "المكلّف",
+        "package": "الباقة"
       },
       "presets": {
         "today": "اليوم",
@@ -751,7 +756,8 @@
       "submit": "إنشاء المهمة",
       "saving": "جارٍ الإنشاء…",
       "created": "تم إنشاء المهمة",
-      "error": "تعذر إنشاء المهمة"
+      "error": "تعذر إنشاء المهمة",
+      "linkedTo": "مرتبطة بـ{type}: {label}"
     },
     "related": {
       "lead": "عميل محتمل",
@@ -1276,7 +1282,10 @@
       "notes": "ملاحظات",
       "addTrip": "أضف تفاصيل الرحلة",
       "leadCreated": "تم إنشاء العميل المحتمل",
-      "moreActions": "الإجراءات"
+      "moreActions": "الإجراءات",
+      "noPackage": "لا توجد باقة مرتبطة",
+      "linkPackage": "ربط باقة",
+      "newTask": "مهمة جديدة لهذا العميل المحتمل"
     },
     "stats": {
       "open": "العملاء المفتوحون",
@@ -1508,8 +1517,8 @@
   },
   "packages": {
     "title": "الباقات",
-    "subtitle": "قوالب المنتجات والمغادرات المؤرخة مع السعة الحية",
-    "searchPlaceholder": "ابحث بالرمز أو الاسم…",
+    "subtitle": "باقات العمرة والحج — الفنادق، مصفوفة الأسعار، اللوجستيات والرحلات",
+    "searchPlaceholder": "ابحث بالرمز أو الاسم أو الفندق أو شركة الطيران",
     "createPackage": "باقة جديدة",
     "createPackageHint": "قالب منتج حج/عمرة قابل لإعادة الاستخدام",
     "createDeparture": "مغادرة جديدة",
@@ -1582,6 +1591,492 @@
       "capacity": "السعة",
       "basePrice": "السعر الأساسي",
       "currency": "العملة"
+    },
+    "newPackage": "باقة جديدة",
+    "emptyFiltered": "لا توجد باقات مطابقة",
+    "emptyFilteredHint": "جرّب بحثًا آخر أو امسح عوامل التصفية.",
+    "quick": {
+      "all": "كل الباقات",
+      "umrah": "عمرة",
+      "hajj": "حج",
+      "open": "متاحة للبيع",
+      "soon": "تغادر خلال 30 يومًا"
+    },
+    "view": {
+      "label": "العرض",
+      "cards": "بطاقات",
+      "table": "جدول"
+    },
+    "card": {
+      "from": "من",
+      "perPerson": "للشخص",
+      "nights": "{n} ليالٍ",
+      "days": "{n} أيام",
+      "split": "مكة {makkah} · المدينة {madinah}",
+      "quota": "{reserved} / {total} محجوز",
+      "remaining": "متبقٍ {n}",
+      "noQuota": "لا توجد حصة",
+      "nextDeparture": "الرحلة القادمة",
+      "noDeparture": "لا توجد رحلة مجدولة",
+      "noPrice": "لا يوجد سعر بعد",
+      "open": "فتح",
+      "salesOpen": "متاحة للبيع",
+      "salesClosed": "البيع مغلق",
+      "inactive": "غير نشطة",
+      "ready": "جاهزة {pct}%"
+    },
+    "kind": {
+      "umrah": "عمرة",
+      "hajj": "حج"
+    },
+    "kindHint": {
+      "umrah": "على مدار العام",
+      "hajj": "موسم ذي الحجة"
+    },
+    "category": {
+      "economy": "اقتصادية",
+      "standard": "قياسية",
+      "luxury": "فاخرة",
+      "boutique": "بوتيك",
+      "ramadan_first15": "رمضان · أول 15",
+      "ramadan_last15": "رمضان · آخر 15",
+      "ramadan_full": "رمضان · الشهر كاملًا",
+      "semester": "عطلة نصف السنة",
+      "short": "حج قصير",
+      "long": "حج طويل",
+      "special_mujamala": "تأشيرة خاصة · مجاملة",
+      "special_commercial": "تأشيرة خاصة · تجارية"
+    },
+    "categoryHint": {
+      "economy": "أفضل قيمة",
+      "standard": "راحة متوازنة",
+      "luxury": "5 نجوم أمام الحرم",
+      "boutique": "مجموعة صغيرة مختارة",
+      "ramadan_first15": "الأيام 1–15",
+      "ramadan_last15": "ليالي القدر",
+      "ramadan_full": "30 يومًا",
+      "semester": "العطلة المدرسية",
+      "short": "حوالي أسبوعين",
+      "long": "حوالي 4 أسابيع",
+      "special_mujamala": "تأشيرة مجاملة",
+      "special_commercial": "حصة تجارية"
+    },
+    "transport": {
+      "flight_scheduled": "رحلة منتظمة",
+      "flight_charter": "طيران عارض",
+      "road": "برًّا"
+    },
+    "transportHint": {
+      "flight_scheduled": "مقاعد على خطوط منتظمة",
+      "flight_charter": "طائرة مستأجرة",
+      "road": "حافلة برية"
+    },
+    "board": {
+      "bb": "مبيت وإفطار",
+      "hb": "نصف إقامة",
+      "fb": "إقامة كاملة",
+      "tabldot": "طبلدوت",
+      "buffet": "بوفيه مفتوح"
+    },
+    "boardShort": {
+      "bb": "BB",
+      "hb": "HB",
+      "fb": "FB",
+      "tabldot": "طبلدوت",
+      "buffet": "بوفيه"
+    },
+    "access": {
+      "walking": "مشيًا",
+      "shuttle": "حافلة ترددية"
+    },
+    "routing": {
+      "direct": "مباشر",
+      "connecting": "عبر ترانزيت"
+    },
+    "intercity": {
+      "haramain_train": "قطار الحرمين",
+      "bus": "حافلة"
+    },
+    "visa": {
+      "UMRAH_VISA": "تأشيرة عمرة",
+      "TOURIST_VISA": "تأشيرة سياحية",
+      "PERSONAL_VISIT": "زيارة شخصية",
+      "HAJJ_VISA": "تأشيرة حج",
+      "BUSINESS_VISIT": "زيارة عمل"
+    },
+    "kit": {
+      "ihram": "إحرام",
+      "luggage": "طقم حقائب",
+      "prayer_book": "كتيب أدعية",
+      "zamzam": "زمزم 5 لتر"
+    },
+    "ziyarat": {
+      "thawr": "جبل ثور",
+      "arafat": "عرفات",
+      "muzdalifah": "مزدلفة",
+      "mina": "منى",
+      "hira": "غار حراء",
+      "jannat_al_mualla": "مقبرة المعلاة",
+      "uhud": "جبل أحد",
+      "qiblatayn": "مسجد القبلتين",
+      "seven_mosques": "المساجد السبعة",
+      "quba": "مسجد قباء",
+      "baqi": "البقيع"
+    },
+    "zone": {
+      "markaziyya_north": "المركزية الشمالية",
+      "markaziyya_south": "المركزية الجنوبية",
+      "markaziyya_west": "المركزية الغربية",
+      "markaziyya_east": "المركزية الشرقية",
+      "outside_central": "خارج المنطقة المركزية"
+    },
+    "city": {
+      "none": "—",
+      "makkah": "مكة",
+      "madinah": "المدينة",
+      "jeddah": "جدة",
+      "transit": "ترانزيت"
+    },
+    "tier": {
+      "QUAD": "رباعية",
+      "TRIPLE": "ثلاثية",
+      "DOUBLE": "ثنائية",
+      "SINGLE": "فردية",
+      "INFANT": "رضيع 0–2",
+      "CHILD_2_6": "طفل 2–6 (بدون سرير)",
+      "CHILD_6_11_BED": "طفل 6–11 مع سرير",
+      "CHILD_6_11_NOBED": "طفل 6–11 بدون سرير"
+    },
+    "tierHint": {
+      "QUAD": "4 في الغرفة",
+      "TRIPLE": "3 في الغرفة",
+      "DOUBLE": "2 في الغرفة",
+      "SINGLE": "غرفة خاصة",
+      "INFANT": "مع الوالدين",
+      "CHILD_2_6": "مع الوالدين",
+      "CHILD_6_11_BED": "سرير مستقل",
+      "CHILD_6_11_NOBED": "سرير مشترك"
+    },
+    "cost": {
+      "flight": "الطيران",
+      "hotel": "الفنادق",
+      "visa": "التأشيرة",
+      "transfer": "التنقلات",
+      "guidance": "الإرشاد",
+      "gifts": "الهدايا والطقم"
+    },
+    "steps": {
+      "identity": {
+        "title": "الباقة",
+        "hint": "النوع، الرمز، المدة، الحصة والنقل"
+      },
+      "hotels": {
+        "title": "الفنادق",
+        "hint": "الإقامة في مكة والمدينة"
+      },
+      "pricing": {
+        "title": "الأسعار",
+        "hint": "مصفوفة الغرف والأعمار، التكاليف والهامش"
+      },
+      "logistics": {
+        "title": "اللوجستيات",
+        "hint": "الطيران، PNR، القطار أو الحافلة، التنقلات"
+      },
+      "services": {
+        "title": "الخدمات",
+        "hint": "المرشد، التأشيرة، الطقم والزيارات"
+      },
+      "itinerary": {
+        "title": "البرنامج",
+        "hint": "البرنامج يومًا بيوم"
+      },
+      "requirements": {
+        "title": "المتطلبات",
+        "hint": "الجواز، التطعيم، الصورة، المحرم"
+      }
+    },
+    "form": {
+      "createTitle": "باقة جديدة",
+      "createSubtitle": "أنشئ ملف المنتج الكامل. خطوة الباقة وحدها مطلوبة للحفظ.",
+      "editTitle": "تعديل الباقة",
+      "editSubtitle": "تُطبّق التغييرات على الحجوزات الجديدة؛ الحجوزات الحالية تحتفظ بأسعارها.",
+      "stepOf": "الخطوة {n} من {total}",
+      "back": "السابق",
+      "next": "التالي",
+      "create": "إنشاء الباقة",
+      "save": "حفظ التغييرات",
+      "createdTitle": "تم إنشاء الباقة",
+      "savedTitle": "تم حفظ الباقة",
+      "saveError": "تعذّر حفظ الباقة",
+      "fixErrors": "راجع الحقول المحددة",
+      "identity": {
+        "kind": "النسك",
+        "category": "الفئة",
+        "code": "رمز الباقة",
+        "codeHint": "أحرف وأرقام وشرطات، مثل UMR-2026-RAM-01",
+        "suggest": "اقتراح",
+        "nameEn": "الاسم (بالإنجليزية)",
+        "nameEnPh": "Ramadan Umrah · Last 15 nights",
+        "nameAr": "الاسم (بالعربية)",
+        "description": "وصف مختصر",
+        "descriptionPh": "ما الذي يميز هذه الباقة",
+        "duration": "المدة",
+        "days": "أيام",
+        "nightsSummary": "{days} أيام · {nights} ليالٍ",
+        "transport": "النقل",
+        "quota": "الحصة",
+        "quotaHint": "إجمالي المقاعد المخطط بيعها؛ 0 = حسب سعة الرحلات",
+        "seats": "مقعد",
+        "currency": "العملة الأساسية",
+        "currencyHint": "تُحفظ الأسعار والتكاليف بهذه العملة وتُحوّل مباشرة",
+        "salesOpen": "متاحة للبيع",
+        "salesOpenHint": "يمكن للوكلاء حجز رحلات هذه الباقة"
+      },
+      "hotels": {
+        "makkah": "فندق مكة",
+        "madinah": "فندق المدينة",
+        "makkahHint": "قرب المسجد الحرام",
+        "madinahHint": "قرب المسجد النبوي",
+        "name": "اسم الفندق",
+        "namePh": "مثل سويس أوتيل المقام",
+        "stars": "النجوم",
+        "distance": "المسافة إلى الحرم",
+        "meters": "م",
+        "access": "الوصول",
+        "shuttleMinutes": "مدة الحافلة",
+        "minutes": "د",
+        "zone": "المنطقة",
+        "zonePh": "اختر المنطقة",
+        "board": "الإعاشة",
+        "checkIn": "الدخول",
+        "checkOut": "المغادرة",
+        "nights": "الليالي",
+        "nightsFromDates": "{n} ليالٍ حسب التواريخ",
+        "useDates": "استخدم التواريخ",
+        "split": "خطة الإقامة",
+        "splitSummary": "مكة {makkah} + المدينة {madinah} = {total} من {max} ليلة",
+        "overflow": "الإقامة أطول من مدة الباقة",
+        "noMadinah": "اجعل ليالي المدينة 0 لباقة مكة فقط"
+      },
+      "pricing": {
+        "matrix": "مصفوفة الأسعار",
+        "matrixHint": "أسعار البيع للشخص بـ {currency}. الصفوف الفارغة غير معروضة.",
+        "rooms": "نوع الغرفة",
+        "ages": "الأطفال",
+        "price": "السعر",
+        "convert": "تحويل مباشر",
+        "convertHint": "بسعر اليوم المتوسط عبر الدولار",
+        "fxUnavailable": "أسعار الصرف المباشرة غير متاحة حاليًا",
+        "orderWarning": "{tiers}: الغرف الأكبر عادةً أرخص للشخص",
+        "costs": "تفصيل التكلفة",
+        "costsHint": "صافي التكلفة للشخص بـ {currency} — للموظفين فقط",
+        "markup": "هامش الربح",
+        "total": "صافي التكلفة",
+        "suggested": "السعر المقترح",
+        "apply": "تطبيق على الثنائية",
+        "margin": "الهامش",
+        "marginOf": "هامش {pct}% على {tier}",
+        "belowCost": "{tier} أقل من التكلفة"
+      },
+      "logistics": {
+        "flights": "الطيران",
+        "flightsHint": "شركة الطيران، المسار، PNR والمقاعد المحجوزة",
+        "airline": "شركة الطيران",
+        "airlinePh": "اسم شركة الطيران",
+        "routing": "المسار",
+        "outbound": "الذهاب",
+        "inbound": "العودة",
+        "route": "المسار",
+        "routePh": "IST-JED",
+        "flightNo": "رقم الرحلة",
+        "date": "التاريخ",
+        "pnr": "PNR المجموعة",
+        "blockSeats": "المقاعد المحجوزة",
+        "ground": "النقل البري",
+        "groundHint": "بين المدن وإلى الفنادق",
+        "intercity": "مكة ⇄ المدينة",
+        "busClass": "فئة الحافلة",
+        "busClassPh": "2024–2026 VIP Neoplan",
+        "airportMeet": "الاستقبال في المطار",
+        "airportMeetHint": "مندوب في صالة الوصول",
+        "hotelTransfers": "التنقل إلى الفنادق",
+        "hotelTransfersHint": "المطار ⇄ الفندق وبين الفنادق",
+        "road": "هذه الباقة برية — لا رحلات طيران للتخطيط."
+      },
+      "services": {
+        "guidance": "الإرشاد",
+        "guidanceHint": "من يقود المجموعة",
+        "leader": "المرشد / قائد الإرشاد",
+        "leaderPh": "اسم الشيخ",
+        "femaleGuide": "مرشدة",
+        "femaleGuideHint": "لجلسات النساء وزيارة الروضة",
+        "visa": "التأشيرة والتأمين",
+        "visaHint": "نوع تأشيرة متوافق مع نسك",
+        "healthInsurance": "التأمين الصحي",
+        "healthInsuranceHint": "مشمول في سعر الباقة",
+        "kit": "طقم المعتمر",
+        "kitHint": "هدايا تُسلّم قبل السفر",
+        "ziyaratMakkah": "زيارات مكة",
+        "ziyaratMadinah": "زيارات المدينة",
+        "ziyaratHint": "زيارات بإرشاد ضمن البرنامج",
+        "lines": "يشمل ولا يشمل",
+        "linesHint": "عنصر في كل سطر، يظهر في العرض",
+        "included": "يشمل",
+        "includedPh": "تذاكر الذهاب والعودة\nرسوم التأشيرة",
+        "excluded": "لا يشمل",
+        "excludedPh": "المصاريف الشخصية\nالأضحية"
+      },
+      "itinerary": {
+        "title": "البرنامج يومًا بيوم",
+        "hint": "تم تخطيط {count} من {days} أيام",
+        "generate": "إنشاء من خطة الإقامة",
+        "regenerate": "استبدال بقالب جديد",
+        "addDay": "إضافة يوم",
+        "day": "اليوم",
+        "dayN": "اليوم {n}",
+        "city": "المدينة",
+        "dayTitle": "العنوان",
+        "details": "التفاصيل",
+        "detailsPh": "الأوقات، نقطة التجمع، ملاحظات",
+        "remove": "حذف اليوم",
+        "empty": "لا توجد أيام بعد",
+        "emptyHint": "أنشئ قالبًا من الفنادق والنقل ثم عدّله."
+      },
+      "requirements": {
+        "title": "الشروط الإلزامية",
+        "hint": "تُطبّق عند إضافة المسافرين إلى الحجز",
+        "passport": "صلاحية الجواز",
+        "passportHint": "صالح لهذا العدد من الأشهر على الأقل بعد السفر",
+        "months": "أشهر",
+        "meningitis": "لقاح الحمى الشوكية (ACYW135)",
+        "meningitisHint": "الشهادة مطلوبة للتأشيرة",
+        "photo": "صورة بيومترية",
+        "photoHint": "خلفية بيضاء، حديثة",
+        "mahram": "شرط المحرم",
+        "mahramHint": "النساء دون السن المحددة يسافرن مع محرم",
+        "mahramAge": "حد العمر",
+        "years": "سنة",
+        "checker": "فحص المسافر",
+        "checkerHint": "جرّب مسافرًا على هذه الشروط",
+        "passportExpiry": "انتهاء الجواز",
+        "dob": "تاريخ الميلاد",
+        "gender": "الجنس",
+        "male": "ذكر",
+        "female": "أنثى",
+        "departDate": "السفر",
+        "allClear": "مؤهل — لا شيء ناقص"
+      },
+      "errors": {
+        "code": "استخدم 2–32 حرفًا أو رقمًا أو شرطة",
+        "name": "أدخل 3 أحرف على الأقل",
+        "duration": "1–60 يومًا",
+        "capacity": "0–10,000 مقعد",
+        "category": "اختر فئة لهذا النوع",
+        "nights": "ليالي مكة والمدينة تتجاوز المدة",
+        "checkOut": "يجب أن تكون المغادرة بعد الدخول",
+        "distance": "0–50,000 م",
+        "route": "استخدم رموز المطارات، مثل IST-JED أو IST-MED-JED",
+        "inbound": "العودة قبل رحلة الذهاب",
+        "money": "أدخل مبلغًا صحيحًا",
+        "markup": "0–300%",
+        "dayTitle": "أضف عنوانًا لليوم",
+        "dayRange": "خارج مدة الباقة",
+        "dayDuplicate": "هذا اليوم مخطط مسبقًا",
+        "passportMonths": "0–24 شهرًا",
+        "stay": "التواريخ لا تطابق عدد الليالي المخطط"
+      }
+    },
+    "template": {
+      "arrival": "الوصول، الإحرام من الميقات وأداء العمرة الأولى",
+      "arrivalDetails": "الاستقبال في المطار، النقل إلى الفندق، أداء العمرة مع المرشد.",
+      "makkahDay": "العبادة في المسجد الحرام",
+      "makkahZiyarat": "زيارات مكة",
+      "transferTrain": "قطار الحرمين إلى المدينة",
+      "transferBus": "الانتقال بالحافلة إلى المدينة",
+      "madinahDay": "العبادة في المسجد النبوي",
+      "madinahZiyarat": "زيارات المدينة والروضة",
+      "farewell": "طواف الوداع والعودة",
+      "farewellDetails": "تسليم الغرف، طواف الوداع، النقل إلى المطار."
+    },
+    "eligibility": {
+      "passport_missing": "لا يوجد جواز سفر مسجل",
+      "passport_short": "يجب أن يكون الجواز صالحًا حتى {date}",
+      "mahram": "يحتاج إلى محرم في الحجز",
+      "mahram_unknown": "تحقق من شرط المحرم (الجنس غير معروف)",
+      "meningitis": "شهادة الحمى الشوكية (ACYW135)",
+      "photo": "صورة بيومترية بخلفية بيضاء"
+    },
+    "readiness": {
+      "title": "جاهزة للبيع",
+      "makkahHotel": "فندق مكة",
+      "madinahHotel": "فندق المدينة",
+      "flights": "الطيران",
+      "visa": "التأشيرة",
+      "pricing": "أسعار الغرف",
+      "itinerary": "البرنامج",
+      "costs": "تفصيل التكلفة"
+    },
+    "detail": {
+      "edit": "تعديل",
+      "tabs": {
+        "overview": "نظرة عامة",
+        "hotels": "الفنادق",
+        "pricing": "الأسعار",
+        "logistics": "اللوجستيات",
+        "services": "الخدمات",
+        "itinerary": "البرنامج",
+        "requirements": "المتطلبات",
+        "departures": "الرحلات",
+        "links": "الأعمال المرتبطة"
+      },
+      "stats": {
+        "quota": "الحصة",
+        "reserved": "محجوز",
+        "remaining": "متبقٍ",
+        "departures": "الرحلات",
+        "from": "من"
+      },
+      "notSet": "غير محدد",
+      "none": "لا شيء",
+      "yes": "نعم",
+      "no": "لا",
+      "incomplete": "ناقص: {items}",
+      "complete": "ملف المنتج مكتمل",
+      "stay": "الإقامة",
+      "distanceM": "{n} م إلى الحرم",
+      "shuttle": "حافلة · {n} د",
+      "convertTo": "العرض بـ",
+      "priceTable": "الأسعار للشخص",
+      "noPrices": "لا توجد أسعار بعد",
+      "noPricesHint": "أضف أسعار الغرف في خطوة الأسعار.",
+      "noHotel": "لا يوجد فندق بعد",
+      "noItinerary": "لا يوجد برنامج بعد",
+      "noItineraryHint": "أنشئه من خطة الإقامة في المحرر.",
+      "costShare": "{pct}% من التكلفة",
+      "leader": "قائد المجموعة"
+    },
+    "links": {
+      "stats": {
+        "openLeads": "العملاء المهتمون",
+        "openTasks": "المهام المفتوحة",
+        "overdue": "المهام المتأخرة",
+        "bookings": "الحجوزات",
+        "pax": "{n, plural, zero {لا مسافرين} one {مسافر واحد} two {مسافران} few {# مسافرين} many {# مسافرًا} other {# مسافر}}"
+      },
+      "tasks": {
+        "title": "المهام",
+        "new": "مهمة جديدة",
+        "empty": "لا توجد مهام مرتبطة بهذه الباقة بعد."
+      },
+      "leads": {
+        "title": "العملاء المهتمون",
+        "empty": "لم يختر أي عميل محتمل هذه الباقة بعد."
+      },
+      "bookings": {
+        "title": "الحجوزات",
+        "empty": "لا توجد حجوزات على مواعيد هذه الباقة بعد."
+      },
+      "locked": "ليست لديك صلاحية الوصول إلى هذه القائمة."
     }
   },
   "bookings": {
@@ -3483,5 +3978,34 @@
       "window": "±3 أيام حول موعدك",
       "secure": "حجز آمن عبر Aviasales"
     }
+  },
+  "packageLink": {
+    "empty": "ربط باقة",
+    "emptyHint": "ابحث في الكتالوج بالرمز أو الاسم أو الفندق",
+    "missing": "الباقة المرتبطة غير متاحة",
+    "change": "تغيير",
+    "clear": "إزالة الباقة",
+    "search": "ابحث عن باقة",
+    "close": "إغلاق",
+    "loading": "جارٍ التحميل…",
+    "noMatches": "لا توجد باقة مطابقة لهذا البحث",
+    "noPackages": "لا توجد باقات في الكتالوج بعد",
+    "nights": "{n, plural, zero {# ليلة} one {ليلة واحدة} two {ليلتان} few {# ليالٍ} many {# ليلة} other {# ليلة}}",
+    "from": "من {price}",
+    "inactive": "غير نشطة",
+    "salesClosed": "المبيعات مغلقة",
+    "departure": "موعد المغادرة",
+    "anyDeparture": "أي موعد",
+    "anyDepartureHint": "لم يُحدَّد بعد",
+    "noDepartures": "لا توجد مواعيد مغادرة قادمة لهذه الباقة",
+    "seatsLeft": "{n, plural, zero {لا مقاعد} one {مقعد واحد متبقٍ} two {مقعدان متبقيان} few {# مقاعد متبقية} many {# مقعدًا متبقيًا} other {# مقعد متبقٍ}}",
+    "full": "مكتملة",
+    "linkTitle": "ربط باقة",
+    "linkHint": "اختر الباقة، وموعد المغادرة إن أردت، التي يخصها هذا السجل.",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "saved": "تم ربط الباقة",
+    "unlinked": "تمت إزالة الباقة",
+    "error": "تعذّر تحديث ربط الباقة"
   }
 }

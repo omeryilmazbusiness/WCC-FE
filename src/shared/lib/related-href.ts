@@ -15,8 +15,9 @@ export function hrefForRelated(ref: RelatedRef): string {
       return routes.booking(ref.relatedId);
     case "lead":
       return ref.customerId ? routes.customer(ref.customerId) : routes.pipeline;
-    case "departure":
     case "package":
+      return routes.package(ref.relatedId);
+    case "departure":
       return routes.packages;
     default:
       return routes.tasks;

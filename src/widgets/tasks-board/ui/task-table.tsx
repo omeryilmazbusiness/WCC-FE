@@ -12,6 +12,7 @@ import {
   type TaskRepository,
 } from "@/entities/task";
 import { hrefForRelated } from "@/shared/lib/related-href";
+import { PackageLinkChip } from "@/features/package-link";
 import { Link } from "@/shared/i18n/navigation";
 import { cn } from "@/shared/lib/cn";
 import { formatDate } from "@/shared/lib/format";
@@ -95,13 +96,24 @@ export function TaskTable({
                     {task.title}
                   </p>
                 )}
-                {hasRelatedRecord(task) ? (
-                  <Link href={hrefForRelated(task)} className="text-xs font-medium text-sky-700 hover:underline">
-                    {relatedText(task)}
-                  </Link>
-                ) : (
-                  <p className="text-xs text-zinc-400">{t(`kinds.${task.kind}`)}</p>
-                )}
+                <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                  {hasRelatedRecord(task) ? (
+                    <Link href={hrefForRelated(task)} className="text-xs font-medium text-sky-700 hover:underline">
+                      {relatedText(task)}
+                    </Link>
+                  ) : (
+                    <p className="text-xs text-zinc-400">{t(`kinds.${task.kind}`)}</p>
+                  )}
+                  {task.pkg ? (
+                    <PackageLinkChip
+                      packageId={task.pkg.packageId}
+                      code={task.pkg.packageCode}
+                      departureCode={task.pkg.departureCode}
+                      compact
+                      className="py-0.5"
+                    />
+                  ) : null}
+                </div>
               </div>
             </div>
           );

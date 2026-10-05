@@ -25,6 +25,7 @@ export interface BookingRepository {
     status?: string;
     customerId?: string;
     departureId?: string;
+    packageId?: string;
     ownerId?: string;
   }): Promise<Booking[]>;
   getById(id: string): Promise<Booking>;
@@ -187,6 +188,7 @@ export class ApiBookingRepository implements BookingRepository {
     status?: string;
     customerId?: string;
     departureId?: string;
+    packageId?: string;
     ownerId?: string;
   } = {}): Promise<Booking[]> {
     const sp = new URLSearchParams();
@@ -194,6 +196,7 @@ export class ApiBookingRepository implements BookingRepository {
     if (params.status) sp.set("status", params.status);
     if (params.customerId) sp.set("customer_id", params.customerId);
     if (params.departureId) sp.set("departure_id", params.departureId);
+    if (params.packageId) sp.set("package_id", params.packageId);
     if (params.ownerId) sp.set("owner_id", params.ownerId);
     sp.set("limit", "100");
     const qs = sp.toString();
@@ -514,6 +517,7 @@ export class MemoryBookingRepository implements BookingRepository {
     status?: string;
     customerId?: string;
     departureId?: string;
+    packageId?: string;
   } = {}): Promise<Booking[]> {
     ensureDemo();
     return store.filter((b) => {
