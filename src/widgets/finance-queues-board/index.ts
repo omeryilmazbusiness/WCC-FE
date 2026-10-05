@@ -1,1 +1,1 @@
-export { FinanceQueuesBoard } from "./ui/finance-queues-board";
+export { FinanceQueuesBoard, FinanceQueuesPanel } from "./ui/finance-queues-board";

@@ -100,6 +100,7 @@ export {
   type DocumentLang,
 } from "./lib/documents";
 export { BookingStatusChip } from "./ui/booking-status-chip";
+export { BookingPicker } from "./ui/booking-picker";
 export { HoldCountdownBadge } from "./ui/hold-countdown-badge";
 export {
   ChannelBadge,

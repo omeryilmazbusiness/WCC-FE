@@ -8,6 +8,7 @@
 /** First path segments owned by app routes; a company slug can never be one of them. */
 export const ROUTE_ROOTS: ReadonlySet<string> = new Set([
   "login",
+  "confirm",
   "security",
   "manager",
   "workspace",
@@ -33,7 +34,7 @@ export const ROUTE_ROOTS: ReadonlySet<string> = new Set([
 ]);
 
 /** Pages outside any workspace (reached before a session exists). */
-const UNSCOPED_ROOTS: ReadonlySet<string> = new Set(["login", "platform"]);
+const UNSCOPED_ROOTS: ReadonlySet<string> = new Set(["login", "platform", "confirm"]);
 
 /** Remembered sign-in value of platform admins, who belong to no company. */
 export const PLATFORM_SIGN_IN = "platform";

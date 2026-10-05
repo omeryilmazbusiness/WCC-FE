@@ -19,6 +19,9 @@ const intlMiddleware = createMiddleware(routing);
 
 const publicPaths = [routes.login, routes.platformLogin];
 
+/** Reconciliation letter links: opened by outside parties, never redirected to a sign-in page. */
+const CONFIRM_PATH = /^\/confirm\/[A-Za-z0-9_-]{32,64}$/;
+
 /** `?any=1` on `/login` opens the generic page even when a company is remembered. */
 const ANY_COMPANY_PARAM = "any";
 
@@ -39,6 +42,7 @@ export default async function middleware(req: NextRequest) {
   const localeMatch = pathname.match(/^\/(en|ar)(?=\/|$)/);
   const locale = localeMatch?.[1] ?? routing.defaultLocale;
   const pathWithoutLocale = pathname.replace(/^\/(en|ar)/, "") || "/";
+  if (CONFIRM_PATH.test(pathWithoutLocale)) return intlMiddleware(req);
   const { workspace: urlWorkspace, rest } = splitWorkspace(pathWithoutLocale);
 
   const session = await verifySession(req.cookies.get(SESSION_COOKIE)?.value);

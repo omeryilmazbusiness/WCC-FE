@@ -10,6 +10,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const SRC = fileURLToPath(new URL("../src/", import.meta.url));
 const SHIMS = {
+  "@/entities/finance": new URL("./shims/finance-entity.ts", import.meta.url).href,
   "@/entities/hotel": new URL("./shims/hotel-entity.ts", import.meta.url).href,
   "@/entities/supplier": new URL("./shims/supplier-entity.ts", import.meta.url).href,
 };

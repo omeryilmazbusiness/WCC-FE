@@ -37,6 +37,8 @@ export const routes = {
   hotels: "/hotels",
   hotel: (id: string) => `/hotels/${id}`,
   flights: "/flights",
+  /** Public balance confirmation link of a reconciliation letter. */
+  confirm: (token: string) => `/confirm/${token}`,
 } as const;
 
 export type AppRole =
