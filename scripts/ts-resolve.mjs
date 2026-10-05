@@ -9,7 +9,10 @@ import { registerHooks } from "node:module";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const SRC = fileURLToPath(new URL("../src/", import.meta.url));
-const SHIMS = { "@/entities/hotel": new URL("./shims/hotel-entity.ts", import.meta.url).href };
+const SHIMS = {
+  "@/entities/hotel": new URL("./shims/hotel-entity.ts", import.meta.url).href,
+  "@/entities/supplier": new URL("./shims/supplier-entity.ts", import.meta.url).href,
+};
 
 function withExtension(path) {
   for (const candidate of [path, `${path}.ts`, `${path}/index.ts`]) {

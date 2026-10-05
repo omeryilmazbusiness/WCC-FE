@@ -30,6 +30,7 @@ export const PERMISSIONS = [
   "visa.write",
   "suppliers.read",
   "suppliers.write",
+  "suppliers.finance",
   "flights.search",
   "ops.read",
   "dashboard.read",
@@ -186,7 +187,7 @@ export const DEMO_ROLE_PERMISSIONS: Record<AppRole, readonly Permission[]> = {
   finance: [
     "branches.read", "customers.read", "payments.read", "payments.write", "payments.approve",
     "fx.manage", "bookings.read", "bookings.write", "audit.read", "documents.read", "suppliers.read",
-    "hotels.read",
+    "suppliers.finance", "hotels.read",
     "tasks.read", "targets.read", "imports.read", "imports.write",
     "notifications.read", "notifications.write", "reports.read", "reports.export",
     "ai.read", "filesync.read", "settings.read",

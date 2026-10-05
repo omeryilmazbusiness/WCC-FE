@@ -23,6 +23,8 @@ import {
   TrendingDown,
   TriangleAlert,
   Wallet,
+  WalletMinimal,
+  CalendarClock,
   type LucideIcon,
 } from "lucide-react";
 import type { Tone } from "@/shared/ui";
@@ -48,6 +50,8 @@ export const NOTIFICATION_KIND_LOOK: Readonly<Record<string, NotificationLook>> 
   "integration.unhealthy": { icon: PlugZap, tone: "zinc" },
   "booking.confirmed": { icon: CircleCheckBig, tone: "emerald" },
   "supplier.unconfirmed": { icon: Building2, tone: "amber" },
+  "supplier.low_balance": { icon: WalletMinimal, tone: "rose" },
+  "supplier.contract_expiring": { icon: CalendarClock, tone: "amber" },
   "report.ready": { icon: ChartColumnBig, tone: "sky" },
   "import.completed": { icon: FileUp, tone: "teal" },
   "ai.summary": { icon: Sparkles, tone: "violet" },

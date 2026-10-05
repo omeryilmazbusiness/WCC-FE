@@ -3023,31 +3023,6 @@
       "cancelled": "Cancelled"
     }
   },
-  "supplierInvoices": {
-    "title": "Invoices / Costs",
-    "subtitle": "Supplier invoices and line costs for the selected supplier",
-    "selectSupplier": "Select a supplier to manage invoices",
-    "count": "invoices",
-    "empty": "No invoices yet",
-    "lines": "lines",
-    "create": "New invoice",
-    "invoiceNumber": "Invoice #",
-    "lineDescription": "Line description",
-    "quantity": "Qty",
-    "unitCost": "Unit cost",
-    "tax": "Tax",
-    "add": "Add invoice",
-    "saved": "Invoice saved",
-    "loadError": "Could not load invoices",
-    "actionError": "Could not update invoice",
-    "status": {
-      "draft": "Draft",
-      "received": "Received",
-      "approved": "Approved",
-      "paid": "Paid",
-      "cancelled": "Cancelled"
-    }
-  },
   "integrations": {
     "title": "External integrations",
     "subtitle": "Connect messaging, email, SMS, and accounting providers",
@@ -4265,6 +4240,8 @@
       "integration_unhealthy": "Integration issue",
       "booking_confirmed": "Booking confirmed",
       "supplier_unconfirmed": "Supplier unconfirmed",
+      "supplier_low_balance": "Supplier balance low",
+      "supplier_contract_expiring": "Supplier contract expiring",
       "report_ready": "Report ready",
       "import_completed": "Import finished",
       "ai_summary": "AI summary",
@@ -4942,6 +4919,601 @@
     "errors": {
       "save": "Couldn't save",
       "load": "Couldn't load"
+    }
+  },
+  "suppliers": {
+    "title": "Suppliers",
+    "subtitle": "API health, deposits & credit, contracts and smart routing for every supplier",
+    "newSupplier": "New supplier",
+    "searchPlaceholder": "Search code, name, account manager or API host",
+    "allCategories": "All categories",
+    "allPayments": "All payment models",
+    "empty": "No suppliers yet",
+    "emptyHint": "Add your GDS, hotel wholesalers, DMCs and other partners to start routing bookings.",
+    "emptyFiltered": "No supplier matches",
+    "emptyFilteredHint": "Try another search or clear the filters.",
+    "notFound": "Supplier not found",
+    "loading": "Loading supplier…",
+    "backToSuppliers": "Suppliers",
+    "saving": "Saving…",
+    "notSet": "Not set",
+    "latencyMs": "{ms} ms",
+    "hoursShort": "h",
+    "view": {
+      "label": "View",
+      "cards": "Cards",
+      "table": "Table"
+    },
+    "quick": {
+      "all": "All suppliers",
+      "open": "Open to search",
+      "closed": "Closed to search",
+      "lowBalance": "Low balance",
+      "apiIssues": "API issues",
+      "expiring": "Contract ending",
+      "disputes": "Open disputes"
+    },
+    "table": {
+      "supplier": "Supplier",
+      "category": "Category",
+      "health": "API health",
+      "funds": "Available",
+      "status": "Status",
+      "payment": "Payment"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "integration": "API & health",
+      "finance": "Account",
+      "scope": "Scope & contracts",
+      "performance": "Performance",
+      "operations": "Operations",
+      "invoices": "Invoices"
+    },
+    "category": {
+      "gds": {
+        "label": "GDS / Flight API",
+        "short": "GDS",
+        "hint": "Duffel, Amadeus, Sabre"
+      },
+      "wholesaler": {
+        "label": "Hotel wholesaler",
+        "short": "Wholesaler",
+        "hint": "RateHawk, Hotelbeds, WebBeds"
+      },
+      "dmc": {
+        "label": "DMC",
+        "short": "DMC",
+        "hint": "Local ground handler"
+      },
+      "transfer": {
+        "label": "Transfer",
+        "short": "Transfer",
+        "hint": "Buses, cars, Haramain train"
+      },
+      "visa": {
+        "label": "Visa broker",
+        "short": "Visa",
+        "hint": "Umrah & tourist visas"
+      },
+      "insurance": {
+        "label": "Insurance",
+        "short": "Insurance",
+        "hint": "Travel & medical cover"
+      },
+      "other": {
+        "label": "Other",
+        "short": "Other",
+        "hint": "Any other partner"
+      }
+    },
+    "integration": {
+      "api": {
+        "label": "Live API",
+        "hint": "Real-time search & booking"
+      },
+      "feed": {
+        "label": "Feed",
+        "hint": "Scheduled file / XML feed"
+      },
+      "manual": {
+        "label": "Manual",
+        "hint": "E-mail or phone confirmation"
+      }
+    },
+    "environment": {
+      "sandbox": "Sandbox",
+      "production": "Production"
+    },
+    "health": {
+      "active": "Healthy",
+      "degraded": "Degraded",
+      "down": "Down",
+      "unknown": "Not checked"
+    },
+    "payment": {
+      "prepaid": {
+        "label": "Prepaid deposit",
+        "hint": "Bookings draw down a deposit"
+      },
+      "postpaid": {
+        "label": "Postpaid credit",
+        "hint": "Billed later within a credit line"
+      },
+      "card": {
+        "label": "Virtual card",
+        "hint": "Paid per booking by card"
+      }
+    },
+    "terms": {
+      "on_booking": "On booking",
+      "net7": "Net 7",
+      "net15": "Net 15",
+      "net30": "Net 30",
+      "weekly": "Weekly"
+    },
+    "product": {
+      "flight": "Flights",
+      "hotel": "Hotels",
+      "transfer": "Transfers",
+      "visa": "Visas",
+      "insurance": "Insurance",
+      "package": "Packages"
+    },
+    "region": {
+      "makkah": "Makkah",
+      "madinah": "Madinah",
+      "jeddah": "Jeddah",
+      "riyadh": "Riyadh",
+      "saudi": "Saudi Arabia",
+      "gcc": "GCC",
+      "middle_east": "Middle East",
+      "turkey": "Türkiye",
+      "europe": "Europe",
+      "asia": "Asia",
+      "global": "Global"
+    },
+    "credential": {
+      "api_key": "API key",
+      "client_id": "Client ID",
+      "client_secret": "Client secret",
+      "account_id": "Account ID"
+    },
+    "entry": {
+      "topup": {
+        "label": "Top-up",
+        "hint": "Add to the deposit"
+      },
+      "charge": {
+        "label": "Charge",
+        "hint": "Booking cost"
+      },
+      "refund": {
+        "label": "Refund",
+        "hint": "Money back from supplier"
+      },
+      "payment": {
+        "label": "Payment",
+        "hint": "Settle the credit line"
+      },
+      "adjustment": {
+        "label": "Adjustment",
+        "hint": "Correction with a note"
+      }
+    },
+    "dispute": {
+      "open": "Open",
+      "resolved": "Resolved",
+      "rejected": "Rejected"
+    },
+    "availability": {
+      "open": "Open to search",
+      "blocked": {
+        "inactive": "Inactive",
+        "contract_expired": "Contract expired",
+        "down": "API down",
+        "deposit_exhausted": "Deposit exhausted",
+        "credit_exhausted": "Credit limit reached"
+      },
+      "warning": {
+        "low_balance": "Low balance",
+        "contract_expiring": "Contract ending",
+        "degraded": "Slow API"
+      }
+    },
+    "warningHint": {
+      "low_balance": "Finance has been notified to top up.",
+      "contract_expiring": "Renew the contract before it ends.",
+      "degraded": "Responses are slow; routing ranks it lower."
+    },
+    "closed": {
+      "title": "Closed to search",
+      "reason": {
+        "inactive": "This supplier is deactivated, so it is hidden from search and routing.",
+        "contract_expired": "The contract has expired. Upload a renewed contract and update the end date.",
+        "down": "The API is not responding. It returns to search automatically once a health check passes.",
+        "deposit_exhausted": "The deposit is used up. Post a top-up to reopen it for search.",
+        "credit_exhausted": "The credit limit is reached. Record a payment or raise the limit."
+      }
+    },
+    "card": {
+      "unlimited": "No limit",
+      "spend30d": "Spend · 30 days",
+      "bookings": "{n, plural, one {# booking} other {# bookings}}",
+      "credentials": "Keys stored",
+      "disputes": "{n, plural, one {# dispute} other {# disputes}}",
+      "open": "Open"
+    },
+    "hero": {
+      "creditLeft": "Credit left",
+      "balance": "Available deposit",
+      "spend30d": "Turnover · 30 days",
+      "bookings30d": "Bookings · 30 days",
+      "lookToBook": "Look-to-book",
+      "errorRate": "Error rate",
+      "contract": "Contract",
+      "expired": "Expired",
+      "daysLeft": "{n, plural, one {# day left} other {# days left}}",
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "edit": "Edit",
+      "activated": "Supplier activated",
+      "deactivated": "Supplier deactivated"
+    },
+    "overview": {
+      "contact": "Account manager",
+      "email": "E-mail",
+      "call": "Call",
+      "commercial": "Commercial terms",
+      "copy": "Copy"
+    },
+    "form": {
+      "createTitle": "New supplier",
+      "editTitle": "Edit supplier",
+      "subtitle": "Master data, API connection, account terms, markups and scope.",
+      "create": "Create supplier",
+      "created": "Supplier created",
+      "updated": "Supplier updated",
+      "saveError": "Could not save the supplier",
+      "errors": {
+        "code": "2–40 characters: A–Z, 0–9 and dashes.",
+        "name": "Enter a name in English or Arabic.",
+        "email": "Enter a valid e-mail.",
+        "phone": "Enter a valid phone number.",
+        "https": "Use a full https:// address.",
+        "credential": "This value is too long.",
+        "currency": "Pick a currency.",
+        "money": "Enter a valid amount.",
+        "markup": "Markup must be between 0 and 500%.",
+        "hours": "0–8760 hours.",
+        "date": "Enter a valid date.",
+        "dateOrder": "End date must be after the start date."
+      },
+      "identity": {
+        "title": "Identity",
+        "hint": "How the supplier appears across the system.",
+        "code": "Supplier code",
+        "codeHint": "Unique, e.g. SUP-DUFFEL-01",
+        "codeLocked": "The code cannot be changed.",
+        "nameEn": "Name (English)",
+        "nameAr": "Name (Arabic)",
+        "category": "Category",
+        "active": "Active",
+        "activeHint": "Inactive suppliers are closed to search and routing."
+      },
+      "contact": {
+        "title": "Account manager & emergency",
+        "hint": "Who to call during normal hours and when things go wrong.",
+        "name": "Account manager",
+        "email": "E-mail",
+        "phone": "Phone",
+        "emergency": "24/7 emergency line",
+        "emergencyHint": "Used by operations for urgent issues on live bookings."
+      },
+      "integration": {
+        "title": "API & integration",
+        "hint": "Connection type, environment and encrypted credentials.",
+        "type": "Integration type",
+        "environment": "Environment",
+        "baseUrl": "API base URL",
+        "webhook": "Webhook URL",
+        "credentials": "Credentials",
+        "credentialsHint": "Encrypted at rest and never shown again. Leave empty to keep the stored value.",
+        "keep": "Stored {hint} — type to replace",
+        "notSet": "Not set",
+        "clear": "Remove stored value",
+        "undoClear": "Keep stored value"
+      },
+      "finance": {
+        "title": "Payment model",
+        "hint": "How the supplier is paid and when it closes automatically.",
+        "locked": "Payment model and currency are locked while the account has a balance.",
+        "currency": "Currency",
+        "creditLimit": "Credit limit",
+        "creditLimitHint": "Leave empty for no limit.",
+        "threshold": "Low-balance alert",
+        "thresholdHint": "Finance is notified when the available amount drops below this.",
+        "terms": "Payment terms"
+      },
+      "markups": {
+        "title": "Markup per product",
+        "hint": "Added on top of supplier net rates."
+      },
+      "scope": {
+        "title": "Scope & rules",
+        "hint": "Where they operate, cancellation SLA and contract period.",
+        "regions": "Regions served",
+        "freeCancel": "Free cancellation",
+        "freeCancelHint": "Hours before service; 0 means non-refundable.",
+        "contractStart": "Contract start",
+        "contractEnd": "Contract end",
+        "contractEndHint": "We warn 30 days before it ends.",
+        "terms": "Service terms & SLA",
+        "termsPlaceholder": "Cancellation SLA, response times, penalties…"
+      }
+    },
+    "ledger": {
+      "title": "Account ledger",
+      "new": "New entry",
+      "posted": "Entry posted",
+      "postError": "Could not post the entry",
+      "postTitle": "Post ledger entry",
+      "postSubtitle": "Every movement is kept with its balance after.",
+      "post": "Post entry",
+      "amount": "Amount",
+      "direction": "Direction",
+      "increase": "Increase",
+      "decrease": "Decrease",
+      "outstanding": "Outstanding",
+      "balance": "Balance",
+      "after": "After",
+      "errors": {
+        "amount": "Enter an amount above zero.",
+        "model": "Not allowed for this payment model.",
+        "funds": "More than the deposit.",
+        "limit": "Over the credit limit.",
+        "outstanding": "More than outstanding.",
+        "negative": "Balance would go negative."
+      },
+      "reference": "Reference",
+      "referenceHint": "Booking, transfer or receipt number",
+      "noteRequired": "Reason (required)",
+      "note": "Note",
+      "noteNeeded": "Adjustments need a reason for the audit trail.",
+      "restricted": "Finance only",
+      "restrictedHint": "You need finance access to see account movements.",
+      "empty": "No movements yet",
+      "emptyHint": "Top-ups, charges and payments will appear here.",
+      "balanceAfter": "Balance {amount}"
+    },
+    "disputes": {
+      "title": "Disputes",
+      "new": "Open dispute",
+      "opened": "Dispute opened",
+      "closed": "Dispute closed",
+      "saveError": "Could not save the dispute",
+      "openTitle": "Open a dispute",
+      "openSubtitle": "Billing or service problems to settle with the supplier.",
+      "open": "Open dispute",
+      "subject": "What happened?",
+      "subjectHint": "At least 3 characters.",
+      "bookingRef": "Booking reference",
+      "amount": "Amount in dispute",
+      "closeTitle": "Close dispute",
+      "close": "Close",
+      "resolvedHint": "Settled in our favour or agreed",
+      "rejectedHint": "Supplier rejected the claim",
+      "resolution": "Outcome",
+      "empty": "No disputes",
+      "emptyHint": "Billing and service disputes with this supplier will show here."
+    },
+    "healthDialog": {
+      "title": "Set API status",
+      "subtitle": "Manual override for feeds, manual suppliers or known incidents.",
+      "saved": "Status updated",
+      "saveError": "Could not update the status",
+      "hint": {
+        "active": "Working normally",
+        "degraded": "Slow or partial errors",
+        "down": "Not usable; closes search",
+        "unknown": "Clear the status"
+      },
+      "note": "Note",
+      "notePlaceholder": "e.g. Supplier announced maintenance until 14:00"
+    },
+    "documents": {
+      "title": "Contracts & documents",
+      "onlyPdf": "Only PDF files are accepted.",
+      "tooLarge": "The file is larger than 20 MB.",
+      "uploaded": "Document uploaded",
+      "uploadError": "Upload failed",
+      "openError": "Could not open the document",
+      "kind": {
+        "contract": "Contract",
+        "nda": "NDA",
+        "sla": "SLA",
+        "corporate": "Corporate docs"
+      },
+      "onFile": "On file",
+      "missing": "Missing",
+      "uploading": "Uploading…",
+      "replace": "New version",
+      "upload": "Upload PDF",
+      "empty": "No documents yet",
+      "emptyHint": "Upload the signed contract, NDA, SLA and company papers.",
+      "current": "Current",
+      "open": "Open"
+    },
+    "invoices": {
+      "title": "Supplier invoices",
+      "new": "New invoice",
+      "moved": "Invoice {status}",
+      "actionError": "Could not update the invoice",
+      "empty": "No invoices",
+      "emptyHint": "Record supplier bills to track approval and payment.",
+      "status": {
+        "draft": "Draft",
+        "submitted": "Submitted",
+        "approved": "Approved",
+        "paid": "Paid",
+        "void": "Void"
+      },
+      "lines": "{n, plural, one {# line} other {# lines}}",
+      "due": "due {date}",
+      "action": {
+        "submitted": "Submit",
+        "approved": "Approve",
+        "paid": "Mark paid",
+        "draft": "Back to draft",
+        "void": "Void"
+      },
+      "created": "Invoice created",
+      "createTitle": "New supplier invoice",
+      "createSubtitle": "Invoice number, dates and lines.",
+      "saving": "Saving…",
+      "create": "Create invoice",
+      "number": "Invoice number",
+      "issued": "Issue date",
+      "dueOn": "Due date",
+      "dateOrder": "Due date must be after the issue date.",
+      "linesTitle": "Lines",
+      "description": "Description",
+      "quantity": "Qty",
+      "unitCost": "Unit cost",
+      "removeLine": "Remove line",
+      "lineError": "Each line needs a description, a quantity of at least 1 and a valid cost.",
+      "addLine": "Add line",
+      "tax": "Tax",
+      "total": "Total"
+    },
+    "links": {
+      "title": "Allotments",
+      "add": "Add allotment",
+      "added": "Allotment added",
+      "confirmed": "Allotment confirmed",
+      "removed": "Allotment removed",
+      "actionError": "Could not update the allotment",
+      "empty": "No allotments",
+      "emptyHint": "Link packages, departures or services held with this supplier.",
+      "type": {
+        "package": "Package",
+        "departure": "Departure",
+        "service": "Service"
+      },
+      "status": {
+        "pending": "Pending",
+        "confirmed": "Confirmed",
+        "cancelled": "Cancelled"
+      },
+      "oversold": "Oversold",
+      "sold": "{sold}/{total} sold",
+      "confirm": "Confirm",
+      "remove": "Remove",
+      "removeTitle": "Remove allotment?",
+      "removeHint": "The link is removed; bookings are not changed.",
+      "addTitle": "Add allotment",
+      "addSubtitle": "Seats or units held with the supplier.",
+      "saving": "Saving…",
+      "linkId": "Package / departure / service ID",
+      "linkIdHint": "Copy the ID from the package or departure page.",
+      "linkIdError": "Enter a valid ID.",
+      "allotment": "Allotment",
+      "allotmentHint": "0 means on request.",
+      "unitCost": "Unit cost"
+    },
+    "issues": {
+      "title": "Issue log",
+      "logged": "Logged",
+      "actionError": "Could not log the issue",
+      "kind": "Kind",
+      "kindLabel": {
+        "note": "Note",
+        "delay": "Delay",
+        "quality": "Quality",
+        "cancellation": "Cancellation",
+        "invoice": "Invoice",
+        "other": "Other"
+      },
+      "placeholder": "What happened with this supplier?",
+      "severity": "Severity",
+      "severityLabel": {
+        "info": "Info",
+        "warning": "Warning",
+        "critical": "Critical"
+      },
+      "log": "Log",
+      "empty": "Nothing logged",
+      "emptyHint": "Delays, quality problems and other incidents will build a history here."
+    },
+    "routing": {
+      "title": "Smart routing",
+      "subtitle": "Who gets the next booking, by product",
+      "product": "Product",
+      "empty": "No supplier for this product",
+      "emptyHint": "Add a supplier in a matching category.",
+      "primary": "Primary",
+      "score": "score"
+    },
+    "integrationTab": {
+      "health": "API health",
+      "connection": "Connection",
+      "checkOk": "Healthy · {ms} ms",
+      "checkFailed": "Health check: {status}",
+      "checkError": "Health check failed",
+      "noLatency": "No latency measured",
+      "checkedAt": "Checked {at}",
+      "neverChecked": "Never checked",
+      "needUrl": "Add an https API base URL to run a health check.",
+      "checking": "Checking…",
+      "check": "Run health check",
+      "setManual": "Set status",
+      "encrypted": "AES-256 encrypted",
+      "metrics": "API metrics · last {days} days"
+    },
+    "metrics": {
+      "searches": "Searches",
+      "bookings": "Bookings",
+      "lookToBook": "Look-to-book",
+      "errorRate": "Error rate",
+      "avgLatency": "Avg. latency",
+      "failedBookings": "Failed bookings",
+      "priceChanges": "Price changes",
+      "soldOuts": "Sold out"
+    },
+    "financeTab": {
+      "headroom": "Funding headroom",
+      "available": "available",
+      "deposit": "Deposit balance",
+      "outstanding": "Outstanding",
+      "thresholdHint": "Finance and managers get an alert below this amount.",
+      "exhausted": "Funds are exhausted — this supplier is closed to search until the account is topped up or settled.",
+      "low": "Balance is below the alert threshold. Finance has been notified.",
+      "guardTitle": "Automatic protection",
+      "guardClose": "When the deposit or credit runs out, the supplier is closed to search automatically.",
+      "guardAlert": "Crossing the low-balance threshold notifies finance and managers once a day.",
+      "guardLedger": "Every top-up, charge and payment is kept with its running balance and audit trail."
+    },
+    "scopeTab": {
+      "coverage": "Coverage & cancellation",
+      "noRegions": "No regions selected.",
+      "freeCancel": "{h, plural, one {# hour} other {# hours}} before service",
+      "nonRefundable": "Non-refundable",
+      "contract": "Contract period",
+      "openEnded": "Open-ended",
+      "expiredHint": "The contract has expired and the supplier is closed to search.",
+      "expiringHint": "{n, plural, one {Ends in # day} other {Ends in # days}} — start the renewal.",
+      "noTerms": "No service terms recorded."
+    },
+    "performance": {
+      "title": "Performance · last {days} days",
+      "turnover": "Turnover",
+      "bookings": "Bookings",
+      "refunds": "Refunds",
+      "openDisputes": "Open disputes"
     }
   }
 }
