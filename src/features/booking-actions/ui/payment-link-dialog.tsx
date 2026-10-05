@@ -14,8 +14,7 @@ import {
 import { isApiError } from "@/shared/api/api-error";
 import { formatMoney } from "@/shared/lib/format";
 import { parseMoneyInput } from "@/shared/lib/money";
-import { Button, CopyButton, Input, useMutationFeedback } from "@/shared/ui";
-import { ActionDialog, Field } from "./action-dialog";
+import { Button, CopyButton, Input, useMutationFeedback, ActionDialog, Field } from "@/shared/ui";
 import type { ShareContact } from "./share-dialog";
 
 type Props = {

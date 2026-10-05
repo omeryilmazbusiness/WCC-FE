@@ -6,8 +6,7 @@ import { Ban, Loader2 } from "lucide-react";
 import type { Booking, BookingRepository, BookingWorkspaceRepository, CancellationQuote } from "@/entities/booking";
 import { cn } from "@/shared/lib/cn";
 import { formatMoney } from "@/shared/lib/format";
-import { Button, Textarea, useMutationFeedback } from "@/shared/ui";
-import { ActionDialog, Field } from "./action-dialog";
+import { Button, Textarea, useMutationFeedback, ActionDialog, Field } from "@/shared/ui";
 
 /** Server minimum for a cancellation reason. */
 const REASON_MIN = 10;

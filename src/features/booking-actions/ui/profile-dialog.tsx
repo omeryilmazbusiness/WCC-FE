@@ -11,8 +11,7 @@ import {
   type BookingProfile,
   type BookingWorkspaceRepository,
 } from "@/entities/booking";
-import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useMutationFeedback } from "@/shared/ui";
-import { ActionDialog, Field } from "./action-dialog";
+import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, useMutationFeedback, ActionDialog, Field } from "@/shared/ui";
 
 const NO_SUPPLIER = "__none";
 

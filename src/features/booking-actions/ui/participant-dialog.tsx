@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { UserRoundPlus } from "lucide-react";
 import { GENDERS, type BookingParticipant, type BookingRepository, type Gender, type ParticipantInput } from "@/entities/booking";
-import { Button, Input, SegmentedControl, useMutationFeedback } from "@/shared/ui";
-import { ActionDialog, Field } from "./action-dialog";
+import { Button, Input, SegmentedControl, useMutationFeedback, ActionDialog, Field } from "@/shared/ui";
 
 type Props = {
   bookingId: string;

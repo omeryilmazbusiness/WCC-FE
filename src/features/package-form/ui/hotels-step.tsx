@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from "@/shared/ui";
 import type { PackageFormValues } from "../model/form";
+import { ContractedHotelPicker } from "./contracted-hotel-picker";
 import { ChoiceGrid, StarPicker, Stepper } from "./controls";
 
 type City = "makkah" | "madinah";
@@ -114,6 +115,7 @@ function HotelCard({ city }: { city: City }) {
       hint={t(`form.hotels.${city}Hint`)}
       testId={`package-form-hotel-${city}`}
     >
+      <ContractedHotelPicker city={city} />
       <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
         <FormField
           control={control}

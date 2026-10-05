@@ -125,6 +125,8 @@ export interface DocumentRepository {
     id: string,
     input: { fileName: string; contentType: string },
   ): Promise<PresignResult>;
+  /** Short-lived signed URL for a completed upload. */
+  downloadUrl(id: string): Promise<string>;
   /** Full upload helper: presign → optional PUT → complete. */
   uploadFile(
     input: PresignInput & { file: File },
@@ -156,6 +158,11 @@ class ApiRepo implements DocumentRepository {
     );
     const rows = Array.isArray(data) ? data : (data.items ?? []);
     return rows.map(mapDocument);
+  }
+
+  async downloadUrl(id: string) {
+    const raw = await this.http.request<Raw>(`/documents/${encodeURIComponent(id)}/download`, { method: "POST" });
+    return String(raw.download_url ?? raw.downloadUrl ?? "");
   }
 
   async presign(input: PresignInput) {
@@ -416,6 +423,10 @@ class MemoryRepo implements DocumentRepository {
       contentType: input.contentType,
       participantId: orig.participantId,
     });
+  }
+
+  async downloadUrl(): Promise<string> {
+    throw new Error("downloads need the server");
   }
 
   async uploadFile(input: PresignInput & { file: File }) {

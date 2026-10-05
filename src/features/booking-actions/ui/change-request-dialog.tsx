@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { CalendarSync, Repeat2, Route, UserPen, FileQuestion } from "lucide-react";
 import { CHANGE_KINDS, type BookingChangeRequest, type BookingWorkspaceRepository, type ChangeKind } from "@/entities/booking";
-import { Button, Textarea, useMutationFeedback, type Tone } from "@/shared/ui";
-import { ActionDialog, ChoiceCard, Field } from "./action-dialog";
+import { Button, Textarea, useMutationFeedback, type Tone, ActionDialog, ChoiceCard, Field } from "@/shared/ui";
 
 const KIND_LOOK: Record<ChangeKind, { icon: typeof Route; tone: Tone }> = {
   date_change: { icon: CalendarSync, tone: "sky" },

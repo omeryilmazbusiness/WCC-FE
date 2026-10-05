@@ -27,7 +27,7 @@ export const ROUTE_ROOTS: ReadonlySet<string> = new Set([
   "inbox",
   "notifications",
   "admin",
-  "rooming",
+  "hotels",
   "flights",
   "platform",
 ]);

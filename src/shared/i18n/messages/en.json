@@ -34,7 +34,7 @@
     "audit": "Audit",
     "logout": "Sign out",
     "settings": "Settings",
-    "rooming": "Rooming",
+    "hotels": "Hotels",
     "flights": "Flights",
     "security": "Security",
     "fxRates": "FX rates",
@@ -1856,7 +1856,19 @@
         "split": "Stay plan",
         "splitSummary": "Makkah {makkah} + Madinah {madinah} = {total} of {max} nights",
         "overflow": "The stay is longer than the package",
-        "noMadinah": "Set Madinah nights to 0 for a Makkah-only package"
+        "noMadinah": "Set Madinah nights to 0 for a Makkah-only package",
+        "contract": {
+          "pick": "Pick a contracted hotel",
+          "change": "Change contracted hotel",
+          "linked": "Linked to {name}",
+          "rate": "Contract: net {net} → sells {gross} per person / {nights} nights (double)",
+          "pricing": "Pricing from the contract…",
+          "needDates": "Set check-in and check-out to see the contract rate.",
+          "unlink": "Unlink",
+          "search": "Search hotels…",
+          "loading": "Loading hotels…",
+          "empty": "No active hotels found"
+        }
       },
       "pricing": {
         "matrix": "Pricing matrix",
@@ -3195,28 +3207,543 @@
       "operations": "Operations"
     }
   },
-  "rooming": {
-    "title": "Rooming",
-    "subtitle": "Rooms, group list, and CSV export by departure",
-    "departure": "Departure",
-    "pickDeparture": "Pick a departure",
-    "departureIdPh": "Departure UUID",
-    "rooms": "Rooms",
-    "roomsEmpty": "No rooms yet",
-    "groupList": "Group list",
-    "groupEmpty": "No assignments yet",
-    "roomLabel": "Room label",
-    "capacity": "Capacity",
-    "addRoom": "Add room",
-    "remove": "Remove",
-    "unassign": "Unassign",
-    "unassigned": "Unassigned",
-    "exportCsv": "Export CSV",
-    "exported": "Exported",
-    "exportError": "Export failed",
-    "loadError": "Could not load rooming",
-    "actionError": "Could not complete action",
-    "saved": "Saved"
+  "hotels": {
+    "title": "Hotels",
+    "subtitle": "Contracted hotels, seasonal net rates, allotments and stop sales in one place.",
+    "newHotel": "New hotel",
+    "searchPlaceholder": "Search hotel, city, district or contact…",
+    "allCities": "All cities",
+    "empty": "No contracted hotels yet",
+    "emptyHint": "Add your first hotel to load its contract, seasons and room blocks.",
+    "emptyFiltered": "No hotels match these filters",
+    "emptyFilteredHint": "Try another city or clear the search.",
+    "loading": "Loading hotel…",
+    "notFound": "Hotel not found",
+    "backToHotels": "Hotels",
+    "saving": "Saving…",
+    "distance": "{m} m",
+    "distanceTo": "{m} m to {place}",
+    "quick": {
+      "all": "All hotels",
+      "active": "Active",
+      "stopSale": "Stop sale today",
+      "releasing": "Releasing this week",
+      "lowStock": "Almost sold out",
+      "noContract": "Contract missing"
+    },
+    "view": {
+      "label": "View",
+      "cards": "Cards",
+      "table": "Table"
+    },
+    "table": {
+      "hotel": "Hotel",
+      "city": "City",
+      "season": "Season now",
+      "allotment": "Allotment",
+      "release": "Next release",
+      "status": "Status"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "stopSale": "Stop sale"
+    },
+    "card": {
+      "noSeason": "No season today",
+      "inactive": "Inactive",
+      "stopSale": "Stop sale",
+      "stars": "{n} stars",
+      "fromNet": "Net from",
+      "perPerson": "/ person",
+      "noRate": "No rate today",
+      "roomTypes": "{n, plural, one {# room type} other {# room types}}",
+      "allotment": "{sold} of {total} rooms sold",
+      "noAllotment": "No room blocks",
+      "left": "{n} left",
+      "contract": "Contract on file",
+      "noContract": "No contract",
+      "release": "Release {date}",
+      "open": "Open"
+    },
+    "tabs": {
+      "overview": "Profile",
+      "rates": "Rates & seasons",
+      "policies": "Child & cancellation",
+      "inventory": "Allotment & stop sale",
+      "quote": "Quick quote",
+      "contract": "Contract"
+    },
+    "hero": {
+      "fromNet": "Net from today",
+      "fromGross": "Selling from",
+      "allotment": "Rooms sold",
+      "seasons": "Seasons",
+      "nextRelease": "Next release",
+      "edit": "Edit hotel"
+    },
+    "seasonKind": {
+      "low": "Low",
+      "shoulder": "Shoulder",
+      "high": "High",
+      "peak": "Peak"
+    },
+    "landmark": {
+      "haram": "Masjid al-Haram",
+      "nabawi": "Masjid an-Nabawi",
+      "city_center": "City centre",
+      "airport": "Airport"
+    },
+    "room": {
+      "standard": "Standard",
+      "superior": "Superior",
+      "deluxe": "Deluxe",
+      "family": "Family",
+      "suite": "Suite",
+      "triple": "Triple",
+      "quad": "Quad"
+    },
+    "meal": {
+      "ro": {
+        "short": "RO",
+        "label": "Room only"
+      },
+      "bb": {
+        "short": "BB",
+        "label": "Bed & breakfast"
+      },
+      "hb": {
+        "short": "HB",
+        "label": "Half board"
+      },
+      "fb": {
+        "short": "FB",
+        "label": "Full board"
+      },
+      "ai": {
+        "short": "AI",
+        "label": "All inclusive"
+      }
+    },
+    "occupancy": {
+      "single": "Single",
+      "double": "Double",
+      "triple": "Triple",
+      "quad": "Quad"
+    },
+    "markup": {
+      "percent": "Percent",
+      "fixed": "Fixed amount"
+    },
+    "allotmentKind": {
+      "guaranteed": "Guaranteed",
+      "on_request": "On request"
+    },
+    "allotmentStatus": {
+      "open": "Open",
+      "sold_out": "Sold out",
+      "released": "Released",
+      "expired": "Expired"
+    },
+    "availability": {
+      "instant": "Instant confirmation",
+      "on_request": "On request",
+      "stop_sale": "Stop sale",
+      "unavailable": "No contract rate"
+    },
+    "band": {
+      "infant": "Infant",
+      "child1": "Child 1",
+      "child2": "Child 2",
+      "adult": "Adult"
+    },
+    "form": {
+      "createTitle": "New contracted hotel",
+      "editTitle": "Edit hotel",
+      "subtitle": "Master data used by quotes, packages and vouchers.",
+      "create": "Create hotel",
+      "created": "Hotel created",
+      "updated": "Hotel updated",
+      "saveError": "Could not save the hotel",
+      "identity": {
+        "title": "Hotel",
+        "hint": "Name as it appears on vouchers.",
+        "name": "Hotel name",
+        "nameAr": "Arabic name",
+        "stars": "Stars",
+        "active": "Open for sale",
+        "activeHint": "Inactive hotels cannot be quoted."
+      },
+      "location": {
+        "title": "Location",
+        "hint": "Where the hotel is and how far it is from the landmark.",
+        "city": "City",
+        "district": "District",
+        "country": "Country",
+        "countryHint": "Two-letter code, e.g. SA",
+        "landmark": "Distance measured to",
+        "distance": "Walking distance",
+        "latitude": "Latitude",
+        "longitude": "Longitude",
+        "preview": "Check on the map"
+      },
+      "contact": {
+        "title": "Contacts",
+        "hint": "Who you negotiate with and where reservations go.",
+        "salesName": "Sales manager",
+        "salesPhone": "Sales phone",
+        "salesEmail": "Sales e-mail",
+        "reservationsEmail": "Reservations e-mail",
+        "reservationsHint": "Vouchers and rooming lists are sent here."
+      },
+      "offer": {
+        "title": "Rooms & board",
+        "hint": "What the contract sells; the rate matrix follows these.",
+        "roomTypes": "Room types",
+        "mealPlans": "Meal plans"
+      },
+      "commercial": {
+        "title": "Currency & markup",
+        "hint": "Gross selling price = net + markup, unless a season overrides it.",
+        "currency": "Contract currency",
+        "markupKind": "Markup type",
+        "markupValue": "Markup",
+        "preview": "Net {net} sells for {gross}"
+      },
+      "notes": {
+        "title": "Notes",
+        "placeholder": "Payment terms, special conditions…"
+      },
+      "errors": {
+        "name": "Enter at least 2 characters.",
+        "city": "City is required.",
+        "country": "Use a two-letter country code.",
+        "distance": "Distance must be 0–100,000 m.",
+        "latitude": "Latitude must be between -90 and 90.",
+        "longitude": "Longitude must be between -180 and 180.",
+        "coordsPair": "Enter both latitude and longitude.",
+        "phone": "Enter a valid phone number.",
+        "email": "Enter a valid e-mail.",
+        "roomTypes": "Choose at least one room type.",
+        "mealPlans": "Choose at least one meal plan.",
+        "markupPercent": "Percent markup must be 0–500.",
+        "markupFixed": "Enter a valid amount."
+      }
+    },
+    "overview": {
+      "location": "Location",
+      "contact": "Contacts",
+      "offer": "Rooms & board",
+      "commercial": "Commercial terms",
+      "notSet": "Not set",
+      "coordinates": "Coordinates",
+      "openMap": "Map",
+      "copyEmail": "Copy e-mail",
+      "markup": "Default markup",
+      "fixedMarkup": "+{amount} per guest per night",
+      "markupHint": "Applied to every net rate unless the season sets its own."
+    },
+    "rates": {
+      "hint": "Prices switch automatically by stay date. Gross includes the markup; net is the contract rate.",
+      "add": "Add season",
+      "empty": "No seasons yet",
+      "emptyHint": "Add a low or peak period with its net rate matrix.",
+      "timelineHint": "The black line marks today ({date}).",
+      "current": "Now",
+      "past": "Ended",
+      "hotelDefault": "hotel default",
+      "edit": "Edit season",
+      "delete": "Delete season",
+      "net": "net {amount}",
+      "deleted": "Season deleted",
+      "deleteError": "Could not delete the season",
+      "deleteTitle": "Delete “{name}”?",
+      "deleteHint": "Quotes for these dates will have no rate until another season covers them."
+    },
+    "season": {
+      "createTitle": "New season",
+      "editTitle": "Edit season",
+      "subtitle": "Validity period and net rates in {currency}.",
+      "period": "Validity period",
+      "periodHint": "Seasons of one hotel cannot overlap.",
+      "nights": "{n, plural, one {# night} other {# nights}}",
+      "name": "Season name",
+      "namePlaceholder": "e.g. Ramadan last 10",
+      "start": "From",
+      "end": "To",
+      "markup": "Markup",
+      "markupHint": "Peak periods often carry a different margin.",
+      "ownMarkup": "Own markup for this season",
+      "hotelMarkup": "Using the hotel markup ({value})",
+      "matrix": "Net rate matrix",
+      "matrixHint": "Per night. Single is per room; double, triple and quad are per person.",
+      "copyFrom": "Copy rates from {name}",
+      "roomMeal": "Room · board",
+      "perRoom": "per room",
+      "perPerson": "per person",
+      "grossLegend": "Green figures are the gross selling price after markup.",
+      "created": "Season added",
+      "updated": "Season updated",
+      "saveError": "Could not save the season",
+      "errors": {
+        "name": "Give the season a name.",
+        "dates": "Pick a valid date range.",
+        "span": "A season can be at most two years long.",
+        "overlap": "Overlaps “{name}” ({from} – {to}).",
+        "markup": "Check the markup value.",
+        "cells": "Fix the highlighted prices.",
+        "rates": "Enter at least one price."
+      }
+    },
+    "policy": {
+      "edit": "Edit",
+      "saveError": "Could not save the policy",
+      "child": {
+        "title": "Child & extra bed",
+        "subtitle": "Age bands and how each is charged, per night.",
+        "saved": "Child policy saved",
+        "ages": "Age bands",
+        "agesHint": "Each limit is exclusive: an infant limit of 2 means 0–1.99.",
+        "infantMaxAge": "Infant until",
+        "child1MaxAge": "Child 1 until",
+        "child2MaxAge": "Child 2 until",
+        "years": "yrs",
+        "rule": {
+          "infant": "Infant",
+          "child1": "Child 1",
+          "child2WithBed": "Child 2 · with bed",
+          "child2NoBed": "Child 2 · no bed"
+        },
+        "ageRange": "Ages {range}",
+        "mode": {
+          "free": "Free",
+          "percent": "% of adult",
+          "fixed": "Fixed"
+        },
+        "percentOfAdult": "Percent of adult rate",
+        "fixedNight": "Fixed amount per night",
+        "percentText": "{pct}% of adult",
+        "fixedText": "{amount} / night",
+        "notContracted": "Not contracted",
+        "freeExample": "Free",
+        "example": "≈ {amount} / night",
+        "extraBed": "Adult extra bed",
+        "extraBedHint": "Net per night for a third or fourth adult bed.",
+        "errors": {
+          "ages": "Ages must rise: infant < child 1 < child 2 ≤ 18.",
+          "infant": "Check the infant charge.",
+          "child1": "Check the child 1 charge.",
+          "child2WithBed": "Check the child 2 with bed charge.",
+          "child2NoBed": "Check the child 2 without bed charge.",
+          "extraBed": "Check the extra bed price."
+        }
+      },
+      "cancel": {
+        "title": "Cancellation & no-show",
+        "subtitle": "What the hotel charges when a booking is cancelled.",
+        "saved": "Cancellation policy saved",
+        "free": "Free cancellation",
+        "freeHint": "Cancel at no cost up to this many days before check-in.",
+        "daysBefore": "days before",
+        "tiers": "Penalty tiers",
+        "tiersHint": "Each tier applies from its day until the next tier.",
+        "addTier": "Add tier",
+        "noTiers": "Inside the penalty window the full stay is charged.",
+        "fromDays": "From (days before)",
+        "kind": "Charge",
+        "nights": "Nights",
+        "percent": "Percent",
+        "nightsCharged": "Nights charged",
+        "percentCharged": "Share of stay",
+        "nightsUnit": "nights",
+        "removeTier": "Remove tier",
+        "noShow": "No-show",
+        "noShowHint": "Share of the stay charged when the guest does not arrive.",
+        "reset": "Use standard policy",
+        "legend": "Days are counted before the check-in date.",
+        "ladder": {
+          "freeWindow": "{days}+ days before check-in",
+          "noShowWindow": "No-show",
+          "day": "{day} days before",
+          "range": "{from}–{to} days before",
+          "free": "Free",
+          "nights": "{n, plural, one {# night} other {# nights}}",
+          "percent": "{pct}% of stay"
+        },
+        "errors": {
+          "freeDays": "Free days must be 0–365.",
+          "tierDays": "Tiers must start before the free window.",
+          "tierDuplicate": "Two tiers start on the same day.",
+          "tierValue": "Check the tier charge.",
+          "noShow": "No-show must be 0–100%."
+        }
+      }
+    },
+    "allotment": {
+      "title": "Allotments",
+      "add": "Add block",
+      "empty": "No room blocks",
+      "emptyHint": "Guaranteed blocks are released automatically before arrival.",
+      "createTitle": "New room block",
+      "editTitle": "Edit room block",
+      "subtitle": "Rooms held for you over a period.",
+      "room": "Room type",
+      "kind": "Sale type",
+      "kindHint": {
+        "guaranteed": "Rooms are yours until the release date.",
+        "on_request": "Each booking needs the hotel's confirmation."
+      },
+      "kindShort": {
+        "guaranteed": "Free sale",
+        "on_request": "Ask the hotel"
+      },
+      "period": "Period & rooms",
+      "rooms": "Rooms",
+      "roomsUnit": "rooms",
+      "soldNote": "{sold} rooms are already sold; the block cannot go below that.",
+      "release": "Release",
+      "releaseHint": "Unsold rooms go back to the hotel this many days before the block starts.",
+      "releaseOn": "Released on {date}",
+      "created": "Room block added",
+      "updated": "Room block updated",
+      "saveError": "Could not save the block",
+      "deleted": "Room block deleted",
+      "edit": "Edit block",
+      "delete": "Delete block",
+      "adjustError": "Could not update the counter",
+      "release1": "Free one room",
+      "sell1": "Sell one room",
+      "soldOf": "{sold}/{rooms} sold",
+      "available": "{n} available",
+      "releasedOn": "Released {date}",
+      "releaseToday": "Releases today",
+      "releaseIn": "Release in {n, plural, one {# day} other {# days}} · {date}",
+      "onRequestNote": "Confirm each booking with the hotel",
+      "deleteTitle": "Delete this room block?",
+      "deleteHint": "Blocks with sold rooms can only be deleted after they end.",
+      "errors": {
+        "dates": "Pick a valid date range.",
+        "span": "A block can be at most two years long.",
+        "rooms": "At least one room.",
+        "belowSold": "Cannot go below {sold} sold rooms."
+      }
+    },
+    "inventory": {
+      "delete": "Delete",
+      "deleteError": "Could not delete"
+    },
+    "stopSale": {
+      "title": "Stop sale calendar",
+      "add": "Stop sale",
+      "none": "No upcoming stop sales.",
+      "createTitle": "Stop sale",
+      "subtitle": "Close sales for these dates; quotes show them as unavailable.",
+      "submit": "Stop sale",
+      "period": "Dates",
+      "scope": "Applies to",
+      "allRooms": "All rooms",
+      "reason": "Reason",
+      "reasonPlaceholder": "e.g. hotel fully booked",
+      "created": "Stop sale added",
+      "saveError": "Could not add the stop sale",
+      "deleted": "Stop sale lifted",
+      "delete": "Lift stop sale",
+      "deleteTitle": "Lift this stop sale?",
+      "deleteHint": "These dates become sellable again.",
+      "prevMonth": "Previous month",
+      "nextMonth": "Next month",
+      "closedDay": "stop sale",
+      "legendAll": "Whole hotel closed",
+      "legendSome": "Some rooms closed",
+      "legendBlock": "Room block"
+    },
+    "quote": {
+      "stay": "Stay",
+      "checkIn": "Check-in",
+      "checkOut": "Check-out",
+      "roomAndBoard": "Room & board",
+      "guests": "Guests",
+      "perRoom": "Per room",
+      "rooms": "Rooms",
+      "adults": "Adults",
+      "childAge": "Child {n} age",
+      "withBed": "With bed",
+      "noBed": "No bed",
+      "removeChild": "Remove child",
+      "addChild": "Add child",
+      "extraBed": "Extra adult bed",
+      "extraBedNoPrice": "No contracted price",
+      "total": "Selling total",
+      "net": "Net cost",
+      "profit": "Profit",
+      "guestsCount": "Guests",
+      "left": "{n} left",
+      "copy": "Copy quote",
+      "copied": "Quote copied",
+      "copyFailed": "Could not copy",
+      "inactive": "This hotel is inactive and cannot be quoted.",
+      "missing": "{n, plural, one {# night has} other {# nights have}} no contract rate.",
+      "nightly": "Night by night",
+      "noRate": "no rate",
+      "childLine": "Child, {age} yrs",
+      "night": "night",
+      "freeUntil": "Free cancellation until",
+      "freeUntilLine": "Free cancellation until {date}",
+      "penaltyToday": "Cancelling today costs {amount}",
+      "tierFrom": "From {date}",
+      "noShow": "No-show",
+      "calculating": "Calculating…",
+      "guestsLine": "{adults, plural, one {# adult} other {# adults}}{children, plural, =0 {} one { + # child} other { + # children}}",
+      "text": {
+        "stay": "Stay",
+        "room": "Room",
+        "guests": "Guests"
+      },
+      "errors": {
+        "dates": "Check-out must be after check-in.",
+        "tooLong": "Stays are limited to 60 nights.",
+        "occupancy": "1–4 adults per room (older children count as adults), at most 4 children."
+      }
+    },
+    "voucher": {
+      "title": "Voucher to hotel",
+      "hint": "Opens an e-mail to {email} with the booking details (no prices).",
+      "noEmail": "Add a reservations e-mail in the profile to send vouchers.",
+      "guest": "Lead guest",
+      "reference": "Booking reference",
+      "notesPlaceholder": "Special requests (adjoining rooms, high floor…)",
+      "copy": "Copy text",
+      "send": "E-mail hotel",
+      "copied": "Voucher copied",
+      "subject": "Booking request – {hotel} – {stay} {ref}",
+      "greeting": "Dear {hotel} reservations team,",
+      "intro": "Please confirm the following booking under our contract:",
+      "closing": "Thank you, we look forward to your confirmation.",
+      "lines": {
+        "reference": "Reference",
+        "guest": "Lead guest",
+        "stay": "Stay",
+        "rooms": "Rooms",
+        "board": "Board",
+        "occupancy": "Occupancy",
+        "childAges": "Child ages",
+        "notes": "Notes"
+      }
+    },
+    "contract": {
+      "title": "Contract",
+      "upload": "Upload PDF",
+      "uploading": "Uploading…",
+      "uploaded": "Contract uploaded",
+      "uploadError": "Could not upload the contract",
+      "onlyPdf": "Only PDF files can be uploaded",
+      "tooLarge": "The file is larger than 20 MB",
+      "openError": "Could not open the file",
+      "empty": "No contract uploaded",
+      "emptyHint": "Upload the signed PDF so the team always works from the latest version.",
+      "current": "Current",
+      "open": "Open"
+    }
   },
   "search": {
     "placeholder": "Search customers, leads, bookings, passports…",

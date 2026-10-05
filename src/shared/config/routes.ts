@@ -33,7 +33,8 @@ export const routes = {
   adminAudit: "/admin/audit",
   adminSettings: "/admin/settings",
   adminCompanies: "/admin/companies",
-  rooming: "/rooming",
+  hotels: "/hotels",
+  hotel: (id: string) => `/hotels/${id}`,
   flights: "/flights",
 } as const;
 

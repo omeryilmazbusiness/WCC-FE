@@ -34,6 +34,8 @@ export const PACKAGE_CURRENCIES = ["SAR", "USD", "EUR", "TRY", "SYP", "AED", "GB
 export const DEFAULT_PACKAGE_CURRENCY = "SAR";
 
 export type Hotel = {
+  /** Contracted hotel (Hotels module) this stay is priced from; empty when typed freely. */
+  hotelId: string;
   name: string;
   stars: number;
   distanceM: number;
@@ -106,7 +108,7 @@ export const DEFAULT_REQUIREMENTS: Requirements = {
 };
 
 export function emptyHotel(): Hotel {
-  return { name: "", stars: 0, distanceM: 0, access: "", shuttleMinutes: 0, zone: "", board: "", checkIn: "", checkOut: "" };
+  return { hotelId: "", name: "", stars: 0, distanceM: 0, access: "", shuttleMinutes: 0, zone: "", board: "", checkIn: "", checkOut: "" };
 }
 
 export function emptySpec(currency: string = DEFAULT_PACKAGE_CURRENCY): PackageSpec {
@@ -149,6 +151,7 @@ const oneOf = <T extends string>(list: readonly T[], v: unknown): "" | T => (lis
 function mapHotel(raw: unknown): Hotel {
   const h = rec(raw);
   return {
+    hotelId: str(h.hotel_id),
     name: str(h.name),
     stars: num(h.stars),
     distanceM: num(h.distance_m),
@@ -230,6 +233,7 @@ export function mapSpec(raw: unknown, currency: string = DEFAULT_PACKAGE_CURRENC
 }
 
 const hotelPayload = (h: Hotel) => ({
+  hotel_id: h.hotelId || undefined,
   name: h.name,
   stars: h.stars,
   distance_m: h.distanceM,

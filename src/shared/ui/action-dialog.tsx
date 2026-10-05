@@ -3,7 +3,8 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/shared/lib/cn";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, TONES, type Tone } from "@/shared/ui";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./dialog";
+import { TONES, type Tone } from "./tone";
 
 type Props = {
   open: boolean;
@@ -15,13 +16,16 @@ type Props = {
   children: ReactNode;
   footer?: ReactNode;
   testId?: string;
+  size?: "md" | "lg" | "xl";
 };
 
-/** Shared shell for the booking quick-action dialogs: big gradient icon, title, body, footer. */
-export function ActionDialog({ open, onOpenChange, icon: Icon, tone, title, description, children, footer, testId }: Props) {
+const SIZE = { md: "max-w-lg", lg: "max-w-2xl", xl: "max-w-4xl" } as const;
+
+/** iOS-style action dialog shell: big gradient icon, title, scrollable body, footer. */
+export function ActionDialog({ open, onOpenChange, icon: Icon, tone, title, description, children, footer, testId, size = "md" }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg rounded-[28px] p-0" data-testid={testId}>
+      <DialogContent className={cn("rounded-[28px] p-0", SIZE[size])} data-testid={testId}>
         <DialogHeader className="flex flex-row items-start gap-4 space-y-0 px-6 pb-2 pt-6 text-start">
           <span className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl", TONES[tone].gradient)} aria-hidden>
             <Icon className="h-6 w-6" strokeWidth={2} />

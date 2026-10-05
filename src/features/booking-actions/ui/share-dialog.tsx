@@ -14,8 +14,7 @@ import {
   type ShareDocument,
 } from "@/entities/booking";
 import { formatMoney } from "@/shared/lib/format";
-import { Button, Textarea, useMutationFeedback, type Tone } from "@/shared/ui";
-import { ActionDialog, ChoiceCard, Field } from "./action-dialog";
+import { Button, Textarea, useMutationFeedback, type Tone, ActionDialog, ChoiceCard, Field } from "@/shared/ui";
 
 export type ShareContact = { name: string; phone: string; email: string };
 

@@ -14,8 +14,7 @@ import {
   type BookingWorkspaceRepository,
 } from "@/entities/booking";
 import { formatDateTime } from "@/shared/lib/format";
-import { Button, Input, useMutationFeedback } from "@/shared/ui";
-import { ActionDialog, Field } from "./action-dialog";
+import { Button, Input, useMutationFeedback, ActionDialog, Field } from "@/shared/ui";
 
 const DAY_MS = 86_400_000;
 

@@ -149,5 +149,7 @@ export { MaskedSecret } from "./masked-secret";
 export { CopyButton } from "./copy-button";
 export { InitialsAvatar } from "./initials-avatar";
 export { FormSection, GroupLabel } from "./form-section";
+export { ActionDialog, ChoiceCard, Field } from "./action-dialog";
 export { IconInput } from "./icon-input";
+export { ChipSet, ChoiceGrid, MoneyInput, StarPicker, Stepper, SwitchRow, type ChoiceOption } from "./form-controls";
 export { InfoRow, InfoSection, infoActionClass } from "./info-section";

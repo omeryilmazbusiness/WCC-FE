@@ -76,7 +76,7 @@ const COUNTRY_PATTERN = /^[A-Z]{2}$/;
 export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
   "api", "app", "admin", "auth", "login", "logout", "setup", "manager", "workspace", "pipeline",
   "inbox", "tasks", "notifications", "customers", "packages", "bookings", "finance", "targets",
-  "reports", "suppliers", "rooming", "integrations", "security", "settings", "import-export",
+  "reports", "suppliers", "rooming", "hotels", "integrations", "security", "settings", "import-export",
   "missing-docs", "flights", "static", "public", "assets", "en", "ar", "www", "help", "support", "status", "platform",
 ]);
 

@@ -1,6 +1,5 @@
 import {
   ArrowLeftRight,
-  BedDouble,
   Bell,
   Briefcase,
   Building2,
@@ -8,6 +7,7 @@ import {
   FileBarChart2,
   FileSpreadsheet,
   FileWarning,
+  Hotel,
   Kanban,
   KeyRound,
   LayoutDashboard,
@@ -59,7 +59,7 @@ export type NavLabel =
   | "setup"
   | "aiSetup"
   | "suppliers"
-  | "rooming"
+  | "hotels"
   | "flights"
   | "missingDocs"
   | "integrations"
@@ -123,7 +123,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
       { href: routes.packages, label: "packages", icon: Package },
       { href: routes.bookings, label: "bookings", icon: CalendarCheck2 },
       { href: routes.flights, label: "flights", icon: PlaneTakeoff },
-      { href: routes.rooming, label: "rooming", icon: BedDouble },
+      { href: routes.hotels, label: "hotels", icon: Hotel },
       { href: routes.suppliers, label: "suppliers", icon: Truck },
       { href: routes.missingDocs, label: "missingDocs", icon: FileWarning },
     ],

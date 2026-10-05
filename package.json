@@ -41,7 +41,8 @@
     "test:notifications": "node --experimental-strip-types scripts/selftest-notifications.ts",
     "test:packages": "node --experimental-strip-types scripts/selftest-packages.ts",
     "test:package-links": "node --experimental-strip-types scripts/selftest-package-links.ts",
-    "test:bookings": "node --experimental-strip-types scripts/selftest-bookings.ts"
+    "test:bookings": "node --experimental-strip-types scripts/selftest-bookings.ts",
+    "test:hotels": "node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/selftest-hotels.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
