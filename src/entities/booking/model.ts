@@ -61,8 +61,72 @@ export function toLineCategory(kind: unknown, category: unknown): LineCategory |
   return toLineKind(kind) === "item" ? "extras" : null;
 }
 
-export type Booking = {
+export const SERVICE_TYPES = ["flight", "hotel", "package", "transfer", "visa", "tour"] as const;
+export type ServiceType = (typeof SERVICE_TYPES)[number];
+
+export const SUPPLIER_SOURCES = [
+  "duffel",
+  "paximum",
+  "amadeus",
+  "sabre",
+  "saadia",
+  "nusuk",
+  "direct_contract",
+  "other",
+] as const;
+export type SupplierSource = (typeof SUPPLIER_SOURCES)[number];
+
+export const SALES_CHANNELS = ["b2c_web", "b2b_agency", "whatsapp_bot", "agent"] as const;
+export type SalesChannel = (typeof SALES_CHANNELS)[number];
+
+/** Server-derived reservation state shown next to the lifecycle status. */
+export const TICKET_STATUSES = ["pending", "option", "issued", "reissued", "cancelled", "refunded"] as const;
+export type TicketStatus = (typeof TICKET_STATUSES)[number];
+
+export const PAYMENT_STATUSES = ["none", "awaiting", "deposit", "paid", "overdue"] as const;
+export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
+
+/** Operator-entered reservation profile (`PATCH /bookings/{id}/profile`). */
+export type BookingProfile = {
+  pnr: string;
+  serviceType: ServiceType;
+  supplierSource: SupplierSource | "";
+  channel: SalesChannel;
+  summary: string;
+  companyName: string;
+};
+
+/** Read-only enrichment joined by the list / detail endpoints. */
+export type BookingInfo = {
+  customerName: string;
+  customerNameAr: string;
+  ownerName: string;
+  packageId: string | null;
+  packageCode: string;
+  packageName: string;
+  packageNameAr: string;
+  packageKind: string;
+  departureCode: string;
+  departDate: string | null;
+  returnDate: string | null;
+  makkahHotel: string;
+  madinahHotel: string;
+  flightRouting: string;
+  participantsCount: number;
+  refundedAmt: number;
+  overdueSchedule: boolean;
+  visaPending: number;
+  openChanges: number;
+};
+
+export type Booking = BookingProfile & {
   id: string;
+  /** Human number ("BK-000123"); empty until the server assigns one. */
+  refCode: string;
+  ticketStatus: TicketStatus;
+  paymentStatus: PaymentStatus;
+  reissueCount: number;
+  info: BookingInfo;
   branchId: string;
   customerId: string;
   departureId: string;
@@ -103,8 +167,16 @@ export type BookingParticipant = {
   passportLast4: string;
   nationality: string;
   dateOfBirth: string | null;
+  gender: Gender | "";
+  /** National id (TCKN / Iqama); masked like the passport, write-only on the API. */
+  nationalId: string;
+  nationalIdLast4: string;
+  healthOk: boolean;
   createdAt: string;
 };
+
+export const GENDERS = ["male", "female"] as const;
+export type Gender = (typeof GENDERS)[number];
 
 export type BookingLineItem = {
   id: string;
@@ -158,6 +230,7 @@ export type BookingCreateInput = {
   discountAmt?: number;
   currency?: string;
   notes?: string;
+  profile?: Partial<BookingProfile>;
 };
 
 export type BookingUpdateInput = {
@@ -183,4 +256,8 @@ export type ParticipantInput = {
   passportNo?: string;
   nationality?: string;
   dateOfBirth?: string | null;
+  gender?: Gender | "";
+  /** On update, blank or the masked value keeps the stored id. */
+  nationalId?: string;
+  healthOk?: boolean;
 };

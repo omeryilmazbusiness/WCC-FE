@@ -2,6 +2,12 @@ import { http, type HttpClient } from "@/shared/api/http-client";
 import { createRepository } from "@/shared/api/repository";
 import { maskedLast4, passportPatchValue, toMaskedSecret } from "@/shared/lib/pii";
 import {
+  GENDERS,
+  PAYMENT_STATUSES,
+  SALES_CHANNELS,
+  SERVICE_TYPES,
+  SUPPLIER_SOURCES,
+  TICKET_STATUSES,
   isBookingStatus,
   toLineCategory,
   toLineKind,
@@ -9,8 +15,10 @@ import {
   type Booking,
   type BookingChecklistItem,
   type BookingCreateInput,
+  type BookingInfo,
   type BookingLineItem,
   type BookingParticipant,
+  type BookingProfile,
   type BookingReadiness,
   type BookingStatus,
   type BookingUpdateInput,
@@ -18,16 +26,11 @@ import {
   type LineItemInput,
   type ParticipantInput,
 } from "./model";
+import { bookingListQuery, endOfLocalDay } from "./lib/workspace";
+import type { BookingListParams } from "./workspace-model";
 
 export interface BookingRepository {
-  list(params?: {
-    q?: string;
-    status?: string;
-    customerId?: string;
-    departureId?: string;
-    packageId?: string;
-    ownerId?: string;
-  }): Promise<Booking[]>;
+  list(params?: BookingListParams): Promise<Booking[]>;
   getById(id: string): Promise<Booking>;
   create(input: BookingCreateInput): Promise<Booking>;
   update(id: string, input: BookingUpdateInput): Promise<Booking>;
@@ -79,8 +82,69 @@ function strOrNull(value: unknown): string | null {
   return typeof value === "string" && value ? value : null;
 }
 
-function mapBooking(raw: Raw): Booking {
+function str(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+function pick<T extends string>(values: readonly T[], value: unknown, fallback: T): T {
+  return (values as readonly unknown[]).includes(value) ? (value as T) : fallback;
+}
+
+function mapInfo(value: unknown): BookingInfo {
+  const r = (value && typeof value === "object" ? value : {}) as Raw;
   return {
+    customerName: str(r.customer_name),
+    customerNameAr: str(r.customer_name_ar),
+    ownerName: str(r.owner_name),
+    packageId: strOrNull(r.package_id),
+    packageCode: str(r.package_code),
+    packageName: str(r.package_name),
+    packageNameAr: str(r.package_name_ar),
+    packageKind: str(r.package_kind),
+    departureCode: str(r.departure_code),
+    departDate: strOrNull(r.depart_date),
+    returnDate: strOrNull(r.return_date),
+    makkahHotel: str(r.makkah_hotel),
+    madinahHotel: str(r.madinah_hotel),
+    flightRouting: str(r.flight_routing),
+    participantsCount: Number(r.participants_count ?? 0),
+    refundedAmt: Number(r.refunded_amt ?? 0),
+    overdueSchedule: Boolean(r.overdue_schedule),
+    visaPending: Number(r.visa_pending ?? 0),
+    openChanges: Number(r.open_changes ?? 0),
+  };
+}
+
+export function mapProfile(raw: Raw): BookingProfile {
+  return {
+    pnr: str(raw.pnr),
+    serviceType: pick(SERVICE_TYPES, raw.service_type ?? raw.serviceType, "package"),
+    supplierSource: pick([...SUPPLIER_SOURCES, ""] as const, raw.supplier_source ?? raw.supplierSource ?? "", ""),
+    channel: pick(SALES_CHANNELS, raw.channel, "agent"),
+    summary: str(raw.summary),
+    companyName: str(raw.company_name ?? raw.companyName),
+  };
+}
+
+export function profilePayload(p: Partial<BookingProfile>): Raw {
+  const out: Raw = {};
+  if (p.pnr !== undefined) out.pnr = p.pnr.trim();
+  if (p.serviceType !== undefined) out.service_type = p.serviceType;
+  if (p.supplierSource !== undefined) out.supplier_source = p.supplierSource;
+  if (p.channel !== undefined) out.channel = p.channel;
+  if (p.summary !== undefined) out.summary = p.summary.trim();
+  if (p.companyName !== undefined) out.company_name = p.companyName.trim();
+  return out;
+}
+
+export function mapBooking(raw: Raw): Booking {
+  return {
+    ...mapProfile(raw),
+    refCode: str(raw.ref_code ?? raw.refCode),
+    ticketStatus: pick(TICKET_STATUSES, raw.ticket_status ?? raw.ticketStatus, "pending"),
+    paymentStatus: pick(PAYMENT_STATUSES, raw.payment_status ?? raw.paymentStatus, "none"),
+    reissueCount: Number(raw.reissue_count ?? raw.reissueCount ?? 0),
+    info: mapInfo(raw.info),
     id: String(raw.id),
     branchId: String(raw.branchId ?? raw.branch_id ?? ""),
     customerId: String(raw.customerId ?? raw.customer_id ?? ""),
@@ -119,8 +183,19 @@ function mapParticipant(raw: Raw): BookingParticipant {
     passportLast4: String(raw.passportLast4 ?? raw.passport_last4 ?? "") || maskedLast4(passportNo),
     nationality: String(raw.nationality ?? ""),
     dateOfBirth: (raw.dateOfBirth ?? raw.date_of_birth ?? null) as string | null,
+    gender: pick([...GENDERS, ""] as const, raw.gender ?? "", ""),
+    nationalId: toMaskedSecret(str(raw.national_id), str(raw.national_id_last4)),
+    nationalIdLast4: str(raw.national_id_last4),
+    healthOk: Boolean(raw.health_ok ?? raw.healthOk),
     createdAt: String(raw.createdAt ?? raw.created_at ?? ""),
   };
+}
+
+function participantExtras(input: ParticipantInput, update: boolean): Raw {
+  const out: Raw = { gender: input.gender ?? "", health_ok: Boolean(input.healthOk) };
+  const nationalId = update ? passportPatchValue(input.nationalId) : input.nationalId?.trim();
+  if (nationalId) out.national_id = nationalId;
+  return out;
 }
 
 function mapLine(raw: Raw): BookingLineItem {
@@ -183,24 +258,8 @@ function mapReadiness(raw: Raw): BookingReadiness {
 export class ApiBookingRepository implements BookingRepository {
   constructor(private readonly http: HttpClient) {}
 
-  async list(params: {
-    q?: string;
-    status?: string;
-    customerId?: string;
-    departureId?: string;
-    packageId?: string;
-    ownerId?: string;
-  } = {}): Promise<Booking[]> {
-    const sp = new URLSearchParams();
-    if (params.q) sp.set("q", params.q);
-    if (params.status) sp.set("status", params.status);
-    if (params.customerId) sp.set("customer_id", params.customerId);
-    if (params.departureId) sp.set("departure_id", params.departureId);
-    if (params.packageId) sp.set("package_id", params.packageId);
-    if (params.ownerId) sp.set("owner_id", params.ownerId);
-    sp.set("limit", "100");
-    const qs = sp.toString();
-    const data = await this.http.request<Raw[]>(`/bookings${qs ? `?${qs}` : ""}`);
+  async list(params: BookingListParams = {}): Promise<Booking[]> {
+    const data = await this.http.request<Raw[]>(`/bookings?${bookingListQuery(params)}`);
     return (Array.isArray(data) ? data : []).map(mapBooking);
   }
 
@@ -220,6 +279,7 @@ export class ApiBookingRepository implements BookingRepository {
         discount_amt: input.discountAmt ?? 0,
         currency: input.currency ?? "USD",
         notes: input.notes ?? "",
+        ...profilePayload(input.profile ?? {}),
       }),
     });
     return mapBooking(raw);
@@ -278,6 +338,7 @@ export class ApiBookingRepository implements BookingRepository {
           passport_no: input.passportNo ?? "",
           nationality: input.nationality ?? "",
           date_of_birth: input.dateOfBirth || null,
+          ...participantExtras(input, false),
         }),
       }),
     );
@@ -296,6 +357,7 @@ export class ApiBookingRepository implements BookingRepository {
           passport_no: passportPatchValue(input.passportNo),
           nationality: input.nationality ?? "",
           date_of_birth: input.dateOfBirth || null,
+          ...participantExtras(input, true),
         }),
       }),
     );
@@ -414,6 +476,34 @@ const DEMO_TRANSITIONS: Record<BookingStatus, AllowedTransition[]> = {
   cancelled: [],
 };
 
+const EMPTY_INFO: BookingInfo = {
+  customerName: "",
+  customerNameAr: "",
+  ownerName: "",
+  packageId: null,
+  packageCode: "",
+  packageName: "",
+  packageNameAr: "",
+  packageKind: "",
+  departureCode: "",
+  departDate: null,
+  returnDate: null,
+  makkahHotel: "",
+  madinahHotel: "",
+  flightRouting: "",
+  participantsCount: 0,
+  refundedAmt: 0,
+  overdueSchedule: false,
+  visaPending: 0,
+  openChanges: 0,
+};
+
+const demoDay = (offsetDays: number) => new Date(Date.now() + offsetDays * 86_400_000).toISOString().slice(0, 10);
+
+function demoInfo(customerName: string, extra: Partial<BookingInfo> = {}): BookingInfo {
+  return { ...EMPTY_INFO, customerName, ownerName: "Sales Agent", departDate: demoDay(30), returnDate: demoDay(44), ...extra };
+}
+
 function demoBooking(
   id: string,
   status: BookingStatus,
@@ -423,6 +513,17 @@ function demoBooking(
   const now = new Date().toISOString();
   const discount = amounts.discount ?? 0;
   return {
+    pnr: "",
+    serviceType: "package",
+    supplierSource: "",
+    channel: "agent",
+    summary: "",
+    companyName: "",
+    refCode: `BK-${String(store.length + 1).padStart(6, "0")}`,
+    ticketStatus: status === "option_hold" ? "option" : status === "cancelled" ? "cancelled" : ["draft", "quoted"].includes(status) ? "pending" : "issued",
+    paymentStatus: amounts.collected >= amounts.total && amounts.total > 0 ? "paid" : amounts.collected > 0 ? "deposit" : "awaiting",
+    reissueCount: 0,
+    info: { ...EMPTY_INFO },
     id,
     branchId: "br-1",
     customerId: "cust-1",
@@ -452,31 +553,63 @@ function demoBooking(
 function ensureDemo() {
   if (store.length > 0) return;
   const id = "bk-demo";
-  const hour = 3600_000;
-  store.push(
-    demoBooking(id, "draft", { total: 300000, cost: 220000, collected: 0 }),
-    demoBooking("bk-demo-quoted", "quoted", { total: 450000, cost: 330000, collected: 0 }),
+  const umrah = { makkahHotel: "Swissôtel Al Maqam", madinahHotel: "Pullman Zamzam", packageName: "Ramadan Umrah", packageKind: "umrah" };
+  const seed: Booking[] = [
+    demoBooking(id, "draft", { total: 300000, cost: 220000, collected: 0 }, { info: demoInfo("Ahmet Yılmaz", umrah), paxCount: 3, channel: "whatsapp_bot", supplierSource: "saadia" }),
+    demoBooking("bk-demo-quoted", "quoted", { total: 450000, cost: 330000, collected: 0 }, {
+      info: demoInfo("Fatma Demir"),
+      serviceType: "flight",
+      supplierSource: "duffel",
+      channel: "b2c_web",
+      summary: "IST - JFK",
+      pnr: "QX7K2M",
+      currency: "USD",
+    }),
     demoBooking(
       "bk-demo-hold",
       "option_hold",
       { total: 520000, cost: 390000, collected: 0 },
-      { holdExpiresAt: new Date(Date.now() + 20 * hour).toISOString() },
+      {
+        holdExpiresAt: new Date(Date.now() + 90 * 60_000).toISOString(),
+        info: demoInfo("Al Noor Travel"),
+        serviceType: "hotel",
+        supplierSource: "paximum",
+        channel: "b2b_agency",
+        companyName: "Al Noor Travel",
+        summary: "Makkah Hilton (5 nights)",
+        currency: "SAR",
+      },
     ),
-    demoBooking("bk-demo-confirmed", "confirmed", { total: 610000, cost: 450000, collected: 0 }),
-    demoBooking("bk-demo-partial", "partially_paid", {
-      total: 380000,
-      cost: 280000,
-      collected: 150000,
-      discount: 20000,
+    demoBooking("bk-demo-confirmed", "confirmed", { total: 610000, cost: 450000, collected: 0 }, {
+      info: demoInfo("Mehmet Kaya", { ...umrah, overdueSchedule: true }),
+      supplierSource: "nusuk",
+      pnr: "UM4Z9P",
     }),
-    demoBooking("bk-demo-ready", "ready", { total: 290000, cost: 210000, collected: 290000 }),
-    demoBooking(
-      "bk-demo-cancelled",
-      "cancelled",
-      { total: 200000, cost: 0, collected: 0 },
-      { statusReason: "Customer withdrew before deposit" },
-    ),
-  );
+    demoBooking("bk-demo-partial", "partially_paid", { total: 380000, cost: 280000, collected: 150000, discount: 20000 }, {
+      info: demoInfo("Zeynep Arslan", { visaPending: 2 }),
+      serviceType: "visa",
+      channel: "agent",
+      summary: "Umrah visa ×2",
+      currency: "EUR",
+    }),
+    demoBooking("bk-demo-ready", "ready", { total: 290000, cost: 210000, collected: 290000 }, {
+      info: demoInfo("Omar Haddad"),
+      serviceType: "transfer",
+      supplierSource: "direct_contract",
+      summary: "JED - Makkah VIP",
+      currency: "TRY",
+    }),
+    demoBooking("bk-demo-cancelled", "cancelled", { total: 200000, cost: 0, collected: 0 }, {
+      statusReason: "Customer withdrew before deposit",
+      info: demoInfo("Ali Çelik"),
+      serviceType: "tour",
+      summary: "Cappadocia 2 days",
+    }),
+  ];
+  seed.forEach((b, i) => {
+    b.refCode = `BK-${String(i + 1).padStart(6, "0")}`;
+  });
+  store.push(...seed);
   parts[id] = [
     {
       id: "bp-1",
@@ -486,6 +619,10 @@ function ensureDemo() {
       passportLast4: "4567",
       nationality: "EG",
       dateOfBirth: "1990-01-15",
+      gender: "male",
+      nationalId: "",
+      nationalIdLast4: "",
+      healthOk: true,
       createdAt: new Date().toISOString(),
     },
   ];
@@ -511,22 +648,43 @@ function ensureDemo() {
   }
 }
 
+const SOLD: BookingStatus[] = ["confirmed", "partially_paid", "ready", "travelled", "completed"];
+
+/** In-memory twin of the server segments (demo only; the server is the authority). */
+export function matchesSegment(b: Booking, segment: BookingListParams["segment"], dayEnd: string): boolean {
+  switch (segment) {
+    case undefined:
+      return true;
+    case "option_today":
+      return b.status === "option_hold" && Boolean(b.holdExpiresAt && b.holdExpiresAt <= dayEnd);
+    case "payment_due":
+      return SOLD.includes(b.status) && b.balanceAmt > 0;
+    case "overdue":
+      return b.info.overdueSchedule;
+    case "visa_pending":
+      return b.status !== "cancelled" && b.info.visaPending > 0;
+    case "issued":
+      return b.ticketStatus === "issued" || b.ticketStatus === "reissued";
+    case "cancelled":
+      return b.status === "cancelled";
+  }
+}
+
 export class MemoryBookingRepository implements BookingRepository {
-  async list(params: {
-    q?: string;
-    status?: string;
-    customerId?: string;
-    departureId?: string;
-    packageId?: string;
-  } = {}): Promise<Booking[]> {
+  async list(params: BookingListParams = {}): Promise<Booking[]> {
     ensureDemo();
+    const dayEnd = params.dayEnd ?? endOfLocalDay();
+    const q = params.q?.trim().toLowerCase() ?? "";
     return store.filter((b) => {
       if (params.status && b.status !== params.status) return false;
       if (params.customerId && b.customerId !== params.customerId) return false;
       if (params.departureId && b.departureId !== params.departureId) return false;
-      if (params.q) {
-        const q = params.q.toLowerCase();
-        if (!b.id.includes(q) && !b.notes.toLowerCase().includes(q)) return false;
+      if (params.serviceType && b.serviceType !== params.serviceType) return false;
+      if (params.channel && b.channel !== params.channel) return false;
+      if (!matchesSegment(b, params.segment, dayEnd)) return false;
+      if (q) {
+        const hay = [b.id, b.refCode, b.pnr, b.notes, b.summary, b.companyName, b.info.customerName].join(" ").toLowerCase();
+        if (!hay.includes(q)) return false;
       }
       return true;
     });
@@ -559,6 +717,8 @@ export class MemoryBookingRepository implements BookingRepository {
         currency: input.currency ?? "USD",
         notes: input.notes ?? "",
         ownerId: "u-local",
+        ...input.profile,
+        pnr: (input.profile?.pnr ?? "").trim().toUpperCase(),
       },
     );
     store.unshift(b);
@@ -669,6 +829,10 @@ export class MemoryBookingRepository implements BookingRepository {
       passportLast4: maskedLast4(toMaskedSecret(input.passportNo)),
       nationality: input.nationality ?? "",
       dateOfBirth: input.dateOfBirth ?? null,
+      gender: input.gender ?? "",
+      nationalId: toMaskedSecret(input.nationalId),
+      nationalIdLast4: maskedLast4(toMaskedSecret(input.nationalId)),
+      healthOk: Boolean(input.healthOk),
       createdAt: new Date().toISOString(),
     };
     parts[id] = [...list, p];
@@ -684,14 +848,20 @@ export class MemoryBookingRepository implements BookingRepository {
     const i = list.findIndex((p) => p.id === participantId);
     if (i < 0) throw new Error("participant not found");
     const passport = passportPatchValue(input.passportNo);
+    const nationalId = passportPatchValue(input.nationalId);
     list[i] = {
       ...list[i],
       fullName: input.fullName,
       ...(passport
         ? { passportNo: toMaskedSecret(passport), passportLast4: maskedLast4(toMaskedSecret(passport)) }
         : {}),
+      ...(nationalId
+        ? { nationalId: toMaskedSecret(nationalId), nationalIdLast4: maskedLast4(toMaskedSecret(nationalId)) }
+        : {}),
       nationality: input.nationality ?? "",
       dateOfBirth: input.dateOfBirth ?? null,
+      gender: input.gender ?? "",
+      healthOk: Boolean(input.healthOk),
     };
     parts[id] = list;
     return { ...list[i] };

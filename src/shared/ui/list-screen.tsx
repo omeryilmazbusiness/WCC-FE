@@ -11,6 +11,8 @@ type ListScreenProps = {
   actions?: ReactNode;
   /** Prefer SearchFilterBar — frameless search + filter edit */
   toolbar?: ReactNode;
+  /** `full` for dashboards-style toolbars (tiles, multi-row filters). */
+  toolbarWidth?: "narrow" | "full";
   children: ReactNode;
   className?: string;
 };
@@ -23,6 +25,7 @@ export function ListScreen({
   description,
   actions,
   toolbar,
+  toolbarWidth = "narrow",
   children,
   className,
 }: ListScreenProps) {
@@ -30,7 +33,7 @@ export function ListScreen({
     <Screen className={className}>
       <PageHeader title={title} description={description} actions={actions} />
       {toolbar ? (
-        <div className={cn("w-full max-w-xl")}>{toolbar}</div>
+        <div className={cn("w-full", toolbarWidth === "narrow" && "max-w-xl")}>{toolbar}</div>
       ) : null}
       {children}
     </Screen>
