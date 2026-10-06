@@ -24,7 +24,6 @@ export const routes = {
   aiSetup: "/setup/ai",
   suppliers: "/suppliers",
   supplier: (id: string) => `/suppliers/${id}`,
-  integrations: "/integrations",
   missingDocs: "/missing-docs",
   tasks: "/tasks",
   inbox: "/inbox",

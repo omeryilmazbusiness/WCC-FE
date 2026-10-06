@@ -26,7 +26,6 @@
     "setup": "Setup",
     "aiSetup": "AI setup",
     "suppliers": "Suppliers",
-    "integrations": "Integrations",
     "missingDocs": "Missing docs",
     "tasks": "Tasks",
     "users": "Users",
@@ -3136,59 +3135,6 @@
       "completed": "Completed",
       "failed": "Failed",
       "cancelled": "Cancelled"
-    }
-  },
-  "integrations": {
-    "title": "External integrations",
-    "subtitle": "Connect messaging, email, SMS, and accounting providers",
-    "refresh": "Refresh",
-    "catalogTitle": "Catalog",
-    "addTitle": "Add integration",
-    "configured": "Configured",
-    "empty": "No integrations configured yet",
-    "displayName": "Display name",
-    "create": "Create",
-    "probe": "Probe",
-    "enable": "Enable",
-    "disable": "Disable",
-    "remove": "Remove",
-    "lastProbe": "Last probe",
-    "saved": "Saved",
-    "probed": "Probe complete",
-    "loadError": "Could not load integrations",
-    "actionError": "Could not complete action",
-    "provider": {
-      "whatsapp": "WhatsApp",
-      "email": "Email",
-      "sms": "SMS",
-      "accounting": "Accounting",
-      "custom": "Custom"
-    },
-    "catalog": {
-      "whatsapp": "Send and receive WhatsApp messages via Cloud API",
-      "email": "SMTP or provider API for booking receipts and alerts",
-      "sms": "OTP and operational SMS notifications",
-      "accounting": "Push invoices and payments to your ledger",
-      "custom": "Custom webhook or API connector"
-    },
-    "status": {
-      "draft": "Draft",
-      "configured": "Configured",
-      "healthy": "Healthy",
-      "degraded": "Degraded",
-      "error": "Error",
-      "disabled": "Disabled"
-    },
-    "editConfig": "Config",
-    "saveConfig": "Save config",
-    "configField": {
-      "phone_number_id": "Phone number ID",
-      "access_token": "Access token",
-      "waba_id": "WABA ID",
-      "smtp_host": "SMTP host",
-      "api_key": "API key",
-      "webhook_url": "Webhook URL",
-      "account_id": "Account ID"
     }
   },
   "adminSettings": {

@@ -17,7 +17,6 @@ import {
   Package,
   Plane,
   PlaneTakeoff,
-  Plug,
   Rocket,
   ScrollText,
   Settings,
@@ -62,7 +61,6 @@ export type NavLabel =
   | "hotels"
   | "flights"
   | "missingDocs"
-  | "integrations"
   | "users"
   | "roles"
   | "audit"
@@ -143,7 +141,6 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     icon: Wrench,
     tone: "indigo",
     items: [
-      { href: routes.integrations, label: "integrations", icon: Plug },
       { href: routes.importExport, label: "importExport", icon: FileSpreadsheet },
       { href: routes.aiSetup, label: "aiSetup", icon: Sparkles },
       { href: routes.setup, label: "setup", icon: Rocket },

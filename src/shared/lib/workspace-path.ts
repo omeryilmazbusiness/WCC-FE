@@ -22,7 +22,6 @@ export const ROUTE_ROOTS: ReadonlySet<string> = new Set([
   "reports",
   "setup",
   "suppliers",
-  "integrations",
   "missing-docs",
   "tasks",
   "inbox",

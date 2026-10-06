@@ -26,7 +26,6 @@
     "setup": "الإعداد",
     "aiSetup": "إعداد الذكاء الاصطناعي",
     "suppliers": "الموردون",
-    "integrations": "التكاملات",
     "missingDocs": "مستندات ناقصة",
     "tasks": "المهام",
     "users": "المستخدمون",
@@ -3136,59 +3135,6 @@
       "completed": "مكتمل",
       "failed": "فشل",
       "cancelled": "ملغى"
-    }
-  },
-  "integrations": {
-    "title": "التكاملات الخارجية",
-    "subtitle": "اربط مزودي الرسائل والبريد والرسائل النصية والمحاسبة",
-    "refresh": "تحديث",
-    "catalogTitle": "الكتالوج",
-    "addTitle": "إضافة تكامل",
-    "configured": "المُعدّة",
-    "empty": "لا توجد تكاملات بعد",
-    "displayName": "الاسم المعروض",
-    "create": "إنشاء",
-    "probe": "اختبار",
-    "enable": "تفعيل",
-    "disable": "تعطيل",
-    "remove": "إزالة",
-    "lastProbe": "آخر اختبار",
-    "saved": "تم الحفظ",
-    "probed": "اكتمل الاختبار",
-    "loadError": "تعذر تحميل التكاملات",
-    "actionError": "تعذر إكمال الإجراء",
-    "provider": {
-      "whatsapp": "واتساب",
-      "email": "البريد",
-      "sms": "رسائل قصيرة",
-      "accounting": "محاسبة",
-      "custom": "مخصص"
-    },
-    "catalog": {
-      "whatsapp": "إرسال واستقبال رسائل واتساب عبر Cloud API",
-      "email": "SMTP أو واجهة مزود لإيصالات الحجوزات والتنبيهات",
-      "sms": "رمز التحقق وإشعارات العمليات عبر الرسائل القصيرة",
-      "accounting": "دفع الفواتير والمدفوعات إلى دفتر الحسابات",
-      "custom": "موصل webhook أو API مخصص"
-    },
-    "status": {
-      "draft": "مسودة",
-      "configured": "مُعدّ",
-      "healthy": "سليم",
-      "degraded": "متدهور",
-      "error": "خطأ",
-      "disabled": "معطّل"
-    },
-    "editConfig": "الإعدادات",
-    "saveConfig": "حفظ الإعدادات",
-    "configField": {
-      "phone_number_id": "معرّف رقم الهاتف",
-      "access_token": "رمز الوصول",
-      "waba_id": "معرّف WABA",
-      "smtp_host": "مضيف SMTP",
-      "api_key": "مفتاح API",
-      "webhook_url": "رابط Webhook",
-      "account_id": "معرّف الحساب"
     }
   },
   "adminSettings": {

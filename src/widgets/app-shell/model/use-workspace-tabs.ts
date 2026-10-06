@@ -12,6 +12,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { canAccessPath } from "@/shared/config/permissions";
+import { ROUTE_ROOTS } from "@/shared/lib/workspace-path";
 import { usePathname, useRouter } from "@/shared/i18n/navigation";
 import { useToast } from "@/shared/ui";
 import { screenRoot, type NavGroup } from "./nav";
@@ -95,7 +96,7 @@ export function useWorkspaceTabs({ groups, permissions, storageKey }: Options): 
       try {
         const saved = sanitizeTabs(
           JSON.parse(window.sessionStorage.getItem(storageKey) ?? "null"),
-          (r) => canAccessPath(permissions, r),
+          (r) => ROUTE_ROOTS.has(r.split("/")[1] ?? "") && canAccessPath(permissions, r),
         );
         if (saved) base = saved;
       } catch {
