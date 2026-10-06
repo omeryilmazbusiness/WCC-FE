@@ -21,6 +21,7 @@
     "test:fx-live": "node --experimental-strip-types scripts/selftest-fx-live.ts",
     "test:fx": "node --experimental-strip-types scripts/selftest-fx.ts",
     "test:missing-docs": "node --experimental-strip-types scripts/selftest-missing-docs.ts",
+    "test:reports": "node --experimental-strip-types scripts/selftest-reports.ts",
     "test:http": "node --experimental-strip-types scripts/selftest-http-dedupe.ts",
     "test:realtime": "node --experimental-strip-types scripts/selftest-realtime.ts",
     "test:adminconfig": "node --experimental-strip-types scripts/selftest-adminconfig.ts",

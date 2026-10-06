@@ -1,117 +1,86 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useCallback, useState } from "react";
+import { CircleCheckBig, Download, LockKeyhole, RefreshCw } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import {
+  REPORT_KIND_LOOK,
+  REPORT_SPECS,
   createReportRepository,
-  REPORT_KINDS,
+  localToday,
+  rangeIssue,
+  reportFileName,
+  type DayRange,
   type ReportFilter,
   type ReportKind,
-  type ReportResult,
+  type ReportRepository,
 } from "@/entities/report";
-import { Link } from "@/shared/i18n/navigation";
-import {
-  Button,
-  PageHeader,
-  QueryState,
-  Screen,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  useToast,
-  useMutationFeedback,
-} from "@/shared/ui";
+import { useCan } from "@/entities/viewer";
 import { cn } from "@/shared/lib/cn";
+import { saveBlob } from "@/shared/lib/download";
+import { formatDay, formatRelativeTime } from "@/shared/lib/format";
+import { useApiQuery } from "@/shared/lib/use-api-query";
+import { Button, PageHeader, QueryState, Screen, TONES, useMutationFeedback, useToast } from "@/shared/ui";
+import { useReportParams } from "../model/use-report-params";
+import { KindPicker } from "./kind-picker";
+import { ReportFilters } from "./report-filters";
+import { ReportSummary } from "./report-summary";
+import { ReportTable } from "./report-table";
 
-function defaultRange(): { from: string; to: string } {
-  const to = new Date();
-  const from = new Date();
-  from.setDate(from.getDate() - 30);
-  const fmt = (d: Date) => d.toISOString().slice(0, 10);
-  return { from: fmt(from), to: fmt(to) };
-}
+const ROW_LIMIT = 200;
 
-function metricValue(v: unknown): string {
-  if (v == null) return "—";
-  if (typeof v === "boolean") return v ? "yes" : "no";
-  if (typeof v === "number") {
-    if (Math.abs(v) >= 100 && Number.isInteger(v)) {
-      // amounts in minor units often end with _amt
-      return String(v);
-    }
-    return String(v);
-  }
-  return String(v);
-}
+type Props = { repository?: ReportRepository };
 
-function severityClass(sev: string) {
-  if (sev === "critical") return "text-rose-700";
-  if (sev === "warning") return "text-amber-700";
-  return "text-zinc-700";
-}
-
-export function ReportsBoard() {
+/** Management reports: pick a report and period, read the headline tiles, drill into rows, export. */
+export function ReportsBoard({ repository }: Props) {
   const t = useTranslations("reports");
+  const locale = useLocale();
   const { push } = useToast();
   const feedback = useMutationFeedback();
-  const repo = useMemo(() => createReportRepository(), []);
-  const range = useMemo(() => defaultRange(), []);
-  const [kind, setKind] = useState<ReportKind>("sales");
-  const [from, setFrom] = useState(range.from);
-  const [to, setTo] = useState(range.to);
-  const [channel, setChannel] = useState("");
-  const [provider, setProvider] = useState("");
-  const [result, setResult] = useState<ReportResult | null>(null);
-  const [loadError, setLoadError] = useState<unknown>(null);
-  const [busy, setBusy] = useState(false);
+  const [repo] = useState(() => repository ?? createReportRepository());
+  const [today] = useState(localToday);
+  const [params, update] = useReportParams(today);
+  const [exporting, setExporting] = useState(false);
+  const canExport = useCan("reports.export");
 
-  const filter = useCallback((): ReportFilter => {
-    const f: ReportFilter = { from, to, limit: 200 };
-    if (channel.trim()) f.channel = channel.trim();
-    if (provider.trim()) f.provider = provider.trim();
-    return f;
-  }, [from, to, channel, provider]);
+  const { kind, range, channel, provider } = params;
+  const spec = REPORT_SPECS[kind];
+  const issue = rangeIssue(range);
 
-  const load = useCallback(
-    async (k: ReportKind) => {
-      setBusy(true);
-      setLoadError(null);
-      try {
-        setResult(await repo.run(k, filter()));
-      } catch (err) {
-        setLoadError(err);
-      } finally {
-        setBusy(false);
-      }
-    },
-    [repo, filter],
-  );
+  const filter: ReportFilter = { from: range.from, to: range.to, limit: ROW_LIMIT };
+  if (spec.extraFilter === "channel" && channel) filter.channel = channel;
+  if (spec.extraFilter === "provider" && provider) filter.provider = provider;
+  const filterKey = [kind, range.from, range.to, filter.channel ?? "", filter.provider ?? ""];
 
-  useEffect(() => {
-    void load(kind);
-  }, [kind, load]);
+  const report = useApiQuery(() => repo.run(kind, filter), [repo, ...filterKey], {
+    enabled: issue === null,
+    cacheKey: ["report", ...filterKey],
+  });
+  const result = report.data?.kind === kind ? report.data : undefined;
+  const refreshing = report.loading && Boolean(result);
+
+  const setKind = useCallback((k: ReportKind) => update({ kind: k }), [update]);
+  const setRange = useCallback((r: DayRange) => update({ range: r }), [update]);
+  const setChannel = useCallback((c: string) => update({ channel: c }), [update]);
+  const setProvider = useCallback((p: string) => update({ provider: p }), [update]);
 
   async function exportCsv() {
+    setExporting(true);
     try {
-      const blob = await repo.exportCsv(kind, filter());
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `report-${kind}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
+      saveBlob(await repo.exportCsv(kind, filter), reportFileName(kind, range));
       push({ title: t("exported"), tone: "success" });
     } catch (err) {
       feedback.error(err, t("exportError"));
+    } finally {
+      setExporting(false);
     }
   }
 
-  const columns = result?.columns ?? [];
-  const summaryEntries = Object.entries(result?.summary ?? {});
+  const look = REPORT_KIND_LOOK[kind];
+  const KindIcon = look.icon;
 
   return (
-    <Screen>
+    <Screen data-testid="reports-board">
       <PageHeader
         title={t("title")}
         description={t("subtitle")}
@@ -120,169 +89,85 @@ export function ReportsBoard() {
             <Button
               type="button"
               variant="secondary"
-              size="sm"
-              onClick={() => void load(kind)}
-              disabled={busy}
+              onClick={() => void report.refresh()}
+              disabled={issue !== null || report.loading}
+              aria-label={t("refresh")}
+              data-testid="rp-refresh"
             >
-              {t("refresh")}
+              <RefreshCw className={cn("h-4 w-4", report.loading && "animate-spin")} aria-hidden />
+              <span className="hidden sm:inline">{t("refresh")}</span>
             </Button>
-            <Button type="button" size="sm" onClick={() => void exportCsv()}>
-              {t("export")}
-            </Button>
+            {canExport ? (
+              <Button type="button" onClick={() => void exportCsv()} disabled={issue !== null || exporting || !result || result.rows.length === 0} data-testid="rp-export">
+                <Download className="h-4 w-4" aria-hidden />
+                {t("export")}
+              </Button>
+            ) : null}
           </div>
         }
       />
 
-      <div className="mb-5 flex flex-wrap items-end gap-3 rounded-2xl border border-zinc-200/80 bg-white p-4">
-        <label className="flex flex-col gap-1 text-xs font-semibold text-zinc-500">
-          {t("from")}
-          <input
-            type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-            className="h-9 rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm font-medium text-zinc-900"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-zinc-500">
-          {t("to")}
-          <input
-            type="date"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            className="h-9 rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm font-medium text-zinc-900"
-          />
-        </label>
-        {(kind === "sla" || kind === "integrations") && (
-          <label className="flex flex-col gap-1 text-xs font-semibold text-zinc-500">
-            {kind === "sla" ? t("channel") : t("provider")}
-            <input
-              type="text"
-              value={kind === "sla" ? channel : provider}
-              onChange={(e) =>
-                kind === "sla"
-                  ? setChannel(e.target.value)
-                  : setProvider(e.target.value)
-              }
-              placeholder={kind === "sla" ? "whatsapp" : "whatsapp"}
-              className="h-9 w-36 rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm font-medium text-zinc-900"
-            />
-          </label>
-        )}
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-9"
-          onClick={() => void load(kind)}
-        >
-          {t("apply")}
-        </Button>
+      <KindPicker value={kind} onChange={setKind} />
+
+      <ReportFilters
+        spec={spec}
+        range={range}
+        today={today}
+        issue={issue}
+        channel={channel}
+        provider={provider}
+        onRange={setRange}
+        onChannel={setChannel}
+        onProvider={setProvider}
+      />
+
+      <div className={cn("flex flex-wrap items-center gap-4 rounded-[28px] border border-zinc-200/60 bg-gradient-to-br p-5", TONES[look.tone].tint)} data-testid="rp-banner">
+        <span className={cn("flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px]", TONES[look.tone].gradient)} aria-hidden>
+          <KindIcon className="h-7 w-7" strokeWidth={2} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[18px] font-semibold tracking-tight text-zinc-950">{t(`kinds.${kind}`)}</p>
+          <p className="truncate text-[13px] text-zinc-500">
+            {formatDay(range.from, locale)} – {formatDay(range.to, locale)}
+            {result?.generatedAt ? ` · ${t("generated", { when: formatRelativeTime(result.generatedAt, locale) })}` : ""}
+          </p>
+        </div>
+        {spec.sensitive && canExport ? (
+          <span className="flex h-9 items-center gap-1.5 rounded-full bg-white/80 px-3.5 text-[12.5px] font-semibold text-zinc-600 ring-1 ring-inset ring-zinc-900/[0.06]">
+            <LockKeyhole className="h-3.5 w-3.5" aria-hidden />
+            {t("auditedExport")}
+          </span>
+        ) : null}
       </div>
 
-      <Tabs
-        value={kind}
-        onValueChange={(v) => setKind(v as ReportKind)}
-        className="space-y-4"
-      >
-        <TabsList className="flex h-auto flex-wrap gap-1 bg-transparent p-0">
-          {REPORT_KINDS.map((k) => (
-            <TabsTrigger
-              key={k}
-              value={k}
-              className="rounded-xl border border-transparent data-[state=active]:border-zinc-200 data-[state=active]:bg-white"
-            >
-              {t(`kinds.${k}`)}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        {REPORT_KINDS.map((k) => (
-          <TabsContent key={k} value={k} className="space-y-4">
-            {summaryEntries.length > 0 ? (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                {summaryEntries.slice(0, 8).map(([key, val]) => (
-                  <div
-                    key={key}
-                    className="rounded-2xl border border-zinc-200/80 bg-white px-4 py-3"
-                  >
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
-                      {key.replace(/_/g, " ")}
-                    </p>
-                    <p className="mt-1 text-lg font-semibold tabular-nums text-zinc-950">
-                      {metricValue(val)}
-                    </p>
+      {issue === null ? (
+        <QueryState
+          loading={report.loading && !result}
+          loadingVariant="table"
+          error={report.error}
+          errorTitle={t("loadError")}
+          onRetry={() => void report.reload()}
+        >
+          {result ? (
+            <div className="space-y-5">
+              <ReportSummary spec={spec} result={result} dimmed={refreshing} />
+              {result.rows.length === 0 ? (
+                <div className={cn("flex flex-col items-center gap-4 rounded-[28px] border border-zinc-200/60 bg-gradient-to-b px-6 py-14 text-center", TONES.emerald.tint)} data-testid="rp-empty">
+                  <span className={cn("flex h-20 w-20 items-center justify-center rounded-[26px]", TONES.emerald.gradient)} aria-hidden>
+                    <CircleCheckBig className="h-10 w-10" strokeWidth={1.9} />
+                  </span>
+                  <div className="max-w-md space-y-1.5">
+                    <p className="text-[19px] font-semibold tracking-tight text-zinc-950">{t("empty")}</p>
+                    <p className="text-[14px] text-zinc-500">{t("emptyHint")}</p>
                   </div>
-                ))}
-              </div>
-            ) : null}
-
-            <QueryState
-              loading={busy && !result}
-              loadingLabel={t("loading")}
-              error={loadError}
-              errorTitle={t("loadError")}
-              onRetry={() => void load(kind)}
-              empty={!result || result.rows.length === 0}
-              emptyTitle={t("empty")}
-              emptyDescription={t("emptyHint")}
-            >
-              <div className="overflow-x-auto rounded-2xl border border-zinc-200/80 bg-white">
-                <table className="min-w-full text-left text-sm">
-                  <thead className="border-b border-zinc-100 bg-zinc-50/80 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
-                    <tr>
-                      <th className="px-4 py-3">{t("colLabel")}</th>
-                      {columns.map((c) => (
-                        <th key={c} className="px-3 py-3 whitespace-nowrap">
-                          {c.replace(/_/g, " ")}
-                        </th>
-                      ))}
-                      <th className="px-4 py-3">{t("colDrill")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(result?.rows ?? []).map((row) => (
-                      <tr
-                        key={row.id}
-                        className="border-b border-zinc-50 last:border-0"
-                      >
-                        <td
-                          className={cn(
-                            "px-4 py-3 font-semibold",
-                            severityClass(row.severity),
-                          )}
-                        >
-                          {row.label}
-                        </td>
-                        {columns.map((c) => (
-                          <td
-                            key={c}
-                            className="px-3 py-3 tabular-nums text-zinc-600"
-                          >
-                            {metricValue(row.metrics[c])}
-                          </td>
-                        ))}
-                        <td className="px-4 py-3">
-                          <div className="flex flex-wrap gap-2">
-                            {row.drilldowns.map((d, i) => (
-                              <Link
-                                key={`${d.hrefHint}-${i}`}
-                                href={d.hrefHint || "/"}
-                                className="text-xs font-semibold text-zinc-900 underline-offset-2 hover:underline"
-                              >
-                                {d.label || t("open")}
-                              </Link>
-                            ))}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </QueryState>
-          </TabsContent>
-        ))}
-      </Tabs>
+                </div>
+              ) : (
+                <ReportTable key={kind} spec={spec} rows={result.rows} dimmed={refreshing} />
+              )}
+            </div>
+          ) : null}
+        </QueryState>
+      ) : null}
     </Screen>
   );
 }
