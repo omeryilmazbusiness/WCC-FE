@@ -2920,14 +2920,9 @@
     "confirmRefPh": "مرجع التأكيد",
     "unconfirmed": "غير مؤكد",
     "oversold": "تجاوز البيع",
-    "missingDocsTitle": "مستندات ناقصة",
-    "missingDocsSubtitle": "فجوات قائمة الرحيل — صدّر لمتابعة العمليات",
     "departureId": "معرّف الرحيل",
-    "departureIdPh": "UUID الرحيل",
     "load": "تحميل",
     "exportCsv": "تصدير CSV",
-    "missingDocsEmpty": "لا مستندات ناقصة",
-    "missingDocsEmptyHint": "أدخل معرّف رحيل وحمّل، أو افتح بـ ?departure_id=",
     "missing": "ناقص",
     "docStatus": {
       "pending": "قيد الانتظار",
@@ -5997,6 +5992,74 @@
         "disputed": "تم الاعتراض على الرصيد. سنتواصل معك.",
         "expired": "انتهت صلاحية هذا الرابط."
       }
+    }
+  },
+  "missingDocs": {
+    "title": "المستندات الناقصة",
+    "subtitle": "المستندات المطلوبة التي لم تُستكمل بعد في رحلة — تابِعها قبل السفر.",
+    "export": "تصدير CSV",
+    "loadError": "تعذر تحميل المستندات الناقصة",
+    "picker": {
+      "title": "الرحلة",
+      "hint": "اختر الباقة ثم الرحلة لمراجعتها.",
+      "package": "الباقة",
+      "loading": "جارٍ تحميل الباقات…",
+      "departures": "الرحلات",
+      "noPackages": "لا توجد باقات نشطة بعد.",
+      "noDepartures": "لا توجد رحلات نشطة لهذه الباقة.",
+      "packagesError": "تعذر تحميل الباقات.",
+      "departuresError": "تعذر تحميل الرحلات.",
+      "departed": "غادرت",
+      "inDays": "{days, plural, =0 {اليوم} one {بعد يوم} two {بعد يومين} few {بعد {formatted} أيام} many {بعد {formatted} يومًا} other {بعد {formatted} يوم}}"
+    },
+    "manual": {
+      "label": "معرّف الرحلة",
+      "placeholder": "مثال: 3f2c…-…",
+      "hint": "الصق معرّف الرحلة من شاشة الباقة.",
+      "submit": "عرض"
+    },
+    "choose": {
+      "title": "اختر رحلة",
+      "hint": "اختر رحلة في الأعلى لمعرفة الحجوزات التي تنقصها مستندات مطلوبة."
+    },
+    "allClear": {
+      "title": "اكتملت جميع المستندات",
+      "hint": "كل الحجوزات في هذه الرحلة لديها المستندات المطلوبة."
+    },
+    "banner": {
+      "past": "{days, plural, one {غادرت منذ يوم} two {غادرت منذ يومين} few {غادرت منذ {formatted} أيام} many {غادرت منذ {formatted} يومًا} other {غادرت منذ {formatted} يوم}}",
+      "critical": "{days, plural, =0 {تغادر اليوم} one {تغادر غدًا} two {تغادر بعد يومين} few {تغادر بعد {formatted} أيام} many {تغادر بعد {formatted} يومًا} other {تغادر بعد {formatted} يوم}}",
+      "soon": "{days, plural, one {تغادر بعد يوم} two {تغادر بعد يومين} few {تغادر بعد {formatted} أيام} many {تغادر بعد {formatted} يومًا} other {تغادر بعد {formatted} يوم}}",
+      "planned": "{days, plural, one {تغادر بعد يوم} two {تغادر بعد يومين} few {تغادر بعد {formatted} أيام} many {تغادر بعد {formatted} يومًا} other {تغادر بعد {formatted} يوم}}"
+    },
+    "stats": {
+      "bookings": "حجوزات بها نقص",
+      "travellers": "المسافرون المتأثرون",
+      "gaps": "المستندات الناقصة",
+      "top": "الأكثر نقصًا",
+      "topCaption": "{count, plural, one {حجز واحد} two {حجزان} few {{formatted} حجوزات} many {{formatted} حجزًا} other {{formatted} حجز}}"
+    },
+    "list": {
+      "title": "حجوزات تحتاج متابعة",
+      "count": "{shown} من {total}",
+      "search": "ابحث عن عميل أو رقم حجز",
+      "kindFilter": "تصفية حسب المستند",
+      "all": "الكل",
+      "noMatch": "لا توجد حجوزات مطابقة لهذه الفلاتر."
+    },
+    "row": {
+      "unknownCustomer": "عميل بدون اسم",
+      "travellers": "{count, plural, one {مسافر واحد} two {مسافران} few {{formatted} مسافرين} many {{formatted} مسافرًا} other {{formatted} مسافر}}",
+      "missingList": "المستندات الناقصة",
+      "open": "فتح الحجز {ref}، {name}: {count, plural, one {مستند واحد ناقص} two {مستندان ناقصان} few {# مستندات ناقصة} many {# مستندًا ناقصًا} other {# مستند ناقص}}"
+    },
+    "csv": {
+      "booking": "الحجز",
+      "customer": "العميل",
+      "travellers": "المسافرون",
+      "status": "الحالة",
+      "missing": "المستندات الناقصة",
+      "bookingId": "معرّف الحجز"
     }
   }
 }

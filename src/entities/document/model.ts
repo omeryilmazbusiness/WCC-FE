@@ -56,6 +56,12 @@ export type MissingDocsRow = {
   participantId: string | null;
   customerId: string;
   missingKinds: string[];
+  /** Human booking number, e.g. `BK-000042`; empty on older servers. */
+  refCode: string;
+  customerName: string;
+  customerNameAr: string;
+  bookingStatus: string;
+  paxCount: number;
 };
 
 export type PresignResult = {

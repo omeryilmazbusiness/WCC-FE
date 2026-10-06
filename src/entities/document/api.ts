@@ -89,6 +89,11 @@ function mapMissing(raw: Raw): MissingDocsRow {
       : Array.isArray(raw.missingKinds)
         ? (raw.missingKinds as unknown[]).map(String)
         : [],
+    refCode: str(raw.ref_code ?? raw.refCode),
+    customerName: str(raw.customer_name ?? raw.customerName),
+    customerNameAr: str(raw.customer_name_ar ?? raw.customerNameAr),
+    bookingStatus: str(raw.booking_status ?? raw.bookingStatus),
+    paxCount: Math.max(0, Number(raw.pax_count ?? raw.paxCount ?? 0) || 0),
   };
 }
 
@@ -320,12 +325,22 @@ class MemoryRepo implements DocumentRepository {
         participantId: "bp-1",
         customerId: "cust-1",
         missingKinds: ["passport", "visa"],
+        refCode: "BK-000101",
+        customerName: "Ahmad Al-Saleh",
+        customerNameAr: "أحمد الصالح",
+        bookingStatus: "confirmed",
+        paxCount: 3,
       },
       {
         bookingId: "bk-demo-2",
         participantId: null,
         customerId: "cust-2",
         missingKinds: ["photo"],
+        refCode: "BK-000102",
+        customerName: "Lina Haddad",
+        customerNameAr: "لينا حداد",
+        bookingStatus: "partially_paid",
+        paxCount: 2,
       },
     ];
   }

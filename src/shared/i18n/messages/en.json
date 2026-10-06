@@ -2920,14 +2920,9 @@
     "confirmRefPh": "Confirmation ref",
     "unconfirmed": "Unconfirmed",
     "oversold": "Oversold",
-    "missingDocsTitle": "Missing documents",
-    "missingDocsSubtitle": "Departure checklist gaps — export for ops follow-up",
     "departureId": "Departure ID",
-    "departureIdPh": "Departure UUID",
     "load": "Load",
     "exportCsv": "Export CSV",
-    "missingDocsEmpty": "No missing docs",
-    "missingDocsEmptyHint": "Enter a departure ID and load, or open with ?departure_id=",
     "missing": "missing",
     "docStatus": {
       "pending": "Pending",
@@ -5997,6 +5992,74 @@
         "disputed": "Balance disputed. We will contact you.",
         "expired": "This link has expired."
       }
+    }
+  },
+  "missingDocs": {
+    "title": "Missing documents",
+    "subtitle": "Required documents still outstanding on a departure — chase them before travel.",
+    "export": "Export CSV",
+    "loadError": "Could not load missing documents",
+    "picker": {
+      "title": "Departure",
+      "hint": "Pick a package, then the departure to review.",
+      "package": "Package",
+      "loading": "Loading packages…",
+      "departures": "Departures",
+      "noPackages": "No active packages yet.",
+      "noDepartures": "This package has no active departures.",
+      "packagesError": "Could not load packages.",
+      "departuresError": "Could not load departures.",
+      "departed": "departed",
+      "inDays": "{days, plural, =0 {today} one {in {formatted} day} other {in {formatted} days}}"
+    },
+    "manual": {
+      "label": "Departure ID",
+      "placeholder": "e.g. 3f2c…-…",
+      "hint": "Paste the departure ID from the package screen.",
+      "submit": "Show"
+    },
+    "choose": {
+      "title": "Choose a departure",
+      "hint": "Select a departure above to see which bookings still miss required documents."
+    },
+    "allClear": {
+      "title": "All documents collected",
+      "hint": "Every booking on this departure has its required documents."
+    },
+    "banner": {
+      "past": "{days, plural, one {Departed {formatted} day ago} other {Departed {formatted} days ago}}",
+      "critical": "{days, plural, =0 {Departs today} one {Departs tomorrow} other {Departs in {formatted} days}}",
+      "soon": "{days, plural, one {Departs in {formatted} day} other {Departs in {formatted} days}}",
+      "planned": "{days, plural, one {Departs in {formatted} day} other {Departs in {formatted} days}}"
+    },
+    "stats": {
+      "bookings": "Bookings with gaps",
+      "travellers": "Travellers affected",
+      "gaps": "Missing documents",
+      "top": "Most missing",
+      "topCaption": "{count, plural, one {{formatted} booking} other {{formatted} bookings}}"
+    },
+    "list": {
+      "title": "Bookings to follow up",
+      "count": "{shown} of {total}",
+      "search": "Search customer or booking no.",
+      "kindFilter": "Filter by document",
+      "all": "All",
+      "noMatch": "No bookings match these filters."
+    },
+    "row": {
+      "unknownCustomer": "Unnamed customer",
+      "travellers": "{count, plural, one {# traveller} other {{formatted} travellers}}",
+      "missingList": "Missing documents",
+      "open": "Open booking {ref}, {name}: {count, plural, one {# document missing} other {# documents missing}}"
+    },
+    "csv": {
+      "booking": "Booking",
+      "customer": "Customer",
+      "travellers": "Travellers",
+      "status": "Status",
+      "missing": "Missing documents",
+      "bookingId": "Booking ID"
     }
   }
 }
