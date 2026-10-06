@@ -56,8 +56,6 @@ export const PERMISSIONS = [
   "ai.read",
   "ai.write",
   "ai.setup",
-  "filesync.read",
-  "filesync.write",
   "settings.read",
   "settings.write",
   "setup.manage",
@@ -181,7 +179,6 @@ export const DEMO_ROLE_PERMISSIONS: Record<AppRole, readonly Permission[]> = {
     "hotels.read",
     "inbox.read", "inbox.write", "targets.read", "imports.read",
     "notifications.read", "notifications.write", "reports.read", "ai.read", "ai.write",
-    "filesync.read",
   ],
   finance: [
     "branches.read", "customers.read", "payments.read", "payments.write", "payments.approve",
@@ -189,7 +186,7 @@ export const DEMO_ROLE_PERMISSIONS: Record<AppRole, readonly Permission[]> = {
     "suppliers.finance", "hotels.read",
     "tasks.read", "targets.read", "imports.read", "imports.write",
     "notifications.read", "notifications.write", "reports.read", "reports.export",
-    "ai.read", "filesync.read", "settings.read",
+    "ai.read", "settings.read",
   ],
   operations: [
     "branches.read", "customers.read", "customers.write", "pii.read",
@@ -198,7 +195,7 @@ export const DEMO_ROLE_PERMISSIONS: Record<AppRole, readonly Permission[]> = {
     "packages.read", "packages.write", "hotels.read", "hotels.write", "tasks.read", "tasks.write",
     "inbox.read", "inbox.write", "integrations.read", "imports.read", "imports.write",
     "notifications.read", "notifications.write", "reports.read", "reports.export",
-    "ai.read", "ai.write", "filesync.read", "filesync.write", "settings.read",
+    "ai.read", "ai.write", "settings.read",
   ],
 };
 

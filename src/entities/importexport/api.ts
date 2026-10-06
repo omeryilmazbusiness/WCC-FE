@@ -7,6 +7,7 @@ import type {
   ImportMode,
   MappingTemplate,
 } from "./model";
+import { isImportable } from "./lib/import-plan";
 
 type Raw = Record<string, unknown>;
 
@@ -202,6 +203,7 @@ class MemoryRepo implements ImportExportRepository {
   ];
 
   async upload(file: File, entityType: ImportEntityType, mode: ImportMode = "upsert") {
+    if (!isImportable(entityType)) throw new Error(`importing ${entityType} is not supported yet`);
     const text = await file.text();
     const lines = text.split(/\r?\n/).filter(Boolean);
     const headers = (lines[0] ?? "Name,Phone,Email").split(",").map((h) => h.trim());
