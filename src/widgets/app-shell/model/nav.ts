@@ -9,7 +9,6 @@ import {
   FileWarning,
   Hotel,
   Kanban,
-  KeyRound,
   LayoutDashboard,
   LayoutGrid,
   ListTodo,
@@ -18,7 +17,6 @@ import {
   Plane,
   PlaneTakeoff,
   Rocket,
-  ScrollText,
   Settings,
   ShieldCheck,
   ShieldHalf,
@@ -35,6 +33,7 @@ import type { LucideIcon } from "lucide-react";
 import { MAX_NAV_FAVORITES } from "@/entities/ui-preference";
 import {
   ROUTE_PERMISSIONS,
+  grants,
   type GuardedRoute,
   type Permission,
 } from "@/shared/config/permissions";
@@ -62,8 +61,6 @@ export type NavLabel =
   | "flights"
   | "missingDocs"
   | "team"
-  | "roles"
-  | "audit"
   | "settings"
   | "companies";
 
@@ -153,8 +150,6 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     items: [
       { href: routes.adminCompanies, label: "companies", icon: Building2 },
       { href: routes.team, label: "team", icon: UsersRound },
-      { href: routes.adminRoles, label: "roles", icon: KeyRound },
-      { href: routes.adminAudit, label: "audit", icon: ScrollText },
       { href: routes.adminSettings, label: "settings", icon: Settings },
     ],
   },
@@ -171,7 +166,7 @@ export const DEFAULT_FAVORITES: readonly GuardedRoute[] = [
 
 function canSee(item: NavItem, permissions: readonly string[]): boolean {
   return (
-    permissions.includes(ROUTE_PERMISSIONS[item.href]) &&
+    grants(permissions, ROUTE_PERMISSIONS[item.href]) &&
     !(item.unless && permissions.includes(item.unless))
   );
 }
@@ -189,7 +184,11 @@ export function visibleNavGroups(permissions: readonly string[]): NavGroup[] {
  * no-longer-permitted routes are skipped rather than shown broken.
  */
 /** Pages that moved; favorites saved under the old address keep working. */
-const RENAMED_HREFS: Readonly<Record<string, GuardedRoute>> = { "/admin/users": routes.team };
+const RENAMED_HREFS: Readonly<Record<string, GuardedRoute>> = {
+  "/admin/users": routes.team,
+  "/admin/roles": routes.adminSettings,
+  "/admin/audit": routes.adminSettings,
+};
 
 export function resolveFavorites(
   groups: readonly NavGroup[],

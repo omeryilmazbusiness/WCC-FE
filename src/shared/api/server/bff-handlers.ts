@@ -22,6 +22,7 @@ import {
   type ViewerSession,
 } from "../session";
 import {
+  backendChangePassword,
   backendLogin,
   backendLogout,
   backendMfaSetup,
@@ -330,5 +331,45 @@ export async function handleMe(req: NextRequest): Promise<NextResponse> {
     return res;
   } catch (err) {
     return sessionFailureResponse(err);
+  }
+}
+
+/**
+ * Changes the viewer's password. Every session ends on the backend, so the new token
+ * pair for this device goes straight into the HttpOnly cookies and the snapshot is re-signed.
+ */
+export async function handleChangePassword(req: NextRequest): Promise<NextResponse> {
+  const csrf = csrfError(req);
+  if (csrf) return errorResponse(csrf);
+  const { current_password, new_password } = await readJson<{ current_password: string; new_password: string }>(req);
+  if (typeof current_password !== "string" || typeof new_password !== "string" || !current_password || !new_password) {
+    return errorResponse(
+      new ApiError({ status: 400, code: "validation_error", message: "Current and new password are required" }),
+    );
+  }
+  const meta = clientMetaFrom(req.headers);
+  const refresh = req.cookies.get(REFRESH_COOKIE)?.value;
+  let access = req.cookies.get(ACCESS_COOKIE)?.value;
+  if (!access && !refresh) return sessionEnded();
+  const current = await verifySession(req.cookies.get(SESSION_COOKIE)?.value);
+  const change = (token: string) => backendChangePassword(token, { current_password, new_password }, meta);
+  try {
+    if (!access) access = (await refreshTokens(refresh!, meta)).accessToken;
+    let tokens: TokenSet;
+    try {
+      tokens = await change(access);
+    } catch (err) {
+      if (!(isApiError(err) && err.status === 401 && refresh)) throw err;
+      const decision = decideOnUnauthorized(err.code, { refreshed: false, hasRefreshToken: true });
+      if (decision.action === "end") return sessionEnded(decision.reason);
+      tokens = await change((await refreshTokens(refresh, meta)).accessToken);
+    }
+    const viewer = await loadViewer(tokens.accessToken, meta, { mfaEnrollmentRequired: current?.mfaEnrollmentRequired });
+    const res = NextResponse.json({ data: { ok: true, viewer } });
+    setTokenCookies(res, tokens);
+    setSessionCookie(res, await signSession(viewer));
+    return res;
+  } catch (err) {
+    return isApiError(err) && err.status !== 401 ? errorResponse(err) : sessionFailureResponse(err);
   }
 }

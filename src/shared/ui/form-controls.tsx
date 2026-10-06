@@ -5,6 +5,7 @@ import { Check, Minus, Plus, Star, type LucideIcon } from "lucide-react";
 import { cn } from "@/shared/lib/cn";
 import { Input } from "./input";
 import { TONES, type Tone } from "./tone";
+import { Switch } from "./switch";
 
 export type ChoiceOption<T extends string> = { value: T; label: string; hint?: string; icon: LucideIcon; tone: Tone };
 
@@ -198,22 +199,7 @@ export function SwitchRow({
         <span className="block text-[13.5px] font-semibold text-zinc-900">{label}</span>
         {hint ? <span className="block text-[11.5px] font-medium text-zinc-500">{hint}</span> : null}
       </span>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        aria-label={label}
-        onClick={() => onChange(!checked)}
-        data-testid={testId}
-        className={cn("relative h-[30px] w-[50px] shrink-0 rounded-full transition-colors", checked ? "bg-emerald-500" : "bg-zinc-300")}
-      >
-        <span
-          className={cn(
-            "absolute top-[3px] h-6 w-6 rounded-full bg-white shadow transition-all",
-            checked ? "start-[23px]" : "start-[3px]",
-          )}
-        />
-      </button>
+      <Switch checked={checked} onChange={onChange} label={label} data-testid={testId} />
     </label>
   );
 }

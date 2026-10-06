@@ -1,5 +1,10 @@
-import { RolesMatrixView } from "@/views/roles-matrix-view";
+import { redirect } from "@/shared/i18n/navigation";
+import { SETTINGS_ROOT } from "@/shared/config/settings";
 
-export default function AdminRolesPage() {
-  return <RolesMatrixView />;
+type Props = { params: Promise<{ locale: string }> };
+
+/** Roles moved into settings; old links and bookmarks land there. */
+export default async function AdminRolesPage({ params }: Props) {
+  const { locale } = await params;
+  redirect({ href: `${SETTINGS_ROOT}/roles`, locale });
 }

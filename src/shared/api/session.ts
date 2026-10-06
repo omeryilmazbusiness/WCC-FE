@@ -28,6 +28,9 @@ export type SessionUser = {
   branchId: string;
   teamId?: string | null;
   mfaEnabled?: boolean;
+  jobTitle?: string;
+  /** Changes with every photo upload; null without a photo. */
+  avatarVersion?: string | null;
 };
 
 export type BranchKind = "main_center" | "branch";

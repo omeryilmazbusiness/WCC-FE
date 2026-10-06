@@ -95,6 +95,21 @@ const refreshStore: RefreshStore = ((globalThis as { __wccRefresh?: RefreshStore
  * across instances the backend accepts the same token again within its 10 s grace window.
  * A 401 means the session is gone (revoked, idle or absolute lifetime reached).
  */
+/** Self-service password change; the backend answers with the replacement session's tokens. */
+export async function backendChangePassword(
+  accessToken: string,
+  input: { current_password: string; new_password: string },
+  meta: ClientMeta,
+): Promise<TokenSet> {
+  const pair = await backendJson<BackendTokenPair>(AUTH_ENDPOINTS.password, {
+    method: "POST",
+    accessToken,
+    body: JSON.stringify(input),
+    meta,
+  });
+  return toTokenSet(pair);
+}
+
 export async function refreshTokens(refreshToken: string, meta: ClientMeta): Promise<TokenSet> {
   const now = Date.now();
   for (const [key, entry] of refreshStore.recent) {
@@ -153,6 +168,8 @@ function mapUser(user: BackendUser): SessionUser {
     branchId: String(user.branch_id ?? ""),
     teamId: user.team_id ?? null,
     mfaEnabled: Boolean(user.mfa_enabled),
+    jobTitle: user.job_title ?? "",
+    avatarVersion: user.avatar_version ?? null,
   };
 }
 

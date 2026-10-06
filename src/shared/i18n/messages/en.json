@@ -29,8 +29,6 @@
     "missingDocs": "Missing docs",
     "tasks": "Tasks",
     "team": "Team",
-    "roles": "Roles",
-    "audit": "Audit",
     "logout": "Sign out",
     "settings": "Settings",
     "hotels": "Hotels",
@@ -114,11 +112,6 @@
     "poweredBy": "by"
   },
   "admin": {
-    "rolesTitle": "Role permissions",
-    "rolesSubtitle": "Read-only matrix of role → capability (API-enforced)",
-    "rolesEmpty": "No permissions loaded",
-    "loadError": "Could not load data",
-    "permission": "Permission",
     "revokeSessions": {
       "action": "Sign out everywhere",
       "confirmTitle": "Sign out {name} everywhere?",
@@ -3165,112 +3158,6 @@
     "issueNotePh": "Add a note…",
     "addIssue": "Add note"
   },
-  "adminSettings": {
-    "title": "Admin settings",
-    "subtitle": "SLA A/B, escalation rules, thresholds, lost reasons, templates and fields",
-    "loadError": "Could not load settings",
-    "actionError": "Could not save settings",
-    "saved": "Saved",
-    "save": "Save",
-    "add": "Add",
-    "remove": "Remove",
-    "empty": "Nothing here yet",
-    "enabled": "Enabled",
-    "disabled": "Disabled",
-    "enable": "Enable",
-    "disable": "Disable",
-    "required": "Required",
-    "sections": {
-      "sla": "SLA",
-      "escalation": "Escalation",
-      "lostReasons": "Lost reasons",
-      "templates": "Templates",
-      "fields": "Fields",
-      "thresholds": "Thresholds",
-      "events": "Events catalog",
-      "docPolicies": "Doc policies"
-    },
-    "sla": {
-      "windowsTitle": "First-response windows",
-      "windowsHint": "How fast a new conversation must get its first reply, per channel. The default applies to channels without their own row.",
-      "defaultChannel": "Default (all channels)",
-      "minutes": "minutes",
-      "addChannel": "Add channel:",
-      "abTitle": "SLA A / B thresholds",
-      "abHint": "A warns the owner before the window ends; B marks the conversation as breached and opens a reply task.",
-      "warnPct": "A — warning at % of window",
-      "breachPct": "B — breach at % of window",
-      "abPreview": "With a {window}-minute window: warning after {warn} min, breach after {breach} min.",
-      "warnAboveBreach": "A must be lower than B.",
-      "invalidWindow": "Every window must be at least 1 minute."
-    },
-    "escalation": {
-      "hint": "Rules the escalation engine runs every 5 minutes. An open alert older than the delay is escalated to the selected roles; turning a rule off stops it for this branch.",
-      "after": "Escalate after",
-      "minutes": "min",
-      "roles": "Escalate to",
-      "overridden": "Branch override",
-      "reset": "Reset to default"
-    },
-    "lostReasons": {
-      "code": "Code",
-      "label": "Label"
-    },
-    "templates": {
-      "code": "Code",
-      "body": "Body"
-    },
-    "fields": {
-      "add": "Add field",
-      "entity": {
-        "lead": "Lead",
-        "customer": "Customer",
-        "booking": "Booking"
-      }
-    },
-    "thresholds": {
-      "range": "Allowed range {min}–{max}",
-      "paymentOverdueHours": {
-        "label": "Payment overdue alert (hours)",
-        "hint": "Hours past a schedule's due date before the booking owner gets a payment-overdue alert."
-      },
-      "missingDocHours": {
-        "label": "Missing documents (hours)",
-        "hint": "Hours after confirmation before missing required documents open a task and alert."
-      },
-      "leadNoFollowupHours": {
-        "label": "Idle lead (hours)",
-        "hint": "Hours without activity or an open task before the lead owner is alerted."
-      },
-      "visaFollowUpDays": {
-        "label": "Visa follow-up (days)",
-        "hint": "Days a submitted visa can wait for a decision before a follow-up task opens."
-      },
-      "targetBehindPct": {
-        "label": "Target behind pace (%)",
-        "hint": "How far below the expected pace a revenue target may fall before managers are alerted."
-      },
-      "capacitySoftPct": {
-        "label": "Soft capacity warning (%)",
-        "hint": "Departure fill level that shows the capacity warning."
-      }
-    },
-    "docPoliciesBody": "Document policies are managed via checklists and missing-docs ops.",
-    "docPoliciesLink": "Open missing docs",
-    "events": {
-      "hint": "Domain events the system publishes. Durable events go through the transactional outbox and are retried until delivered.",
-      "durable": "Durable (outbox)",
-      "inProcess": "In-process",
-      "idempotent": "Idempotent"
-    },
-    "roles": {
-      "manager": "Manager",
-      "gm": "GM",
-      "admin": "Admin",
-      "finance": "Finance",
-      "operations": "Operations"
-    }
-  },
   "hotels": {
     "title": "Hotels",
     "subtitle": "Contracted hotels, seasonal net rates, allotments and stop sales in one place.",
@@ -3993,8 +3880,6 @@
     "activeBookings": "This customer still has active bookings. Complete or cancel them before anonymizing."
   },
   "audit": {
-    "title": "Audit log",
-    "subtitle": "Who did what, when and from where — filter, inspect changes and export",
     "exportCsv": "Export CSV",
     "exported": "Audit log exported",
     "exportError": "Could not export the audit log",
@@ -6275,6 +6160,230 @@
       "passwordReset": "New password set for {name}",
       "unlocked": "{name} was unlocked",
       "unlockError": "Could not unlock the account"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "profileHint": "Photo, personal info & password",
+    "welcomeTitle": "Choose a setting",
+    "welcomeBody": "Pick an item on the left to view or change it.",
+    "groups": {
+      "account": "Account",
+      "access": "Team & access"
+    },
+    "sections": {
+      "profile": {
+        "title": "Profile",
+        "hint": "Photo, personal info and password",
+        "description": "How you appear to your team, and how you sign in. Changes apply right away."
+      },
+      "team": {
+        "title": "Team",
+        "hint": "Members, roles and sign-in",
+        "description": "Everyone who works in this center."
+      },
+      "roles": {
+        "title": "Roles & permissions",
+        "hint": "What each role can do",
+        "description": "What every role is allowed to see and change. Roles are defined by the platform and apply to every company."
+      },
+      "audit": {
+        "title": "Audit log",
+        "hint": "Who changed what, and when",
+        "description": "Every sign-in and change, grouped by day. Filter by area, action or person and export as CSV."
+      }
+    },
+    "roles": {
+      "pick": "Choose a role",
+      "empty": "No roles to show",
+      "coverage": "{granted} of {total} permissions",
+      "filter": "Show",
+      "showAll": "All",
+      "showGranted": "Allowed",
+      "granted": "Allowed",
+      "notGranted": "Not allowed",
+      "footer": "The server checks every permission again on each request; this list is for reference.",
+      "domains": {
+        "users": "Team members",
+        "roles": "Roles",
+        "audit": "Audit log",
+        "branches": "Branches",
+        "customers": "Customers",
+        "pii": "Personal data",
+        "privacy": "Privacy",
+        "leads": "Leads",
+        "bookings": "Bookings",
+        "payments": "Payments",
+        "fx": "Exchange rates",
+        "documents": "Documents",
+        "visa": "Visas",
+        "suppliers": "Suppliers",
+        "flights": "Flights",
+        "ops": "Platform operations",
+        "dashboard": "Dashboard",
+        "packages": "Packages",
+        "hotels": "Hotels",
+        "tasks": "Tasks",
+        "inbox": "Inbox",
+        "integrations": "Integrations",
+        "targets": "Targets",
+        "imports": "Import & export",
+        "notifications": "Notifications",
+        "reports": "Reports",
+        "ai": "AI assistant",
+        "settings": "Settings",
+        "setup": "Company setup",
+        "companies": "Companies"
+      },
+      "actions": {
+        "read": "View",
+        "write": "Create and edit",
+        "unlock": "Unlock accounts",
+        "delete": "Delete",
+        "override": "Override rules",
+        "discount": "Give discounts",
+        "approve": "Approve",
+        "manage": "Manage",
+        "review": "Review",
+        "finance": "Finance details",
+        "search": "Search",
+        "export": "Export",
+        "setup": "Set up"
+      }
+    },
+    "profile": {
+      "mfaOn": "2FA on",
+      "mfaOff": "2FA off",
+      "updated": "Last updated {date}",
+      "accountId": "Account ID",
+      "copyId": "Copy account ID",
+      "completeness": {
+        "title": "Complete your profile",
+        "hint": "Add a photo, job title and phone number, and turn on two-factor authentication."
+      },
+      "photo": {
+        "add": "Add photo",
+        "change": "Change photo",
+        "remove": "Remove",
+        "hint": "PNG, JPEG or WebP. Cropped to a square and resized automatically.",
+        "updated": "Profile photo updated",
+        "removed": "Profile photo removed",
+        "uploadFailed": "Could not upload the photo",
+        "removeFailed": "Could not remove the photo",
+        "removeTitle": "Remove your profile photo?",
+        "removeBody": "Your initials will be shown instead.",
+        "cancel": "Cancel",
+        "problem": {
+          "type": "Choose a PNG, JPEG or WebP image",
+          "tooLarge": "This image is too large. Choose one under 15 MB.",
+          "tooSmall": "This image is too small. Use at least 96 × 96 pixels.",
+          "unreadable": "This image could not be read. Try another file."
+        }
+      },
+      "info": {
+        "title": "Personal information",
+        "footer": "Your name and job title are shown to colleagues across the workspace. Your phone number is for internal contact only.",
+        "fullName": "Full name",
+        "fullNamePlaceholder": "Your full name",
+        "jobTitle": "Job title",
+        "jobTitlePlaceholder": "e.g. General Manager",
+        "phone": "Phone",
+        "phonePlaceholder": "+90 555 123 45 67",
+        "unsaved": "You have unsaved changes",
+        "discard": "Discard",
+        "save": "Save",
+        "saved": "Personal information saved",
+        "saveFailed": "Could not save your changes",
+        "issue": {
+          "fullName": {
+            "required": "Enter at least 2 characters",
+            "tooLong": "Use at most 120 characters",
+            "invalid": "Remove unsupported characters"
+          },
+          "jobTitle": {
+            "required": "Enter a job title",
+            "tooLong": "Use at most 80 characters",
+            "invalid": "Remove unsupported characters"
+          },
+          "phone": {
+            "required": "Enter a phone number",
+            "tooLong": "This number is too long",
+            "invalid": "Enter 7 to 15 digits; you can use spaces, +, -, . and ( )"
+          }
+        }
+      },
+      "email": {
+        "title": "Change sign-in email",
+        "description": "You currently sign in with {email}.",
+        "newEmail": "New email",
+        "currentPassword": "Current password",
+        "passwordHint": "Confirms that it is really you.",
+        "wrongPassword": "The password is incorrect",
+        "notice": "Use the new address next time you sign in. Your current sessions stay signed in.",
+        "cancel": "Cancel",
+        "submit": "Change email",
+        "saved": "Sign-in email changed",
+        "failed": "Could not change your email",
+        "problem": {
+          "required": "Enter an email address",
+          "invalid": "Enter a valid email address",
+          "unchanged": "This is already your email",
+          "taken": "Another account already uses this email"
+        }
+      },
+      "password": {
+        "title": "Change password",
+        "description": "Choose a strong password you don't use anywhere else.",
+        "current": "Current password",
+        "new": "New password",
+        "confirm": "Confirm new password",
+        "show": "Show password",
+        "hide": "Hide password",
+        "wrongCurrent": "The current password is incorrect",
+        "weak": "This password doesn't meet the requirements",
+        "sameAsCurrent": "The new password must differ from the current one",
+        "mismatch": "The passwords don't match",
+        "notice": "You stay signed in on this device. All your other devices and sessions will be signed out.",
+        "cancel": "Cancel",
+        "submit": "Change password",
+        "saved": "Password changed",
+        "savedBody": "Other devices have been signed out.",
+        "failed": "Could not change your password",
+        "strength": {
+          "weak": "Weak",
+          "fair": "Fair",
+          "good": "Good",
+          "strong": "Strong"
+        },
+        "rule": {
+          "length": "10 to 128 characters",
+          "mix": "Letters and numbers",
+          "common": "Not a common password"
+        }
+      },
+      "signIn": {
+        "title": "Sign-in & security",
+        "footer": "Every change here is recorded in the audit log.",
+        "email": "Email",
+        "password": "Password",
+        "passwordValue": "Change",
+        "mfa": "Two-factor authentication",
+        "on": "On",
+        "off": "Off",
+        "sessions": "Devices & sessions",
+        "sessionsValue": "Manage"
+      },
+      "org": {
+        "title": "Organization",
+        "footer": "Your role, branch and team are managed by your company's administrators.",
+        "role": "Role",
+        "company": "Company",
+        "branch": "Branch",
+        "allBranches": "All branches",
+        "team": "Team",
+        "noTeam": "Not assigned",
+        "memberSince": "Member since"
+      }
     }
   }
 }

@@ -29,8 +29,6 @@ export const routes = {
   inbox: "/inbox",
   notifications: "/notifications",
   team: "/team",
-  adminRoles: "/admin/roles",
-  adminAudit: "/admin/audit",
   adminSettings: "/admin/settings",
   adminCompanies: "/admin/companies",
   hotels: "/hotels",

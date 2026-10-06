@@ -20,6 +20,9 @@ type Props = {
   surface?: "light" | "dark";
 };
 
+// Fixed instead of Radix's useId: the header renders one bell, and dev SSR can derive a different useId than hydration.
+const TRIGGER_ID = "notification-bell-trigger";
+
 /** Header bell: unread badge plus an iOS-style popup with the latest alerts and channel settings. */
 export function NotificationBell({ surface = "dark" }: Props) {
   const t = useTranslations("notifications");
@@ -61,7 +64,7 @@ export function NotificationBell({ surface = "dark" }: Props) {
         if (!next) setShowPrefs(false);
       }}
     >
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger asChild id={TRIGGER_ID}>
         <IconButton
           label={t("title")}
           variant="ghost"
@@ -88,6 +91,7 @@ export function NotificationBell({ surface = "dark" }: Props) {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
+        aria-labelledby={TRIGGER_ID}
         align="end"
         sideOffset={10}
         className="w-[min(100vw-1.5rem,25rem)] rounded-[26px] border-zinc-200/60 bg-zinc-50/95 p-0 shadow-[0_30px_70px_-30px_rgba(15,23,42,0.45)] backdrop-blur-xl"

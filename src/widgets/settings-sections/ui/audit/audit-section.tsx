@@ -24,16 +24,14 @@ import {
   type AuditEvent,
   type AuditFilters,
 } from "@/entities/audit";
-import { listUsers } from "@/entities/identity";
+import { listAllUsers } from "@/entities/identity";
 import { useCan } from "@/entities/viewer";
 import { cn } from "@/shared/lib/cn";
 import { saveBlob } from "@/shared/lib/download";
 import { formatNumber } from "@/shared/lib/format";
 import { useApiQuery } from "@/shared/lib/use-api-query";
 import {
-  PageHeader,
   QueryState,
-  Screen,
   SegmentedControl,
   Select,
   SelectContent,
@@ -109,7 +107,8 @@ function dayLabel(day: string, locale: string): string {
   }).format(date);
 }
 
-export function AuditLogView() {
+/** Who did what and when: day-grouped audit trail with filters and CSV export. */
+export function AuditSection() {
   const t = useTranslations("audit");
   const locale = useLocale();
   const feedback = useMutationFeedback();
@@ -137,7 +136,7 @@ export function AuditLogView() {
     cacheKey: ["audit", filters, offset],
   });
   const actions = useApiQuery(() => repo.listActions(), [], { cacheKey: ["audit-actions"] });
-  const users = useApiQuery(() => listUsers(), [], { enabled: canReadUsers, cacheKey: ["users", "all"] });
+  const users = useApiQuery(() => listAllUsers(), [], { enabled: canReadUsers, cacheKey: ["team-members", "all"] });
 
   const entityTypes = useMemo(() => {
     const fromActions = (actions.data ?? []).map((a) => a.split(".")[0]).filter(Boolean);
@@ -190,24 +189,7 @@ export function AuditLogView() {
   }
 
   return (
-    <Screen data-testid="audit-log">
-      <PageHeader
-        title={t("title")}
-        description={t("subtitle")}
-        actions={
-          <button
-            type="button"
-            disabled={exporting}
-            onClick={() => void exportCsv()}
-            data-testid="audit-export-csv"
-            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-zinc-100 px-4 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-200/80 disabled:opacity-50"
-          >
-            <Download className="h-3.5 w-3.5" strokeWidth={2} />
-            {t("exportCsv")}
-          </button>
-        }
-      />
-
+    <div className="space-y-5" data-testid="audit-log">
       <div className="flex flex-wrap items-center gap-2">
         <SegmentedControl<Period>
           aria-label={t("periodLabel")}
@@ -236,7 +218,7 @@ export function AuditLogView() {
             allLabel={t("filters.all")}
             value={actorId}
             onChange={withPageReset(setActorId)}
-            options={(users.data ?? []).map((u) => ({ value: u.id, label: u.full_name || u.email }))}
+            options={(users.data?.users ?? []).map((u) => ({ value: u.id, label: u.full_name || u.email }))}
           />
         ) : null}
         {isFiltered ? (
@@ -248,6 +230,16 @@ export function AuditLogView() {
             {t("filters.reset")}
           </button>
         ) : null}
+        <button
+          type="button"
+          disabled={exporting}
+          onClick={() => void exportCsv()}
+          data-testid="audit-export-csv"
+          className="ms-auto inline-flex h-9 items-center gap-1.5 rounded-full bg-[#007AFF] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-[#0062cc] disabled:opacity-50"
+        >
+          <Download className="h-3.5 w-3.5" strokeWidth={2.2} />
+          {t("exportCsv")}
+        </button>
       </div>
 
       <QueryState
@@ -307,7 +299,7 @@ export function AuditLogView() {
           </div>
         ) : null}
       </QueryState>
-    </Screen>
+    </div>
   );
 }
 

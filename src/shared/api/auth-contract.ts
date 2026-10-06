@@ -19,6 +19,7 @@ export const AUTH_ENDPOINTS = {
   sessions: "/auth/sessions",
   session: (id: string) => `/auth/sessions/${encodeURIComponent(id)}`,
   revokeOtherSessions: "/auth/sessions/revoke-others",
+  password: "/auth/password",
   unlockUser: (id: string) => `/users/${id}/unlock`,
   revokeUserSessions: (id: string) => `/users/${encodeURIComponent(id)}/sessions/revoke`,
 } as const;
@@ -31,6 +32,8 @@ export const PROXY_BLOCKED_PATHS: readonly string[] = [
   AUTH_ENDPOINTS.mfaVerify,
   AUTH_ENDPOINTS.mfaSetup,
   AUTH_ENDPOINTS.mfaSetupConfirm,
+  // Answers with a fresh token pair, which must land in HttpOnly cookies (BFF route), never in JS.
+  AUTH_ENDPOINTS.password,
 ];
 
 export const LOCKED_ERROR_CODE = "account_locked";
@@ -76,6 +79,8 @@ export type BackendUser = {
   team_id?: string | null;
   is_active?: boolean;
   mfa_enabled?: boolean;
+  job_title?: string;
+  avatar_version?: string | null;
 };
 
 export type BackendTokenPair = {

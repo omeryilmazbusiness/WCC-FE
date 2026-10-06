@@ -2,6 +2,7 @@
 
 import { PanelLeftClose, PanelLeftOpen, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { avatarUrl } from "@/entities/profile";
 import type { GuardedRoute } from "@/shared/config/permissions";
 import { routes } from "@/shared/config/routes";
 import { Link } from "@/shared/i18n/navigation";
@@ -22,7 +23,7 @@ type Props = {
   favorites: NavFavorites;
   activeHref: GuardedRoute | undefined;
   securityActive: boolean;
-  user: { fullName: string; role: string };
+  user: { fullName: string; role: string; avatarVersion?: string | null };
 };
 
 /** Dark sidebar frame: brand + collapse control, navigation, signed-in user. */
@@ -127,9 +128,14 @@ export function ShellSidebar({
           <span className="relative shrink-0">
             <span
               aria-hidden
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-b from-white to-zinc-300 text-[12px] font-semibold tracking-wide text-zinc-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_4px_12px_-4px_rgba(0,0,0,0.6)]"
+              className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-gradient-to-b from-white to-zinc-300 text-[12px] font-semibold tracking-wide text-zinc-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_4px_12px_-4px_rgba(0,0,0,0.6)]"
             >
-              {initials(user.fullName)}
+              {user.avatarVersion ? (
+                // eslint-disable-next-line @next/next/no-img-element -- private, cookie-authenticated image
+                <img src={avatarUrl(user.avatarVersion)} alt="" className="h-full w-full object-cover" draggable={false} />
+              ) : (
+                initials(user.fullName)
+              )}
             </span>
             <span aria-hidden className="absolute -bottom-0.5 -end-0.5 h-3 w-3 rounded-full bg-emerald-400 ring-[2.5px] ring-zinc-950" />
           </span>

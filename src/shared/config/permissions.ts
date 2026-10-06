@@ -1,4 +1,5 @@
 import { routes, type AppRole } from "./routes";
+import { SETTINGS_HUB_PERMISSIONS, settingsPermissionFor } from "./settings";
 
 /** Mirrors `internal/platform/auth/rbac.go` — the backend stays the source of truth. */
 export const PERMISSIONS = [
@@ -73,6 +74,13 @@ export function isPermission(value: unknown): value is Permission {
   return typeof value === "string" && PERMISSION_SET.has(value);
 }
 
+/** One permission, or a list where any one of them is enough. */
+export type PermissionRule = Permission | readonly Permission[];
+
+export function grants(granted: readonly string[], rule: PermissionRule): boolean {
+  return typeof rule === "string" ? granted.includes(rule) : rule.some((p) => granted.includes(p));
+}
+
 /**
  * Route → permission guarding the backend API that screen depends on.
  * Single source for sidebar visibility and the middleware route guard.
@@ -99,11 +107,9 @@ export const ROUTE_PERMISSIONS = {
   [routes.flights]: "flights.search",
   [routes.missingDocs]: "documents.read",
   [routes.team]: "users.read",
-  [routes.adminRoles]: "roles.read",
-  [routes.adminAudit]: "audit.read",
-  [routes.adminSettings]: "settings.read",
+  [routes.adminSettings]: SETTINGS_HUB_PERMISSIONS,
   [routes.adminCompanies]: "companies.manage",
-} as const satisfies Record<string, Permission>;
+} as const satisfies Record<string, PermissionRule>;
 
 export type GuardedRoute = keyof typeof ROUTE_PERMISSIONS;
 
@@ -111,8 +117,10 @@ const GUARDED_BY_LENGTH = (Object.keys(ROUTE_PERMISSIONS) as GuardedRoute[]).sor
   (a, b) => b.length - a.length,
 );
 
-/** Longest-prefix match so `/customers/123` inherits `/customers`. */
-export function requiredPermissionFor(pathWithoutLocale: string): Permission | null {
+/** Longest-prefix match so `/customers/123` inherits `/customers`; settings sections carry their own rule. */
+export function requiredPermissionFor(pathWithoutLocale: string): PermissionRule | null {
+  const settings = settingsPermissionFor(pathWithoutLocale);
+  if (settings) return settings;
   for (const route of GUARDED_BY_LENGTH) {
     if (pathWithoutLocale === route || pathWithoutLocale.startsWith(`${route}/`)) {
       return ROUTE_PERMISSIONS[route];
@@ -131,7 +139,7 @@ export function hasPermission(
 
 export function canAccessPath(granted: readonly string[], pathWithoutLocale: string): boolean {
   const required = requiredPermissionFor(pathWithoutLocale);
-  return required === null || granted.includes(required);
+  return required === null || grants(granted, required);
 }
 
 const ROLE_HOME: Record<AppRole, GuardedRoute> = {
@@ -146,9 +154,9 @@ const ROLE_HOME: Record<AppRole, GuardedRoute> = {
 /** Role's preferred landing page if permitted, else the first permitted screen. */
 export function homeFor(role: AppRole, granted: readonly string[]): string {
   const preferred = ROLE_HOME[role];
-  if (preferred && granted.includes(ROUTE_PERMISSIONS[preferred])) return preferred;
+  if (preferred && grants(granted, ROUTE_PERMISSIONS[preferred])) return preferred;
   const first = (Object.keys(ROUTE_PERMISSIONS) as GuardedRoute[]).find((route) =>
-    granted.includes(ROUTE_PERMISSIONS[route]),
+    grants(granted, ROUTE_PERMISSIONS[route]),
   );
   return first ?? routes.security;
 }

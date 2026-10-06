@@ -1,5 +1,10 @@
-import { AuditLogView } from "@/views/audit-log-view";
+import { redirect } from "@/shared/i18n/navigation";
+import { SETTINGS_ROOT } from "@/shared/config/settings";
 
-export default function AdminAuditPage() {
-  return <AuditLogView />;
+type Props = { params: Promise<{ locale: string }> };
+
+/** The audit log moved into settings; old links and bookmarks land there. */
+export default async function AdminAuditPage({ params }: Props) {
+  const { locale } = await params;
+  redirect({ href: `${SETTINGS_ROOT}/audit`, locale });
 }
