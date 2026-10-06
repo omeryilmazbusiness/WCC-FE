@@ -28,7 +28,7 @@ export const routes = {
   tasks: "/tasks",
   inbox: "/inbox",
   notifications: "/notifications",
-  adminUsers: "/admin/users",
+  team: "/team",
   adminRoles: "/admin/roles",
   adminAudit: "/admin/audit",
   adminSettings: "/admin/settings",

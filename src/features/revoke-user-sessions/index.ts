@@ -1,1 +1,1 @@
-export { RevokeUserSessionsButton } from "./ui/revoke-user-sessions-button";
+export { RevokeUserSessionsButton, RevokeUserSessionsDialog } from "./ui/revoke-user-sessions-button";

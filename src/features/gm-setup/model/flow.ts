@@ -77,7 +77,7 @@ export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
   "api", "app", "admin", "auth", "login", "logout", "setup", "manager", "workspace", "pipeline",
   "inbox", "tasks", "notifications", "customers", "packages", "bookings", "finance", "targets",
   "reports", "suppliers", "rooming", "hotels", "integrations", "security", "settings", "import-export",
-  "missing-docs", "flights", "static", "public", "assets", "en", "ar", "www", "help", "support", "status", "platform", "confirm",
+  "missing-docs", "flights", "static", "public", "assets", "en", "ar", "www", "help", "support", "status", "platform", "confirm", "team",
 ]);
 
 /** Instant hints for required fields; the backend stays authoritative. */

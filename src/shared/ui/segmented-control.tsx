@@ -7,6 +7,8 @@ type Option<T extends string> = {
   value: T;
   label: string;
   icon?: LucideIcon;
+  /** Small badge after the label; pass an already formatted number. */
+  count?: string;
 };
 
 type SegmentedControlProps<T extends string> = {
@@ -58,6 +60,11 @@ export function SegmentedControl<T extends string>({
           >
             {Icon ? <Icon className={size === "lg" ? "h-4 w-4" : "h-3.5 w-3.5"} strokeWidth={2.2} aria-hidden /> : null}
             {opt.label}
+            {opt.count !== undefined ? (
+              <span className={cn("rounded-full px-1.5 text-[11px] tabular-nums", active ? "bg-zinc-100 text-zinc-700" : "bg-zinc-200/70 text-zinc-500")}>
+                {opt.count}
+              </span>
+            ) : null}
           </button>
         );
       })}

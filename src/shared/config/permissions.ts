@@ -98,7 +98,7 @@ export const ROUTE_PERMISSIONS = {
   [routes.hotels]: "hotels.read",
   [routes.flights]: "flights.search",
   [routes.missingDocs]: "documents.read",
-  [routes.adminUsers]: "users.read",
+  [routes.team]: "users.read",
   [routes.adminRoles]: "roles.read",
   [routes.adminAudit]: "audit.read",
   [routes.adminSettings]: "settings.read",

@@ -20,7 +20,6 @@ import {
   Rocket,
   ScrollText,
   Settings,
-  Shield,
   ShieldCheck,
   ShieldHalf,
   Sparkles,
@@ -28,6 +27,7 @@ import {
   TrendingUp,
   Truck,
   Users,
+  UsersRound,
   Wallet,
   Wrench,
 } from "lucide-react";
@@ -61,7 +61,7 @@ export type NavLabel =
   | "hotels"
   | "flights"
   | "missingDocs"
-  | "users"
+  | "team"
   | "roles"
   | "audit"
   | "settings"
@@ -152,7 +152,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     tone: "slate",
     items: [
       { href: routes.adminCompanies, label: "companies", icon: Building2 },
-      { href: routes.adminUsers, label: "users", icon: Shield },
+      { href: routes.team, label: "team", icon: UsersRound },
       { href: routes.adminRoles, label: "roles", icon: KeyRound },
       { href: routes.adminAudit, label: "audit", icon: ScrollText },
       { href: routes.adminSettings, label: "settings", icon: Settings },
@@ -188,6 +188,9 @@ export function visibleNavGroups(permissions: readonly string[]): NavGroup[] {
  * Pinned shortcuts the viewer can open, in the saved order. Unknown or
  * no-longer-permitted routes are skipped rather than shown broken.
  */
+/** Pages that moved; favorites saved under the old address keep working. */
+const RENAMED_HREFS: Readonly<Record<string, GuardedRoute>> = { "/admin/users": routes.team };
+
 export function resolveFavorites(
   groups: readonly NavGroup[],
   saved: readonly string[] | null,
@@ -198,7 +201,7 @@ export function resolveFavorites(
   }
   const out: FavoriteItem[] = [];
   for (const href of saved ?? DEFAULT_FAVORITES) {
-    const item = byHref.get(href);
+    const item = byHref.get(RENAMED_HREFS[href] ?? href);
     if (item && !out.some((f) => f.href === href)) out.push(item);
     if (out.length === MAX_NAV_FAVORITES) break;
   }

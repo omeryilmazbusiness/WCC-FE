@@ -71,15 +71,15 @@ test.describe("Epic 19 security", () => {
 
   test("T-247 employee cannot open admin screens", async ({ page }) => {
     await login(page, "sales@wodi.local");
-    await page.goto("/en/admin/users");
+    await page.goto("/en/team");
     await expect(page).toHaveURL(/\/en\/workspace/);
-    await expect(page.locator("aside nav").getByRole("link", { name: /users/i })).toHaveCount(0);
+    await expect(page.locator("aside nav").getByRole("link", { name: /^team$/i })).toHaveCount(0);
   });
 
   test("T-254 unlock is offered only for locked accounts", async ({ page }) => {
     await login(page, "admin@wodi.local");
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(page.locator("table")).toBeVisible();
+    await page.goto("/en/team");
+    await expect(page.getByTestId("team-board")).toBeVisible();
     const locked = await page.getByTestId("user-locked").count();
     await expect(page.getByTestId("user-unlock")).toHaveCount(locked);
   });

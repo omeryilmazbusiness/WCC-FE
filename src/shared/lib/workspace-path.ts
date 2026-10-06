@@ -30,6 +30,7 @@ export const ROUTE_ROOTS: ReadonlySet<string> = new Set([
   "hotels",
   "flights",
   "platform",
+  "team",
 ]);
 
 /** Pages outside any workspace (reached before a session exists). */

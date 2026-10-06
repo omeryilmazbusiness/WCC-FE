@@ -28,7 +28,7 @@
     "suppliers": "Suppliers",
     "missingDocs": "Missing docs",
     "tasks": "Tasks",
-    "users": "Users",
+    "team": "Team",
     "roles": "Roles",
     "audit": "Audit",
     "logout": "Sign out",
@@ -114,46 +114,11 @@
     "poweredBy": "by"
   },
   "admin": {
-    "branch": "Branch",
-    "usersTitle": "Users",
-    "usersSubtitle": "Create and manage staff accounts, roles, and branch assignment",
-    "usersEmpty": "No users found",
     "rolesTitle": "Role permissions",
     "rolesSubtitle": "Read-only matrix of role → capability (API-enforced)",
     "rolesEmpty": "No permissions loaded",
-    "auditTitle": "Audit log",
-    "auditSubtitle": "Who changed what — filter by actor, entity, and time",
-    "auditEmpty": "No audit events yet",
-    "name": "Full name",
-    "email": "Email",
-    "role": "Role",
-    "status": "Status",
-    "active": "Active",
-    "inactive": "Inactive",
-    "activate": "Activate",
-    "deactivate": "Deactivate",
-    "createUser": "Create user",
-    "searchUsers": "Search users…",
-    "allRoles": "All roles",
-    "created": "User created",
-    "updated": "User updated",
-    "createError": "Could not create user",
     "loadError": "Could not load data",
     "permission": "Permission",
-    "when": "When",
-    "action": "Action",
-    "entity": "Entity",
-    "entityId": "Entity ID",
-    "actor": "Actor",
-    "entityFilter": "Search action / entity / actor…",
-    "actorFilter": "Actor ID",
-    "allEntities": "All entities",
-    "locked": "Locked",
-    "unlock": "Unlock",
-    "unlocked": "Account unlocked",
-    "unlockError": "Could not unlock account",
-    "updateError": "Could not update user",
-    "initialPassword": "Initial password",
     "revokeSessions": {
       "action": "Sign out everywhere",
       "confirmTitle": "Sign out {name} everywhere?",
@@ -161,11 +126,7 @@
       "cancel": "Cancel",
       "success": "{count, plural, =0 {No active sessions to sign out} one {# session signed out} other {# sessions signed out}}",
       "error": "Could not sign out the user's sessions"
-    },
-    "company": "Company",
-    "gmsTitle": "General managers",
-    "gmsSubtitle": "The GM account of every company. GMs are created with their company and manage their own staff.",
-    "gmsEmpty": "No GM accounts yet"
+    }
   },
   "manager": {
     "title": "Manager dashboard",
@@ -6193,6 +6154,127 @@
       "status": "Status",
       "missing": "Missing documents",
       "bookingId": "Booking ID"
+    }
+  },
+  "team": {
+    "title": "Team",
+    "subtitle": "Everyone who works in this center, their roles and how they sign in.",
+    "platformTitle": "Company owners",
+    "platformSubtitle": "The general manager account of every company on the platform.",
+    "add": "Add member",
+    "you": "You",
+    "mfa": "2FA",
+    "joined": "Joined {date}",
+    "roles": {
+      "gm": "General Manager",
+      "manager": "Manager",
+      "operations": "Operations",
+      "finance": "Finance",
+      "employee": "Agent",
+      "admin": "Administrator"
+    },
+    "roleHint": {
+      "gm": "Runs the whole company: every center, setting and report.",
+      "manager": "Leads a center: team, targets, approvals and reports.",
+      "operations": "Handles suppliers, hotels, flights and fulfilment.",
+      "finance": "Payments, invoices, refunds and reconciliation.",
+      "employee": "Sells and serves customers, bookings and tasks.",
+      "admin": "Platform operator outside any company."
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Deactivated",
+      "locked": "Locked"
+    },
+    "form": {
+      "addTitle": "Add a team member",
+      "addHint": "They can sign in right away with the email and password you set here.",
+      "editTitle": "Edit {name}",
+      "editHint": "Change the name, role or team. The email address cannot be changed.",
+      "name": "Full name",
+      "nameError": "Enter the member's full name.",
+      "email": "Work email",
+      "emailError": "Enter a valid email address.",
+      "role": "Role",
+      "selfRole": "You cannot change your own role.",
+      "team": "Team",
+      "noTeam": "No team",
+      "password": "Initial password",
+      "passwordHint": "Share it privately; ask them to change it after the first sign-in.",
+      "passwordError": "The password does not meet the rules above.",
+      "cancel": "Cancel",
+      "save": "Save changes",
+      "add": "Add member"
+    },
+    "password": {
+      "show": "Show password",
+      "hide": "Hide password",
+      "generate": "Generate",
+      "copy": "Copy password",
+      "copied": "Password copied",
+      "copyFailed": "Could not copy the password",
+      "rule": {
+        "length": "10 to 128 characters",
+        "mix": "Letters and numbers",
+        "common": "Not a common password"
+      }
+    },
+    "reset": {
+      "title": "New password for {name}",
+      "hint": "They will be signed out on every device and must use the new password.",
+      "label": "New password",
+      "submit": "Set password"
+    },
+    "menu": {
+      "label": "Actions for {name}",
+      "edit": "Edit details",
+      "password": "Reset password",
+      "unlock": "Unlock",
+      "signOut": "Sign out everywhere",
+      "deactivate": "Deactivate",
+      "activate": "Reactivate"
+    },
+    "deactivate": {
+      "title": "Deactivate {name}?",
+      "body": "They are signed out and can no longer sign in. Their bookings and history stay. You can reactivate them at any time.",
+      "confirm": "Deactivate"
+    },
+    "filters": {
+      "search": "Search name or email",
+      "status": "Filter by status",
+      "allStatus": "All",
+      "role": "Filter by role",
+      "allRoles": "Everyone",
+      "clear": "Clear filters"
+    },
+    "summary": {
+      "members": "Members",
+      "inactive": "{count, plural, =0 {None deactivated} one {{formatted} deactivated} other {{formatted} deactivated}}",
+      "active": "Active",
+      "activeCaption": "Can sign in now",
+      "locked": "Locked out",
+      "lockedCaption": "Too many failed sign-ins",
+      "lockedNone": "Nobody is locked out",
+      "mfa": "2FA protected",
+      "mfaCaption": "{count, plural, =0 {No members use 2FA} one {{formatted} member} other {{formatted} members}}"
+    },
+    "empty": {
+      "title": "Build your team",
+      "body": "Add the people who work in this center and give each one the right role.",
+      "platformTitle": "No companies yet",
+      "platformBody": "General manager accounts appear here when a company is registered.",
+      "filteredTitle": "No members match these filters"
+    },
+    "toast": {
+      "created": "{name} joined the team",
+      "createError": "Could not add the member",
+      "updated": "{name} updated",
+      "updateError": "Could not save the changes",
+      "activated": "{name} can sign in again",
+      "deactivated": "{name} was deactivated",
+      "passwordReset": "New password set for {name}",
+      "unlocked": "{name} was unlocked",
+      "unlockError": "Could not unlock the account"
     }
   }
 }

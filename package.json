@@ -30,6 +30,7 @@
     "test:lead-draft": "node --experimental-strip-types scripts/selftest-lead-draft.ts",
     "test:target-period": "node --experimental-strip-types scripts/selftest-target-period.ts",
     "test:dashboard-period": "node --experimental-strip-types scripts/selftest-dashboard-period.ts",
+    "test:team": "node --experimental-strip-types scripts/selftest-team.ts",
     "test:team-stats": "node --experimental-strip-types scripts/selftest-team-stats.ts",
     "test:lead-pipeline": "node --experimental-strip-types scripts/selftest-lead-pipeline.ts",
     "test:scroll-axis": "node --experimental-strip-types scripts/selftest-scroll-axis.ts",

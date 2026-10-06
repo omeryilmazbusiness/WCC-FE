@@ -44,7 +44,7 @@ const SHARED: Screen[] = [
 ];
 
 const ADMIN: Screen[] = [
-  { key: "admin-users", path: "/admin/users", title: "Admin — Users" },
+  { key: "team", path: "/team", title: "Team" },
   { key: "admin-roles", path: "/admin/roles", title: "Admin — Roles" },
   { key: "admin-audit", path: "/admin/audit", title: "Admin — Audit" },
 ];

@@ -49,6 +49,7 @@ export type ApiUser = {
   failed_login_attempts?: number;
   /** English company name; set on listings for company accounts. */
   company_name?: string;
+  created_at?: string;
 };
 
 const DEMO_BRANCH: Branch = {
@@ -218,6 +219,33 @@ export async function listUsers(params?: {
   );
 }
 
+/** The API caps one page at 100 rows. */
+const MEMBER_PAGE = 100;
+const MAX_MEMBER_PAGES = 10;
+
+export type MemberList = { users: ApiUser[]; total: number };
+
+/** Every account in the branch (company accounts for platform admins), fetched page by page. */
+export async function listAllUsers(params: { branchId?: string } = {}): Promise<MemberList> {
+  return withDemoFallback(
+    async () => {
+      const users: ApiUser[] = [];
+      let total = 0;
+      for (let page = 0; page < MAX_MEMBER_PAGES; page++) {
+        const sp = new URLSearchParams({ limit: String(MEMBER_PAGE), offset: String(page * MEMBER_PAGE) });
+        if (params.branchId) sp.set("branch_id", params.branchId);
+        const body = (await (await http.raw(`/users?${sp}`)).json()) as { data?: ApiUser[]; meta?: { total?: number } };
+        const rows = Array.isArray(body.data) ? body.data : [];
+        users.push(...rows);
+        total = Number(body.meta?.total ?? users.length);
+        if (rows.length < MEMBER_PAGE || users.length >= total) break;
+      }
+      return { users, total: Math.max(total, users.length) };
+    },
+    () => ({ users: DEMO_USERS, total: DEMO_USERS.length }),
+  );
+}
+
 export function createUser(body: {
   email: string;
   password: string;
@@ -242,6 +270,8 @@ export function updateUser(
     is_active: boolean;
     mfa_enabled: boolean;
     password: string;
+    team_id: string;
+    clear_team: boolean;
   }>,
 ): Promise<ApiUser> {
   return http.request<ApiUser>(`/users/${id}`, {
