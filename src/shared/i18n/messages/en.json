@@ -2331,31 +2331,124 @@
   "aiSetup": {
     "title": "AI setup",
     "subtitle": "Bring your own OpenAI, Claude, or Gemini key for this branch",
-    "welcomeBody": "Each company connects its own AI provider. Keys stay on your branch — WODI never shares them across tenants.",
-    "point1": "Accepted providers: OpenAI (GPT), Anthropic (Claude), Google Gemini",
-    "point2": "Money, SLA, and targets stay deterministic in code — AI only explains and drafts",
-    "point3": "Reply drafts never auto-send; OCR always needs human confirm",
-    "continue": "Continue",
-    "chooseProvider": "Choose provider",
-    "apiKey": "API key",
-    "keyPlaceholder": "Paste your provider API key",
-    "keyPlaceholderKeep": "Leave blank to keep {hint}",
-    "modelOptional": "Model (optional)",
-    "modelPlaceholder": "Leave blank for provider default",
-    "back": "Back",
-    "save": "Save & enable",
-    "saving": "Saving…",
-    "saved": "AI provider connected",
-    "saveError": "Could not save AI settings",
-    "keyRequired": "API key is required",
-    "readyTitle": "AI is ready",
-    "readyBody": "Manager summary, inbox drafts, lead priority, and OCR are available for this branch.",
+    "eyebrow": "WODI AI",
+    "heroTitle": "Your AI co-pilot for every branch",
+    "heroBody": "Connect your own OpenAI, Claude or Gemini key. WODI AI briefs your day, drafts replies, ranks leads and reads documents — while money and deadlines stay in code.",
+    "getStarted": "Get started",
+    "status": {
+      "off": {
+        "label": "Not connected",
+        "body": "Connect a provider to turn AI on for this branch."
+      },
+      "paused": {
+        "label": "Paused",
+        "body": "Your key is saved. AI stays off until you resume it."
+      },
+      "ready": {
+        "label": "Connected",
+        "body": "AI is on for this branch. Everyone with access can use it now."
+      }
+    },
+    "featuresTitle": "What WODI AI does for you",
+    "features": {
+      "briefing": {
+        "title": "Daily briefing",
+        "body": "A short summary of what changed and what needs you today."
+      },
+      "drafts": {
+        "title": "Reply drafts",
+        "body": "Ready-to-edit WhatsApp and email replies. Nothing sends on its own."
+      },
+      "priority": {
+        "title": "Lead priority",
+        "body": "See which leads are hot and why, so the team calls the right people first."
+      },
+      "ocr": {
+        "title": "Document reading",
+        "body": "Passports and visas are read into forms — you confirm every field."
+      },
+      "targets": {
+        "title": "Target insights",
+        "body": "Plain-language notes on how each target is tracking."
+      },
+      "assistant": {
+        "title": "Ask WODI AI",
+        "body": "Ask about your data or how a screen works, right from any page."
+      }
+    },
+    "guardrailsTitle": "Built-in guardrails",
+    "guardrails": {
+      "key": {
+        "title": "Your key, your branch",
+        "body": "Keys are encrypted and never shared across companies."
+      },
+      "numbers": {
+        "title": "Numbers stay in code",
+        "body": "Money, SLAs and targets are calculated by WODI, never guessed by AI."
+      },
+      "human": {
+        "title": "A person always decides",
+        "body": "Drafts never auto-send and scanned data always needs your OK."
+      }
+    },
+    "connectTitle": "Connect your AI",
+    "connectBody": "Takes about a minute. You can switch or pause any time.",
+    "editTitle": "Change provider",
+    "cancel": "Cancel",
     "edit": "Change provider",
-    "connectedAs": "Connected: {provider} ({hint})",
-    "goDashboard": "Go to dashboard",
-    "modelHint": "Default: {model}. Pick from the list or type another model ID.",
+    "chooseProvider": "Choose a provider",
+    "current": "Current",
+    "providers": {
+      "openai": "GPT models",
+      "anthropic": "Anthropic models",
+      "gemini": "Google models"
+    },
+    "stepKey": "Paste your API key",
+    "stepModel": "Pick a model",
+    "apiKey": "API key",
+    "getKey": "Get your {provider} key",
+    "keyPlaceholderFor": "Paste your key ({hint})",
+    "showKey": "Show key",
+    "hideKey": "Hide key",
+    "keyKept": "Your saved key stays in place. Switch to “Use a new key” to replace it.",
+    "keyPrivacy": "Encrypted on our servers. Only the last 4 characters are ever shown.",
+    "keyIssues": {
+      "required": "Paste an API key to continue.",
+      "malformed": "This doesn't look like a full API key.",
+      "mismatch": "This looks like a {provider} key."
+    },
+    "switchTo": "Switch to {provider}",
+    "model": "Model",
+    "recommended": "Recommended",
+    "otherModel": "Other…",
+    "modelPlaceholder": "Type a model ID",
+    "modelLabel": "Model",
+    "keyLabel": "Key",
+    "connect": "Verify & connect",
+    "saveChanges": "Verify & save",
     "verifying": "Checking with provider…",
-    "verifyNote": "We send one short test request to confirm the key and model before saving."
+    "verifyNote": "We send one short test request to confirm the key and model before saving.",
+    "saved": "AI provider connected",
+    "savedHint": "{provider} is now on for this branch.",
+    "saveError": "Could not save AI settings",
+    "goDashboard": "Go to dashboard",
+    "power": {
+      "pause": "Pause AI",
+      "resume": "Resume AI",
+      "paused": "AI paused",
+      "resumed": "AI resumed",
+      "failed": "Couldn't change AI status"
+    },
+    "keyMode": {
+      "keep": "Keep current key",
+      "replace": "Use a new key"
+    },
+    "keySaved": "Saved & encrypted",
+    "keyReplacing": "The new key replaces the saved one only after it's verified. Switch back to keep the current key.",
+    "throttled": {
+      "title": "Saved — provider is busy",
+      "body": "{provider} accepted the settings but is busy right now (quota, rate limit or high demand). AI answers start as soon as it clears — check billing if this persists."
+    }
   },
   "setup": {
     "brand": "WODI",

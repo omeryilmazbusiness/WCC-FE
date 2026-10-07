@@ -8,7 +8,14 @@ export type AISetup = {
   keyHint: string;
   setupCompleted: boolean;
   acceptedProviders: AIProvider[];
+  /**
+   * Result of the provider check on the last save only: `throttled` means the key was
+   * accepted but the provider is over quota / rate limit right now.
+   */
+  verification?: AIVerification;
 };
+
+export type AIVerification = "passed" | "skipped" | "throttled";
 
 /** Latest AI briefing; `available` is false until one has been generated. */
 export type DailySummary = {
@@ -97,28 +104,40 @@ export type OCRResult = {
 };
 
 /** `models[0]` mirrors the backend default used when the model field is left blank. */
-export const AI_PROVIDERS: {
+export type AIProviderInfo = {
   id: AIProvider;
   label: string;
+  /** Short brand name for compact UI. */
+  name: string;
   hint: string;
   models: string[];
-}[] = [
+  /** Where an admin creates a key (opens in a new tab). */
+  keyUrl: string;
+};
+
+export const AI_PROVIDERS: AIProviderInfo[] = [
   {
     id: "openai",
     label: "OpenAI (GPT)",
+    name: "OpenAI",
     hint: "sk-…",
     models: ["gpt-6-luna", "gpt-6.1-sol", "gpt-6-astra"],
+    keyUrl: "https://platform.openai.com/api-keys",
   },
   {
     id: "anthropic",
     label: "Anthropic (Claude)",
+    name: "Claude",
     hint: "sk-ant-…",
     models: ["claude-haiku-4-5", "claude-sonnet-5", "claude-opus-5-5"],
+    keyUrl: "https://console.anthropic.com/settings/keys",
   },
   {
     id: "gemini",
     label: "Google Gemini",
+    name: "Gemini",
     hint: "AIza…",
     models: ["gemini-3.5-flash", "gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-2.5-pro"],
+    keyUrl: "https://aistudio.google.com/apikey",
   },
 ];

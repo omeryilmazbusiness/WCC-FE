@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useReducer, useRef } from "react";
+import { useCallback, useEffect, useReducer, useRef } from "react";
 import {
   AssistantError,
   activeConversation,
@@ -23,13 +23,17 @@ const newId = () =>
 type Turn = { role: "user" | "assistant"; content: string };
 
 /**
+ * The first tab is rendered on the server too, so its id must be identical on both sides;
+ * `useId` is not, because the shell tree differs by permission. One assistant per page.
+ */
+const FIRST_CONVERSATION_ID = "chat-1";
+
+/**
  * Up to `MAX_CONVERSATIONS` chats side by side. Each tab streams on its own, so a
  * reply keeps arriving in a background tab while the viewer works in another.
  */
 export function useAssistantConversations(transport: AssistantTransport, context: AssistantContext) {
-  // The first tab is rendered on the server too, so its id must match on both sides.
-  const firstId = useId();
-  const [state, dispatch] = useReducer(conversationsReducer, firstId, (id) => initialConversations(id, 0));
+  const [state, dispatch] = useReducer(conversationsReducer, FIRST_CONVERSATION_ID, (id) => initialConversations(id, 0));
   const stateRef = useRef(state);
   const contextRef = useRef(context);
   const controllers = useRef(new Map<string, AbortController>());

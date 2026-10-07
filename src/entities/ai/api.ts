@@ -44,6 +44,9 @@ function mapSetup(raw: Raw): AISetup {
     keyHint: str(raw.key_hint ?? raw.keyHint),
     setupCompleted: Boolean(raw.setup_completed ?? raw.setupCompleted),
     acceptedProviders: providers as AIProvider[],
+    ...(raw.verification === "passed" || raw.verification === "skipped" || raw.verification === "throttled"
+      ? { verification: raw.verification }
+      : {}),
   };
 }
 
@@ -116,6 +119,8 @@ export type AIRepository = {
     apiKey: string;
     model?: string;
   }): Promise<AISetup>;
+  /** Pauses AI for the branch; the stored key is kept for a later resume. */
+  disable(): Promise<AISetup>;
   dailySummary(): Promise<DailySummary>;
   generateDailySummary(): Promise<DailySummary>;
   leadDraft(conversationId: string): Promise<LeadDraftResult>;
@@ -156,6 +161,10 @@ class ApiRepo implements AIRepository {
         }),
       }),
     );
+  }
+
+  async disable() {
+    return mapSetup(await this.http.request<Raw>("/ai/setup/disable", { method: "POST" }));
   }
 
   async dailySummary() {
@@ -269,6 +278,10 @@ class MemoryRepo implements AIRepository {
   }
 
   async completeSetup(): Promise<AISetup> {
+    return offline();
+  }
+
+  async disable(): Promise<AISetup> {
     return offline();
   }
 
