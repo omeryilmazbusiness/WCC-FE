@@ -3,11 +3,11 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, ChevronsDownUp, ChevronsUpDown, SearchX } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { faqAnchor, searchFaq, type FaqEntry, type FaqTopicId } from "@/entities/faq";
+import { faqAnchor, searchFaq, useFaqCatalog, type FaqEntry, type FaqTopicId, type FaqTopicView } from "@/entities/faq";
+import { usePermissions } from "@/entities/viewer";
 import { Link } from "@/shared/i18n/navigation";
 import { cn } from "@/shared/lib/cn";
 import { GlyphTile, InsetGroup, SearchField } from "@/shared/ui";
-import { useFaqCatalog, type FaqTopicView } from "../../model/use-faq-catalog";
 import { FaqItem } from "./faq-item";
 import { FAQ_TOPIC_LOOK } from "./faq-look";
 
@@ -33,7 +33,7 @@ function groupHits(topics: readonly FaqTopicView[], hits: readonly FaqEntry[]): 
 /** Searchable help for every screen the viewer can open, grouped by topic. */
 export function FaqSection() {
   const t = useTranslations("faq.ui");
-  const topics = useFaqCatalog();
+  const topics = useFaqCatalog(usePermissions());
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<TopicFilter>("all");
   const [open, setOpen] = useState<ReadonlySet<string>>(() => new Set());

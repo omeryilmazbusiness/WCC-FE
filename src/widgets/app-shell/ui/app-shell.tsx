@@ -9,9 +9,8 @@ import { usePathname, useWorkspaceRef, WorkspaceRefProvider } from "@/shared/i18
 import { cn } from "@/shared/lib/cn";
 import type { WorkspaceRef } from "@/shared/lib/workspace-path";
 import { ToastProvider } from "@/shared/ui";
-import { createPreviewTransport } from "@/entities/assistant";
 import { ViewerProvider, useCan, useViewer } from "@/entities/viewer";
-import { AssistantBubble, AssistantPanel, AssistantProvider } from "@/features/ai-assistant";
+import { AssistantBubble, AssistantPanel, AssistantProvider, useAssistantTransport } from "@/features/ai-assistant";
 import { SessionExpiryWatcher } from "@/features/auth-by-credentials";
 import { createUiPreferenceRepository } from "@/entities/ui-preference";
 import { activeNavHref, visibleNavGroups } from "../model/nav";
@@ -133,11 +132,11 @@ function ShellFrame({
   );
 }
 
-/** The shell-wide assistant: a pinned bubble and one panel; the backend later swaps in a live transport. */
+/** The shell-wide assistant: a pinned bubble and one panel, answering from Help & FAQ first, then the backend. */
 function ShellAssistant({ groups, activeHref }: { groups: ReturnType<typeof visibleNavGroups>; activeHref: ReturnType<typeof activeNavHref> }) {
   const tNav = useTranslations("nav");
   const workspace = useWorkspaceRef();
-  const transport = useMemo(() => createPreviewTransport(), []);
+  const transport = useAssistantTransport();
   const active = groups.flatMap((g) => g.items).find((item) => item.href === activeHref);
 
   return (

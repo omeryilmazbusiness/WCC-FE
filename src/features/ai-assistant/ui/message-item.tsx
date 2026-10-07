@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import type { ChatFeedback, ChatMessage } from "@/entities/assistant";
 import { cn } from "@/shared/lib/cn";
 import { AssistantOrb } from "./assistant-orb";
+import { ReplyMetaLine } from "./reply-meta";
 import { RichText } from "./rich-text";
 
 type Props = {
@@ -53,11 +54,17 @@ function AssistantReply({ message, isLast, onRetry, onFeedback }: Props) {
         ) : message.status === "error" ? (
           <div className="flex items-start gap-2 rounded-2xl bg-rose-50 px-3 py-2.5 text-[13.5px] text-rose-700" role="alert">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-            <span className="flex-1">{t(`errors.${message.errorCode === "not_configured" ? "notConfigured" : "unavailable"}`)}</span>
+            <span className="flex-1">{t(`errors.${errorKey(message.errorCode)}`)}</span>
           </div>
         ) : (
           <RichText text={message.content} caret={message.status === "streaming"} />
         )}
+        {message.meta && message.status !== "error" && !waiting ? (
+          <ReplyMetaLine
+            meta={message.meta}
+            onAskAI={message.meta.source === "faq" && isLast && message.status === "done" ? () => onRetry(message.id) : undefined}
+          />
+        ) : null}
         {message.status === "stopped" ? <p className="mt-1.5 text-[12px] font-medium text-zinc-400">{t("stopped")}</p> : null}
 
         {message.status !== "streaming" ? (
@@ -100,6 +107,18 @@ function AssistantReply({ message, isLast, onRetry, onFeedback }: Props) {
       </div>
     </div>
   );
+}
+
+const ERROR_KEYS: Record<string, string> = {
+  not_configured: "notConfigured",
+  forbidden: "forbidden",
+  rate_limited: "rateLimited",
+  invalid: "invalid",
+  offline: "offline",
+};
+
+function errorKey(code: string | undefined): string {
+  return (code && ERROR_KEYS[code]) || "unavailable";
 }
 
 function Action({ label, onClick, pressed, testId, children }: { label: string; onClick: () => void; pressed?: boolean; testId?: string; children: React.ReactNode }) {

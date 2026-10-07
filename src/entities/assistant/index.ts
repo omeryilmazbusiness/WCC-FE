@@ -8,7 +8,23 @@ export {
   type ChatMessage,
   type ChatMessageStatus,
   type ChatRole,
+  type AssistantQuota,
+  type ReplyMeta,
+  type ReplyNotice,
+  type ReplySource,
 } from "./model/types";
+export { abortableSleep, revealDelay, revealPieces } from "./model/stream";
+export { createLiveTransport, fetchAssistantProtocol } from "./api/live";
+export {
+  createHttpTransport,
+  requestAssistantProtocol,
+  parseChatReply,
+  parseProtocol,
+  parseQuota,
+  toAssistantError,
+  type AssistantProtocol,
+  type ProtocolCapability,
+} from "./api/assistant-api";
 export {
   HISTORY_TURNS,
   INITIAL_CHAT,

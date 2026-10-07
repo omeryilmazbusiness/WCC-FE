@@ -1,9 +1,13 @@
-import type { ChatFeedback, ChatMessage, ChatRole } from "./types";
+import type { ChatFeedback, ChatMessage, ChatRole, ReplyMeta } from "./types";
 
 /** Longest prompt accepted; mirrors the limit the backend will enforce. */
 export const MAX_PROMPT_CHARS = 4000;
 /** Turns sent as history with each question, newest last. */
-export const HISTORY_TURNS = 20;
+/** Messages of context sent with a question; the backend uses at most 4 turns, so more only costs bandwidth. */
+export const HISTORY_TURNS = 8;
+
+/** Replies the model never needs as context: fixed FAQ and rule texts. */
+const CANNED_SOURCES = new Set(["faq", "rule"]);
 
 export type ChatState = { messages: ChatMessage[] };
 
@@ -11,6 +15,7 @@ export const INITIAL_CHAT: ChatState = { messages: [] };
 
 export type ChatAction =
   | { type: "send"; userId: string; replyId: string; text: string; now: number }
+  | { type: "meta"; id: string; meta: ReplyMeta }
   | { type: "delta"; id: string; text: string }
   | { type: "finish"; id: string }
   | { type: "stop"; id: string }
@@ -56,6 +61,8 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
         ],
       };
     }
+    case "meta":
+      return patch(state, action.id, (m) => (m.status === "streaming" ? { ...m, meta: action.meta } : m));
     case "delta":
       return patch(state, action.id, (m) => (m.status === "streaming" ? { ...m, content: m.content + action.text } : m));
     case "finish":
@@ -68,7 +75,7 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       if (isStreaming(state)) return state;
       const last = state.messages.at(-1);
       if (!last || last.id !== action.id || last.role !== "assistant") return state;
-      return patch(state, action.id, (m) => ({ ...m, content: "", status: "streaming", errorCode: undefined, feedback: undefined, createdAt: action.now }));
+      return patch(state, action.id, (m) => ({ ...m, content: "", status: "streaming", errorCode: undefined, feedback: undefined, meta: undefined, createdAt: action.now }));
     }
     case "feedback":
       return patch(state, action.id, (m) => (m.role === "assistant" ? { ...m, feedback: action.value } : m));
@@ -79,12 +86,13 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
 }
 
 /**
- * History sent with a question: finished turns only (failed or empty replies are
- * dropped), capped to the newest `HISTORY_TURNS`.
+ * History sent with a question: finished turns only (failed, empty and canned
+ * FAQ / rule replies are dropped), capped to the newest `HISTORY_TURNS`.
  */
 export function historyFor(messages: readonly ChatMessage[]): { role: ChatRole; content: string }[] {
   return messages
     .filter((m) => m.status !== "streaming" && m.status !== "error" && m.content.trim() !== "")
+    .filter((m) => !(m.role === "assistant" && m.meta && CANNED_SOURCES.has(m.meta.source)))
     .slice(-HISTORY_TURNS)
     .map((m) => ({ role: m.role, content: m.content }));
 }

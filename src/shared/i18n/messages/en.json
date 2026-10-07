@@ -6197,6 +6197,21 @@
         "title": "Help & FAQ",
         "hint": "Answers for every screen",
         "description": "How to use every screen, in plain words. Search or browse by topic."
+      },
+      "ai": {
+        "title": "AI protocol",
+        "hint": "What WODI AI can and can't do",
+        "description": "What WODI AI is allowed to do for you, how it answers, and the rules it always follows."
+      },
+      "support": {
+        "title": "Get help",
+        "hint": "Send a request to the WODI team",
+        "description": "Tell us what's wrong or what you need. The WODI platform team reads every request and replies here."
+      },
+      "supportInbox": {
+        "title": "Support inbox",
+        "hint": "Help requests from every company",
+        "description": "Requests sent from Settings by every company. Set a status and reply — the requester sees your note."
       }
     },
     "roles": {
@@ -6239,7 +6254,8 @@
         "ai": "AI assistant",
         "settings": "Settings",
         "setup": "Company setup",
-        "companies": "Companies"
+        "companies": "Companies",
+        "support": "Support"
       },
       "actions": {
         "read": "View",
@@ -6390,6 +6406,154 @@
         "noTeam": "Not assigned",
         "memberSince": "Member since"
       }
+    },
+    "aiProtocol": {
+      "status": {
+        "title": "WODI AI",
+        "full": "Full answers",
+        "essential": "Essential mode",
+        "ready": "Connected. Answers are short, grounded in your data and limited to what your role can see.",
+        "notConfigured": "AI isn't set up for this company yet. You still get Help & FAQ answers and essentials from your data.",
+        "quotaReached": "Today's AI answers are used up. You still get Help & FAQ answers and essentials from your data."
+      },
+      "quota": {
+        "title": "AI answers today",
+        "used": "{used} of {limit} used",
+        "unlimited": "No daily limit",
+        "hint": "Help & FAQ, saved and data answers don't count. You're never blocked; past the limit answers become shorter.",
+        "resets": "Resets at {time}."
+      },
+      "pipeline": {
+        "title": "How it answers",
+        "footer": "Each step is tried in order; the AI model is only used when nothing cheaper can answer.",
+        "steps": {
+          "faq": {
+            "title": "Help & FAQ",
+            "body": "Questions about screens are answered instantly from Help & FAQ, without AI."
+          },
+          "rules": {
+            "title": "Fixed rules",
+            "body": "Greetings, off-topic requests and actions your role can't use get a fixed reply."
+          },
+          "data": {
+            "title": "Your data",
+            "body": "Only the few figures the question needs, from what your role may see."
+          },
+          "cache": {
+            "title": "Saved answers",
+            "body": "The same question on unchanged data reuses the last answer for a few minutes."
+          },
+          "ai": {
+            "title": "AI model",
+            "body": "A short, focused request with your question and the needed figures only."
+          }
+        }
+      },
+      "capabilities": {
+        "title": "What it can do",
+        "footer": "WODI AI only does these tasks. Anything else gets a polite \"I can't help with that\".",
+        "usesData": "Uses your data",
+        "usesModel": "Uses AI",
+        "noModel": "No AI needed",
+        "needs": "Needs",
+        "allowed": "Allowed for you",
+        "locked": "Not allowed for your role",
+        "items": {
+          "ops_summary": {
+            "title": "Operations summary",
+            "body": "Today's open leads, overdue tasks, unpaid bookings and missing documents."
+          },
+          "lead_focus": {
+            "title": "Lead focus",
+            "body": "Which leads and items need attention first, and why."
+          },
+          "revenue_status": {
+            "title": "Revenue vs target",
+            "body": "Where you stand against your target for the current period."
+          },
+          "message_draft": {
+            "title": "Message drafts",
+            "body": "Drafts a short customer message for you to review. It never sends anything."
+          },
+          "app_help": {
+            "title": "How-to help",
+            "body": "Explains how to do something in WODI, starting from Help & FAQ."
+          }
+        }
+      },
+      "rules": {
+        "title": "Rules it always follows",
+        "footer": "These rules are enforced by the server for every message.",
+        "items": {
+          "read_only": {
+            "title": "Read-only",
+            "body": "It never creates, changes or deletes anything."
+          },
+          "no_send": {
+            "title": "Never sends",
+            "body": "Drafts stay drafts; only you can send a message."
+          },
+          "own_scope": {
+            "title": "Your access only",
+            "body": "It sees exactly what your role and branch allow, nothing more."
+          },
+          "no_invented_numbers": {
+            "title": "No made-up numbers",
+            "body": "Figures come from your data; if a number isn't there, it says so."
+          },
+          "minimal_data": {
+            "title": "Minimal data",
+            "body": "Only the few figures a question needs are shared, never full records or personal details."
+          },
+          "faq_first": {
+            "title": "Help & FAQ first",
+            "body": "Questions about screens are answered from Help & FAQ before AI is asked."
+          },
+          "fixed_capabilities": {
+            "title": "Fixed tasks",
+            "body": "It only does the tasks listed here."
+          },
+          "never_blocked": {
+            "title": "Never blocked",
+            "body": "Past the daily limit or without AI, you still get essential answers."
+          },
+          "audited": {
+            "title": "Recorded",
+            "body": "Every AI request is logged with its cost, without storing your message text."
+          },
+          "user_language": {
+            "title": "Your language",
+            "body": "It answers in the language you use the app in."
+          }
+        }
+      },
+      "limits": {
+        "body": "Messages can be up to {chars} characters. It remembers the last {turns} turns of a conversation, and saved answers last {minutes} minutes.",
+        "version": "Protocol {version}"
+      }
+    },
+    "support": {
+      "newTitle": "New request",
+      "mineTitle": "Your requests",
+      "mineFooter": "Tap a request to see the details and the team's reply.",
+      "mineEmpty": "You haven't sent any requests yet.",
+      "reply": "Reply from the WODI team",
+      "awaiting": "We've got it — the team will reply here.",
+      "resolvedNoReply": "Marked as resolved.",
+      "resolvedAt": "Resolved {date}"
+    },
+    "supportInbox": {
+      "filter": "Filter by status",
+      "all": "All",
+      "search": "Search title, person or company",
+      "footer": "Showing {shown} of {total}",
+      "empty": "No requests here. 🎉",
+      "noMatches": "No requests match your search.",
+      "more": "Show more",
+      "narrow": "Use search or a status to narrow the list",
+      "requester": "Requester",
+      "workspace": "Company / branch",
+      "language": "Language"
     }
   },
   "faq": {
@@ -7147,7 +7311,11 @@
     "disclaimer": "WODI AI can make mistakes. Check important figures before acting.",
     "errors": {
       "unavailable": "The assistant couldn't answer right now. Try again.",
-      "notConfigured": "AI isn't set up for this company yet. Ask an admin to finish AI setup."
+      "notConfigured": "AI isn't set up for this company yet. Ask an admin to finish AI setup.",
+      "forbidden": "Your role can't use WODI AI for this.",
+      "rateLimited": "Too many messages in a short time. Wait a moment and try again.",
+      "invalid": "That message couldn't be sent. Shorten it and try again.",
+      "offline": "You're offline. Check your connection and try again."
     },
     "tabs": {
       "label": "Conversations",
@@ -7155,6 +7323,64 @@
       "new": "New conversation",
       "close": "Close “{title}”",
       "busy": "Answering"
+    },
+    "meta": {
+      "sources": {
+        "faq": "From Help & FAQ",
+        "data": "From your data",
+        "cache": "Saved answer",
+        "ai": "WODI AI",
+        "rule": "WODI AI",
+        "preview": "Preview"
+      },
+      "notices": {
+        "quota_reached": "You've used today's AI answers, so this is the essential answer from your data.",
+        "not_configured": "AI isn't set up for this company yet, so this is the essential answer from your data.",
+        "ai_unavailable": "AI is busy right now, so this is the essential answer from your data.",
+        "not_allowed": "Your role can't use this. Ask your manager if you need it."
+      },
+      "resets": "Full answers return at {time}.",
+      "openHelp": "Open in Help",
+      "askAI": "Ask AI instead"
+    }
+  },
+  "support": {
+    "status": {
+      "open": "Open",
+      "in_progress": "In progress",
+      "resolved": "Resolved"
+    },
+    "form": {
+      "title": "Title",
+      "titlePlaceholder": "e.g. Export to Excel fails on Bookings",
+      "description": "Description",
+      "descriptionPlaceholder": "What happened, what you expected, and the steps to reproduce it.",
+      "footer": "Your name, company and branch are attached so we can help faster.",
+      "send": "Send request",
+      "sending": "Sending…",
+      "sent": "Request #{number} sent",
+      "sentHint": "We'll reply in Settings → Get help.",
+      "failed": "Couldn't send your request",
+      "issues": {
+        "title": {
+          "short": "Use at least 4 characters.",
+          "long": "Keep it under 120 characters."
+        },
+        "description": {
+          "short": "Add a few more details (at least 10 characters).",
+          "long": "Keep it under 4000 characters."
+        }
+      }
+    },
+    "editor": {
+      "status": "Status",
+      "note": "Reply to requester",
+      "notePlaceholder": "Visible to the person who sent the request",
+      "noteHint": "The requester sees this note.",
+      "noteTooLong": "Keep it under 1000 characters.",
+      "save": "Save",
+      "saved": "Request updated",
+      "failed": "Couldn't update the request"
     }
   }
 }

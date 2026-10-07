@@ -62,6 +62,8 @@ export const PERMISSIONS = [
   "setup.manage",
   "branches.manage",
   "companies.manage",
+  "support.write",
+  "support.manage",
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -166,9 +168,9 @@ export function homeFor(role: AppRole, granted: readonly string[]): string {
  * and the backend is unreachable. Never consulted for a real session.
  */
 export const DEMO_ROLE_PERMISSIONS: Record<AppRole, readonly Permission[]> = {
-  gm: PERMISSIONS.filter((p) => p !== "companies.manage"),
+  gm: PERMISSIONS.filter((p) => p !== "companies.manage" && p !== "support.manage"),
   // Platform operator: belongs to no company and holds no company-data permission.
-  admin: ["companies.manage", "users.read", "users.write", "users.unlock", "audit.read", "ops.read"],
+  admin: ["companies.manage", "users.read", "users.write", "users.unlock", "audit.read", "ops.read", "support.manage"],
   manager: PERMISSIONS.filter(
     (p) =>
       p !== "users.write" &&
@@ -178,7 +180,8 @@ export const DEMO_ROLE_PERMISSIONS: Record<AppRole, readonly Permission[]> = {
       p !== "fx.manage" &&
       p !== "setup.manage" &&
       p !== "branches.manage" &&
-      p !== "companies.manage",
+      p !== "companies.manage" &&
+      p !== "support.manage",
   ),
   employee: [
     "branches.read", "customers.read", "customers.write", "leads.read", "leads.write",
@@ -187,6 +190,7 @@ export const DEMO_ROLE_PERMISSIONS: Record<AppRole, readonly Permission[]> = {
     "hotels.read",
     "inbox.read", "inbox.write", "targets.read", "imports.read",
     "notifications.read", "notifications.write", "reports.read", "ai.read", "ai.write",
+    "support.write",
   ],
   finance: [
     "branches.read", "customers.read", "payments.read", "payments.write", "payments.approve",
@@ -194,7 +198,7 @@ export const DEMO_ROLE_PERMISSIONS: Record<AppRole, readonly Permission[]> = {
     "suppliers.finance", "hotels.read",
     "tasks.read", "targets.read", "imports.read", "imports.write",
     "notifications.read", "notifications.write", "reports.read", "reports.export",
-    "ai.read", "settings.read",
+    "ai.read", "settings.read", "support.write",
   ],
   operations: [
     "branches.read", "customers.read", "customers.write", "pii.read",
@@ -203,7 +207,7 @@ export const DEMO_ROLE_PERMISSIONS: Record<AppRole, readonly Permission[]> = {
     "packages.read", "packages.write", "hotels.read", "hotels.write", "tasks.read", "tasks.write",
     "inbox.read", "inbox.write", "integrations.read", "imports.read", "imports.write",
     "notifications.read", "notifications.write", "reports.read", "reports.export",
-    "ai.read", "ai.write", "settings.read",
+    "ai.read", "ai.write", "settings.read", "support.write",
   ],
 };
 

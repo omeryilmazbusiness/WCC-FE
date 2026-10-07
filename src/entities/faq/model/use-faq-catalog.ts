@@ -2,8 +2,8 @@
 
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { visibleFaqTopics, type FaqEntry, type FaqTopic, type FaqTopicId } from "@/entities/faq";
-import { usePermissions } from "@/entities/viewer";
+import type { FaqTopic, FaqTopicId } from "./catalog";
+import { visibleFaqTopics, type FaqEntry } from "./search";
 
 export type FaqTopicView = {
   id: FaqTopicId;
@@ -13,13 +13,12 @@ export type FaqTopicView = {
   entries: FaqEntry[];
 };
 
-/** Topics the viewer may read, with their copy resolved for the current locale. */
-export function useFaqCatalog(): FaqTopicView[] {
+/** Topics the viewer may read (by their `granted` permissions), with copy resolved for the current locale. */
+export function useFaqCatalog(granted: readonly string[]): FaqTopicView[] {
   const t = useTranslations("faq.topics");
-  const permissions = usePermissions();
   return useMemo(
     () =>
-      visibleFaqTopics(permissions).map((topic) => {
+      visibleFaqTopics(granted).map((topic) => {
         const id = topic.id as FaqTopicId;
         return {
           id,
@@ -34,6 +33,6 @@ export function useFaqCatalog(): FaqTopicView[] {
           })),
         };
       }),
-    [permissions, t],
+    [granted, t],
   );
 }

@@ -47,13 +47,14 @@ export function useAssistantConversations(transport: AssistantTransport, context
   const chat = useCallback((id: string, action: ChatAction) => dispatch({ type: "chat", id, action }), []);
 
   const run = useCallback(
-    async (conversationId: string, replyId: string, messages: Turn[]) => {
+    async (conversationId: string, replyId: string, messages: Turn[], options?: { skipFaq?: boolean }) => {
       const controller = new AbortController();
       controllers.current.set(conversationId, controller);
       try {
-        for await (const chunk of transport.stream({ messages, context: contextRef.current }, controller.signal)) {
+        for await (const chunk of transport.stream({ messages, context: contextRef.current, options }, controller.signal)) {
           if (controller.signal.aborted || chunk.type === "done") break;
-          chat(conversationId, { type: "delta", id: replyId, text: chunk.text });
+          if (chunk.type === "meta") chat(conversationId, { type: "meta", id: replyId, meta: chunk.meta });
+          else chat(conversationId, { type: "delta", id: replyId, text: chunk.text });
         }
         chat(conversationId, { type: controller.signal.aborted ? "stop" : "finish", id: replyId });
       } catch (err) {
@@ -79,13 +80,14 @@ export function useAssistantConversations(transport: AssistantTransport, context
     [chat, run],
   );
 
+  /** Regenerates the last reply; it always asks the assistant, never Help & FAQ again. */
   const retry = useCallback(
     (messageId: string) => {
       const current = activeConversation(stateRef.current);
       const messages = current.chat.messages;
       if (isStreaming(current.chat) || messages.at(-1)?.id !== messageId) return;
       chat(current.id, { type: "retry", id: messageId, now: Date.now() });
-      void run(current.id, messageId, historyFor(messages.slice(0, -1)));
+      void run(current.id, messageId, historyFor(messages.slice(0, -1)), { skipFaq: true });
     },
     [chat, run],
   );

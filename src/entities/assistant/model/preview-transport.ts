@@ -1,3 +1,4 @@
+import { abortableSleep, revealPieces } from "./stream";
 import type { AssistantChunk, AssistantRequest, AssistantTransport } from "./types";
 
 type Intent = "summary" | "leads" | "revenue" | "followUp" | "fallback";
@@ -49,22 +50,16 @@ export function previewReply(request: AssistantRequest): string {
   return REPLIES[request.context.locale][previewIntent(last)];
 }
 
-const sleep = (ms: number, signal: AbortSignal) =>
-  new Promise<void>((resolve, reject) => {
-    if (signal.aborted) return reject(signal.reason);
-    const timer = setTimeout(resolve, ms);
-    signal.addEventListener("abort", () => (clearTimeout(timer), reject(signal.reason)), { once: true });
-  });
-
 /** Streams the sample reply word by word, so the UI behaves exactly as with the live API. */
 export function createPreviewTransport({ firstTokenMs = 650, tokenMs = 22 } = {}): AssistantTransport {
   return {
     mode: "preview",
     async *stream(request, signal): AsyncIterable<AssistantChunk> {
-      await sleep(firstTokenMs, signal);
-      for (const piece of previewReply(request).match(/\S+\s*|\s+/g) ?? []) {
+      await abortableSleep(firstTokenMs, signal);
+      yield { type: "meta", meta: { source: "preview" } };
+      for (const piece of revealPieces(previewReply(request))) {
         yield { type: "delta", text: piece };
-        if (tokenMs > 0) await sleep(tokenMs, signal);
+        if (tokenMs > 0) await abortableSleep(tokenMs, signal);
       }
       yield { type: "done" };
     },
