@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test:i18n": "node scripts/check-i18n-keys.mjs",
     "test:settings": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs scripts/selftest-settings.ts",
+    "test:faq": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs scripts/selftest-faq.ts",
     "test:profile": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs scripts/selftest-profile.ts",
     "test:setup-flow": "node --experimental-strip-types scripts/selftest-setup-flow.ts",
     "test:geo": "node --experimental-strip-types scripts/selftest-geo.ts",

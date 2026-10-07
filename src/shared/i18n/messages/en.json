@@ -6169,7 +6169,8 @@
     "welcomeBody": "Pick an item on the left to view or change it.",
     "groups": {
       "account": "Account",
-      "access": "Team & access"
+      "access": "Team & access",
+      "support": "Help"
     },
     "sections": {
       "profile": {
@@ -6191,6 +6192,11 @@
         "title": "Audit log",
         "hint": "Who changed what, and when",
         "description": "Every sign-in and change, grouped by day. Filter by area, action or person and export as CSV."
+      },
+      "faq": {
+        "title": "Help & FAQ",
+        "hint": "Answers for every screen",
+        "description": "How to use every screen, in plain words. Search or browse by topic."
       }
     },
     "roles": {
@@ -6383,6 +6389,713 @@
         "team": "Team",
         "noTeam": "Not assigned",
         "memberSince": "Member since"
+      }
+    }
+  },
+  "faq": {
+    "ui": {
+      "searchPlaceholder": "Search questions and answers",
+      "clear": "Clear search",
+      "results": "{count, plural, =0 {No answers} one {# answer} other {# answers}}",
+      "allTopics": "All topics",
+      "topicCount": "{count, plural, one {# question} other {# questions}}",
+      "openScreen": "Open screen",
+      "expandAll": "Expand all",
+      "collapseAll": "Collapse all",
+      "copyLink": "Copy link to this answer",
+      "linkCopied": "Link copied",
+      "emptyTitle": "No matching answers",
+      "emptyBody": "Try fewer or different words, or browse a topic.",
+      "footer": "Only topics for screens you can open are listed. Still stuck? Ask your general manager or contact WODI support."
+    },
+    "topics": {
+      "gettingStarted": {
+        "title": "Getting started",
+        "summary": "Signing in, moving around and the basics",
+        "items": {
+          "signIn": {
+            "q": "How do I sign in?",
+            "a": "Open your company's sign-in page (the address your manager shared, ending in your company name) and enter your work email and password. If two-step verification is on, enter the 6-digit code from your authenticator app as well. After several wrong passwords in a row the account is locked for a while; your manager can unlock it from Team."
+          },
+          "navigation": {
+            "q": "How is the menu organised?",
+            "a": "The left sidebar groups screens into Overview, Sales & CRM, Operations, Finance & reports, Tools & setup and Administration. You only see the screens your role allows. Collapse the sidebar with the button at its top to get more room; hovering the icons shows their names."
+          },
+          "favorites": {
+            "q": "How do I pin my most used screens?",
+            "a": "Drag any screen into the Favorites area at the top of the sidebar. You can pin up to 5 screens, reorder them by dragging and remove them the same way. Favorites are saved to your account, so they follow you to every device."
+          },
+          "branch": {
+            "q": "How do I switch between branches?",
+            "a": "Company-wide roles (general manager, finance and others with access to every branch) can pick a branch from the switcher in the top bar. Everything you see and create then belongs to that branch. Staff assigned to a single branch always work in their own branch."
+          },
+          "language": {
+            "q": "How do I change the language?",
+            "a": "Use the EN / AR switch in the top bar. The whole interface, including dates, numbers and the reading direction, changes immediately. Customer-facing documents can still be produced in the customer's own language."
+          },
+          "search": {
+            "q": "How do I find a customer, lead or booking quickly?",
+            "a": "Use the search box in the top bar and type at least 2 characters. It searches customers, leads, bookings, conversations, tasks, packages, departures, suppliers and passport numbers at once, and you can narrow the results by type."
+          },
+          "signOut": {
+            "q": "How do I sign out, and why was I signed out?",
+            "a": "Use the sign-out button in the top bar. For security you are also signed out when your session expires, when your password is changed or reset, or when you or an administrator ends your session from another device."
+          }
+        }
+      },
+      "account": {
+        "title": "Your account & security",
+        "summary": "Profile, password, two-step verification and devices",
+        "items": {
+          "profile": {
+            "q": "How do I update my name, job title, phone or photo?",
+            "a": "Open Settings and tap your card at the top, then edit the Personal information rows and press Save. To change the photo, tap your picture: PNG, JPEG or WebP images are cropped to a square and resized automatically."
+          },
+          "password": {
+            "q": "How do I change my password?",
+            "a": "In Settings → Profile choose Password, enter your current password and the new one twice. It needs 10 to 128 characters with letters and numbers. You stay signed in on this device; every other device is signed out."
+          },
+          "twoFactor": {
+            "q": "How do I turn on two-step verification?",
+            "a": "Open Security (from Settings → Profile → Two-factor authentication), choose Set up authenticator, scan the QR code with an app such as Google Authenticator or 1Password and enter the 6-digit code. From then on every sign-in asks for a code."
+          },
+          "recovery": {
+            "q": "What if I lose the phone with my authenticator?",
+            "a": "Use one of the recovery codes shown when you turned on two-step verification; each works once. You can create new codes on the Security screen. If you have none left, ask your general manager to reset your access."
+          },
+          "sessions": {
+            "q": "How do I see and end my signed-in devices?",
+            "a": "The Security screen lists every device signed in to your account with its browser, location and last activity. Sign out any device you don't recognise, or end all other sessions at once."
+          }
+        }
+      },
+      "manager": {
+        "title": "Manager dashboard",
+        "summary": "The branch at a glance",
+        "items": {
+          "overview": {
+            "q": "What does the manager dashboard show?",
+            "a": "A live summary of your branch: revenue and margin from the finance ledger, open balances, target pace, team workload, and exceptions that need attention such as overdue tasks, missing documents or unpaid instalments."
+          },
+          "revenue": {
+            "q": "Where do the revenue figures come from?",
+            "a": "They come from real bookings and payments in the finance ledger, in your reporting currency. Margin only counts bookings that have costs entered; outstanding shows bookings with an open balance."
+          },
+          "attention": {
+            "q": "What is the 'Needs attention' list?",
+            "a": "Open exceptions for the branch, ordered by urgency. Each item links straight to the record so you can fix it; it disappears once it is resolved."
+          },
+          "team": {
+            "q": "How do I see what each team member is working on?",
+            "a": "The team card shows the leads, tasks and bookings each person owns. Open a person's tasks to reassign work when someone is overloaded or away."
+          },
+          "period": {
+            "q": "Can I change the period?",
+            "a": "Yes. Use the period selector at the top of the dashboard; all cards refresh for the chosen range. For detailed breakdowns and exports open Reports."
+          }
+        }
+      },
+      "workspace": {
+        "title": "My workspace",
+        "summary": "Your daily queue in one place",
+        "items": {
+          "overview": {
+            "q": "What is My workspace?",
+            "a": "The home screen for agents and operations staff. It brings together your task queue, your open opportunities and your personal target pace, so you can start the day from one place."
+          },
+          "queue": {
+            "q": "In what order are tasks shown?",
+            "a": "Overdue and escalated tasks come first, then by due date and priority. Complete or cancel a task right from the queue; new follow-ups appear automatically when leads are created."
+          },
+          "pipeline": {
+            "q": "Can I move my leads from here?",
+            "a": "The workspace lists your open opportunities with their stage. To drag them between stages, open the full Pipeline board."
+          },
+          "target": {
+            "q": "What does the target card mean?",
+            "a": "It compares what you have sold or collected so far with your share of the active target, and shows whether you are ahead of or behind the expected pace."
+          }
+        }
+      },
+      "tasks": {
+        "title": "Tasks",
+        "summary": "Plan, prioritise and close work",
+        "items": {
+          "create": {
+            "q": "How do I create a task?",
+            "a": "Press New task, describe what needs doing, set the priority and due date, and pick the owner. You can link the task to a lead, customer or booking so everyone sees the context."
+          },
+          "priority": {
+            "q": "What do the priorities and SLA labels mean?",
+            "a": "Priority sets the order in the queue. SLA labels show how much time is left before the task is late; late tasks are marked overdue and can be escalated to a manager automatically."
+          },
+          "assign": {
+            "q": "How do I hand a task to someone else?",
+            "a": "Open the task and change its owner. Managers see the whole branch queue and can reassign any task; agents see the tasks they own."
+          },
+          "bulk": {
+            "q": "Can I reassign many tasks at once?",
+            "a": "Yes. In the team view select several tasks with their checkboxes and choose Assign to move them all to one owner."
+          },
+          "sources": {
+            "q": "Where do automatic tasks come from?",
+            "a": "The system creates follow-ups for new leads, payment promises, upcoming departures, missing documents and similar events. Their source is shown on the task."
+          },
+          "overdue": {
+            "q": "What happens when a task is overdue?",
+            "a": "It moves to the top of the queue, is highlighted in red and appears in the manager's attention list. Escalation rules may also notify the manager."
+          }
+        }
+      },
+      "notifications": {
+        "title": "Notifications",
+        "summary": "Alerts that need your attention",
+        "items": {
+          "what": {
+            "q": "What appears in Notifications?",
+            "a": "Alerts about tasks, leads, payments, supplier issues, reports and other events that need someone to act. The bell in the top bar shows the newest ones; the Notifications screen shows them all."
+          },
+          "states": {
+            "q": "What do open, acknowledged and resolved mean?",
+            "a": "Open alerts have not been seen by anyone yet. Acknowledge one to show you are handling it, then resolve it when it is done. Resolved alerts are kept for reference."
+          },
+          "live": {
+            "q": "Do I need to refresh the page?",
+            "a": "No. Notifications arrive live; the counter on the bell and the list update by themselves."
+          },
+          "channels": {
+            "q": "Can I get alerts by email or push?",
+            "a": "In-app alerts are always on. Email and push delivery are optional and can be turned on in the notification preferences."
+          },
+          "rules": {
+            "q": "Who decides when an alert is raised?",
+            "a": "Thresholds, SLA targets and escalation rules are set by the company's administrators. If you receive too many or too few alerts, ask your manager to adjust them."
+          }
+        }
+      },
+      "pipeline": {
+        "title": "Pipeline",
+        "summary": "Leads from first contact to booking",
+        "items": {
+          "create": {
+            "q": "How do I add a new lead?",
+            "a": "Press New lead and fill in who is asking, what they need (destination, dates, travellers, budget) and the next follow-up date. The lead starts in the New stage on the board."
+          },
+          "stages": {
+            "q": "How do I move a lead to the next stage?",
+            "a": "Drag the card to another column on the board, or change the stage in the table. Only allowed transitions are accepted; if a move is refused, the lead must first pass through the stage in between."
+          },
+          "views": {
+            "q": "Is there a list view?",
+            "a": "Yes. Switch between the Kanban board and the table at the top. The table is easier for sorting, filtering by owner or source and editing many leads."
+          },
+          "lost": {
+            "q": "What happens when I mark a lead as lost?",
+            "a": "You are asked for a lost reason. Reasons feed the sales reports, so the team can see why deals are lost."
+          },
+          "convert": {
+            "q": "How do I turn a lead into a booking?",
+            "a": "When the customer agrees, use Convert on the lead. A draft booking is created with the customer and request details, ready for travellers and services."
+          },
+          "fields": {
+            "q": "Why do child ages and airport codes matter?",
+            "a": "Child ages and travel class change flight and hotel prices. Airports are stored as IATA codes (for example IST → JED) so flight searches and quotes can be prepared automatically."
+          }
+        }
+      },
+      "inbox": {
+        "title": "Inbox",
+        "summary": "WhatsApp, Instagram, Messenger and email in one place",
+        "items": {
+          "connect": {
+            "q": "How do I connect WhatsApp, Instagram, Messenger or Gmail?",
+            "a": "A manager opens Inbox and follows the channel setup: choose the channel, paste the credentials from Meta or Google, and copy the webhook URL and verify token shown into the provider's settings. One channel is enough to start."
+          },
+          "reply": {
+            "q": "How do I reply to a conversation?",
+            "a": "Pick a conversation on the left to read the thread, type your reply at the bottom and press Send (or Ctrl/⌘ + Enter). The reply goes out on the same channel the customer used."
+          },
+          "assign": {
+            "q": "How are conversations shared within the team?",
+            "a": "Conversations sit in queues. Assign one to yourself or a colleague so everyone knows who is answering; the customer's profile and open leads are shown beside the thread."
+          },
+          "lead": {
+            "q": "Can I create a lead from a message?",
+            "a": "Yes. Use Create lead in the conversation; the name, dates, travellers, budget and package mentioned are pre-filled where possible."
+          },
+          "aiDraft": {
+            "q": "Can AI suggest a reply?",
+            "a": "If an AI provider is connected for your branch, you can ask for a draft reply. Always read and edit the draft before sending."
+          },
+          "noMessages": {
+            "q": "Why don't I see any messages?",
+            "a": "Either no channel is connected yet for this branch, or the provider has not delivered messages to the webhook. Check the channel status in the inbox setup or ask your manager."
+          }
+        }
+      },
+      "customers": {
+        "title": "Customers",
+        "summary": "Traveller profiles and documents",
+        "items": {
+          "create": {
+            "q": "How do I add a customer?",
+            "a": "Press New customer. Only the name and phone number are required; add the date of birth, nationality, passport and preferences whenever you have them."
+          },
+          "documents": {
+            "q": "How are passports and personal data protected?",
+            "a": "Passport and identity numbers are stored encrypted and shown masked. Revealing one requires permission and is recorded in the audit log. A warning appears when a passport has less than 6 months left."
+          },
+          "duplicates": {
+            "q": "What if the customer already exists?",
+            "a": "While you type, similar profiles (same phone, email or name) are suggested. You can open the existing profile instead; if you create it anyway, you can merge the two later."
+          },
+          "merge": {
+            "q": "How do I merge duplicate customers?",
+            "a": "Open the profile you want to keep and choose Merge. The other record's bookings, leads and history move to it and the duplicate becomes inactive."
+          },
+          "family": {
+            "q": "How do I link family members or companions?",
+            "a": "On the profile, use Link companion to connect a spouse, children or travel partners. Linked people can be added to the same booking in one step."
+          },
+          "history": {
+            "q": "Where do I see everything about a customer?",
+            "a": "The customer profile shows contact details, documents, family, leads, bookings, payments and conversations together, so you have the full relationship on one page."
+          }
+        }
+      },
+      "targets": {
+        "title": "Targets",
+        "summary": "Sales goals and pace",
+        "items": {
+          "create": {
+            "q": "How do I set a target?",
+            "a": "Press New target, choose the period (weekly, monthly, season, yearly or custom), set the amount and currency and choose whether it measures booked or collected revenue."
+          },
+          "measure": {
+            "q": "How is progress calculated?",
+            "a": "Progress uses the real figures from the finance ledger. Pace compares where you are with where you should be today, and the forecast projects the end-of-period result."
+          },
+          "seasonality": {
+            "q": "What is seasonality?",
+            "a": "For long periods you can enter 12 monthly weights in percent, for example more in Ramadan and Hajj months. They are normalised to 100% and spread the target realistically over the year."
+          },
+          "shares": {
+            "q": "Can I split a target between people?",
+            "a": "Yes. Give each team member a share; their personal pace then appears on their workspace and on the dashboard."
+          },
+          "delete": {
+            "q": "What happens if I delete a target?",
+            "a": "The target with its seasonality, shares and history is removed. Bookings and payments are not affected."
+          }
+        }
+      },
+      "packages": {
+        "title": "Packages",
+        "summary": "Umrah, Hajj and tour products",
+        "items": {
+          "create": {
+            "q": "How do I create a package?",
+            "a": "Press New package and work through the steps: identity (type, code, duration, quota, currency), hotels, transport, pricing, services, itinerary and requirements. Only the first step is required to save; finish the rest later."
+          },
+          "pricing": {
+            "q": "How does the pricing matrix work?",
+            "a": "Enter per-person sale prices by room type, occupancy and age band. Empty rows are not offered. Net costs are visible to staff only and are used to calculate margin."
+          },
+          "departures": {
+            "q": "What is a departure?",
+            "a": "A dated instance of the package with its own capacity and price. Bookings are always made on a departure; it keeps a snapshot of the prices so later changes don't affect existing bookings."
+          },
+          "clone": {
+            "q": "How do I add many dates quickly?",
+            "a": "Use Clone on an existing departure to copy its capacity and prices into a new date window, then adjust what differs."
+          },
+          "requirements": {
+            "q": "What are package requirements?",
+            "a": "Rules checked when travellers are added to a booking, such as minimum passport validity after departure or a mahram for women under the age limit. Bookings that break them cannot be confirmed without an override."
+          },
+          "itinerary": {
+            "q": "Do I have to write the itinerary by hand?",
+            "a": "No. Generate it from the hotels and transport in the package, then fine-tune the days. It appears in customer documents."
+          }
+        }
+      },
+      "bookings": {
+        "title": "Bookings",
+        "summary": "From draft to confirmed trip",
+        "items": {
+          "create": {
+            "q": "How do I create a booking?",
+            "a": "Convert a lead from the pipeline, or press New booking and pick the customer and package departure. Every booking starts as a draft."
+          },
+          "travellers": {
+            "q": "How do I add travellers?",
+            "a": "In the booking open Travellers and add every person with passport details. Linked family members can be added in one step; package requirements are checked as you go."
+          },
+          "confirm": {
+            "q": "Why can't I confirm a booking?",
+            "a": "Confirmation needs the readiness checklist to be complete: all travellers with valid documents, prices set and requirements met. The checklist shows exactly what is missing."
+          },
+          "override": {
+            "q": "Can I confirm despite missing documents?",
+            "a": "Users with override permission can confirm anyway by writing a reason. The reason and the person are recorded in the audit log."
+          },
+          "payments": {
+            "q": "How do I take a payment or send a payment link?",
+            "a": "Record cash, transfer or card payments in the booking's payment section, or send a pay link: the customer pays by card on the provider's secure 3D page and the payment is posted to the booking automatically."
+          },
+          "documents": {
+            "q": "How do I send the customer their documents?",
+            "a": "The Documents tab produces branded vouchers, invoices and confirmations in the customer's language. Print them or save as PDF, and use Share to send a ready-made message."
+          },
+          "cancel": {
+            "q": "How do cancellations and refunds work?",
+            "a": "Use Cancel on the booking. The penalty follows the cancellation policy by days before departure; any refund then waits for finance approval before it affects collected revenue."
+          }
+        }
+      },
+      "flights": {
+        "title": "Flights",
+        "summary": "Live fares around the customer's preferred time",
+        "items": {
+          "search": {
+            "q": "How do I search for flights?",
+            "a": "Choose where from, where to, the departure date, an optional preferred time and the travellers. Flights within 3 days of the date are listed, closest to the preferred time first."
+          },
+          "results": {
+            "q": "How should I read the results?",
+            "a": "Each fare shows the airline, times, stops, duration and price. Use the non-stop filter if the customer wants direct flights only."
+          },
+          "book": {
+            "q": "How do I book a flight?",
+            "a": "Open the fare to continue on Aviasales, where the booking is completed. Add the ticket details to the customer's booking afterwards."
+          },
+          "unavailable": {
+            "q": "Why are no fares shown?",
+            "a": "Live fares need the provider token on the server, and the provider may be temporarily unavailable. You can still search the same trip on Aviasales with one tap, or try another date or a nearby airport."
+          }
+        }
+      },
+      "hotels": {
+        "title": "Hotels",
+        "summary": "Contracts, seasons and allotments",
+        "items": {
+          "create": {
+            "q": "How do I add a hotel?",
+            "a": "Press New hotel and enter the name as it appears on vouchers, the location and distance to the landmark, the reservations contact and what the contract sells. Inactive hotels cannot be quoted."
+          },
+          "seasons": {
+            "q": "How do seasonal rates work?",
+            "a": "Add low and peak seasons with a net rate matrix per night: single is per room, double, triple and quad are per person. Seasons of one hotel cannot overlap, and prices switch automatically by stay date."
+          },
+          "markup": {
+            "q": "How is the selling price calculated?",
+            "a": "Gross price = net rate + markup. The hotel's default markup applies unless a season sets its own."
+          },
+          "children": {
+            "q": "How are children charged?",
+            "a": "Define age bands in the child policy and how each is charged per night. Each limit is exclusive: an infant limit of 2 means ages 0 to 1.99."
+          },
+          "allotment": {
+            "q": "What are allotments and stop sales?",
+            "a": "Allotments are room blocks the hotel holds for you; stop sales close dates that can no longer be sold. Both are respected when quoting."
+          }
+        }
+      },
+      "suppliers": {
+        "title": "Suppliers",
+        "summary": "Partners, balances and contracts",
+        "items": {
+          "create": {
+            "q": "How do I add a supplier?",
+            "a": "Press New supplier and fill in the master data, contacts (including an emergency contact), API connection, payment terms, markups and scope. Credentials are encrypted and never shown again."
+          },
+          "health": {
+            "q": "What does the health status mean?",
+            "a": "It shows whether the supplier's API is working. Operations can set it manually for manual suppliers or known incidents; unhealthy suppliers are avoided by smart routing."
+          },
+          "ledger": {
+            "q": "How do I track deposits and credit?",
+            "a": "The ledger lists every top-up, charge and payment with the balance after it. Finance gets an alert when the available amount drops below the threshold. You need finance access to see it."
+          },
+          "invoices": {
+            "q": "How do supplier invoices work?",
+            "a": "Record supplier bills on the supplier, approve them, and pay them from Finance → Payables, where approved invoices are planned by due date."
+          },
+          "disputes": {
+            "q": "How do I record a problem with a supplier?",
+            "a": "Open a dispute for billing or service problems, and log issues such as delays or quality problems. Together they build a history you can use in negotiations."
+          },
+          "contract": {
+            "q": "What happens when a contract expires?",
+            "a": "You are warned before the end date. Once it has expired the supplier is closed to search and routing until the contract is renewed."
+          }
+        }
+      },
+      "missingDocs": {
+        "title": "Missing documents",
+        "summary": "Chase documents before departure",
+        "items": {
+          "what": {
+            "q": "What does this screen show?",
+            "a": "For one departure, every booking that still misses required documents such as passports, visas or photos, and which traveller is affected."
+          },
+          "use": {
+            "q": "How do I use it?",
+            "a": "Pick a package and then the departure. Work down the list and contact the customers; each row links to the booking to upload or fix the document."
+          },
+          "allClear": {
+            "q": "What does 'All clear' mean?",
+            "a": "Every booking on that departure has all its required documents. Nothing needs chasing."
+          }
+        }
+      },
+      "finance": {
+        "title": "Finance",
+        "summary": "Cash, receivables, payables and profit",
+        "items": {
+          "overview": {
+            "q": "What is on the finance overview?",
+            "a": "Cash per currency, receivables, payables and net exposure (cash plus receivables minus payables), with the latest movements."
+          },
+          "treasury": {
+            "q": "How do I manage bank accounts, tills and POS?",
+            "a": "In Treasury add each bank account, cash till, virtual POS or wallet with its currency. Record income, expenses and transfers between accounts of the same currency; POS commissions are charged automatically."
+          },
+          "receivables": {
+            "q": "How do I follow up unpaid balances?",
+            "a": "Receivables groups open balances by how late they are. Tap an ageing bucket to filter, send a payment link, or record a payment promise, which creates a follow-up task for that date. Agencies over their credit limit or past the grace days are stopped from new B2B sales automatically."
+          },
+          "payables": {
+            "q": "How do I pay suppliers?",
+            "a": "Payables lists approved supplier invoices by due date and supplier deposit balances. Select several invoices to pay them together; each payment leaves the chosen account and closes the invoice."
+          },
+          "profit": {
+            "q": "Where do I see profitability and commissions?",
+            "a": "Profitability shows revenue, cost and margin, compares them with the budget and calculates the booking owner's commission as a share of the margin."
+          },
+          "recon": {
+            "q": "How do I reconcile bank transfers and BSP?",
+            "a": "Bank credits that mention a booking number (such as BK-000123) or PNR are matched automatically; match the rest by hand. Import BSP billing to compare it with ticketed bookings, and send balance letters that the other party confirms through a secure link."
+          },
+          "queues": {
+            "q": "What are the finance queues?",
+            "a": "Work lists for finance: overdue promises, payments waiting for verification, refunds waiting for approval and customer credits."
+          }
+        }
+      },
+      "fxRates": {
+        "title": "Exchange rates",
+        "summary": "Accounting rates for reporting",
+        "items": {
+          "what": {
+            "q": "Why do I need exchange rates?",
+            "a": "Bookings and payments in other currencies are converted into your reporting currency with the accounting rate of their date, so reports and the dashboard add up correctly."
+          },
+          "add": {
+            "q": "How do I add a rate?",
+            "a": "Press Add rate, choose the base and quote currency, the date and the rate (1 unit of the base currency in the quote currency). Add one rate per pair and day."
+          },
+          "live": {
+            "q": "Can I use live market rates?",
+            "a": "Yes. Live mid rates are shown for reference; adopt one to save it as today's accounting rate. Some pairs are calculated through the US dollar."
+          },
+          "missing": {
+            "q": "What if a rate is missing?",
+            "a": "Amounts on a date without a rate have no reporting value until you add one. Payments already converted keep their stored amount even if you change the rate later."
+          },
+          "converter": {
+            "q": "How does the converter work?",
+            "a": "It uses the latest rate on or before the date you choose, so you can check any historical amount."
+          }
+        }
+      },
+      "reports": {
+        "title": "Reports",
+        "summary": "Sales, targets, readiness, SLA, finance and integrations",
+        "items": {
+          "which": {
+            "q": "Which reports are available?",
+            "a": "Sales, Targets, Travel readiness, Response times (SLA), Finance and Integrations. Each has its own filters and a table you can drill into."
+          },
+          "period": {
+            "q": "How do I choose a period and filters?",
+            "a": "Pick the report, then the date range and filters such as branch, owner or source. The figures refresh straight away."
+          },
+          "export": {
+            "q": "Can I export a report?",
+            "a": "Yes. Use Export to download the current view as a CSV that opens correctly in Excel, including Arabic text. Exports are recorded in the audit log."
+          },
+          "empty": {
+            "q": "Why is my report empty?",
+            "a": "There may be no data for the chosen period or filters. Try a longer period, clear filters or pick another report."
+          }
+        }
+      },
+      "importExport": {
+        "title": "Import & export",
+        "summary": "Spreadsheets in and clean data out",
+        "items": {
+          "import": {
+            "q": "How do I import a spreadsheet?",
+            "a": "Choose what to import, then drop a CSV or Excel (.xlsx) file whose first row holds the column names. Nothing is written until you confirm on the review step."
+          },
+          "matching": {
+            "q": "My column names are different. Is that a problem?",
+            "a": "No. In the next step you match your columns to the system fields. Start from the downloadable template to skip matching entirely."
+          },
+          "review": {
+            "q": "What happens to rows with errors?",
+            "a": "The review step lists every issue before importing. You can still import; valid rows are saved and the rows with issues are reported as failed, with a downloadable error report."
+          },
+          "templates": {
+            "q": "Can I reuse my column matching?",
+            "a": "Yes. Save the matching as a template; next time, apply it with one tap when your file has the same columns. Templates are shared within the branch."
+          },
+          "export": {
+            "q": "How do I export data?",
+            "a": "Open Export, choose the dataset and download a UTF-8 CSV of your branch's data. Arabic text opens correctly in Excel, and the file can be edited and imported back."
+          },
+          "history": {
+            "q": "Where can I see previous imports?",
+            "a": "History shows the 50 most recent imports in the branch with who ran them, the results and their error reports."
+          }
+        }
+      },
+      "aiSetup": {
+        "title": "AI setup",
+        "summary": "Your own OpenAI, Claude or Gemini key",
+        "items": {
+          "what": {
+            "q": "Why do I connect my own AI provider?",
+            "a": "Each company uses its own OpenAI, Anthropic Claude or Google Gemini account. Costs and data stay with you, and WODI never shares keys between companies."
+          },
+          "connect": {
+            "q": "How do I connect a provider?",
+            "a": "Choose the provider, paste your API key and optionally pick a model, then test the connection. Once it passes, AI features turn on for the branch."
+          },
+          "features": {
+            "q": "Which features use AI?",
+            "a": "The manager summary, reply drafts in the inbox, lead priority, target insights and reading passports from photos (OCR)."
+          },
+          "security": {
+            "q": "Is my key safe?",
+            "a": "The key is encrypted on the server and never shown again after saving. Replace or remove it at any time from this screen."
+          }
+        }
+      },
+      "setup": {
+        "title": "Company setup",
+        "summary": "The guided first-time setup",
+        "items": {
+          "what": {
+            "q": "What is company setup?",
+            "a": "A guided flow for the general manager to prepare the workspace: company details and branches, staff profiles, the AI provider and message channels."
+          },
+          "steps": {
+            "q": "What do the steps contain?",
+            "a": "Company: names, logo, contact, location, currency, time zone and branches (exactly one main center). Team: staff profiles with temporary passwords. AI: your provider key. Channels: WhatsApp, Instagram, Messenger or Gmail."
+          },
+          "later": {
+            "q": "Can I finish setup later?",
+            "a": "Yes. Choose Finish later at any time; everything saved so far is kept. Setup always opens at the beginning, with your saved answers filled in."
+          },
+          "language": {
+            "q": "Why does setup start with a language choice?",
+            "a": "So the person setting up works in the language they prefer. Choosing Arabic or English switches the whole workspace to that language."
+          }
+        }
+      },
+      "team": {
+        "title": "Team",
+        "summary": "Members, roles and sign-in",
+        "items": {
+          "add": {
+            "q": "How do I add a team member?",
+            "a": "Press Add member, enter the name, work email, role, branch and team, and set a temporary password (or generate one). Share it privately; they can sign in right away and should change it after the first sign-in."
+          },
+          "roles": {
+            "q": "Which roles exist?",
+            "a": "General Manager, Manager, Agent, Operations and Finance. Each role sees only the screens and actions it needs; Settings → Roles & permissions shows exactly what each role can do."
+          },
+          "reset": {
+            "q": "How do I reset someone's password?",
+            "a": "Open the member's menu and choose Reset password. They are signed out on every device and must use the new password."
+          },
+          "deactivate": {
+            "q": "What happens when I deactivate a member?",
+            "a": "They are signed out and can no longer sign in. Their bookings and history stay. You can reactivate them at any time."
+          },
+          "unlock": {
+            "q": "A member is locked out. What do I do?",
+            "a": "Accounts lock for a while after too many wrong passwords. Choose Unlock from the member's menu to let them try again straight away."
+          },
+          "sessions": {
+            "q": "Can I sign someone out of all devices?",
+            "a": "Yes. Use End all sessions on the member; every device is signed out immediately. They can sign in again unless the account is deactivated."
+          }
+        }
+      },
+      "settings": {
+        "title": "Settings",
+        "summary": "Profile, roles, audit log and help",
+        "items": {
+          "what": {
+            "q": "What can I do in Settings?",
+            "a": "Manage your own profile, review roles and permissions, read the audit log and find answers in this help section. Only the items your role allows are listed."
+          },
+          "roles": {
+            "q": "Can I change what a role is allowed to do?",
+            "a": "Roles are defined by the platform and apply to every company, so the list is read-only. The server checks every permission again on each request."
+          },
+          "audit": {
+            "q": "What is recorded in the audit log?",
+            "a": "Every sign-in and change: who did what, when, from which device and what changed. Filter by area, action or person, grouped by day."
+          },
+          "export": {
+            "q": "Can I export the audit log?",
+            "a": "Yes. Apply the filters you need and export the result as CSV."
+          }
+        }
+      },
+      "companies": {
+        "title": "Companies (platform)",
+        "summary": "For platform operators",
+        "items": {
+          "create": {
+            "q": "How do I register a new company?",
+            "a": "In Companies press New company, enter the company name, workspace address and optional logo, and create its general manager account."
+          },
+          "gm": {
+            "q": "What happens after the company is created?",
+            "a": "Share the GM credentials securely. On first sign-in the GM is guided through company setup: details, branches, team, AI and channels."
+          },
+          "manage": {
+            "q": "What does 'suspended' mean on a company?",
+            "a": "Each company is shown as active or suspended. Users of a suspended company cannot sign in until it is active again; its data is kept."
+          }
+        }
+      },
+      "privacy": {
+        "title": "Privacy & data protection",
+        "summary": "How personal data is handled",
+        "items": {
+          "masking": {
+            "q": "Why are some numbers hidden?",
+            "a": "Passport, identity and similar personal numbers are masked by default. Users with permission can reveal them; every reveal is logged."
+          },
+          "anonymize": {
+            "q": "A customer asked us to delete their data. What do I do?",
+            "a": "Users with privacy permission can anonymise the customer (KVKK / GDPR erasure). Personal data is removed permanently while bookings and financial records are kept for accounting. A reason is required and logged."
+          },
+          "audit": {
+            "q": "Can I see who looked at or changed a record?",
+            "a": "Yes. The audit log in Settings records changes, sign-ins, exports and personal-data reveals with the person, time and device."
+          },
+          "encryption": {
+            "q": "How are passwords and keys stored?",
+            "a": "Passwords are stored as one-way hashes. Supplier credentials, AI keys and passport numbers are encrypted at rest and never shown again in full."
+          }
+        }
       }
     }
   }

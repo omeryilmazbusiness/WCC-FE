@@ -1,5 +1,5 @@
 /**
- * Self-test: iOS-style settings hub — own profile, team, roles and audit; per-role visibility and route
+ * Self-test: iOS-style settings hub — own profile, team, roles, audit and help; per-role visibility and route
  * guards, permission grouping, the persistent list layout, en/ar coverage and the redirects.
  * Run: npm run test:settings
  */
@@ -31,7 +31,7 @@ function registry() {
   assert.ok(!isSettingsDetail("nope"));
   assert.equal(settingsPath(findSettingsSection("audit")!), `${SETTINGS_ROOT}/audit`);
   assert.equal(settingsPath(findSettingsSection("team")!), "/team");
-  assert.deepEqual(ids, ["profile", "team", "roles", "audit"], "settings keeps only the essentials");
+  assert.deepEqual(ids, ["profile", "team", "roles", "audit", "faq"], "settings keeps only the essentials");
   assert.ok(isSettingsDetail("profile"), "the profile opens inside settings");
   assert.equal(findSettingsSection("profile")!.permission, undefined, "the own profile needs no extra permission");
   assert.deepEqual([...SETTINGS_HUB_PERMISSIONS].sort(), ["audit.read", "roles.read"]);
@@ -41,7 +41,7 @@ function visibility() {
   const ids = (role: keyof typeof DEMO_ROLE_PERMISSIONS) =>
     visibleSettings(DEMO_ROLE_PERMISSIONS[role]).flatMap((g) => g.sections.map((s) => s.id));
   assert.deepEqual(ids("gm"), SETTINGS_SECTIONS.map((s) => s.id), "the GM sees every section");
-  assert.deepEqual(ids("admin"), ["profile", "team", "audit"], "platform operators: profile, team and audit");
+  assert.deepEqual(ids("admin"), ["profile", "team", "audit", "faq"], "platform operators: profile, team, audit and help");
   assert.deepEqual(ids("employee"), [], "agents have no settings");
   assert.ok(ids("finance").includes("audit") && !ids("finance").includes("roles"));
   assert.ok(visibleSettings(DEMO_ROLE_PERMISSIONS.admin).every((g) => g.sections.length > 0), "empty groups are dropped");

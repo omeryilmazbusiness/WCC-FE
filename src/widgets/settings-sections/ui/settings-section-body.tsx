@@ -2,6 +2,7 @@
 
 import type { SettingsDetailId } from "@/shared/config/settings";
 import { AuditSection } from "./audit/audit-section";
+import { FaqSection } from "./faq/faq-section";
 import { ProfileSection } from "./profile/profile-section";
 import { RolesSection } from "./roles-section";
 
@@ -14,5 +15,7 @@ export function SettingsSectionBody({ section }: { section: SettingsDetailId }) 
       return <RolesSection />;
     case "audit":
       return <AuditSection />;
+    case "faq":
+      return <FaqSection />;
   }
 }

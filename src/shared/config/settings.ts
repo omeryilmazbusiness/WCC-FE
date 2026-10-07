@@ -4,18 +4,18 @@ import { routes } from "./routes";
 /** Settings hub; every section below it opens at `/admin/settings/{id}`. */
 export const SETTINGS_ROOT = routes.adminSettings;
 
-export type SettingsGroupId = "account" | "access";
+export type SettingsGroupId = "account" | "access" | "support";
 
-export const SETTINGS_GROUPS: readonly SettingsGroupId[] = ["account", "access"];
+export const SETTINGS_GROUPS: readonly SettingsGroupId[] = ["account", "access", "support"];
 
-export type SettingsSectionId = "profile" | "team" | "roles" | "audit";
+export type SettingsSectionId = "profile" | "team" | "roles" | "audit" | "faq";
 
 export type SettingsSection = {
   id: SettingsSectionId;
   group: SettingsGroupId;
   /**
    * Permission of the API the section reads; the section is hidden and its page blocked without it.
-   * Unset for the viewer's own account, which follows the hub itself.
+   * Unset for sections every settings user gets (own profile, help), which follow the hub itself.
    */
   permission?: Permission;
   /** Set when the section is a full page elsewhere; the row links there instead of a detail screen. */
@@ -28,6 +28,7 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   { id: "team", group: "access", permission: "users.read", href: routes.team },
   { id: "roles", group: "access", permission: "roles.read" },
   { id: "audit", group: "access", permission: "audit.read" },
+  { id: "faq", group: "support" },
 ];
 
 /** Sections that open as a detail screen inside settings. */

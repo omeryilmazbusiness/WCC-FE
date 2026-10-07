@@ -1,4 +1,4 @@
-import { KeyRound, ScrollText, UserRound, Users, type LucideIcon } from "lucide-react";
+import { CircleHelp, KeyRound, ScrollText, UserRound, Users, type LucideIcon } from "lucide-react";
 import type { SettingsSectionId } from "@/shared/config/settings";
 import type { Tone } from "@/shared/ui";
 
@@ -9,4 +9,5 @@ export const SECTION_LOOK: Record<SettingsSectionId, SectionLook> = {
   team: { icon: Users, tone: "sky" },
   roles: { icon: KeyRound, tone: "indigo" },
   audit: { icon: ScrollText, tone: "zinc" },
+  faq: { icon: CircleHelp, tone: "teal" },
 };
