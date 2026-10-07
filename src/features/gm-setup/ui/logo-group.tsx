@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { ImageUp, Loader2, Trash2 } from "lucide-react";
 import {
+  announceCompanyBrandingChanged,
   companyLogoUrl,
   createCompanyBrandingApi,
   logoProblem,
@@ -51,7 +52,9 @@ export function LogoGroup({ slug, name }: Props) {
     setBusy(true);
     setProblem(null);
     try {
-      setBranding(await action());
+      const next = await action();
+      setBranding(next);
+      announceCompanyBrandingChanged(next);
       feedback.success(done);
     } catch (err) {
       feedback.error(err, t("error"));

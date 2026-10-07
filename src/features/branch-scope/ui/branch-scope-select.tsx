@@ -5,10 +5,10 @@ import { Check, ChevronsUpDown, Crown, MapPin, ShieldCheck } from "lucide-react"
 import { useViewer } from "@/entities/viewer";
 import type { SessionBranch } from "@/shared/api/session";
 import { usePathname } from "@/shared/i18n/navigation";
-import { initials } from "@/shared/lib/avatar";
 import { cn } from "@/shared/lib/cn";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui";
 import { useActiveBranch } from "../model/active-branch";
+import { CompanyMark } from "./company-mark";
 
 const MONOGRAM =
   "flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-gradient-to-b from-zinc-800 to-zinc-950 text-[12px] font-semibold tracking-wide text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_6px_14px_-8px_rgba(0,0,0,0.7)]";
@@ -56,9 +56,7 @@ export function BranchScopeSelect() {
   const mainCenter = active.kind === "main_center";
   const label = (
     <>
-      <span className={MONOGRAM} aria-hidden>
-        {initials(companyName)}
-      </span>
+      <CompanyMark slug={ws.company.slug} name={companyName} />
       <span className="flex min-w-0 flex-col items-start leading-none">
         <span className="max-w-full truncate text-[13.5px] font-semibold tracking-tight text-zinc-950" data-testid="scope-company">
           {companyName}

@@ -1,5 +1,6 @@
 export {
   AssistantError,
+  SHOWN_NOTICES,
   type AssistantChunk,
   type AssistantContext,
   type AssistantRequest,
@@ -41,6 +42,7 @@ export {
   MAX_CONVERSATIONS,
   activeConversation,
   canOpenConversation,
+  hasConversationHistory,
   conversationTitle,
   conversationsReducer,
   initialConversations,

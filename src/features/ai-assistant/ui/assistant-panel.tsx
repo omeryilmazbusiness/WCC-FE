@@ -10,6 +10,7 @@ import { useAssistant } from "../model/assistant-context";
 import { useAssistantConversations } from "../model/use-assistant-conversations";
 import { AssistantEmpty } from "./assistant-empty";
 import { AssistantOrb } from "./assistant-orb";
+import { ClearChatsButton } from "./clear-chats-button";
 import { Composer, type ComposerHandle } from "./composer";
 import { ConversationTabs, conversationTabId } from "./conversation-tabs";
 import { MessageItem } from "./message-item";
@@ -181,6 +182,13 @@ export function AssistantPanel({ transport, screenLabel, screen, branchId }: Pro
             }}
             onClose={(id) => {
               chats.close(id);
+              focusComposerSoon();
+            }}
+          />
+          <ClearChatsButton
+            disabled={!chats.canClear}
+            onClear={() => {
+              chats.clearAll();
               focusComposerSoon();
             }}
           />

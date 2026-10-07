@@ -18,13 +18,14 @@ import {
   canOpenConversation,
   conversationTitle,
   conversationsReducer,
+  hasConversationHistory,
   initialConversations,
   isConversationStreaming,
   type ConversationsState,
 } from "../src/entities/assistant/model/conversations.ts";
 import { parseRichText } from "../src/entities/assistant/model/rich-text.ts";
 import { createPreviewTransport, previewIntent, previewReply } from "../src/entities/assistant/model/preview-transport.ts";
-import { AssistantError, type AssistantChunk, type AssistantRequest, type AssistantTransport } from "../src/entities/assistant/model/types.ts";
+import { AssistantError, SHOWN_NOTICES, type AssistantChunk, type AssistantRequest, type AssistantTransport } from "../src/entities/assistant/model/types.ts";
 import { revealDelay } from "../src/entities/assistant/model/stream.ts";
 import { createHttpTransport, parseChatReply, parseProtocol, toAssistantError } from "../src/entities/assistant/api/assistant-api.ts";
 import { ApiError } from "../src/shared/api/api-error.ts";
@@ -146,6 +147,16 @@ function conversations() {
   assert.deepEqual(s, initialConversations("fresh", 7), "closing the last tab leaves one fresh chat");
   assert.equal(conversationsReducer(s, { type: "close", id: "ghost", freshId: "g", now: 8 }), s);
   assert.equal(conversationsReducer(s, { type: "chat", id: "c1", action: { type: "stop", id: "a1" } }), s, "late chunks of a closed tab are ignored");
+
+  // Clear all
+  assert.ok(!hasConversationHistory(s), "a single empty chat has nothing to clear");
+  assert.equal(conversationsReducer(s, { type: "clear", freshId: "z", now: 9 }), s, "clearing nothing changes nothing");
+  let busy = conversationsReducer(s, { type: "chat", id: "fresh", action: { type: "send", userId: "u", replyId: "r", text: "Hi", now: 10 } });
+  busy = conversationsReducer(busy, { type: "open", id: "second", now: 11 });
+  assert.ok(hasConversationHistory(busy));
+  const cleared = conversationsReducer(busy, { type: "clear", freshId: "new", now: 12 });
+  assert.deepEqual(cleared, initialConversations("new", 12), "clear all leaves one fresh, empty chat");
+  assert.equal(conversationsReducer(cleared, { type: "chat", id: "fresh", action: { type: "delta", id: "r", text: "late" } }), cleared, "late chunks after clearing are ignored");
 }
 
 function richText() {
@@ -281,6 +292,18 @@ function tokenBudget() {
   assert.equal(revealDelay(10, 12), 12, "short replies type at the normal pace");
   assert.equal(revealDelay(900, 12), 1, "long replies finish within the reveal budget");
   assert.equal(revealDelay(0, 12), 0);
+}
+
+function silentFallbacks() {
+  assert.deepEqual([...SHOWN_NOTICES], ["not_allowed"], "only actionable notices are shown; fallbacks just show the source");
+  const meta = read("src/features/ai-assistant/ui/reply-meta.tsx");
+  assert.match(meta, /SHOWN_NOTICES\.has\(meta\.notice\)/);
+  const panel = read("src/features/ai-assistant/ui/assistant-panel.tsx");
+  assert.match(panel, /<ClearChatsButton\s+disabled=\{!chats\.canClear\}/, "the header has a clear-all button");
+  const hook = read("src/features/ai-assistant/model/use-assistant-conversations.ts");
+  assert.match(hook, /controllers\.current\.forEach\(\(c\) => c\.abort\(\)\);\s*controllers\.current\.clear\(\);/, "clearing stops every stream first");
+  const button = read("src/features/ai-assistant/ui/clear-chats-button.tsx");
+  assert.match(button, /if \(!confirming\) return setConfirming\(true\);/, "a single tap never deletes");
 }
 
 function metaReducer() {
@@ -443,7 +466,9 @@ function protocolCopy() {
     for (const id of BE_RULES) assert.ok(p.rules.items[id]?.title && p.rules.items[id]?.body, `${lang}: rule ${id}`);
     for (const id of BE_CAPABILITIES) assert.ok(p.capabilities.items[id]?.title && p.capabilities.items[id]?.body, `${lang}: capability ${id}`);
     for (const step of ["faq", "rules", "data", "cache", "ai"]) assert.ok(p.pipeline.steps[step]?.title, `${lang}: pipeline ${step}`);
-    for (const n of ["quota_reached", "not_configured", "ai_unavailable", "not_allowed"]) assert.ok(m.assistant.meta.notices[n], `${lang}: notice ${n}`);
+    for (const n of SHOWN_NOTICES) assert.ok(m.assistant.meta.notices[n], `${lang}: notice ${n}`);
+    for (const n of ["quota_reached", "not_configured", "ai_unavailable"]) assert.equal(m.assistant.meta.notices[n], undefined, `${lang}: fallback notice ${n} stays silent`);
+    for (const k of ["label", "confirm", "confirmShort"]) assert.ok(m.assistant.clear?.[k], `${lang}: clear.${k}`);
     for (const s of ["faq", "data", "cache", "ai", "rule", "preview"]) assert.ok(m.assistant.meta.sources[s], `${lang}: source ${s}`);
     for (const k of ["forbidden", "rateLimited", "invalid", "offline"]) assert.ok(m.assistant.errors[k], `${lang}: errors.${k}`);
     assert.match(p.quota.used, /\{used\}[\s\S]*\{limit\}/, `${lang}: quota shows used and limit`);
@@ -472,6 +497,7 @@ function settingsWiring() {
 }
 
 reducer();
+silentFallbacks();
 tokenBudget();
 metaReducer();
 await httpTransport();

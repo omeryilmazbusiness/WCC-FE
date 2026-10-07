@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "framer-motion";
-import { Rocket } from "lucide-react";
 import { createSetupRepository, type SetupOverview, type SetupStepKey } from "@/entities/setup";
 import { useRouter } from "@/shared/i18n/navigation";
 import { isRtl } from "@/shared/i18n/routing";
@@ -148,15 +147,7 @@ function SetupFlow({ initial }: { initial: SetupOverview }) {
 
   return (
     <>
-      <header className="mx-auto flex max-w-5xl items-center justify-between px-5 pt-5 sm:px-8 sm:pt-7">
-        <div className="glass-pill flex h-10 items-center gap-2.5 rounded-full ps-1.5 pe-4">
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-zinc-950">
-            <Rocket className="h-3.5 w-3.5" strokeWidth={2} />
-          </span>
-          <span className="max-w-[180px] truncate text-[13px] font-semibold tracking-[-0.01em] text-white/90">
-            {overview.company.nameEn || t("brand")}
-          </span>
-        </div>
+      <header className="mx-auto flex max-w-5xl items-center justify-end px-5 pt-5 sm:px-8 sm:pt-7">
         <PillButton
           variant="glass"
           className="h-10 px-4 text-[13px]"

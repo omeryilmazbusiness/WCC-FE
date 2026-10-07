@@ -16,6 +16,7 @@
     "test:assistant": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs scripts/selftest-assistant.ts",
     "test:support": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs scripts/selftest-support.ts",
     "test:ai-setup": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs scripts/selftest-ai-setup.ts",
+    "test:company-brand": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs scripts/selftest-company-brand.ts",
     "test:profile": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs scripts/selftest-profile.ts",
     "test:setup-flow": "node --experimental-strip-types scripts/selftest-setup-flow.ts",
     "test:geo": "node --experimental-strip-types scripts/selftest-geo.ts",

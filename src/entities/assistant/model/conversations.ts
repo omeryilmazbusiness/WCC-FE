@@ -11,6 +11,8 @@ export type ConversationsAction =
   | { type: "open"; id: string; now: number }
   | { type: "close"; id: string; freshId: string; now: number }
   | { type: "select"; id: string }
+  /** Drops every conversation and starts over with one empty tab. */
+  | { type: "clear"; freshId: string; now: number }
   | { type: "chat"; id: string; action: ChatAction };
 
 const blank = (id: string, now: number): Conversation => ({ id, createdAt: now, chat: INITIAL_CHAT });
@@ -32,6 +34,11 @@ export function canOpenConversation(state: ConversationsState): boolean {
 
 export function isConversationStreaming(c: Conversation): boolean {
   return isStreaming(c.chat);
+}
+
+/** Something to clear: a conversation has messages, or more than one tab is open. */
+export function hasConversationHistory(state: ConversationsState): boolean {
+  return state.conversations.length > 1 || state.conversations.some((c) => !isEmpty(c));
 }
 
 /** Tab title: the first question, on one line; `null` while the chat is still empty. */
@@ -56,6 +63,8 @@ export function conversationsReducer(state: ConversationsState, action: Conversa
       if (state.activeId !== action.id) return { ...state, conversations: rest };
       return { conversations: rest, activeId: rest[Math.max(0, index - 1)].id };
     }
+    case "clear":
+      return hasConversationHistory(state) ? initialConversations(action.freshId, action.now) : state;
     case "select":
       return state.conversations.some((c) => c.id === action.id) ? { ...state, activeId: action.id } : state;
     case "chat": {

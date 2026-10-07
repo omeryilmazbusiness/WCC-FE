@@ -6,6 +6,7 @@ import {
   activeConversation,
   canOpenConversation,
   canSend,
+  hasConversationHistory,
   conversationsReducer,
   historyFor,
   initialConversations,
@@ -117,12 +118,20 @@ export function useAssistantConversations(transport: AssistantTransport, context
 
   const select = useCallback((id: string) => dispatch({ type: "select", id }), []);
 
+  /** Stops every reply still streaming, then starts over with one empty tab. */
+  const clearAll = useCallback(() => {
+    controllers.current.forEach((c) => c.abort());
+    controllers.current.clear();
+    dispatch({ type: "clear", freshId: newId(), now: Date.now() });
+  }, []);
+
   const active = activeConversation(state);
   return {
     conversations: state.conversations,
     active,
     streaming: isStreaming(active.chat),
     canOpen: canOpenConversation(state),
+    canClear: hasConversationHistory(state),
     send,
     retry,
     stop,
@@ -130,5 +139,6 @@ export function useAssistantConversations(transport: AssistantTransport, context
     open,
     close,
     select,
+    clearAll,
   };
 }

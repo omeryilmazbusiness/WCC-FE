@@ -11,6 +11,12 @@ export type ReplySource = "faq" | "ai" | "cache" | "data" | "rule" | "preview";
 /** Why a reply did not come from the model. */
 export type ReplyNotice = "quota_reached" | "not_configured" | "ai_unavailable" | "not_allowed";
 
+/**
+ * Notices worth a line under the answer. Fallbacks (quota, not set up, provider busy) stay
+ * silent: the source chip already says the answer came from the viewer's data.
+ */
+export const SHOWN_NOTICES: ReadonlySet<ReplyNotice> = new Set(["not_allowed"]);
+
 export type AssistantQuota = {
   /** 0 = unlimited. */
   limit: number;

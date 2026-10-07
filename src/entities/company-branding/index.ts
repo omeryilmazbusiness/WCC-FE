@@ -7,3 +7,4 @@ export {
   type CompanyBrandingApi,
   type LogoProblem,
 } from "./api";
+export { announceCompanyBrandingChanged, useCompanyBranding } from "./use-company-branding";

@@ -2451,7 +2451,6 @@
     }
   },
   "setup": {
-    "brand": "WODI",
     "title": "Set up your workspace",
     "eyebrow": "Step {current} of {total}",
     "eyebrowDone": "Setup complete",
@@ -7427,14 +7426,15 @@
         "preview": "Preview"
       },
       "notices": {
-        "quota_reached": "You've used today's AI answers, so this is the essential answer from your data.",
-        "not_configured": "AI isn't set up for this company yet, so this is the essential answer from your data.",
-        "ai_unavailable": "AI is busy right now, so this is the essential answer from your data.",
         "not_allowed": "Your role can't use this. Ask your manager if you need it."
       },
-      "resets": "Full answers return at {time}.",
       "openHelp": "Open in Help",
       "askAI": "Ask AI instead"
+    },
+    "clear": {
+      "label": "Clear all chats",
+      "confirm": "Tap again to delete all chats",
+      "confirmShort": "Clear all?"
     }
   },
   "support": {
