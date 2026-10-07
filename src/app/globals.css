@@ -471,3 +471,57 @@ html:has(.night-aurora) body {
     display: none;
   }
 }
+
+/* AI assistant: spinning colour orb, typing dots, streaming caret, message entrance. */
+@keyframes assistant-orb {
+  to {
+    transform: rotate(1turn);
+  }
+}
+@keyframes assistant-dot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+@keyframes assistant-caret {
+  50% {
+    opacity: 0;
+  }
+}
+@keyframes assistant-pop {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-assistant-orb {
+  animation: assistant-orb 6s linear infinite;
+}
+.animate-assistant-dot {
+  animation: assistant-dot 1.2s ease-in-out infinite;
+}
+.animate-assistant-caret {
+  animation: assistant-caret 1s steps(1) infinite;
+}
+.animate-assistant-pop {
+  animation: assistant-pop 0.32s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-assistant-orb,
+  .animate-assistant-dot,
+  .animate-assistant-caret,
+  .animate-assistant-pop {
+    animation: none;
+  }
+}

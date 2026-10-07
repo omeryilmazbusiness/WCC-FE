@@ -2,6 +2,7 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { LogOut } from "lucide-react";
+import { AssistantHeaderButton } from "@/features/ai-assistant";
 import { NotificationBell } from "@/features/notifications";
 import { LocaleSwitcher } from "@/features/switch-locale";
 import { BranchScopeSelect } from "@/features/branch-scope";
@@ -46,6 +47,7 @@ export function AppHeader({ className }: Props) {
       >
         <FxLiveIndicator />
         <span aria-hidden className="mx-1 h-4 w-px bg-zinc-950/10" />
+        <AssistantHeaderButton />
         {canNotify ? <NotificationBell surface="light" /> : null}
         <LocaleSwitcher surface="light" compact />
         <span aria-hidden className="mx-1 h-4 w-px bg-zinc-950/10" />

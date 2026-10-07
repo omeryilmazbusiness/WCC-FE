@@ -7098,5 +7098,63 @@
         }
       }
     }
+  },
+  "assistant": {
+    "title": "WODI AI",
+    "subtitle": "Your travel operations copilot",
+    "preview": "Preview",
+    "typing": "Writing…",
+    "thinking": "Thinking",
+    "open": "Open AI assistant",
+    "close": "Close AI assistant",
+    "ask": "Ask WODI AI",
+    "greeting": {
+      "morning": "Good morning, {name}",
+      "afternoon": "Good afternoon, {name}",
+      "evening": "Good evening, {name}",
+      "default": "Hello, {name}"
+    },
+    "intro": "Ask about your pipeline, bookings, revenue or team. I answer with what you're allowed to see.",
+    "suggestions": {
+      "summary": {
+        "title": "Today's summary",
+        "prompt": "Give me a summary of today's operations"
+      },
+      "leads": {
+        "title": "Hot leads",
+        "prompt": "Which leads should I focus on this week?"
+      },
+      "revenue": {
+        "title": "Revenue check",
+        "prompt": "How is revenue tracking against our targets?"
+      },
+      "followUp": {
+        "title": "Draft a message",
+        "prompt": "Draft a follow-up message for a customer"
+      }
+    },
+    "placeholder": "Message WODI AI…",
+    "send": "Send",
+    "stop": "Stop generating",
+    "stopped": "Stopped",
+    "copy": "Copy",
+    "copied": "Copied",
+    "retry": "Regenerate",
+    "helpful": "Helpful",
+    "notHelpful": "Not helpful",
+    "scrollDown": "Scroll to latest",
+    "tooLong": "Message is too long (max {max, number} characters).",
+    "disclaimer": "WODI AI can make mistakes. Check important figures before acting.",
+    "errors": {
+      "unavailable": "The assistant couldn't answer right now. Try again.",
+      "notConfigured": "AI isn't set up for this company yet. Ask an admin to finish AI setup."
+    },
+    "tabs": {
+      "label": "Conversations",
+      "untitled": "New chat",
+      "new": "New conversation",
+      "close": "Close “{title}”",
+      "busy": "Answering"
+    }
   }
 }

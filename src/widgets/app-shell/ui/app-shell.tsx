@@ -1,14 +1,17 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import type { ViewerSession } from "@/shared/api/session";
 import { loginHref, sessionEndReason } from "@/shared/api/session-end";
 import { routes } from "@/shared/config/routes";
-import { usePathname, WorkspaceRefProvider } from "@/shared/i18n/navigation";
+import { usePathname, useWorkspaceRef, WorkspaceRefProvider } from "@/shared/i18n/navigation";
+import { cn } from "@/shared/lib/cn";
 import type { WorkspaceRef } from "@/shared/lib/workspace-path";
 import { ToastProvider } from "@/shared/ui";
-import { ViewerProvider, useViewer } from "@/entities/viewer";
+import { createPreviewTransport } from "@/entities/assistant";
+import { ViewerProvider, useCan, useViewer } from "@/entities/viewer";
+import { AssistantBubble, AssistantPanel, AssistantProvider } from "@/features/ai-assistant";
 import { SessionExpiryWatcher } from "@/features/auth-by-credentials";
 import { createUiPreferenceRepository } from "@/entities/ui-preference";
 import { activeNavHref, visibleNavGroups } from "../model/nav";
@@ -93,8 +96,10 @@ function ShellFrame({
   const favorites = useNavFavorites({ groups, initial: navFavorites, repository: preferences });
   const tabs = useWorkspaceTabs({ groups, permissions, storageKey: `wcc.tabs.v1:${user.id}` });
   const { collapsed, toggle } = useSidebarCollapse(sidebarCollapsed);
+  const canAssist = useCan("ai.read");
 
   return (
+    <AssistantProvider enabled={canAssist}>
     <ScreenOpenerProvider value={tabs.openFromLink}>
       <div className="flex min-h-screen bg-[#F9FAFB]" data-testid="app-shell">
         <ShellSidebar
@@ -112,12 +117,38 @@ function ShellFrame({
           <WorkspaceTabBar groups={groups} tabs={tabs} panelId={MAIN_ID} />
           <main
             id={MAIN_ID}
-            className="mx-auto w-full max-w-[1400px] flex-1 px-5 py-6 sm:px-8 sm:py-7 lg:px-10"
+            className={cn(
+              "mx-auto w-full max-w-[1400px] flex-1 px-5 py-6 sm:px-8 sm:py-7 lg:px-10",
+              // Room for the pinned assistant bubble at the end of every page.
+              canAssist && "pb-24 sm:pb-28",
+            )}
           >
             {children}
           </main>
         </div>
       </div>
+      <ShellAssistant groups={groups} activeHref={activeHref} />
     </ScreenOpenerProvider>
+    </AssistantProvider>
+  );
+}
+
+/** The shell-wide assistant: a pinned bubble and one panel; the backend later swaps in a live transport. */
+function ShellAssistant({ groups, activeHref }: { groups: ReturnType<typeof visibleNavGroups>; activeHref: ReturnType<typeof activeNavHref> }) {
+  const tNav = useTranslations("nav");
+  const workspace = useWorkspaceRef();
+  const transport = useMemo(() => createPreviewTransport(), []);
+  const active = groups.flatMap((g) => g.items).find((item) => item.href === activeHref);
+
+  return (
+    <>
+      <AssistantBubble />
+      <AssistantPanel
+        transport={transport}
+        screen={active?.label}
+        screenLabel={active ? tNav(active.label) : undefined}
+        branchId={workspace?.branch}
+      />
+    </>
   );
 }
