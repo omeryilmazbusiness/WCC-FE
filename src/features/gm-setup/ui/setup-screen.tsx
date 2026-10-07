@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "framer-motion";
 import { Rocket } from "lucide-react";
@@ -11,6 +11,7 @@ import { routes } from "@/shared/config/routes";
 import { useApiQuery } from "@/shared/lib/use-api-query";
 import { ErrorState, useMutationFeedback } from "@/shared/ui";
 import { initialStep, neighborStep, statusOf, stepOrder } from "../model/flow";
+import { clearSetupIntroCookie } from "../model/intro";
 import { AIStep } from "./ai-step";
 import { ChannelsStep } from "./channels-step";
 import { CompanyStep } from "./company-step";
@@ -23,7 +24,7 @@ import { StepDock } from "./step-dock";
 type Props = {
   /** Server-rendered overview; the screen fetches itself when it is missing. */
   initial: SetupOverview | null;
-  /** First visit: welcome + language choice before the steps. */
+  /** Welcome + language choice before the steps; off only right after a language switch. */
   showIntro?: boolean;
 };
 
@@ -32,6 +33,10 @@ export function SetupScreen({ initial, showIntro = false }: Props) {
   const repository = useMemo(() => createSetupRepository(), []);
   const query = useApiQuery(() => repository.get(), [repository], { enabled: initial === null });
   const [intro, setIntro] = useState(showIntro);
+
+  useEffect(() => {
+    document.cookie = clearSetupIntroCookie();
+  }, []);
 
   function introDone() {
     window.scrollTo({ top: 0 });

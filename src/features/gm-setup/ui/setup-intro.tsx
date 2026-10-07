@@ -30,7 +30,7 @@ type Props = {
 };
 
 /**
- * First-run welcome: a fly-in hero, then a greeting that cycles through the supported
+ * Setup welcome, shown on every visit: a fly-in hero, then a greeting that cycles through the supported
  * languages. "Continue" picks whichever language is on screen at that moment.
  */
 export function SetupIntro({ onDone }: Props) {
@@ -59,16 +59,15 @@ export function SetupIntro({ onDone }: Props) {
   function proceed() {
     if (leaving) return;
     const next = current.lang;
-    document.cookie = setupIntroCookie(user.id);
     setLeaving(true);
-    // The cookie already hides the welcome in this browser if the save fails.
     const saved = preferences.markWelcomeSeen().catch(() => undefined);
     if (next === locale) {
       const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       window.setTimeout(onDone, still ? 0 : FADE_OUT_MS);
       return;
     }
-    // The next locale is server-rendered: save first so it never shows the welcome again.
+    // The next locale is server-rendered; the cookie makes it open on the steps, not the intro again.
+    document.cookie = setupIntroCookie(user.id);
     void saved.then(() => startSwitch(() => router.replace(pathname, { locale: next, scroll: true })));
   }
 

@@ -65,11 +65,10 @@ function overview(patch: Partial<SetupOverview> = {}): SetupOverview {
 // navigation
 {
   const o = overview();
-  assert.equal(initialStep(o), "staff");
-  assert.equal(initialStep(overview({ nextStep: null })), "channels");
-  // completed with skips reopens the first step that is not done
-  assert.equal(initialStep(overview({ completed: true })), "staff");
-  assert.equal(initialStep(overview({ completed: true, fullyDone: true })), null);
+  assert.equal(initialStep(o), "company", "setup restarts from the first step");
+  assert.equal(initialStep(overview({ nextStep: null })), "company");
+  assert.equal(initialStep(overview({ completed: true })), "company");
+  assert.equal(initialStep(overview({ completed: true, fullyDone: true })), "company");
   assert.equal(neighborStep(o, "company", -1), null);
   assert.equal(neighborStep(o, "company", 1), "staff");
   assert.equal(neighborStep(o, "channels", 1), null);

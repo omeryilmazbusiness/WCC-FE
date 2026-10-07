@@ -31,14 +31,9 @@ export function countOf(o: SetupOverview, key: SetupStepKey): number {
   return o.steps.find((s) => s.key === key)?.count ?? 0;
 }
 
-/**
- * Step to open on arrival: the first pending one, or after completion the
- * first skipped one; `null` shows the summary.
- */
+/** Setup always restarts from the first step; saved answers stay filled in. */
 export function initialStep(o: SetupOverview): SetupStepKey | null {
-  if (o.fullyDone) return null;
-  if (o.completed) return o.steps.find((s) => s.status !== "done")?.key ?? null;
-  return o.nextStep ?? stepOrder(o).at(-1) ?? null;
+  return stepOrder(o)[0] ?? null;
 }
 
 export function neighborStep(
