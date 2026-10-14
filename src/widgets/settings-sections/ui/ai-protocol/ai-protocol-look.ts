@@ -1,5 +1,6 @@
 import {
   BookOpen,
+  Briefcase,
   CircleHelp,
   Database,
   Eye,
@@ -30,16 +31,18 @@ export const CAPABILITY_LOOK: Record<string, Look> = {
   revenue_status: { icon: TrendingUp, tone: "amber" },
   message_draft: { icon: PenLine, tone: "violet" },
   app_help: { icon: CircleHelp, tone: "teal" },
+  work_request: { icon: Briefcase, tone: "indigo" },
 };
 
 export const RULE_ICON: Record<string, LucideIcon> = {
+  work_only: Briefcase,
+  task_style: ListChecks,
   read_only: Eye,
   no_send: MailX,
   own_scope: Lock,
   no_invented_numbers: Hash,
   minimal_data: Minimize2,
   faq_first: BookOpen,
-  fixed_capabilities: ListChecks,
   never_blocked: Gauge,
   audited: ScrollText,
   user_language: Languages,

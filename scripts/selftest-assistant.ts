@@ -261,8 +261,8 @@ function wiring() {
 }
 
 /** Mirrors `internal/domain/assistant/protocol.go` in the backend. */
-const BE_RULES = ["read_only", "no_send", "own_scope", "no_invented_numbers", "minimal_data", "faq_first", "fixed_capabilities", "never_blocked", "audited", "user_language"];
-const BE_CAPABILITIES = ["ops_summary", "lead_focus", "revenue_status", "message_draft", "app_help"];
+const BE_RULES = ["work_only", "task_style", "read_only", "no_send", "own_scope", "no_invented_numbers", "minimal_data", "faq_first", "never_blocked", "audited", "user_language"];
+const BE_CAPABILITIES = ["ops_summary", "lead_focus", "revenue_status", "message_draft", "app_help", "work_request"];
 
 const collect = async (stream: AsyncIterable<AssistantChunk>) => {
   const out: AssistantChunk[] = [];
@@ -461,10 +461,15 @@ async function faqFirst() {
 }
 
 function protocolCopy() {
+  const look = read("src/widgets/settings-sections/ui/ai-protocol/ai-protocol-look.ts");
+  for (const id of [...BE_RULES, ...BE_CAPABILITIES]) assert.match(look, new RegExp(`\\n  ${id}: `), `look: ${id} has an icon`);
+  assert.doesNotMatch(look, /fixed_capabilities/, "look: no stale rule");
   for (const [lang, m] of [["en", en], ["ar", ar]] as const) {
     const p = m.settings.aiProtocol;
     for (const id of BE_RULES) assert.ok(p.rules.items[id]?.title && p.rules.items[id]?.body, `${lang}: rule ${id}`);
     for (const id of BE_CAPABILITIES) assert.ok(p.capabilities.items[id]?.title && p.capabilities.items[id]?.body, `${lang}: capability ${id}`);
+    assert.deepEqual(Object.keys(p.rules.items), BE_RULES, `${lang}: rule copy matches the backend list and order, nothing stale`);
+    assert.deepEqual(Object.keys(p.capabilities.items).sort(), [...BE_CAPABILITIES].sort(), `${lang}: capability copy matches the backend`);
     for (const step of ["faq", "rules", "data", "cache", "ai"]) assert.ok(p.pipeline.steps[step]?.title, `${lang}: pipeline ${step}`);
     for (const n of SHOWN_NOTICES) assert.ok(m.assistant.meta.notices[n], `${lang}: notice ${n}`);
     for (const n of ["quota_reached", "not_configured", "ai_unavailable"]) assert.equal(m.assistant.meta.notices[n], undefined, `${lang}: fallback notice ${n} stays silent`);

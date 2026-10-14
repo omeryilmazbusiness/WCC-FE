@@ -6543,7 +6543,7 @@
       },
       "capabilities": {
         "title": "What it can do",
-        "footer": "WODI AI only does these tasks. Anything else gets a polite \"I can't help with that\".",
+        "footer": "WODI AI does WODI work only and replies by doing the task, not by chatting. Anything else is declined in one line.",
         "usesData": "Uses your data",
         "usesModel": "Uses AI",
         "noModel": "No AI needed",
@@ -6570,6 +6570,10 @@
           "app_help": {
             "title": "How-to help",
             "body": "Explains how to do something in WODI, starting from Help & FAQ."
+          },
+          "work_request": {
+            "title": "Work requests",
+            "body": "Any other question or task about your WODI work: advice, steps, checklists, rewording a draft."
           }
         }
       },
@@ -6577,6 +6581,14 @@
         "title": "Rules it always follows",
         "footer": "These rules are enforced by the server for every message.",
         "items": {
+          "work_only": {
+            "title": "WODI work only",
+            "body": "The app, your customers, leads, bookings, payments, tasks, documents, team and Hajj/Umrah operations. Anything else is declined."
+          },
+          "task_style": {
+            "title": "Does, doesn't chat",
+            "body": "Every reply carries out your request, result first: no small talk or filler. It asks a question only when a needed detail is missing."
+          },
           "read_only": {
             "title": "Read-only",
             "body": "It never creates, changes or deletes anything."
@@ -6600,10 +6612,6 @@
           "faq_first": {
             "title": "Help & FAQ first",
             "body": "Questions about screens are answered from Help & FAQ before AI is asked."
-          },
-          "fixed_capabilities": {
-            "title": "Fixed tasks",
-            "body": "It only does the tasks listed here."
           },
           "never_blocked": {
             "title": "Never blocked",
@@ -7370,7 +7378,7 @@
       "evening": "Good evening, {name}",
       "default": "Hello, {name}"
     },
-    "intro": "Ask about your pipeline, bookings, revenue or team. I answer with what you're allowed to see.",
+    "intro": "Give me a WODI task: today's summary, leads to chase, revenue, a customer message, how-to help or advice. I only use what you're allowed to see.",
     "suggestions": {
       "summary": {
         "title": "Today's summary",
