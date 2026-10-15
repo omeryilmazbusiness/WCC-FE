@@ -94,6 +94,9 @@ export type Task = {
   outcome: string;
   assigneeId: string;
   assigneeName: string;
+  /** Who opened a manual task; empty for tasks created by automation. */
+  createdById?: string;
+  createdByName?: string;
   /** Empty for standalone (manual) tasks. */
   relatedType: string;
   relatedId: string;

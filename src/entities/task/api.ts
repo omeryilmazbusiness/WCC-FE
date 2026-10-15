@@ -3,6 +3,7 @@ import { createRepository } from "@/shared/api/repository";
 import {
   canTransitionTask,
   hasRelatedRecord,
+  isTaskClosed,
   normalizeTaskPriority,
   type Task,
   type TaskCreateInput,
@@ -11,6 +12,17 @@ import {
   type TaskPackageInput,
   type TaskStatus,
 } from "./model";
+import {
+  TASK_NOTE_MAX,
+  mapTaskNote,
+  mapTaskNoteThread,
+  normalizeNoteBody,
+  sortNotes,
+  validateNoteDraft,
+  type TaskNote,
+  type TaskNoteBlocked,
+  type TaskNoteThread,
+} from "./notes";
 
 export type TaskListParams = {
   q?: string;
@@ -41,6 +53,12 @@ export interface TaskRepository {
     assigneeName?: string,
   ): Promise<Task[]>;
   escalateOverdue(): Promise<number>;
+  /** The viewer's view of a task's note thread (assignee ↔ creator). */
+  notes(taskId: string): Promise<TaskNoteThread>;
+  /** Sends a note to the task's other participant. */
+  addNote(taskId: string, body: string): Promise<TaskNote>;
+  /** Marks the viewer's unread notes on a task as read; returns how many changed. */
+  markNotesRead(taskId: string): Promise<number>;
   /** Offline/demo helpers — no-ops against API (BE seeder owns this). */
   ensureFollowUpForLead(input: {
     leadId: string;
@@ -85,6 +103,8 @@ function mapTask(raw: Raw): Task {
     outcome: String(raw.outcome ?? ""),
     assigneeId: String(raw.assigneeId ?? raw.assignee_id ?? ""),
     assigneeName: String(raw.assigneeName ?? raw.assignee_name ?? ""),
+    createdById: String(raw.createdBy ?? raw.created_by ?? ""),
+    createdByName: String(raw.createdByName ?? raw.created_by_name ?? ""),
     relatedType,
     relatedId,
     relatedLabel: linked ? label : "",
@@ -233,6 +253,24 @@ export class ApiTaskRepository implements TaskRepository {
     return Number(raw.escalated ?? 0);
   }
 
+  async notes(taskId: string): Promise<TaskNoteThread> {
+    return mapTaskNoteThread(await this.http.request<Raw>(`/tasks/${taskId}/notes`));
+  }
+
+  async addNote(taskId: string, body: string): Promise<TaskNote> {
+    return mapTaskNote(
+      await this.http.request<Raw>(`/tasks/${taskId}/notes`, {
+        method: "POST",
+        body: JSON.stringify({ body }),
+      }),
+    );
+  }
+
+  async markNotesRead(taskId: string): Promise<number> {
+    const raw = await this.http.request<Raw>(`/tasks/${taskId}/notes/read`, { method: "POST" });
+    return Number(raw?.marked ?? 0);
+  }
+
   async ensureFollowUpForLead(input: {
     leadId: string;
   }): Promise<Task> {
@@ -359,6 +397,8 @@ const store: Task[] = [
     completedAt: null,
   },
 ];
+
+const noteStore: TaskNote[] = [];
 
 function clone(t: Task): Task {
   return { ...t };
@@ -547,6 +587,54 @@ export class MemoryTaskRepository implements TaskRepository {
     return n;
   }
 
+  /** Demo threads speak as the assignee, the side that writes to the creator. */
+  async notes(taskId: string): Promise<TaskNoteThread> {
+    const t = store.find((x) => x.id === taskId);
+    if (!t) throw new Error("task not found");
+    const creator = t.createdById ?? "";
+    const blocked: TaskNoteBlocked = !creator
+      ? "no_creator"
+      : creator === t.assigneeId
+        ? "self_assigned"
+        : isTaskClosed(t)
+          ? "closed"
+          : "";
+    return {
+      notes: sortNotes(noteStore.filter((n) => n.taskId === taskId).map((n) => ({ ...n }))),
+      canRead: true,
+      canPost: blocked === "",
+      blocked,
+      recipientId: creator || null,
+      recipientName: t.createdByName ?? "",
+      unread: 0,
+      maxLength: TASK_NOTE_MAX,
+    };
+  }
+
+  async addNote(taskId: string, body: string): Promise<TaskNote> {
+    const thread = await this.notes(taskId);
+    if (!thread.canPost) throw new Error(`notes blocked: ${thread.blocked}`);
+    if (validateNoteDraft(body, thread.maxLength)) throw new Error("invalid note");
+    const t = store.find((x) => x.id === taskId)!;
+    const note: TaskNote = {
+      id: `note-${crypto.randomUUID()}`,
+      taskId,
+      authorId: t.assigneeId,
+      authorName: t.assigneeName,
+      recipientId: thread.recipientId ?? "",
+      recipientName: thread.recipientName,
+      body: normalizeNoteBody(body),
+      createdAt: nowIso(),
+      readAt: null,
+    };
+    noteStore.push(note);
+    return { ...note };
+  }
+
+  async markNotesRead(): Promise<number> {
+    return 0;
+  }
+
   async ensureFollowUpForLead(input: {
     leadId: string;
     leadName: string;
@@ -629,6 +717,6 @@ export function createTaskRepository(): TaskRepository {
   return createRepository<TaskRepository>({
     api,
     memory,
-    reads: ["list", "listMine", "listToday", "listByRelated", "getById"],
+    reads: ["list", "listMine", "listToday", "listByRelated", "getById", "notes"],
   });
 }

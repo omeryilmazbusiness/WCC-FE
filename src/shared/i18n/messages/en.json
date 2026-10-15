@@ -663,7 +663,9 @@
       "package": "Package",
       "noPackage": "No package linked",
       "linkPackage": "Link package",
-      "changePackage": "Change"
+      "changePackage": "Change",
+      "createdBy": "Created by",
+      "createdByAutomation": "Automation (no one to note)"
     },
     "create": {
       "title": "New task",
@@ -719,6 +721,29 @@
       "conversation": "Conversation",
       "departure": "Departure",
       "package": "Package"
+    },
+    "notes": {
+      "title": "Notes",
+      "label": "Note to {name}",
+      "placeholder": "Write a note to {name}…",
+      "send": "Send",
+      "sending": "Sending…",
+      "shortcut": "Ctrl + Enter to send",
+      "counter": "{count} / {max}",
+      "tooLong": "Too long — keep it under {max} characters",
+      "empty": "No notes yet",
+      "emptyHint": "Questions or updates for {name} go here — they get notified instantly.",
+      "someone": "Someone",
+      "seen": "Seen",
+      "sent": "Sent",
+      "sendError": "Could not send the note",
+      "loadError": "Could not load notes — tap to retry",
+      "blocked": {
+        "closed": "This task is closed, so its notes are read-only.",
+        "no_creator": "This task was created by automation — there is no one to send a note to.",
+        "self_assigned": "You created this task for yourself — there is no one to send a note to.",
+        "not_participant": "Notes are private between the assignee and the person who created the task."
+      }
     }
   },
   "customers": {
@@ -4338,6 +4363,7 @@
       "task_overdue": "Overdue task",
       "task_escalated": "Escalated task",
       "task_reminder": "Task reminder",
+      "task_note": "Task note",
       "payment_overdue": "Overdue payment",
       "payment_due": "Payment due",
       "document_missing": "Missing document",

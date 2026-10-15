@@ -28,6 +28,20 @@ export {
   packageLinkLabel,
   summarizeTasks,
 } from "./model";
+export type { TaskNote, TaskNoteBlocked, TaskNoteDay, TaskNoteThread, NoteDraftIssue } from "./notes";
+export {
+  TASK_NOTE_MAX,
+  appendNote,
+  groupNotesByDay,
+  isOwnNote,
+  mapTaskNote,
+  mapTaskNoteThread,
+  markThreadRead,
+  noteLength,
+  normalizeNoteBody,
+  sortNotes,
+  validateNoteDraft,
+} from "./notes";
 export {
   TASK_KIND_LOOK,
   TASK_PRIORITY_LOOK,

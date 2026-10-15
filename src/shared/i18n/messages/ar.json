@@ -663,7 +663,9 @@
       "package": "الباقة",
       "noPackage": "لا توجد باقة مرتبطة",
       "linkPackage": "ربط باقة",
-      "changePackage": "تغيير"
+      "changePackage": "تغيير",
+      "createdBy": "أنشأها",
+      "createdByAutomation": "الأتمتة (لا يوجد من تُرسل إليه ملاحظة)"
     },
     "create": {
       "title": "مهمة جديدة",
@@ -719,6 +721,29 @@
       "conversation": "محادثة",
       "departure": "رحلة مغادرة",
       "package": "باقة"
+    },
+    "notes": {
+      "title": "الملاحظات",
+      "label": "ملاحظة إلى {name}",
+      "placeholder": "اكتب ملاحظة إلى {name}…",
+      "send": "إرسال",
+      "sending": "جارٍ الإرسال…",
+      "shortcut": "Ctrl + Enter للإرسال",
+      "counter": "{count} / {max}",
+      "tooLong": "طويلة جدًا — يجب ألا تتجاوز {max} حرفًا",
+      "empty": "لا توجد ملاحظات بعد",
+      "emptyHint": "اكتب هنا أسئلتك أو مستجداتك إلى {name} — سيصله إشعار فورًا.",
+      "someone": "شخص ما",
+      "seen": "تمت القراءة",
+      "sent": "أُرسلت",
+      "sendError": "تعذّر إرسال الملاحظة",
+      "loadError": "تعذّر تحميل الملاحظات — اضغط لإعادة المحاولة",
+      "blocked": {
+        "closed": "هذه المهمة مغلقة، لذا الملاحظات للقراءة فقط.",
+        "no_creator": "أُنشئت هذه المهمة تلقائيًا — لا يوجد من تُرسل إليه ملاحظة.",
+        "self_assigned": "أنشأت هذه المهمة لنفسك — لا يوجد من تُرسل إليه ملاحظة.",
+        "not_participant": "الملاحظات خاصة بين المكلّف بالمهمة ومن أنشأها."
+      }
     }
   },
   "customers": {
@@ -4338,6 +4363,7 @@
       "task_overdue": "مهمة متأخرة",
       "task_escalated": "مهمة مُصعّدة",
       "task_reminder": "تذكير بمهمة",
+      "task_note": "ملاحظة مهمة",
       "payment_overdue": "دفعة متأخرة",
       "payment_due": "دفعة مستحقة",
       "document_missing": "مستند ناقص",

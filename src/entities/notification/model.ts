@@ -69,6 +69,7 @@ export function notificationHref(
   if (n.entityId) {
     if (n.entityType === "booking") return routes.booking(n.entityId);
     if (n.entityType === "customer") return routes.customer(n.entityId);
+    if (n.entityType === "task") return `${routes.tasks}?task=${encodeURIComponent(n.entityId)}`;
   }
   return n.hrefHint;
 }

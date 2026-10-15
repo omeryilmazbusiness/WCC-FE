@@ -23,6 +23,7 @@ import { BulkAssignTasksDialog } from "@/features/bulk-assign-tasks";
 import { CreateTaskDialog } from "@/features/create-task";
 import { useDragScroll } from "@/shared/lib/use-drag-scroll";
 import { Screen, SearchFilterBar, useMutationFeedback, useToast } from "@/shared/ui";
+import { useTaskParam } from "../model/use-task-param";
 import { TaskColumn, type DropState } from "./task-column";
 import { TaskDetailDrawer } from "./task-detail-drawer";
 import { TaskTable } from "./task-table";
@@ -71,13 +72,39 @@ export function TasksBoard({ repository, initialTasks, assigneeId, managerMode }
   const [detailId, setDetailId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const detailTask = useMemo(() => tasks.find((x) => x.id === detailId) ?? null, [tasks, detailId]);
+  const [taskParam, setTaskParam] = useTaskParam();
 
   function openDetail(task: Task) {
     setDetailId(task.id);
     setDetailOpen(true);
+    setTaskParam(task.id);
+  }
+
+  function onDetailOpenChange(open: boolean) {
+    setDetailOpen(open);
+    if (!open) setTaskParam("");
   }
 
   useEffect(() => setTasks(initialTasks), [initialTasks]);
+  useEffect(() => {
+    if (!taskParam) return;
+    setDetailId(taskParam);
+    setDetailOpen(true);
+    if (initialTasks.some((x) => x.id === taskParam)) return;
+    let cancelled = false;
+    repository
+      .getById(taskParam)
+      .then((task) => {
+        if (!cancelled) upsert(task);
+      })
+      .catch(() => {
+        if (!cancelled) setTaskParam("");
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [taskParam]);
   useEffect(() => {
     const saved = readView();
     if (saved) setView(saved);
@@ -315,7 +342,7 @@ export function TasksBoard({ repository, initialTasks, assigneeId, managerMode }
         locale={locale}
         repository={repository}
         open={detailOpen && detailTask !== null}
-        onOpenChange={setDetailOpen}
+        onOpenChange={onDetailOpenChange}
         onChanged={upsert}
       />
     </Screen>

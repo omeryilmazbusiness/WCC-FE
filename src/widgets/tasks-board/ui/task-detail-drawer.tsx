@@ -11,9 +11,11 @@ import {
   CircleSlash,
   IdCard,
   Link2,
+  MessageSquareText,
   Package,
   RefreshCw,
   Siren,
+  UserRoundPen,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -27,10 +29,11 @@ import {
   type Task,
   type TaskRepository,
 } from "@/entities/task";
-import { useCan } from "@/entities/viewer";
+import { useCan, useViewer } from "@/entities/viewer";
 import { CancelTaskDialog } from "@/features/cancel-task";
 import { CompleteTaskButton } from "@/features/complete-task";
 import { LinkPackageDialog } from "@/features/package-link";
+import { TaskNotes } from "@/features/task-notes";
 import { routes } from "@/shared/config/routes";
 import { Link } from "@/shared/i18n/navigation";
 import { initials } from "@/shared/lib/avatar";
@@ -84,6 +87,7 @@ function TaskDetail({ task, locale, repository, onChanged }: DetailProps) {
   const t = useTranslations("tasks");
   const relatedText = useRelatedText();
   const canWrite = useCan("tasks.write");
+  const { user } = useViewer();
   const kind = TASK_KIND_LOOK[task.kind] ?? TASK_KIND_LOOK.custom;
   const status = TASK_STATUS_LOOK[task.status];
   const priority = TASK_PRIORITY_LOOK[task.priority];
@@ -185,6 +189,10 @@ function TaskDetail({ task, locale, repository, onChanged }: DetailProps) {
           )}
         </Section>
 
+        <Section icon={MessageSquareText} tone="sky" title={t("notes.title")} testId="task-detail-notes">
+          <TaskNotes task={task} repository={repository} viewerId={user.id} locale={locale} />
+        </Section>
+
         {closed && task.outcome ? (
           <Section
             icon={task.status === "done" ? CircleCheckBig : CircleSlash}
@@ -256,6 +264,13 @@ function TaskDetail({ task, locale, repository, onChanged }: DetailProps) {
                   ) : null}
                 </span>
               }
+            />
+            <Row
+              leading={<IconTile icon={UserRoundPen} tone={task.createdById ? "violet" : "zinc"} size="lg" />}
+              label={t("detail.createdBy")}
+              value={task.createdById ? task.createdByName || "—" : t("detail.createdByAutomation")}
+              muted={!task.createdById}
+              testId="task-detail-created-by"
             />
             <Row
               leading={<IconTile icon={CalendarPlus} tone="zinc" size="lg" />}
