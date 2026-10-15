@@ -1104,7 +1104,7 @@
     "kanban": "كانبان",
     "table": "جدول",
     "viewMode": "عرض الخط",
-    "searchPlaceholder": "ابحث بالاسم أو الهاتف أو المصدر…",
+    "searchPlaceholder": "الاسم أو الهاتف أو البريد أو الشركة…",
     "filterAll": "الكل",
     "empty": "لا توجد نتائج",
     "emptyHint": "امسح عوامل التصفية أو أنشئ عميلاً محتملاً.",
@@ -1296,6 +1296,7 @@
       "week": "هذا الأسبوع",
       "month": "هذا الشهر",
       "quarter": "آخر 90 يومًا",
+      "year": "آخر 12 شهرًا",
       "total": "{count, plural, one {{formatted} عميل محتمل} other {{formatted} عملاء محتملين}}"
     },
     "sort": {
@@ -1491,6 +1492,11 @@
         "currency": "استخدم رمزًا من 3 أحرف، مثل TRY",
         "currencyRequired": "اختر عملة للميزانية"
       }
+    },
+    "filters": {
+      "priority": "الأولوية",
+      "segment": "نوع العميل",
+      "lostReason": "سبب الخسارة"
     }
   },
   "packages": {

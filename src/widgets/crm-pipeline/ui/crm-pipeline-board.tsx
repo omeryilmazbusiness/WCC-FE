@@ -6,16 +6,23 @@ import { UserPlus } from "lucide-react";
 import {
   canTransitionLead,
   isLeadPeriod,
+  LEAD_PRIORITIES,
+  LEAD_QUERY_MAX,
+  LEAD_SEGMENTS,
   LEAD_STAGES,
+  LOST_REASON_CODES,
   periodRange,
   PIPELINE_COLUMNS,
   weekStartFor,
   type Lead,
   type LeadPeriod,
+  type LeadPriority,
   type LeadQuery,
   type LeadRepository,
+  type LeadSegment,
   type LeadSort,
   type LeadStage,
+  type LostReasonCode,
 } from "@/entities/lead";
 import { CreateLeadDialog, LeadFormDialog } from "@/features/create-lead";
 import { LostReasonDialog } from "@/features/change-lead-stage";
@@ -88,6 +95,9 @@ export function CrmPipelineBoard({ repository }: Props) {
   const [ownerFilter, setOwnerFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
   const [stageFilter, setStageFilter] = useState<"all" | LeadStage>("all");
+  const [priorityFilter, setPriorityFilter] = useState<"all" | LeadPriority>("all");
+  const [segmentFilter, setSegmentFilter] = useState<"all" | LeadSegment>("all");
+  const [lostReasonFilter, setLostReasonFilter] = useState<"all" | LostReasonCode>("all");
   const [noFollowOnly, setNoFollowOnly] = useState(false);
   const [sort, setSort] = useState<LeadSort>("updated");
   const [tablePage, setTablePage] = useState(0);
@@ -106,12 +116,15 @@ export function CrmPipelineBoard({ repository }: Props) {
       q: q || undefined,
       ownerId: ownerFilter === "all" ? undefined : ownerFilter,
       source: sourceFilter === "all" ? undefined : sourceFilter,
+      priority: priorityFilter === "all" ? undefined : priorityFilter,
+      segment: segmentFilter === "all" ? undefined : segmentFilter,
+      lostReason: lostReasonFilter === "all" ? undefined : lostReasonFilter,
       noFollowUp: noFollowOnly || undefined,
       createdFrom: range.from?.toISOString(),
       createdTo: range.to?.toISOString(),
       sort,
     };
-  }, [period, locale, q, ownerFilter, sourceFilter, noFollowOnly, sort]);
+  }, [period, locale, q, ownerFilter, sourceFilter, priorityFilter, segmentFilter, lostReasonFilter, noFollowOnly, sort]);
 
   const tableStage = stageFilter === "all" ? undefined : stageFilter;
   const queryKey = JSON.stringify([query, tableStage]);
@@ -206,7 +219,14 @@ export function CrmPipelineBoard({ repository }: Props) {
   }
 
   const isFiltered =
-    search.length > 0 || ownerFilter !== "all" || sourceFilter !== "all" || noFollowOnly || stageFilter !== "all";
+    search.length > 0 ||
+    ownerFilter !== "all" ||
+    sourceFilter !== "all" ||
+    priorityFilter !== "all" ||
+    segmentFilter !== "all" ||
+    lostReasonFilter !== "all" ||
+    noFollowOnly ||
+    stageFilter !== "all";
 
   const sections = [
     {
@@ -225,6 +245,36 @@ export function CrmPipelineBoard({ repository }: Props) {
       value: sourceFilter,
       onChange: setSourceFilter,
       options: [{ value: "all", label: t("filterAll") }, ...sources.map((s) => ({ value: s.source, label: s.source }))],
+    },
+    {
+      id: "priority",
+      label: t("filters.priority"),
+      value: priorityFilter,
+      onChange: (v: string) => setPriorityFilter(v as "all" | LeadPriority),
+      options: [
+        { value: "all", label: t("filterAll") },
+        ...LEAD_PRIORITIES.map((p) => ({ value: p, label: t(`leadForm.priorities.${p}`) })),
+      ],
+    },
+    {
+      id: "segment",
+      label: t("filters.segment"),
+      value: segmentFilter,
+      onChange: (v: string) => setSegmentFilter(v as "all" | LeadSegment),
+      options: [
+        { value: "all", label: t("filterAll") },
+        ...LEAD_SEGMENTS.map((s) => ({ value: s, label: t(`leadForm.segments.${s}`) })),
+      ],
+    },
+    {
+      id: "lostReason",
+      label: t("filters.lostReason"),
+      value: lostReasonFilter,
+      onChange: (v: string) => setLostReasonFilter(v as "all" | LostReasonCode),
+      options: [
+        { value: "all", label: t("filterAll") },
+        ...LOST_REASON_CODES.map((c) => ({ value: c, label: t(`lostReasons.${c}`) })),
+      ],
     },
     {
       id: "nofollow",
@@ -305,10 +355,14 @@ export function CrmPipelineBoard({ repository }: Props) {
             filterLabel={tc("filter")}
             resetLabel={tc("resetFilters")}
             isFiltered={isFiltered}
+            inputProps={{ maxLength: LEAD_QUERY_MAX, "data-testid": "pipeline-search" }}
             onReset={() => {
               setSearch("");
               setOwnerFilter("all");
               setSourceFilter("all");
+              setPriorityFilter("all");
+              setSegmentFilter("all");
+              setLostReasonFilter("all");
               setStageFilter("all");
               setNoFollowOnly(false);
             }}

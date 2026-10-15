@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import {
+  Archive,
   ArrowDownUp,
   CalendarDays,
   CalendarRange,
@@ -19,6 +20,7 @@ const PERIODS: { value: LeadPeriod; icon: LucideIcon; tone: Tone }[] = [
   { value: "week", icon: CalendarDays, tone: "sky" },
   { value: "month", icon: CalendarRange, tone: "violet" },
   { value: "quarter", icon: History, tone: "amber" },
+  { value: "year", icon: Archive, tone: "teal" },
 ];
 
 type Props = {

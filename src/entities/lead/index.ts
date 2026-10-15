@@ -68,9 +68,14 @@ export {
 } from "./lib/pipeline";
 export {
   LEAD_PERIODS,
+  LEAD_QUERY_MAX,
+  LEAD_RETENTION_MONTHS,
   LEAD_SORTS,
   isLeadPeriod,
   isLeadSort,
+  leadMatchesSearch,
+  leadQueryParams,
+  parseLeadSearch,
   periodRange,
   weekStartFor,
   type LeadPeriod,

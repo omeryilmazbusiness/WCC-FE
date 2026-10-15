@@ -33,6 +33,7 @@
     "test:realtime": "node --experimental-strip-types scripts/selftest-realtime.ts",
     "test:pagination": "node --experimental-strip-types scripts/selftest-pagination.ts",
     "test:filters": "node --experimental-strip-types scripts/selftest-filters.ts",
+    "test:lead-archive": "node --experimental-strip-types scripts/selftest-lead-archive.ts",
     "test:lead-draft": "node --experimental-strip-types scripts/selftest-lead-draft.ts",
     "test:target-period": "node --experimental-strip-types scripts/selftest-target-period.ts",
     "test:dashboard-period": "node --experimental-strip-types scripts/selftest-dashboard-period.ts",

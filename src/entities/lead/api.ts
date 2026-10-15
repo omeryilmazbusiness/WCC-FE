@@ -31,7 +31,7 @@ import {
   type BoardColumn,
   type BudgetSum,
 } from "./lib/pipeline";
-import { leadQueryParams, type LeadQuery } from "./lib/query";
+import { leadMatchesSearch, leadQueryParams, type LeadQuery } from "./lib/query";
 
 export type LeadPage = { items: Lead[]; total: number };
 
@@ -486,19 +486,13 @@ function matchesQuery(l: Lead, query: LeadQuery): boolean {
   if (query.packageId && l.interest.packageId !== query.packageId) return false;
   if (query.stage && l.stage !== query.stage) return false;
   if (query.source && l.source.toLowerCase() !== query.source.toLowerCase()) return false;
+  if (query.priority && l.profile.priority !== query.priority) return false;
+  if (query.segment && l.profile.segment !== query.segment) return false;
+  if (query.lostReason && (l.stage !== "lost" || l.lostReasonCode !== query.lostReason)) return false;
   if (query.noFollowUp && !l.noFollowUp) return false;
   if (query.createdFrom && l.createdAt < query.createdFrom) return false;
   if (query.createdTo && l.createdAt >= query.createdTo) return false;
-  const q = query.q?.trim().toLowerCase();
-  if (!q) return true;
-  return (
-    l.fullName.toLowerCase().includes(q) ||
-    l.phone.includes(q) ||
-    l.profile.email.includes(q) ||
-    l.profile.companyName.toLowerCase().includes(q) ||
-    l.source.toLowerCase().includes(q) ||
-    l.ownerName.toLowerCase().includes(q)
-  );
+  return leadMatchesSearch(l, query.q ?? "");
 }
 
 function sortLeads(rows: Lead[], sort: LeadQuery["sort"]): Lead[] {
