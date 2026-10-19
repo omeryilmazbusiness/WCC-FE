@@ -11,6 +11,8 @@ export type RevenueTarget = {
   teamId: string | null;
   label: string;
   targetAmount: number;
+  /** Optional travellers-to-send goal for the period; null = money only. */
+  targetCustomers: number | null;
   currency: string;
   metric: TargetMetric;
   scopeType: TargetScope;
@@ -47,6 +49,14 @@ export type TargetProgress = {
   daysLeft: number;
   /** Currencies left out of actualAmount because no FX rate was effective. */
   unconverted: string[];
+  /** Present when the target has a customer-volume goal. */
+  targetCustomers: number | null;
+  actualCustomers: number | null;
+  customersExpectedToDate: number | null;
+  customersProgressBps: number | null;
+  customersPaceBps: number | null;
+  customersRequiredDaily: number | null;
+  customersStatus: TargetStatus | null;
 };
 
 export type TargetContribution = {

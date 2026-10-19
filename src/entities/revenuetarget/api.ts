@@ -22,6 +22,7 @@ function mapTarget(raw: Raw): RevenueTarget {
     teamId: (raw.team_id as string) ?? null,
     label: String(raw.label ?? ""),
     targetAmount: Number(raw.target_amount ?? 0),
+    targetCustomers: raw.target_customers == null ? null : Number(raw.target_customers),
     currency: String(raw.currency ?? "SAR"),
     metric: String(raw.metric ?? "collected") as RevenueTarget["metric"],
     scopeType: String(raw.scope_type ?? "branch") as RevenueTarget["scopeType"],
@@ -56,12 +57,25 @@ function mapProgress(raw: Raw): TargetProgress {
     daysTotal: Number(raw.days_total ?? 0),
     daysLeft: Number(raw.days_left ?? 0),
     unconverted: Array.isArray(raw.unconverted) ? raw.unconverted.map(String) : [],
+    targetCustomers: raw.target_customers == null ? null : Number(raw.target_customers),
+    actualCustomers: raw.actual_customers == null ? null : Number(raw.actual_customers),
+    customersExpectedToDate:
+      raw.customers_expected_to_date == null ? null : Number(raw.customers_expected_to_date),
+    customersProgressBps: raw.customers_progress_bps == null ? null : Number(raw.customers_progress_bps),
+    customersPaceBps: raw.customers_pace_bps == null ? null : Number(raw.customers_pace_bps),
+    customersRequiredDaily:
+      raw.customers_required_daily == null ? null : Number(raw.customers_required_daily),
+    customersStatus: raw.customers_status
+      ? (String(raw.customers_status) as TargetProgress["customersStatus"])
+      : null,
   };
 }
 
 export type CreateTargetInput = {
   label: string;
   targetAmount: number;
+  /** Optional travellers-to-send goal; omit for money-only. */
+  targetCustomers?: number;
   currency?: string;
   metric?: string;
   scopeType?: string;
@@ -105,6 +119,7 @@ class ApiRepo implements RevenueTargetRepository {
         body: JSON.stringify({
           label: input.label,
           target_amount: input.targetAmount,
+          target_customers: input.targetCustomers,
           currency: input.currency,
           metric: input.metric,
           scope_type: input.scopeType,
@@ -121,6 +136,7 @@ class ApiRepo implements RevenueTargetRepository {
     const body: Record<string, unknown> = {};
     if (patch.label != null) body.label = patch.label;
     if (patch.targetAmount != null) body.target_amount = patch.targetAmount;
+    if (patch.targetCustomers !== undefined) body.target_customers = patch.targetCustomers ?? null;
     if (patch.currency != null) body.currency = patch.currency;
     if (patch.metric != null) body.metric = patch.metric;
     if (patch.scopeType != null) body.scope_type = patch.scopeType;
@@ -257,6 +273,7 @@ class MemoryRepo implements RevenueTargetRepository {
       teamId: null,
       label: "Season target",
       targetAmount: 100000000,
+      targetCustomers: 1200,
       currency: "SAR",
       metric: "collected",
       scopeType: "branch",
@@ -280,6 +297,7 @@ class MemoryRepo implements RevenueTargetRepository {
       teamId: null,
       label: input.label,
       targetAmount: input.targetAmount,
+      targetCustomers: input.targetCustomers ?? null,
       currency: input.currency ?? "SAR",
       metric: (input.metric as RevenueTarget["metric"]) ?? "collected",
       scopeType: (input.scopeType as RevenueTarget["scopeType"]) ?? "branch",
@@ -295,6 +313,7 @@ class MemoryRepo implements RevenueTargetRepository {
     const t = this.targets.find((x) => x.id === id)!;
     if (patch.label != null) t.label = patch.label;
     if (patch.targetAmount != null) t.targetAmount = patch.targetAmount;
+    if (patch.targetCustomers !== undefined) t.targetCustomers = patch.targetCustomers ?? null;
     if (patch.curveType != null) t.curveType = patch.curveType as RevenueTarget["curveType"];
     if (patch.periodStart != null) t.periodStart = patch.periodStart;
     if (patch.periodEnd != null) t.periodEnd = patch.periodEnd;
@@ -338,6 +357,13 @@ class MemoryRepo implements RevenueTargetRepository {
       daysTotal: daysInclusive(t.periodStart, t.periodEnd),
       daysLeft: Math.max(0, daysInclusive(todayISO(), t.periodEnd)),
       unconverted: [],
+      targetCustomers: t.targetCustomers,
+      actualCustomers: t.targetCustomers == null ? null : Math.round(t.targetCustomers * 0.42),
+      customersExpectedToDate: t.targetCustomers == null ? null : Math.round(t.targetCustomers * 0.4),
+      customersProgressBps: t.targetCustomers == null ? null : 4200,
+      customersPaceBps: t.targetCustomers == null ? null : 10500,
+      customersRequiredDaily: t.targetCustomers == null ? null : 5,
+      customersStatus: t.targetCustomers == null ? null : "ahead",
     };
   }
   async setWeights(id: string, weights: TargetWeight[]) {

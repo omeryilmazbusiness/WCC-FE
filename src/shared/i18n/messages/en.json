@@ -249,7 +249,8 @@
       "pace": "Pace",
       "reached": "Goal reached",
       "perDay": "Daily need",
-      "unconverted": "{currencies} not counted — add FX rate"
+      "unconverted": "{currencies} not counted — add FX rate",
+      "customers": "{actual} of {goal} customers"
     },
     "attention": {
       "title": "Needs attention",
@@ -2929,7 +2930,8 @@
       "perDay": "per remaining day",
       "variance": "Variance",
       "pace": "Pace vs expected",
-      "curve": "Curve"
+      "curve": "Curve",
+      "customersRequired": "{count} customers / remaining day"
     },
     "fields": {
       "label": "Label",
@@ -2937,7 +2939,8 @@
       "periodStart": "Period start",
       "periodEnd": "Period end",
       "metric": "Measure",
-      "currency": "Currency"
+      "currency": "Currency",
+      "customers": "Customers to send"
     },
     "seasonalityHint": "Enter 12 monthly weights (percent). They are normalized to 100%.",
     "weightsCsv": "Monthly weights (CSV)",
@@ -2997,8 +3000,14 @@
           "invalid": "Enter a positive amount, e.g. 250000"
         },
         "currency": "Use a 3-letter code such as SAR",
-        "label": "Give the target a name"
-      }
+        "label": "Give the target a name",
+        "customers": "Enter a whole number greater than zero"
+      },
+      "customersOptional": "Optional — e.g. 250",
+      "customersHint": "Travellers sold in this period (confirmed bookings). Leave empty for a money-only goal."
+    },
+    "chip": {
+      "customers": "{count} customers"
     }
   },
   "importExport": {

@@ -127,6 +127,14 @@ function FocusedTarget({ target, locale }: { target: TargetProgress; locale: str
             <span className="ms-1.5 text-[13px] font-semibold text-zinc-400">{target.currency}</span>
           </p>
           <p className="truncate text-[13px] font-medium text-zinc-500">{t("of", { goal })}</p>
+          {target.targetCustomers != null ? (
+            <p className="truncate text-[12px] font-medium text-zinc-500" data-testid="manager-target-customers">
+              {t("customers", {
+                actual: (target.actualCustomers ?? 0).toLocaleString(locale),
+                goal: target.targetCustomers.toLocaleString(locale),
+              })}
+            </p>
+          ) : null}
         </div>
       </div>
 

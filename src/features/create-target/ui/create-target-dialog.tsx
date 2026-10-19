@@ -56,6 +56,7 @@ function freshDraft(kind: TargetPeriodKind = "monthly"): TargetDraft {
     start: today,
     end: inMonth.toISOString().slice(0, 10),
     amount: "",
+    customers: "",
     currency: "",
     metric: "collected",
     label: "",
@@ -273,6 +274,24 @@ export function CreateTargetDialog({ repository, onCreated, trigger }: Props) {
               />
             </FieldBlock>
           </div>
+
+          <FieldBlock
+            id="target-customers"
+            label={t("fields.customers")}
+            error={errors.customers ? t("form.errors.customers") : undefined}
+          >
+            <Input
+              id="target-customers"
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder={t("form.customersOptional")}
+              value={draft.customers}
+              onChange={(e) => update({ customers: e.target.value })}
+              className="h-12 text-lg font-semibold tabular-nums"
+              data-testid="target-customers"
+            />
+            <p className="mt-1.5 text-[12px] font-medium text-zinc-400">{t("form.customersHint")}</p>
+          </FieldBlock>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col items-start gap-1.5">

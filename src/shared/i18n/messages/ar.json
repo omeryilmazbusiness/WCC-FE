@@ -249,7 +249,8 @@
       "pace": "الوتيرة",
       "reached": "تحقق الهدف",
       "perDay": "المطلوب يوميًا",
-      "unconverted": "لم تُحتسب {currencies} — أضف سعر صرف"
+      "unconverted": "لم تُحتسب {currencies} — أضف سعر صرف",
+      "customers": "{actual} من {goal} عميل"
     },
     "attention": {
       "title": "يحتاج إلى متابعة",
@@ -2929,7 +2930,8 @@
       "perDay": "لكل يوم متبقٍ",
       "variance": "الانحراف",
       "pace": "الوتيرة مقابل المتوقع",
-      "curve": "المنحنى"
+      "curve": "المنحنى",
+      "customersRequired": "{count} عميل / يوم متبقٍ"
     },
     "fields": {
       "label": "التسمية",
@@ -2937,7 +2939,8 @@
       "periodStart": "بداية الفترة",
       "periodEnd": "نهاية الفترة",
       "metric": "المقياس",
-      "currency": "العملة"
+      "currency": "العملة",
+      "customers": "العملاء المطلوب إرسالهم"
     },
     "seasonalityHint": "أدخل 12 وزناً شهرياً (نسب). تُطبَّع إلى 100٪.",
     "weightsCsv": "أوزان الأشهر (CSV)",
@@ -2997,8 +3000,14 @@
           "invalid": "أدخل مبلغًا موجبًا، مثل 250000"
         },
         "currency": "استخدم رمزًا من 3 أحرف مثل SAR",
-        "label": "أدخل اسمًا للهدف"
-      }
+        "label": "أدخل اسمًا للهدف",
+        "customers": "أدخل عددًا صحيحًا أكبر من صفر"
+      },
+      "customersOptional": "اختياري — مثل 250",
+      "customersHint": "المسافرون المباعون في هذه الفترة (حجوزات مؤكدة). اتركه فارغًا لهدف مالي فقط."
+    },
+    "chip": {
+      "customers": "{count} عميل"
     }
   },
   "importExport": {

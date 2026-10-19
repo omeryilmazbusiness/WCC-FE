@@ -318,7 +318,12 @@ export function TargetPerformanceBoard() {
               <PeriodKindIcon kind={tg.periodKind} size="sm" />
               <span className="min-w-0">
                 <span className="block max-w-[12rem] truncate text-[13px] font-semibold text-zinc-900">{tg.label}</span>
-                <span className="block text-[11px] font-medium text-zinc-400">{t(`kinds.${tg.periodKind}`)}</span>
+                <span className="block text-[11px] font-medium text-zinc-400">
+                  {t(`kinds.${tg.periodKind}`)}
+                  {tg.targetCustomers != null
+                    ? ` · ${t("chip.customers", { count: tg.targetCustomers.toLocaleString(locale) })}`
+                    : ""}
+                </span>
               </span>
             </button>
           );
@@ -420,6 +425,57 @@ export function TargetPerformanceBoard() {
                 {money(progress.expectedToDate, progress.currency)}
               </span>
             </div>
+
+            {progress.targetCustomers != null ? (
+              <div
+                className="mt-4 rounded-2xl border border-zinc-200/70 bg-zinc-50/80 px-4 py-3"
+                data-testid="target-customers-progress"
+              >
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+                      {t("fields.customers")}
+                    </p>
+                    <p className="mt-0.5 text-[20px] font-semibold tabular-nums text-zinc-950">
+                      {(progress.actualCustomers ?? 0).toLocaleString(locale)}
+                      <span className="ms-2 text-sm font-medium text-zinc-400">
+                        {t("ofTarget", {
+                          target: progress.targetCustomers.toLocaleString(locale),
+                        })}
+                      </span>
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 text-end">
+                    {progress.customersStatus ? (
+                      <Badge className={cn("capitalize", (STATUS_STYLE[progress.customersStatus] ?? STATUS_STYLE.placeholder).badge)}>
+                        {t(`status.${progress.customersStatus}`)}
+                      </Badge>
+                    ) : null}
+                    <p className="text-sm font-semibold tabular-nums text-zinc-900">
+                      {pct(progress.customersProgressBps ?? 0)}
+                    </p>
+                  </div>
+                </div>
+                <div className="relative mt-2.5 h-1.5 overflow-hidden rounded-full bg-zinc-200/80">
+                  <div
+                    className={cn(
+                      "absolute inset-y-0 start-0 rounded-full",
+                      (STATUS_STYLE[progress.customersStatus ?? "placeholder"] ?? STATUS_STYLE.placeholder).bar,
+                    )}
+                    style={{
+                      width: `${Math.min(100, Math.max(0, (progress.customersProgressBps ?? 0) / 100))}%`,
+                    }}
+                  />
+                </div>
+                {progress.customersRequiredDaily != null && progress.customersRequiredDaily > 0 ? (
+                  <p className="mt-2 text-[11px] font-medium text-zinc-400">
+                    {t("cards.customersRequired", {
+                      count: progress.customersRequiredDaily.toLocaleString(locale),
+                    })}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
 
             {progress.unconverted.length > 0 ? (
               <Link
