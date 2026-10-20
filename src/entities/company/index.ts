@@ -6,3 +6,14 @@ export {
   type RegisterCompanyInput,
   type RegisteredCompany,
 } from "./api";
+export {
+  ADDRESS_MAX,
+  CITY_MAX,
+  COUNTRY_MAX,
+  isCityName,
+  isCountryName,
+  isStreetAddress,
+  normalizeAddress,
+  normalizeCity,
+  normalizeCountry,
+} from "./place";

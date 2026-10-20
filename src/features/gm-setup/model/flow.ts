@@ -3,6 +3,7 @@
  * only derive navigation and client-side hints from its overview.
  */
 
+import { isCityName, isCountryName, isStreetAddress } from "@/entities/company/place";
 import type {
   CompanyProfile,
   SetupOverview,
@@ -65,7 +66,6 @@ export type CompanyFieldErrors = Partial<Record<keyof CompanyProfile, string>>;
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])$/;
-const COUNTRY_PATTERN = /^[A-Z]{2}$/;
 
 /** Mirrors the backend's reserved first path segments (`domain/company.reservedSlugs`). */
 export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
@@ -83,9 +83,9 @@ export function companyHints(c: CompanyProfile): CompanyFieldErrors {
   const slug = c.slug.trim();
   if (slug && (!SLUG_PATTERN.test(slug) || RESERVED_SLUGS.has(slug))) out.slug = "slug";
   if (c.email.trim() && !EMAIL_PATTERN.test(c.email.trim())) out.email = "email";
-  if (!COUNTRY_PATTERN.test(c.country.trim())) out.country = "country";
-  if (!c.city.trim()) out.city = "city";
-  if (!c.address.trim()) out.address = "address";
+  if (!isCountryName(c.country)) out.country = "country";
+  if (!isCityName(c.city)) out.city = "city";
+  if (!isStreetAddress(c.address)) out.address = "address";
   return out;
 }
 

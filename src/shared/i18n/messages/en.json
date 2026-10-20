@@ -4422,6 +4422,9 @@
       "subtitle": "Creates the company, its main center and the general manager account.",
       "groups": {
         "company": "Company",
+        "companyHint": "How the tenant appears on the platform and its sign-in page.",
+        "location": "Location",
+        "locationHint": "Country, city and street address — typed as names, not codes.",
         "gm": "General manager"
       },
       "fields": {
@@ -4430,10 +4433,16 @@
         "slug": "Web address",
         "country": "Country",
         "city": "City",
+        "address": "Address",
         "gmName": "Full name",
         "gmEmail": "Email",
         "gmPassword": "Temporary password",
         "logo": "Logo"
+      },
+      "placeholders": {
+        "country": "Syria",
+        "city": "Damascus",
+        "address": "Street, district, building"
       },
       "slugHint": "Workspace URL: {path}. Leave empty to derive it from the name.",
       "gmHint": "The GM completes company details, branches and team on first sign-in.",
@@ -4454,8 +4463,9 @@
         "nameAr": "Too long.",
         "slug": "2–48 lowercase letters, digits or dashes; not a reserved word.",
         "slugTaken": "This address is already taken.",
-        "country": "Use a 2-letter country code.",
-        "city": "Too long.",
+        "country": "Enter the country name.",
+        "city": "Enter the city name.",
+        "address": "Enter the street address.",
         "gmName": "Enter the full name.",
         "gmEmail": "Enter a valid email.",
         "emailTaken": "This email is already in use.",

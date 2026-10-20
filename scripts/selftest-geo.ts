@@ -14,6 +14,7 @@ import {
   cityOptions,
   countryOptions,
   normalizeSearch,
+  resolveCountryCode,
   searchOptions,
   timezoneFor,
 } from "../src/entities/geo/model/options.ts";
@@ -94,12 +95,22 @@ const validZone = (tz: string) => {
   assert.equal(cityOptions(sy, "ar").find((o) => o.value === "Damascus")?.label, "دمشق");
   assert.ok(cityOptions(sy, "en", "Old Quarter").some((o) => o.value === "Old Quarter"));
   assert.ok(countryOptions(countries, "en", "ZZ").some((o) => o.value === "ZZ"));
+  assert.doesNotThrow(() => countryOptions(countries, "en", "Syria"));
+  assert.doesNotThrow(() => countryOptions(countries, "en", "Not A Region"));
+  assert.ok(countryOptions(countries, "en", "Syria").some((o) => o.value === "SY"));
+  assert.ok(!countryOptions(countries, "en", "Syria").some((o) => o.value === "Syria"), "a known name is not duplicated");
+  assert.ok(countryOptions(countries, "en", "Wodi Land").some((o) => o.value === "Wodi Land"));
+  assert.equal(resolveCountryCode(countries, "Syria", "en"), "SY");
+  assert.equal(resolveCountryCode(countries, "سوريا", "ar"), "SY");
+  assert.equal(resolveCountryCode(countries, "sy", "en"), "SY");
+  assert.equal(resolveCountryCode(countries, "Wodi Land", "en"), "Wodi Land");
 
   assert.equal(timezoneFor(countries, sy, "SY", "Aleppo", "UTC"), "Asia/Damascus");
   const us = parseCityFile(readFile("US"));
   assert.equal(timezoneFor(countries, us, "US", "Chicago", "UTC"), "America/Chicago");
   assert.equal(timezoneFor(countries, [], "US", "", "UTC"), COUNTRY_ROWS.find(([c]) => c === "US")?.[1]);
   assert.equal(timezoneFor(countries, [], "ZZ", "", "Asia/Riyadh"), "Asia/Riyadh");
+  assert.equal(timezoneFor(countries, sy, "Syria", "Damascus", "UTC"), "Asia/Damascus");
 }
 
 // search: accent / case / Arabic-form insensitive, prefix first, capped

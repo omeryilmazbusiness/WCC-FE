@@ -6,6 +6,7 @@ import { Building2 } from "lucide-react";
 import {
   cityOptions,
   countryOptions,
+  resolveCountryCode,
   staticGeoCatalog,
   timezoneFor,
   useCities,
@@ -71,12 +72,16 @@ export function CompanyStep({ overview, repository, onSaved, onBack, geo = stati
   const feedback = useMutationFeedback();
   const refreshViewer = useRefreshViewer();
   const activeBranch = useActiveBranch();
-  const [form, setForm] = useState<CompanyProfile>(() => ({
-    ...overview.company,
-    timezone:
-      overview.company.timezone ||
-      timezoneFor(geo.countries(), [], overview.company.country, "", DEFAULT_TIMEZONE),
-  }));
+  const [form, setForm] = useState<CompanyProfile>(() => {
+    const country = resolveCountryCode(geo.countries(), overview.company.country, locale) || overview.company.country;
+    return {
+      ...overview.company,
+      country,
+      timezone:
+        overview.company.timezone ||
+        timezoneFor(geo.countries(), [], country, overview.company.city, DEFAULT_TIMEZONE),
+    };
+  });
   const { cities: cityList, status: cityStatus, reload: reloadCities } = useCities(geo, form.country);
   const [drafts, setDrafts] = useState<BranchDraft[]>(() => draftsOf(overview));
   const [errors, setErrors] = useState<CompanyFieldErrors>({});

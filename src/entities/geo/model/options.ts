@@ -1,20 +1,63 @@
 import type { City, Country, GeoOption } from "./types";
 
+const ISO_COUNTRY = /^[A-Z]{2}$/;
+
+/** ISO 3166-1 alpha-2; `Intl.DisplayNames({type:"region"})` only accepts these. */
+export function isIsoCountryCode(value: string): boolean {
+  return ISO_COUNTRY.test(value);
+}
+
 function sortByLabel(options: GeoOption[], locale: string): GeoOption[] {
   const collator = new Intl.Collator(locale, { sensitivity: "base" });
   return options.sort((a, b) => collator.compare(a.label, b.label));
 }
 
-/** Countries by localized name (code and English name stay searchable); a saved code outside the catalogue stays. */
+/** Localized region label; never throws on a country name or unknown token. */
+function regionLabel(names: Intl.DisplayNames, code: string): string {
+  if (!isIsoCountryCode(code)) return code;
+  try {
+    return names.of(code) ?? code;
+  } catch {
+    return code;
+  }
+}
+
+/**
+ * Map a stored country (ISO code or a typed display name such as "Syria") onto a
+ * catalogue code when the name matches English or the active locale.
+ */
+export function resolveCountryCode(countries: readonly Country[], value: string, locale: string): string {
+  const raw = value.trim();
+  if (!raw) return "";
+  const asCode = /^[A-Za-z]{2}$/.test(raw) ? raw.toUpperCase() : raw;
+  if (countries.some((c) => c.code === asCode)) return asCode;
+  const names = new Intl.DisplayNames([locale], { type: "region" });
+  const english = new Intl.DisplayNames(["en"], { type: "region" });
+  const needle = normalizeSearch(raw);
+  for (const { code } of countries) {
+    if (normalizeSearch(regionLabel(names, code)) === needle || normalizeSearch(regionLabel(english, code)) === needle) {
+      return code;
+    }
+  }
+  return raw;
+}
+
+function countryOption(code: string, names: Intl.DisplayNames, english: Intl.DisplayNames): GeoOption {
+  if (!isIsoCountryCode(code)) return { value: code, label: code };
+  const label = regionLabel(names, code);
+  const en = regionLabel(english, code);
+  return { value: code, label, alt: `${code} ${en}` };
+}
+
+/** Countries by localized name (code and English name stay searchable); a saved code or name outside the catalogue stays. */
 export function countryOptions(countries: readonly Country[], locale: string, current = ""): GeoOption[] {
   const names = new Intl.DisplayNames([locale], { type: "region" });
   const english = new Intl.DisplayNames(["en"], { type: "region" });
   const codes = countries.map((c) => c.code);
-  if (current && !codes.includes(current)) codes.push(current);
-  return sortByLabel(
-    codes.map((code) => ({ value: code, label: names.of(code) ?? code, alt: `${code} ${english.of(code) ?? ""}` })),
-    locale,
-  );
+  const saved = current.trim();
+  const resolved = saved ? resolveCountryCode(countries, saved, locale) : "";
+  if (saved && !codes.includes(saved) && !codes.includes(resolved)) codes.push(saved);
+  return sortByLabel(codes.map((code) => countryOption(code, names, english)), locale);
 }
 
 /** Cities by localized name (Arabic when available); a saved city outside the catalogue stays. */
@@ -37,9 +80,10 @@ export function timezoneFor(
   city: string,
   fallback: string,
 ): string {
+  const code = countries.some((c) => c.code === country) ? country : resolveCountryCode(countries, country, "en");
   return (
     (city && cities.find((c) => c.value === city)?.timezone) ||
-    countries.find((c) => c.code === country)?.timezone ||
+    countries.find((c) => c.code === code)?.timezone ||
     fallback
   );
 }

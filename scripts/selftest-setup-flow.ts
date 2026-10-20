@@ -90,7 +90,9 @@ function overview(patch: Partial<SetupOverview> = {}): SetupOverview {
   assert.equal(companyHints({ ...company, slug: "Al-Noor" }).slug, "slug");
   const noLocation = companyHints({ ...company, country: "", city: " ", address: "" });
   assert.deepEqual(Object.keys(noLocation).sort(), ["address", "city", "country"]);
-  assert.equal(companyHints({ ...company, country: "sa" }).country, "country");
+  assert.equal(companyHints({ ...company, country: "s" }).country, "country");
+  assert.equal(companyHints({ ...company, country: "Saudi Arabia" }).country, undefined);
+  assert.equal(companyHints({ ...company, country: "sa" }).country, undefined, "legacy ISO codes still pass");
   assert.equal(initials("sara ahmed"), "SA");
   assert.equal(initials("Omer"), "O");
   assert.equal(initials(""), "?");

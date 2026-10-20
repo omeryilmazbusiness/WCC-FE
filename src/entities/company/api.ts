@@ -8,6 +8,7 @@ export type PlatformCompany = {
   name_ar: string;
   country: string;
   city: string;
+  address: string;
   is_active: boolean;
   created_at: string;
   branch_count: number;
@@ -25,6 +26,7 @@ export type RegisterCompanyInput = {
   slug?: string;
   country?: string;
   city?: string;
+  address?: string;
   gm: { full_name: string; email: string; password: string };
 };
 
