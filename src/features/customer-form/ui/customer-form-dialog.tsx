@@ -112,7 +112,8 @@ export function CustomerFormDialog({ repository, customer, open, onOpenChange, o
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="flex max-h-[94vh] max-w-2xl flex-col gap-0 overflow-hidden bg-[#f4f4f7] p-0 sm:p-0"
+        overlayClassName="z-[80]"
+        className="z-[80] flex max-h-[94vh] max-w-2xl flex-col gap-0 overflow-hidden bg-[#f4f4f7] p-0 sm:p-0"
         data-testid="customer-form"
       >
         <DialogHeader className="border-b border-zinc-200/70 bg-white/80 px-5 pb-4 pt-5 backdrop-blur sm:px-7">

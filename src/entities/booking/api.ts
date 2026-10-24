@@ -280,6 +280,31 @@ export class ApiBookingRepository implements BookingRepository {
         currency: input.currency ?? "USD",
         notes: input.notes ?? "",
         ...profilePayload(input.profile ?? {}),
+        ...(input.participants?.length
+          ? {
+              participants: input.participants.map((p) => ({
+                full_name: p.fullName,
+                passport_no: p.passportNo ?? "",
+                nationality: p.nationality ?? "",
+                date_of_birth: p.dateOfBirth || null,
+                gender: p.gender ?? "",
+                national_id: p.nationalId ?? "",
+                health_ok: Boolean(p.healthOk),
+              })),
+            }
+          : {}),
+        ...(input.items?.length
+          ? {
+              items: input.items.map((it) => ({
+                kind: it.kind,
+                ...(it.kind === "item" ? { category: it.category ?? "extras" } : {}),
+                label: it.label,
+                quantity: it.quantity,
+                unit_price: it.unitPrice,
+                unit_cost: it.unitCost,
+              })),
+            }
+          : {}),
       }),
     });
     return mapBooking(raw);
@@ -700,30 +725,57 @@ export class MemoryBookingRepository implements BookingRepository {
   async create(input: BookingCreateInput): Promise<Booking> {
     ensureDemo();
     const id = crypto.randomUUID();
+    const party = (input.participants ?? []).filter((p) => p.fullName.trim());
+    const items = input.items ?? [];
+    const cost = items.reduce((sum, it) => sum + Math.max(1, it.quantity) * it.unitCost, 0);
+    const subtotal = items.reduce((sum, it) => sum + Math.max(1, it.quantity) * it.unitPrice, 0);
+    const discount = input.discountAmt ?? 0;
+    const total = items.length ? Math.max(0, subtotal - discount) : (input.totalAmount ?? 0);
     const b = demoBooking(
       id,
       "draft",
-      {
-        total: input.totalAmount ?? 0,
-        cost: 0,
-        collected: 0,
-        discount: input.discountAmt ?? 0,
-      },
+      { total, cost, collected: 0, discount },
       {
         customerId: input.customerId,
         departureId: input.departureId,
         leadId: input.leadId ?? null,
-        paxCount: input.paxCount,
+        paxCount: party.length || input.paxCount,
         currency: input.currency ?? "USD",
         notes: input.notes ?? "",
         ownerId: "u-local",
         ...input.profile,
         pnr: (input.profile?.pnr ?? "").trim().toUpperCase(),
+        info: { ...EMPTY_INFO, customerName: "", participantsCount: party.length },
       },
     );
     store.unshift(b);
-    parts[id] = [];
-    lines[id] = [];
+    parts[id] = party.map((p) => ({
+      id: crypto.randomUUID(),
+      bookingId: id,
+      fullName: p.fullName.trim(),
+      passportNo: toMaskedSecret(p.passportNo),
+      passportLast4: maskedLast4(toMaskedSecret(p.passportNo)),
+      nationality: p.nationality ?? "",
+      dateOfBirth: p.dateOfBirth ?? null,
+      gender: p.gender ?? "",
+      nationalId: toMaskedSecret(p.nationalId),
+      nationalIdLast4: maskedLast4(toMaskedSecret(p.nationalId)),
+      healthOk: Boolean(p.healthOk),
+      createdAt: new Date().toISOString(),
+    }));
+    lines[id] = items.map((it, i) => ({
+      id: crypto.randomUUID(),
+      bookingId: id,
+      kind: it.kind,
+      category: it.category,
+      label: it.label,
+      quantity: Math.max(1, it.quantity),
+      unitPrice: it.unitPrice,
+      unitCost: it.unitCost,
+      lineTotal: Math.max(1, it.quantity) * it.unitPrice,
+      lineCost: Math.max(1, it.quantity) * it.unitCost,
+      sortOrder: i,
+    }));
     checks[id] = seedChecklist(id);
     return { ...b };
   }

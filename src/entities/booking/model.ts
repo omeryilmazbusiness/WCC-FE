@@ -231,6 +231,8 @@ export type BookingCreateInput = {
   currency?: string;
   notes?: string;
   profile?: Partial<BookingProfile>;
+  participants?: ParticipantInput[];
+  items?: LineItemInput[];
 };
 
 export type BookingUpdateInput = {

@@ -57,6 +57,7 @@
     "test:packages": "node --experimental-strip-types scripts/selftest-packages.ts",
     "test:package-links": "node --experimental-strip-types scripts/selftest-package-links.ts",
     "test:bookings": "node --experimental-strip-types scripts/selftest-bookings.ts",
+    "test:create-booking": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs scripts/selftest-create-booking.ts",
     "test:hotels": "node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/selftest-hotels.ts",
     "test:suppliers": "node --experimental-transform-types --no-warnings --import ./scripts/ts-resolve.mjs scripts/selftest-suppliers.ts",
     "test:finance": "node --experimental-transform-types --no-warnings --import ./scripts/ts-resolve.mjs scripts/selftest-finance.ts",

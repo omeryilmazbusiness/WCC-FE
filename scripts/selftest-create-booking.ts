@@ -1,0 +1,262 @@
+/**
+ * Self-test: New Booking wizard — draft validation, who-gets-which-service mapping, HTTP payload.
+ * Run: npm run test:create-booking
+ */
+
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import {
+  BOOKING_CREATE_STEPS,
+  draftGrandTotal,
+  draftIssues,
+  emptyBookingDraft,
+  firstIssueStep,
+  serviceLineCategory,
+  serviceLineLabel,
+  toCreateInput,
+  type BookingDraft,
+  type FlightPick,
+  type ServiceDraft,
+  type TravellerDraft,
+} from "../src/features/create-booking/model/draft.ts";
+import { applyCustomer } from "../src/features/create-booking/model/party.ts";
+import { applyFlightPick, flightPickFromOffer, flightSummary } from "../src/features/create-booking/model/flight-pick.ts";
+import { CREATE_LOOK, KIND_LOOK, STEP_LOOK } from "../src/features/create-booking/ui/look.ts";
+
+const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
+
+function traveller(key: string, name: string, extra: Partial<TravellerDraft> = {}): TravellerDraft {
+  return {
+    key,
+    fullName: name,
+    gender: "",
+    dateOfBirth: "",
+    nationality: "",
+    passportNo: "",
+    nationalId: "",
+    healthOk: false,
+    ...extra,
+  };
+}
+
+function service(key: string, extra: Partial<ServiceDraft> = {}): ServiceDraft {
+  return { key, kind: "package", label: "", travellerKeys: [], quantity: 1, unitPrice: "0", unitCost: "0", ...extra };
+}
+
+function validDraft(): BookingDraft {
+  return {
+    ...emptyBookingDraft(),
+    customerId: "cust-1",
+    customerLabel: "Ali",
+    channel: "b2b_agency",
+    companyName: "Al Noor Travel",
+    serviceType: "package",
+    departureId: "dep-1",
+    packageId: "pkg-1",
+    pnr: "um4z9p",
+    summary: "Family Umrah",
+    currency: "SAR",
+    discountAmt: "100",
+    travellers: [
+      traveller("a", "Ali Hassan", { gender: "male", nationality: "sa", passportNo: "a1234567", dateOfBirth: "1990-05-01" }),
+      traveller("b", "Fatima Hassan", { gender: "female", nationality: "SA", nationalId: "1234567890" }),
+    ],
+    services: [
+      service("s1", { kind: "package", label: "Umrah", travellerKeys: ["a", "b"], quantity: 2, unitPrice: "4000", unitCost: "3000" }),
+      service("s2", { kind: "visa", label: "Visa", travellerKeys: ["a"], quantity: 1, unitPrice: "500", unitCost: "400" }),
+      service("s3", { kind: "transfer", label: "JED–Makkah", quantity: 1, unitPrice: "250.50", unitCost: "180" }),
+    ],
+  };
+}
+
+function validation() {
+  const empty = emptyBookingDraft();
+  const issues = draftIssues(empty);
+  assert.ok(issues.party?.includes("customer"));
+  assert.ok(issues.trip?.includes("departure"));
+  assert.ok(issues.travellers?.some((x) => x.startsWith("name:")));
+  assert.equal(firstIssueStep(issues), "party");
+
+  const agency = { ...empty, customerId: "c1", channel: "b2b_agency" as const };
+  assert.ok(draftIssues(agency).party?.includes("companyName"));
+
+  const badPnr = { ...validDraft(), pnr: "bad pnr!" };
+  assert.ok(draftIssues(badPnr).trip?.includes("pnr"));
+
+  const badNid = validDraft();
+  badNid.travellers[1] = { ...badNid.travellers[1], nationalId: "12" };
+  assert.ok(draftIssues(badNid).travellers?.includes("nationalId:1"));
+
+  const overDiscount = { ...validDraft(), discountAmt: "999999" };
+  assert.ok(draftIssues(overDiscount).services?.includes("discount"));
+
+  const badMoney = validDraft();
+  badMoney.services[0] = { ...badMoney.services[0], unitPrice: "12.345" };
+  assert.ok(draftIssues(badMoney).services?.includes("money:0"));
+
+  assert.equal(firstIssueStep(draftIssues(validDraft())), null);
+
+  const flightTrip = { ...validDraft(), serviceType: "flight" as const, flight: null };
+  assert.ok(draftIssues(flightTrip).trip?.includes("flight"));
+  const flightOk = { ...flightTrip, flight: samplePick() };
+  assert.ok(!draftIssues(flightOk).trip?.includes("flight"));
+}
+
+function samplePick(extra: Partial<FlightPick> = {}): FlightPick {
+  return {
+    airline: "TK",
+    airlineName: "Turkish Airlines",
+    flightNumber: "123",
+    origin: "IST",
+    destination: "JED",
+    originAirport: "IST",
+    destinationAirport: "JED",
+    localDeparture: "2026-12-10T10:00",
+    price: 450.5,
+    currency: "USD",
+    bookingUrl: "https://example.test/tk123",
+    ...extra,
+  };
+}
+
+function partyAndFlight() {
+  const unnamed = emptyBookingDraft();
+  const seeded = { ...unnamed, ...applyCustomer(unnamed, { id: "c9", fullName: "Omar Ali", nationality: "sa", dateOfBirth: "1988-03-12" }) };
+  assert.equal(seeded.customerId, "c9");
+  assert.equal(seeded.customerLabel, "Omar Ali");
+  assert.equal(seeded.travellers[0].fullName, "Omar Ali");
+  assert.equal(seeded.travellers[0].nationality, "SA");
+  assert.equal(seeded.travellers[0].dateOfBirth, "1988-03-12");
+
+  const named = { ...unnamed, travellers: [traveller(unnamed.travellers[0].key, "Kept Name")] };
+  const kept = applyCustomer(named, { id: "c2", fullName: "New Person", nationality: "tr" });
+  assert.equal(kept.customerId, "c2");
+  assert.equal(kept.travellers?.[0].fullName, "Kept Name");
+  assert.equal(kept.travellers?.[0].nationality, "");
+
+  const pick = flightPickFromOffer(samplePick({ price: 450.5, currency: "EUR" }));
+  assert.equal(flightSummary(pick), "TK 123 · IST–JED");
+  const twoPax = {
+    ...emptyBookingDraft(),
+    travellers: [traveller("a", "Ali"), traveller("b", "Fatima")],
+    services: [service("s0", { kind: "package", label: "" })],
+  };
+  const applied = { ...twoPax, ...applyFlightPick(twoPax, pick) };
+  assert.equal(applied.serviceType, "flight");
+  assert.equal(applied.currency, "EUR");
+  assert.equal(applied.supplierSource, "other");
+  assert.equal(applied.summary, "TK 123 · IST–JED");
+  assert.equal(applied.flight?.flightNumber, "123");
+  assert.equal(applied.services[0].kind, "flight");
+  assert.equal(applied.services[0].quantity, 2);
+  assert.equal(applied.services[0].unitPrice, "450.5");
+  assert.equal(applied.services[0].key, "s0");
+
+  const withVisa = {
+    ...twoPax,
+    services: [service("visa", { kind: "visa", label: "Visa" })],
+  };
+  const added = applyFlightPick(withVisa, pick);
+  assert.equal(added.services?.[0].kind, "flight");
+  assert.equal(added.services?.[1].kind, "visa");
+}
+
+function mapping() {
+  assert.equal(serviceLineCategory("transfer"), "transport");
+  assert.equal(serviceLineCategory("visa"), "extras");
+  assert.equal(serviceLineCategory("tour"), "extras");
+  assert.equal(serviceLineCategory("hotel"), "hotel");
+  const d = validDraft();
+  assert.equal(serviceLineLabel(d.services[0], d.travellers), "Umrah — Ali Hassan, Fatima Hassan");
+  assert.equal(serviceLineLabel(d.services[1], d.travellers), "Visa — Ali Hassan");
+  assert.equal(serviceLineLabel(d.services[2], d.travellers), "JED–Makkah");
+  // 2*4000 + 500 + 250.50 = 8750.50 major → 875050 minor; minus 100.00 → 865050
+  assert.equal(draftGrandTotal(d), 2 * 400000 + 50000 + 25050 - 10000);
+
+  const input = toCreateInput(d);
+  assert.equal(input.customerId, "cust-1");
+  assert.equal(input.departureId, "dep-1");
+  assert.equal(input.paxCount, 2);
+  assert.equal(input.currency, "SAR");
+  assert.equal(input.profile?.pnr, "UM4Z9P");
+  assert.equal(input.profile?.channel, "b2b_agency");
+  assert.equal(input.profile?.companyName, "Al Noor Travel");
+  assert.equal(input.participants?.length, 2);
+  assert.equal(input.participants?.[0].nationality, "SA");
+  assert.equal(input.participants?.[0].dateOfBirth, "1990-05-01");
+  assert.equal(input.items?.[0].category, "package");
+  assert.equal(input.items?.[0].label, "Umrah — Ali Hassan, Fatima Hassan");
+  assert.equal(input.items?.[0].quantity, 2);
+  assert.equal(input.items?.[0].unitPrice, 400000);
+  assert.equal(input.items?.[1].category, "extras");
+  assert.equal(input.items?.[2].category, "transport");
+  assert.equal(input.items?.[2].unitPrice, 25050);
+  assert.equal(input.totalAmount, draftGrandTotal(d));
+  assert.equal(input.discountAmt, 10000);
+}
+
+function look() {
+  assert.deepEqual(Object.keys(STEP_LOOK), [...BOOKING_CREATE_STEPS]);
+  assert.ok(CREATE_LOOK.icon && CREATE_LOOK.tone === "emerald");
+  assert.equal(KIND_LOOK.transfer.tone, "amber");
+  assert.equal(KIND_LOOK.visa.tone, "rose");
+  assert.equal(KIND_LOOK.extras.tone, "zinc");
+}
+
+function wiring() {
+  const dialog = read("src/features/create-booking/ui/create-booking-dialog.tsx");
+  const steps = read("src/features/create-booking/ui/steps.tsx");
+  const grid = read("src/shared/ui/form-controls.tsx");
+  assert.match(dialog, /DrawerContent/);
+  assert.match(dialog, /GlyphTile/);
+  assert.match(dialog, /data-testid="create-booking-dialog"/);
+  assert.match(dialog, /create-booking-rail-\$\{s\}/);
+  assert.match(steps, /FormSection/);
+  assert.match(steps, /GlyphTile/);
+  assert.match(steps, /InitialsAvatar/);
+  assert.match(steps, /size="lg"/);
+  assert.match(steps, /CustomerFormDialog/);
+  assert.match(steps, /PickFlightDialog/);
+  assert.match(steps, /applyCustomer/);
+  assert.match(steps, /applyFlightPick/);
+  assert.match(steps, /create-booking-new-customer/);
+  assert.match(steps, /create-booking-pick-flight/);
+  const picker = read("src/features/create-booking/ui/pick-flight-dialog.tsx");
+  assert.match(picker, /data-testid="create-booking-flight-dialog"/);
+  assert.match(picker, /FlightSearchForm/);
+  assert.match(picker, /w-\[min\(96vw,1180px\)\]/);
+  assert.match(picker, /create-booking-select-flight/);
+  assert.match(dialog, /onCustomerCreated/);
+  assert.match(grid, /size === "lg"/);
+  assert.deepEqual([...BOOKING_CREATE_STEPS], ["party", "trip", "travellers", "services", "review"]);
+  const api = read("src/entities/booking/api.ts");
+  assert.match(api, /participants:/);
+  assert.match(api, /full_name:/);
+  assert.match(api, /unit_price:/);
+  const en = JSON.parse(read("src/shared/i18n/messages/en.json"));
+  const ar = JSON.parse(read("src/shared/i18n/messages/ar.json"));
+  for (const step of BOOKING_CREATE_STEPS) {
+    assert.ok(en.bookings.steps[step].title && ar.bookings.steps[step].title, `steps.${step}`);
+  }
+  for (const key of [
+    "createTitle",
+    "forWhom",
+    "kind",
+    "grand",
+    "createCustomer",
+    "noCustomersCreate",
+    "pickFlight",
+    "pickFlightTitle",
+    "selectFlight",
+    "flightRequired",
+  ]) {
+    assert.ok(en.bookings.form[key] && ar.bookings.form[key], `form.${key}`);
+  }
+}
+
+validation();
+partyAndFlight();
+mapping();
+look();
+wiring();
+console.log("create-booking selftest OK");

@@ -16,18 +16,27 @@ export function ChoiceGrid<T extends string>({
   options,
   columns = 2,
   name,
+  size = "md",
 }: {
   value: T | "";
   onChange: (v: T) => void;
   options: readonly ChoiceOption<T>[];
   columns?: 2 | 3 | 4;
   name: string;
+  /** `lg` stacks a big icon above the label (wizard / marketing pickers). */
+  size?: "md" | "lg";
 }) {
+  const stacked = size === "lg";
   return (
     <div
       role="radiogroup"
       aria-label={name}
-      className={cn("grid gap-2.5", columns === 2 && "grid-cols-2", columns === 3 && "grid-cols-2 sm:grid-cols-3", columns === 4 && "grid-cols-2 sm:grid-cols-4")}
+      className={cn(
+        "grid items-stretch gap-2.5",
+        columns === 2 && "grid-cols-2",
+        columns === 3 && "grid-cols-2 sm:grid-cols-3",
+        columns === 4 && "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4",
+      )}
     >
       {options.map((o) => {
         const active = o.value === value;
@@ -41,25 +50,32 @@ export function ChoiceGrid<T extends string>({
             onClick={() => onChange(o.value)}
             data-testid={`${name}-${o.value}`}
             className={cn(
-              "relative flex min-w-0 items-center gap-3 rounded-[20px] border p-3 text-start transition duration-200",
+              "relative flex h-full min-w-0 rounded-[20px] border text-start transition duration-200",
+              stacked ? "flex-col items-center justify-center gap-2 px-2.5 pb-3 pt-3.5" : "items-center gap-3 p-3",
               active
                 ? "border-zinc-900/80 bg-white shadow-[0_12px_28px_-20px_rgba(15,23,42,0.6)] ring-1 ring-zinc-900/80"
                 : "border-zinc-200/70 bg-zinc-50/60 hover:bg-white hover:shadow-[0_10px_24px_-20px_rgba(15,23,42,0.45)]",
             )}
           >
             <span
-              className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-[15px] transition", active ? TONES[o.tone].gradient : TONES[o.tone].soft)}
+              className={cn(
+                "flex shrink-0 items-center justify-center transition",
+                stacked ? "h-12 w-12 rounded-[16px] sm:h-14 sm:w-14 sm:rounded-[18px]" : "h-11 w-11 rounded-[15px]",
+                active ? TONES[o.tone].gradient : TONES[o.tone].soft,
+              )}
               aria-hidden
             >
-              <Icon className="h-[22px] w-[22px]" strokeWidth={2.1} />
+              <Icon className={stacked ? "h-6 w-6 sm:h-7 sm:w-7" : "h-[22px] w-[22px]"} strokeWidth={2.05} />
             </span>
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-[13.5px] font-semibold text-zinc-900">{o.label}</span>
-              {o.hint ? <span className="block truncate text-[11.5px] font-medium text-zinc-500">{o.hint}</span> : null}
+            <span className={cn("min-w-0", stacked ? "w-full px-1 text-center" : "flex-1")}>
+              <span className={cn("block font-semibold leading-snug text-zinc-900", stacked ? "line-clamp-2 text-[12.5px] sm:text-[13px]" : "truncate text-[13.5px]")}>
+                {o.label}
+              </span>
+              {o.hint ? <span className="mt-0.5 block truncate text-[11.5px] font-medium text-zinc-500">{o.hint}</span> : null}
             </span>
             {active ? (
-              <span className="absolute end-2.5 top-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-zinc-950 text-white" aria-hidden>
-                <Check className="h-3 w-3" strokeWidth={3} />
+              <span className="absolute end-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-zinc-950 text-white sm:end-2 sm:top-2 sm:h-5 sm:w-5" aria-hidden>
+                <Check className="h-2.5 w-2.5 sm:h-3 sm:w-3" strokeWidth={3} />
               </span>
             ) : null}
           </button>

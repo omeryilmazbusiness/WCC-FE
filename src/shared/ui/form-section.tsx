@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
-import { cn } from "@/shared/lib/cn";
-import { TONES, type Tone } from "./tone";
+import { GlyphTile } from "./inset-group";
+import type { Tone } from "./tone";
 
 type Props = {
   icon: LucideIcon;
@@ -21,14 +21,12 @@ export function FormSection({ icon: Icon, tone, title, hint, aside, testId, chil
       data-testid={testId}
     >
       <header className="mb-4 flex items-center gap-3.5">
-        <span className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px]", TONES[tone].gradient)} aria-hidden>
-          <Icon className="h-6 w-6" strokeWidth={2.2} />
-        </span>
+        <GlyphTile icon={Icon} tone={tone} size="section" />
         <div className="min-w-0 flex-1">
-          <h3 className="text-[16px] font-semibold tracking-tight text-zinc-950">{title}</h3>
-          {hint ? <p className="mt-0.5 text-[12.5px] font-medium text-zinc-500">{hint}</p> : null}
+          <h3 className="text-[16px] font-semibold leading-tight tracking-tight text-zinc-950">{title}</h3>
+          {hint ? <p className="mt-1 text-[12.5px] font-medium leading-snug text-zinc-500">{hint}</p> : null}
         </div>
-        {aside}
+        {aside ? <div className="shrink-0">{aside}</div> : null}
       </header>
       <div className="space-y-4">{children}</div>
     </section>

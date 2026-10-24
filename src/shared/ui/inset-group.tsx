@@ -17,7 +17,9 @@ const GLYPH_BG: Record<Tone, string> = {
 const GLYPH_SIZE = {
   sm: { box: "h-[30px] w-[30px] rounded-[8px]", icon: "h-[17px] w-[17px]" },
   md: { box: "h-10 w-10 rounded-[11px]", icon: "h-5 w-5" },
-  lg: { box: "h-16 w-16 rounded-[18px]", icon: "h-8 w-8" },
+  section: { box: "h-12 w-12 rounded-[16px]", icon: "h-6 w-6" },
+  xl: { box: "h-14 w-14 rounded-[18px]", icon: "h-7 w-7" },
+  lg: { box: "h-16 w-16 rounded-[20px]", icon: "h-8 w-8" },
 } as const;
 
 /** Solid colour square with a white glyph, like an iOS Settings icon. */
