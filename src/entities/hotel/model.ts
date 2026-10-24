@@ -82,6 +82,7 @@ export type HotelSummary = {
   seasonName: string;
   seasonKind: SeasonKind | "";
   fromNet: number;
+  fromSell: number;
   roomsTotal: number;
   roomsSold: number;
   nextRelease: string | null;
@@ -89,6 +90,15 @@ export type HotelSummary = {
   contractFiles: number;
   seasonsCount: number;
   allotmentCount: number;
+};
+
+/** Nightly firma (net) and satış (sell) for one room type in one calendar month. */
+export type MonthlyRate = {
+  year: number;
+  month: number;
+  roomType: RoomType;
+  net: number;
+  sell: number;
 };
 
 export type HotelListItem = Hotel & { summary: HotelSummary };
@@ -148,6 +158,7 @@ export type StopSale = {
 export type HotelDetail = {
   hotel: Hotel;
   seasons: Season[];
+  monthlyRates: MonthlyRate[];
   allotments: Allotment[];
   stopSales: StopSale[];
   today: string;
@@ -167,6 +178,7 @@ export type HotelInput = {
   cancellation?: CancellationPolicy;
   notes: string;
   isActive?: boolean;
+  monthlyRates?: MonthlyRate[];
 };
 
 export type SeasonInput = {

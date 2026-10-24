@@ -22,16 +22,16 @@ const FUTURE = "2026-10-06T12:15:00Z";
 const PAST = "2026-10-06T11:00:00Z";
 
 function user(id: string, patch: Partial<ApiUser>): ApiUser {
-  return { id, email: `${id}@wodi.local`, full_name: id, role: "employee", is_active: true, ...patch } as ApiUser;
+  return { id, email: `${id}@wodi.local`, full_name: id, role: "agent", is_active: true, ...patch } as ApiUser;
 }
 
 const team = [
-  user("zeynep", { full_name: "Zeynep Çelik", role: "employee", mfa_enabled: true }),
-  user("ali", { full_name: "Ali Kaya", role: "manager" }),
+  user("zeynep", { full_name: "Zeynep Çelik", role: "agent", mfa_enabled: true }),
+  user("ali", { full_name: "Ali Kaya", role: "agent" }),
   user("omar", { full_name: "Omar Haddad", role: "gm", mfa_enabled: true }),
   user("sara", { full_name: "Sara Nour", role: "finance", locked_until: FUTURE }),
-  user("old", { full_name: "Old Lock", role: "operations", locked_until: PAST }),
-  user("gone", { full_name: "Gone Away", role: "employee", is_active: false, locked_until: FUTURE }),
+  user("old", { full_name: "Old Lock", role: "agent", locked_until: PAST }),
+  user("gone", { full_name: "Gone Away", role: "agent", is_active: false, locked_until: FUTURE }),
 ];
 
 function status() {
@@ -47,11 +47,11 @@ function filters() {
   assert.deepEqual(filterMembers(team, { ...all, query: "celik" }, NOW).map((u) => u.id), ["zeynep"], "diacritics-insensitive");
   assert.deepEqual(filterMembers(team, { ...all, query: "SARA@" }, NOW).map((u) => u.id), ["sara"], "matches email, any case");
   assert.deepEqual(filterMembers(team, { ...all, status: "locked" }, NOW).map((u) => u.id), ["sara"]);
-  assert.deepEqual(filterMembers(team, { ...all, role: "employee", status: "active" }, NOW).map((u) => u.id), ["zeynep"]);
+  assert.deepEqual(filterMembers(team, { ...all, role: "agent", status: "active" }, NOW).map((u) => u.id), ["zeynep", "ali", "old"]);
 }
 
 function sorting() {
-  assert.deepEqual(sortMembers(team).map((u) => u.id), ["omar", "ali", "old", "sara", "gone", "zeynep"], "seniority, then name");
+  assert.deepEqual(sortMembers(team).map((u) => u.id), ["omar", "sara", "ali", "gone", "old", "zeynep"], "seniority, then name");
 }
 
 function summary() {
@@ -62,7 +62,7 @@ function summary() {
   assert.equal(s.inactive, 1);
   assert.equal(s.active + s.locked + s.inactive, s.total);
   assert.equal(s.mfa, 2);
-  assert.equal(s.byRole.employee, 2);
+  assert.equal(s.byRole.agent, 4);
   assert.equal(s.byRole.admin, undefined);
 }
 
@@ -124,7 +124,7 @@ function messages() {
   const en = load("en");
   const ar = load("ar");
   assert.deepEqual(leaves(ar.team).sort(), leaves(en.team).sort(), "team messages match in en and ar");
-  for (const role of ["gm", "manager", "operations", "finance", "employee", "admin"]) {
+  for (const role of ["gm", "finance", "agent", "admin"]) {
     assert.ok(en.team.roles[role] && en.team.roleHint[role], `role ${role} labelled`);
   }
   assert.equal(en.nav.team, "Team");

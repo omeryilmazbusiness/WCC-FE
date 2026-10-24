@@ -49,7 +49,7 @@ export function MemberDialog({ open, onOpenChange, member, roles, teams, branchI
   const editing = Boolean(member);
   const [name, setName] = useState(member?.full_name ?? "");
   const [email, setEmail] = useState(member?.email ?? "");
-  const [role, setRole] = useState<AppRole>(member?.role ?? "employee");
+  const [role, setRole] = useState<AppRole>(member?.role ?? "agent");
   const [team, setTeam] = useState(member?.team_id ?? NO_TEAM);
   const [password, setPassword] = useState("");
   const [touched, setTouched] = useState(false);

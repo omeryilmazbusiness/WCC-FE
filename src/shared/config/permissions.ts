@@ -39,6 +39,7 @@ export const PERMISSIONS = [
   "packages.write",
   "hotels.read",
   "hotels.write",
+  "hotels.pricing",
   "buses.read",
   "buses.write",
   "tasks.read",
@@ -149,9 +150,7 @@ export function canAccessPath(granted: readonly string[], pathWithoutLocale: str
 
 const ROLE_HOME: Record<AppRole, GuardedRoute> = {
   gm: routes.manager,
-  manager: routes.manager,
-  employee: routes.workspace,
-  operations: routes.workspace,
+  agent: routes.workspace,
   finance: routes.finance,
   admin: routes.adminCompanies,
 };
@@ -174,19 +173,7 @@ export const DEMO_ROLE_PERMISSIONS: Record<AppRole, readonly Permission[]> = {
   gm: PERMISSIONS.filter((p) => p !== "companies.manage" && p !== "support.manage"),
   // Platform operator: belongs to no company and holds no company-data permission.
   admin: ["companies.manage", "users.read", "users.write", "users.unlock", "audit.read", "ops.read", "support.manage"],
-  manager: PERMISSIONS.filter(
-    (p) =>
-      p !== "users.write" &&
-      p !== "users.unlock" &&
-      p !== "ops.read" &&
-      p !== "privacy.manage" &&
-      p !== "fx.manage" &&
-      p !== "setup.manage" &&
-      p !== "branches.manage" &&
-      p !== "companies.manage" &&
-      p !== "support.manage",
-  ),
-  employee: [
+  agent: [
     "branches.read", "customers.read", "customers.write", "leads.read", "leads.write",
     "bookings.read", "bookings.write", "documents.read", "documents.write", "visa.read",
     "visa.write", "suppliers.read", "flights.search", "tasks.read", "tasks.write", "packages.read",
@@ -203,22 +190,11 @@ export const DEMO_ROLE_PERMISSIONS: Record<AppRole, readonly Permission[]> = {
     "notifications.read", "notifications.write", "reports.read", "reports.export",
     "ai.read", "settings.read", "support.write",
   ],
-  operations: [
-    "branches.read", "customers.read", "customers.write", "pii.read",
-    "documents.read", "documents.write", "documents.review", "visa.read", "visa.write",
-    "suppliers.read", "suppliers.write", "flights.search", "bookings.read", "bookings.write",
-    "packages.read", "packages.write", "hotels.read", "hotels.write", "buses.read", "buses.write", "tasks.read", "tasks.write",
-    "inbox.read", "inbox.write", "integrations.read", "imports.read", "imports.write",
-    "notifications.read", "notifications.write", "reports.read", "reports.export",
-    "ai.read", "ai.write", "settings.read", "support.write",
-  ],
 };
 
 export const DEMO_ROLE_SCOPE: Record<AppRole, AccessScope> = {
   gm: "company",
   admin: "global",
-  manager: "branch",
   finance: "branch",
-  operations: "branch",
-  employee: "own",
+  agent: "own",
 };

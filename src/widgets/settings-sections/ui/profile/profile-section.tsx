@@ -57,7 +57,7 @@ function ProfileScreen({ profile, onSaved }: { profile: Profile; onSaved: (p: Pr
   const branch = profile.branchId ? workspace?.branches.find((b) => b.id === profile.branchId) : undefined;
   const branchName = branch ? (locale === "ar" && branch.nameAr) || branch.nameEn : null;
   const teamName = profile.team ? (locale === "ar" && profile.team.nameAr) || profile.team.nameEn : null;
-  const roleLook = ROLE_LOOK[profile.role] ?? ROLE_LOOK.employee;
+  const roleLook = ROLE_LOOK[profile.role] ?? ROLE_LOOK.agent;
   const completeness = profileCompleteness(profile);
 
   return (

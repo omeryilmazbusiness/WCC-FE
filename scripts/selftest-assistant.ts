@@ -485,7 +485,7 @@ function settingsWiring() {
   const ai = SETTINGS_SECTIONS.find((s) => s.id === "ai");
   assert.ok(ai && ai.group === "support" && ai.permission === "ai.read" && !ai.href, "AI protocol is a support detail behind ai.read");
   const ids = (role: keyof typeof DEMO_ROLE_PERMISSIONS) => visibleSettings(DEMO_ROLE_PERMISSIONS[role]).flatMap((g) => g.sections.map((s) => s.id));
-  assert.ok(ids("employee").includes("ai"), "every AI user can read the protocol");
+  assert.ok(ids("agent").includes("ai"), "every AI user can read the protocol");
   assert.ok(ids("gm").includes("ai"));
   assert.match(read("src/widgets/settings-sections/ui/settings-section-body.tsx"), /case "ai":\s*return <AiProtocolSection \/>/);
   assert.match(read("src/widgets/settings-hub/ui/section-look.ts"), /ai: \{ icon: Sparkles/);

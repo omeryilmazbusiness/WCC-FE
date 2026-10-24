@@ -1,5 +1,6 @@
 export * from "./model";
 export * from "./lib/pricing";
+export * from "./lib/monthly";
 export type { HotelRepository } from "./api";
 export { ApiHotelRepository, MemoryHotelRepository, createHotelRepository, hotelPayload, mapHotel } from "./api";
 export * from "./ui/look";

@@ -345,7 +345,7 @@ class MemoryRepo implements NotificationRepository {
         kind: "message.sla_breached",
         severity: "critical" as const,
         escalateAfterSeconds: 900,
-        escalateToRoles: ["manager", "gm"],
+        escalateToRoles: ["gm"],
         groupable: true,
         defaultTitle: "Conversation SLA breached",
         defaultHref: "/inbox",

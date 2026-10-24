@@ -1,5 +1,5 @@
 import { isPermission, type AccessScope } from "@/shared/config/permissions";
-import { isAppRole } from "@/shared/config/routes";
+import { canonicalizeRole, isAppRole } from "@/shared/config/routes";
 import type { SessionBranch, SessionWorkspace, ViewerSession } from "../session";
 import { sessionSecret } from "./server-env";
 
@@ -76,7 +76,7 @@ function parseSession(raw: unknown): ViewerSession | null {
   if (!raw || typeof raw !== "object") return null;
   const r = raw as Record<string, unknown>;
   const user = r.user as Record<string, unknown> | undefined;
-  if (!user || typeof user.id !== "string" || !isAppRole(user.role)) return null;
+  if (!user || typeof user.id !== "string" || !isAppRole(canonicalizeRole(user.role))) return null;
   if (typeof r.expiresAt !== "number" || r.expiresAt <= Date.now()) return null;
   const scope = SCOPES.includes(r.scope as AccessScope) ? (r.scope as AccessScope) : "own";
   return {
@@ -84,7 +84,7 @@ function parseSession(raw: unknown): ViewerSession | null {
       id: user.id,
       email: String(user.email ?? ""),
       fullName: String(user.fullName ?? ""),
-      role: user.role,
+      role: canonicalizeRole(user.role),
       branchId: String(user.branchId ?? ""),
       teamId: (user.teamId as string | null | undefined) ?? null,
       mfaEnabled: Boolean(user.mfaEnabled),

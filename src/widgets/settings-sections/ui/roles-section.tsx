@@ -47,7 +47,7 @@ export function RolesSection() {
       <div className="space-y-5" data-testid="roles-section">
         <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1" role="tablist" aria-label={t("pick")}>
           {roles.map((r) => {
-            const look = ROLE_LOOK[r] ?? ROLE_LOOK.employee;
+            const look = ROLE_LOOK[r] ?? ROLE_LOOK.agent;
             const Icon = look.icon;
             const active = r === role;
             return (
@@ -74,7 +74,7 @@ export function RolesSection() {
 
         {role ? (
           <div className="flex flex-col gap-4 rounded-[22px] bg-white p-4 ring-1 ring-zinc-200/60 sm:flex-row sm:items-center">
-            <GlyphTile icon={(ROLE_LOOK[role] ?? ROLE_LOOK.employee).icon} tone={(ROLE_LOOK[role] ?? ROLE_LOOK.employee).tone} size="md" />
+            <GlyphTile icon={(ROLE_LOOK[role] ?? ROLE_LOOK.agent).icon} tone={(ROLE_LOOK[role] ?? ROLE_LOOK.agent).tone} size="md" />
             <div className="min-w-0 flex-1">
               <p className="text-[16px] font-semibold text-zinc-950">{tRole.has(role) ? tRole(role) : humanize(role)}</p>
               <p className="text-[13px] text-zinc-500" data-testid="roles-coverage">

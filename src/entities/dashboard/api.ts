@@ -286,7 +286,7 @@ export class MemoryDashboardRepository implements DashboardRepository {
       const row = byOwner.get(l.ownerId) ?? {
         id: l.ownerId,
         name: l.ownerName,
-        role: "employee",
+        role: "agent",
         leadsHandled: 0,
         leadsWon: 0,
         openTasks: 0,
@@ -304,7 +304,7 @@ export class MemoryDashboardRepository implements DashboardRepository {
       const row = byOwner.get(t.assigneeId) ?? {
         id: t.assigneeId,
         name: t.assigneeName,
-        role: "operations",
+        role: "agent",
         leadsHandled: 0,
         leadsWon: 0,
         openTasks: 0,

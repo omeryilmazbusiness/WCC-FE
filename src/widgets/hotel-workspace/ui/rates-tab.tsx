@@ -16,10 +16,11 @@ import {
   type HotelRepository,
   type Season,
 } from "@/entities/hotel";
+import { MonthlyRatesBoard } from "@/features/hotel-form";
 import { SeasonDialog } from "@/features/hotel-season";
 import { cn } from "@/shared/lib/cn";
 import { formatDay, formatMoney } from "@/shared/lib/format";
-import { Button, ConfirmDialog, EmptyState, IconButton, TONES, useMutationFeedback } from "@/shared/ui";
+import { Button, ConfirmDialog, EmptyState, FormSection, IconButton, TONES, useMutationFeedback } from "@/shared/ui";
 
 type Props = {
   detail: HotelDetail;
@@ -107,11 +108,13 @@ function SeasonCard({
             {formatDay(season.startDate, locale)} – {formatDay(season.endDate, locale)} · {t("season.nights", { n: daysBetween(season.startDate, season.endDate) + 1 })}
           </p>
         </div>
-        <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-[11.5px] font-semibold text-zinc-700 ring-1 ring-inset ring-zinc-900/5">
-          <BadgePercent className="h-3.5 w-3.5 text-amber-500" aria-hidden />
-          {markup.kind === "percent" ? `+${markup.value / 100}%` : `+${money(markup.value)}`}
-          {season.markup ? null : <span className="text-zinc-400">· {t("rates.hotelDefault")}</span>}
-        </span>
+        {canWrite ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-[11.5px] font-semibold text-zinc-700 ring-1 ring-inset ring-zinc-900/5">
+            <BadgePercent className="h-3.5 w-3.5 text-amber-500" aria-hidden />
+            {markup.kind === "percent" ? `+${markup.value / 100}%` : `+${money(markup.value)}`}
+            {season.markup ? null : <span className="text-zinc-400">· {t("rates.hotelDefault")}</span>}
+          </span>
+        ) : null}
         {canWrite ? (
           <div className="flex gap-1">
             <IconButton label={t("rates.edit")} variant="ghost" onClick={onEdit} data-testid={`season-edit-${season.id}`}>
@@ -157,7 +160,7 @@ function SeasonCard({
                       {r[o] > 0 ? (
                         <>
                           <span className="block font-semibold text-zinc-900">{money(grossCell(r[o], markup))}</span>
-                          <span className="block text-[11px] text-zinc-400">{t("rates.net", { amount: money(r[o]) })}</span>
+                          {canWrite ? <span className="block text-[11px] text-zinc-400">{t("rates.net", { amount: money(r[o]) })}</span> : null}
                         </>
                       ) : (
                         <span className="text-zinc-300">—</span>
@@ -201,32 +204,39 @@ export function RatesTab({ detail, repository, canWrite, onChanged }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-[13px] font-medium text-zinc-500">{t("rates.hint")}</p>
-        {canWrite ? (
-          <Button onClick={() => setCreating(true)} data-testid="season-create">
-            <CalendarPlus className="h-4 w-4" aria-hidden />
-            {t("rates.add")}
-          </Button>
-        ) : null}
-      </div>
-
-      {seasons.length === 0 ? (
-        <EmptyState
-          icon={CalendarRange}
-          title={t("rates.empty")}
-          description={t("rates.emptyHint")}
-          actionLabel={canWrite ? t("rates.add") : undefined}
-          onAction={canWrite ? () => setCreating(true) : undefined}
-        />
-      ) : (
-        <>
-          <SeasonTimeline seasons={seasons} today={detail.today} />
-          {seasons.map((s) => (
-            <SeasonCard key={s.id} season={s} detail={detail} canWrite={canWrite} onEdit={() => setEditing(s)} onDelete={() => setDeleting(s)} />
-          ))}
-        </>
-      )}
+      <MonthlyRatesBoard detail={detail} repository={repository} canWrite={canWrite} onChanged={onChanged} />
+      <FormSection
+        icon={CalendarRange}
+        tone="amber"
+        title={t("rates.seasonsTitle")}
+        hint={t("rates.seasonsHint")}
+        testId="hotel-seasons"
+        aside={
+          canWrite ? (
+            <Button onClick={() => setCreating(true)} data-testid="season-create">
+              <CalendarPlus className="h-4 w-4" aria-hidden />
+              {t("rates.add")}
+            </Button>
+          ) : undefined
+        }
+      >
+        {seasons.length === 0 ? (
+          <EmptyState
+            icon={CalendarRange}
+            title={t("rates.empty")}
+            description={t("rates.emptyHint")}
+            actionLabel={canWrite ? t("rates.add") : undefined}
+            onAction={canWrite ? () => setCreating(true) : undefined}
+          />
+        ) : (
+          <div className="space-y-4">
+            <SeasonTimeline seasons={seasons} today={detail.today} />
+            {seasons.map((s) => (
+              <SeasonCard key={s.id} season={s} detail={detail} canWrite={canWrite} onEdit={() => setEditing(s)} onDelete={() => setDeleting(s)} />
+            ))}
+          </div>
+        )}
+      </FormSection>
 
       <SeasonDialog
         repository={repository}

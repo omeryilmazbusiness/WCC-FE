@@ -12,7 +12,7 @@ import type {
 } from "@/entities/setup";
 
 /** Roles the GM seeds as staff profiles; `gm` and `admin` are managed elsewhere. */
-export const STAFF_ROLES = ["manager", "employee", "finance", "operations"] as const;
+export const STAFF_ROLES = ["finance", "agent"] as const;
 export type StaffRole = (typeof STAFF_ROLES)[number];
 
 export const CURRENCY_CHOICES = ["USD", "SYP", "SAR", "EUR", "TRY"] as const;

@@ -110,7 +110,7 @@ async function requests() {
 
 function access() {
   assert.ok(PERMISSIONS.includes("support.write") && PERMISSIONS.includes("support.manage"));
-  for (const role of ["gm", "manager", "employee", "finance", "operations"] as const) {
+  for (const role of ["gm", "finance", "agent"] as const) {
     const perms = DEMO_ROLE_PERMISSIONS[role];
     assert.ok(perms.includes("support.write"), `${role} can send help requests`);
     assert.ok(!perms.includes("support.manage"), `${role} never sees other companies' requests`);
@@ -119,7 +119,7 @@ function access() {
   assert.ok(!DEMO_ROLE_PERMISSIONS.admin.includes("support.write"), "the platform team answers, it doesn't ask");
 
   const ids = (role: keyof typeof DEMO_ROLE_PERMISSIONS) => visibleSettings(DEMO_ROLE_PERMISSIONS[role]).flatMap((g) => g.sections.map((s) => s.id));
-  assert.ok(ids("employee").includes("support"));
+  assert.ok(ids("agent").includes("support"));
   assert.ok(ids("admin").includes("supportInbox") && !ids("admin").includes("support"));
   assert.equal(findSettingsSection("support")?.group, "support");
   assert.equal(findSettingsSection("supportInbox")?.group, "support");

@@ -5,7 +5,6 @@ import {
   parsePercentInput,
   type Hotel,
   type HotelInput,
-  type Landmark,
   type MarkupKind,
   type MealPlan,
   type RoomType,
@@ -20,10 +19,6 @@ export type HotelDraft = {
   city: string;
   country: string;
   district: string;
-  landmark: Landmark | "";
-  distance: string;
-  latitude: string;
-  longitude: string;
   salesName: string;
   salesPhone: string;
   salesEmail: string;
@@ -41,9 +36,6 @@ export type HotelDraftField =
   | "name"
   | "city"
   | "country"
-  | "distance"
-  | "latitude"
-  | "longitude"
   | "salesPhone"
   | "salesEmail"
   | "reservationsEmail"
@@ -55,8 +47,15 @@ export type HotelDraftErrors = Partial<Record<HotelDraftField, string>>;
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE = /^\+?[0-9][0-9 ()-]{5,19}$/;
-const COUNTRY = /^[A-Za-z]{2}$/;
 const MAX_MARKUP_BPS = 50_000;
+
+export function parseMarkupDraft(kind: MarkupKind, value: string): number | null {
+  if (!value.trim()) return 0;
+  const v = kind === "percent" ? parsePercentInput(value) : parseMoneyInput(value);
+  if (v == null) return null;
+  if (kind === "percent" && v > MAX_MARKUP_BPS) return null;
+  return v;
+}
 
 function inputToDraft(i: HotelInput): HotelDraft {
   return {
@@ -66,10 +65,6 @@ function inputToDraft(i: HotelInput): HotelDraft {
     city: i.location.city,
     country: i.location.country,
     district: i.location.district,
-    landmark: i.location.landmark,
-    distance: i.location.distanceM ? String(i.location.distanceM) : "",
-    latitude: i.location.latitude != null ? String(i.location.latitude) : "",
-    longitude: i.location.longitude != null ? String(i.location.longitude) : "",
     salesName: i.contact.salesName,
     salesPhone: i.contact.salesPhone,
     salesEmail: i.contact.salesEmail,
@@ -85,26 +80,11 @@ function inputToDraft(i: HotelInput): HotelDraft {
 }
 
 export function newDraft(): HotelDraft {
-  return inputToDraft(emptyHotelInput());
+  return { ...inputToDraft(emptyHotelInput()), roomTypes: [] };
 }
 
 export function draftFromHotel(h: Hotel): HotelDraft {
   return inputToDraft(hotelToInput(h));
-}
-
-function parseCoord(v: string): number | null | undefined {
-  const s = v.trim().replace(",", ".");
-  if (!s) return null;
-  const n = Number(s);
-  return Number.isFinite(n) ? n : undefined;
-}
-
-function parseMarkup(d: HotelDraft): number | null {
-  if (!d.markupValue.trim()) return 0;
-  const v = d.markupKind === "percent" ? parsePercentInput(d.markupValue) : parseMoneyInput(d.markupValue);
-  if (v == null) return null;
-  if (d.markupKind === "percent" && v > MAX_MARKUP_BPS) return null;
-  return v;
 }
 
 /** Instant hints keyed by draft field; values are i18n keys under `hotels.form.errors`. */
@@ -112,20 +92,13 @@ export function draftErrors(d: HotelDraft): HotelDraftErrors {
   const e: HotelDraftErrors = {};
   if (d.name.trim().length < 2) e.name = "name";
   if (!d.city.trim()) e.city = "city";
-  if (d.country.trim() && !COUNTRY.test(d.country.trim())) e.country = "country";
-  if (d.distance.trim() && !/^\d{1,6}$/.test(d.distance.trim())) e.distance = "distance";
-  else if (Number(d.distance || 0) > 100_000) e.distance = "distance";
-  const lat = parseCoord(d.latitude);
-  const lng = parseCoord(d.longitude);
-  if (lat === undefined || (lat != null && Math.abs(lat) > 90)) e.latitude = "latitude";
-  if (lng === undefined || (lng != null && Math.abs(lng) > 180)) e.longitude = "longitude";
-  if (!e.latitude && !e.longitude && (lat == null) !== (lng == null)) e.longitude = "coordsPair";
+  if (d.country.trim().length > 80) e.country = "country";
   if (d.salesPhone.trim() && !PHONE.test(d.salesPhone.trim())) e.salesPhone = "phone";
   if (d.salesEmail.trim() && !EMAIL.test(d.salesEmail.trim())) e.salesEmail = "email";
   if (d.reservationsEmail.trim() && !EMAIL.test(d.reservationsEmail.trim())) e.reservationsEmail = "email";
   if (d.roomTypes.length === 0) e.roomTypes = "roomTypes";
   if (d.mealPlans.length === 0) e.mealPlans = "mealPlans";
-  if (parseMarkup(d) == null) e.markupValue = d.markupKind === "percent" ? "markupPercent" : "markupFixed";
+  if (parseMarkupDraft(d.markupKind, d.markupValue) == null) e.markupValue = d.markupKind === "percent" ? "markupPercent" : "markupFixed";
   return e;
 }
 
@@ -137,12 +110,12 @@ export function draftToInput(d: HotelDraft, base?: Hotel): HotelInput {
     stars: d.stars,
     location: {
       city: d.city.trim(),
-      country: d.country.trim().toUpperCase(),
+      country: d.country.trim().replace(/\s+/g, " "),
       district: d.district.trim(),
-      latitude: parseCoord(d.latitude) ?? null,
-      longitude: parseCoord(d.longitude) ?? null,
-      landmark: d.landmark,
-      distanceM: Number(d.distance.trim() || 0),
+      latitude: null,
+      longitude: null,
+      landmark: "",
+      distanceM: 0,
     },
     contact: {
       salesName: d.salesName.trim(),
@@ -153,7 +126,7 @@ export function draftToInput(d: HotelDraft, base?: Hotel): HotelInput {
     roomTypes: d.roomTypes,
     mealPlans: d.mealPlans,
     currency: d.currency,
-    markup: { kind: d.markupKind, value: parseMarkup(d) ?? 0 },
+    markup: { kind: d.markupKind, value: parseMarkupDraft(d.markupKind, d.markupValue) ?? 0 },
     childPolicy: base?.childPolicy,
     cancellation: base?.cancellation,
     notes: d.notes.trim(),
@@ -166,9 +139,6 @@ export const SERVER_FIELD: Record<string, HotelDraftField> = {
   name: "name",
   city: "city",
   country: "country",
-  distance_m: "distance",
-  latitude: "latitude",
-  longitude: "longitude",
   sales_phone: "salesPhone",
   sales_email: "salesEmail",
   reservations_email: "reservationsEmail",

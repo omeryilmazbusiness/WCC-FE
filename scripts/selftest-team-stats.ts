@@ -18,7 +18,7 @@ import {
 
 function member(p: Partial<TeamMemberStat> & { id: string; name: string }): TeamMemberStat {
   return {
-    role: "employee",
+    role: "agent",
     leadsHandled: 0,
     leadsWon: 0,
     openTasks: 0,

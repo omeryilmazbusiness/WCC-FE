@@ -2,13 +2,12 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Calculator, CalendarRange, FileSignature, LayoutDashboard, ShieldCheck, Warehouse, type LucideIcon } from "lucide-react";
+import { CalendarRange, FileSignature, LayoutDashboard, ShieldCheck, Warehouse, type LucideIcon } from "lucide-react";
 import type { DocumentRepository } from "@/entities/document";
 import type { Allotment, HotelRepository } from "@/entities/hotel";
 import { useCan } from "@/entities/viewer";
 import { ContractPanel } from "@/features/hotel-contract";
 import { HotelFormDialog } from "@/features/hotel-form";
-import { QuoteCalculator } from "@/features/hotel-quote";
 import { routes } from "@/shared/config/routes";
 import { Link } from "@/shared/i18n/navigation";
 import { useApiQuery } from "@/shared/lib/use-api-query";
@@ -25,7 +24,6 @@ const TAB_ICON: Record<HotelTab, LucideIcon> = {
   rates: CalendarRange,
   policies: ShieldCheck,
   inventory: Warehouse,
-  quote: Calculator,
   contract: FileSignature,
 };
 
@@ -35,10 +33,11 @@ type Props = {
   documents: DocumentRepository;
 };
 
-/** Contracting workspace of one hotel: profile, rate matrix, policies, inventory, quotes, contract. */
+/** Contracting workspace of one hotel: profile, rate matrix, policies, inventory, contract. */
 export function HotelWorkspace({ hotelId, repository, documents }: Props) {
   const t = useTranslations("hotels");
   const canWrite = useCan("hotels.write");
+  const canPrice = useCan("hotels.pricing");
   const canReadDocs = useCan("documents.read");
   const [tab, selectTab] = useHotelTab();
   const [editing, setEditing] = useState(false);
@@ -75,7 +74,7 @@ export function HotelWorkspace({ hotelId, repository, documents }: Props) {
         <span className="hidden rtl:inline">→</span> {t("backToHotels")}
       </Link>
 
-      <HotelHero detail={data} canWrite={canWrite} onEdit={() => setEditing(true)} />
+      <HotelHero detail={data} canWrite={canWrite} canPrice={canPrice} onEdit={() => setEditing(true)} />
 
       <Tabs value={tab} onValueChange={selectTab} className="mt-5">
         <div className="-mx-1 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -95,19 +94,16 @@ export function HotelWorkspace({ hotelId, repository, documents }: Props) {
         </div>
 
         <TabsContent value="overview" className="mt-4">
-          <OverviewTab hotel={data.hotel} />
+          <OverviewTab hotel={data.hotel} canWrite={canPrice} />
         </TabsContent>
         <TabsContent value="rates" className="mt-4">
-          <RatesTab detail={data} repository={repository} canWrite={canWrite} onChanged={refresh} />
+          <RatesTab detail={data} repository={repository} canWrite={canPrice} onChanged={refresh} />
         </TabsContent>
         <TabsContent value="policies" className="mt-4">
           <PoliciesTab detail={data} repository={repository} canWrite={canWrite} onChanged={refresh} />
         </TabsContent>
         <TabsContent value="inventory" className="mt-4">
           <InventoryTab detail={data} repository={repository} canWrite={canWrite} onChanged={refresh} onAllotment={patchAllotment} />
-        </TabsContent>
-        <TabsContent value="quote" className="mt-4">
-          <QuoteCalculator repository={repository} hotel={data.hotel} seasons={data.seasons} today={data.today} />
         </TabsContent>
         {canReadDocs ? (
           <TabsContent value="contract" className="mt-4">
@@ -116,7 +112,7 @@ export function HotelWorkspace({ hotelId, repository, documents }: Props) {
         ) : null}
       </Tabs>
 
-      <HotelFormDialog repository={repository} hotel={data.hotel} open={editing} onOpenChange={setEditing} onSaved={refresh} />
+      <HotelFormDialog repository={repository} hotel={data.hotel} monthlyRates={data.monthlyRates} open={editing} onOpenChange={setEditing} onSaved={refresh} />
     </Screen>
   );
 }

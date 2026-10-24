@@ -212,7 +212,7 @@ export function emptyHotelInput(): HotelInput {
     name: "",
     nameAr: "",
     stars: 5,
-    location: { city: "", country: "SA", district: "", latitude: null, longitude: null, landmark: "haram", distanceM: 0 },
+    location: { city: "", country: "", district: "", latitude: null, longitude: null, landmark: "", distanceM: 0 },
     contact: { salesName: "", salesPhone: "", salesEmail: "", reservationsEmail: "" },
     roomTypes: ["standard", "deluxe", "triple", "quad"],
     mealPlans: ["ro", "bb"],

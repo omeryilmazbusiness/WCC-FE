@@ -29,10 +29,8 @@ import { ChoiceGrid, GlassField, GlassGroup, GlassInput, PillButton, StepHero } 
 import { StepFooter } from "./step-footer";
 
 const ROLE_TINTS: Record<string, string> = {
-  manager: "from-sky-400 to-blue-600",
-  employee: "from-amber-400 to-orange-500",
   finance: "from-emerald-400 to-teal-600",
-  operations: "from-violet-400 to-fuchsia-600",
+  agent: "from-sky-400 to-blue-600",
 };
 
 type Props = {
@@ -176,7 +174,7 @@ function NewProfileSheet({
   const feedback = useMutationFeedback();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<StaffRole>("employee");
+  const [role, setRole] = useState<StaffRole>("agent");
   const [branchId, setBranchId] = useState(defaultBranchId);
   const [mode, setMode] = useState<PasswordMode>("generate");
   const [generated, setGenerated] = useState(() => generatePassword());
@@ -190,7 +188,7 @@ function NewProfileSheet({
   function reset() {
     setName("");
     setEmail("");
-    setRole("employee");
+    setRole("agent");
     setBranchId(defaultBranchId);
     setMode("generate");
     setGenerated(generatePassword());

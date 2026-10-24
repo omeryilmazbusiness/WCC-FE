@@ -2,10 +2,10 @@ import type { AppRole } from "@/shared/config/routes";
 import type { ApiUser } from "../api";
 
 /** Seniority order used for sorting and role chips. */
-export const ROLE_ORDER: readonly AppRole[] = ["gm", "manager", "operations", "finance", "employee", "admin"];
+export const ROLE_ORDER: readonly AppRole[] = ["gm", "finance", "agent", "admin"];
 
-/** Roles a company GM can hand out; `admin` is the platform operator only. */
-export const COMPANY_ROLES: readonly AppRole[] = ["manager", "employee", "operations", "finance", "gm"];
+/** Roles a company GM can hand out. Admin is the platform operator only. */
+export const COMPANY_ROLES: readonly AppRole[] = ["gm", "finance", "agent"];
 
 export type MemberStatus = "active" | "inactive" | "locked";
 export type StatusFilter = MemberStatus | "all";

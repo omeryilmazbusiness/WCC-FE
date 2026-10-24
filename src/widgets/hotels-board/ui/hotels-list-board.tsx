@@ -146,8 +146,7 @@ export function HotelsListBoard({ repository }: Props) {
         header: t("table.city"),
         cell: ({ row }) => (
           <span className="text-[13px]">
-            {row.original.location.city}
-            {row.original.location.distanceM > 0 ? <span className="text-zinc-400"> · {t("distance", { m: row.original.location.distanceM })}</span> : null}
+            {[row.original.location.city, row.original.location.country].filter(Boolean).join(" · ")}
           </span>
         ),
       },
@@ -163,13 +162,19 @@ export function HotelsListBoard({ repository }: Props) {
       },
       {
         id: "from",
-        header: t("card.fromNet"),
-        cell: ({ row }) =>
-          row.original.summary.fromNet > 0 ? (
-            <span className="font-semibold tabular-nums">{formatMoneyWhole(row.original.summary.fromNet, locale, row.original.currency)}</span>
-          ) : (
-            <span className="text-zinc-400">—</span>
-          ),
+        header: t("card.fromSell"),
+        cell: ({ row }) => {
+          const s = row.original.summary;
+          if (s.fromSell <= 0) return <span className="text-zinc-400">—</span>;
+          return (
+            <span className="block">
+              <span className="font-semibold tabular-nums">{formatMoneyWhole(s.fromSell, locale, row.original.currency)}</span>
+              {s.fromNet > 0 ? (
+                <span className="block text-[11px] font-medium text-zinc-400">{t("card.companyFrom", { amount: formatMoneyWhole(s.fromNet, locale, row.original.currency) })}</span>
+              ) : null}
+            </span>
+          );
+        },
       },
       {
         id: "allotment",
@@ -342,7 +347,7 @@ export function HotelsListBoard({ repository }: Props) {
         onOpenChange={setCreating}
         onSaved={(hotel) => {
           void hotels.refresh();
-          router.push(routes.hotel(hotel.id));
+          router.push(`${routes.hotel(hotel.id)}?tab=rates`);
         }}
       />
     </ListScreen>

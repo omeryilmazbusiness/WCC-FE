@@ -12,7 +12,7 @@ export type User = {
 };
 
 export function isManagerRole(role: AppRole): boolean {
-  return role === "gm" || role === "manager";
+  return role === "gm";
 }
 
 export function isAdminRole(role: AppRole): boolean {
@@ -21,5 +21,5 @@ export function isAdminRole(role: AppRole): boolean {
 
 /** Roles that can configure BYO AI (not the first-run wizard — that is GM-only). */
 export function canConfigureAI(role: AppRole): boolean {
-  return role === "gm" || role === "manager" || role === "admin";
+  return role === "gm" || role === "admin";
 }

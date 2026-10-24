@@ -1,7 +1,7 @@
 import { AUTH_ENDPOINTS } from "@/shared/api/auth-contract";
 import { bffHttp, http, PROXY_BASE_PATH } from "@/shared/api/http-client";
 import type { ViewerSession } from "@/shared/api/session";
-import { isAppRole } from "@/shared/config/routes";
+import { canonicalizeRole } from "@/shared/config/routes";
 import type { PersonalInfo, Profile } from "./model";
 
 type ApiProfile = {
@@ -32,7 +32,7 @@ export function mapProfile(p: ApiProfile): Profile {
     fullName: p.full_name,
     jobTitle: p.job_title ?? "",
     phone: p.phone ?? "",
-    role: isAppRole(p.role) ? p.role : "employee",
+    role: canonicalizeRole(p.role),
     branchId: p.branch_id,
     team: p.team ? { id: p.team.id, nameEn: p.team.name_en, nameAr: p.team.name_ar } : null,
     mfaEnabled: p.mfa_enabled,

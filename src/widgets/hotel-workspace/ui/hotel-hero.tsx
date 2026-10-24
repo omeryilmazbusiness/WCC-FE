@@ -5,13 +5,11 @@ import { useLocale, useTranslations } from "next-intl";
 import { Ban, BedDouble, CalendarClock, CalendarRange, Hotel as HotelIcon, PencilLine, Tag, TrendingUp, type LucideIcon } from "lucide-react";
 import {
   HotelStars,
-  LANDMARK_LOOK,
   SEASON_LOOK,
   fillPct,
-  grossCell,
-  markupFor,
+  monthlyFromNet,
+  monthlyFromSell,
   releasingSoon,
-  seasonFrom,
   seasonOn,
   stopSaleOn,
   type HotelDetail,
@@ -20,9 +18,9 @@ import { cn } from "@/shared/lib/cn";
 import { formatDay, formatMoneyWhole } from "@/shared/lib/format";
 import { TONES, type Tone } from "@/shared/ui";
 
-type Props = { detail: HotelDetail; canWrite: boolean; onEdit: () => void };
+type Props = { detail: HotelDetail; canWrite: boolean; canPrice?: boolean; onEdit: () => void };
 
-export function HotelHero({ detail, canWrite, onEdit }: Props) {
+export function HotelHero({ detail, canWrite, canPrice = false, onEdit }: Props) {
   const t = useTranslations("hotels");
   const locale = useLocale();
   const { hotel, seasons, allotments, stopSales, today } = detail;
@@ -31,8 +29,10 @@ export function HotelHero({ detail, canWrite, onEdit }: Props) {
   const SeasonIcon = seasonLook?.icon;
   const stop = stopSaleOn(stopSales, today);
   const tone: Tone = !hotel.isActive ? "zinc" : stop ? "rose" : (seasonLook?.tone ?? "sky");
-  const fromNet = season ? seasonFrom(season) : 0;
-  const fromGross = fromNet ? grossCell(fromNet, markupFor(hotel, season)) : 0;
+  const year = Number(today.slice(0, 4));
+  const month = Number(today.slice(5, 7));
+  const fromNet = monthlyFromNet(detail.monthlyRates, year, month);
+  const fromSell = monthlyFromSell(detail.monthlyRates, year, month);
   const live = allotments.filter((a) => a.status !== "expired");
   const rooms = live.reduce((s, a) => s + a.rooms, 0);
   const sold = live.reduce((s, a) => s + a.sold, 0);
@@ -42,15 +42,13 @@ export function HotelHero({ detail, canWrite, onEdit }: Props) {
     .map((a) => a.releaseDate)
     .sort()[0];
   const soon = releasingSoon(allotments, today).length;
-  const landmark = hotel.location.landmark ? LANDMARK_LOOK[hotel.location.landmark] : null;
-  const LandmarkIcon = landmark?.icon;
   const primary = locale === "ar" && hotel.nameAr ? hotel.nameAr : hotel.name;
   const secondary = locale === "ar" ? hotel.name : hotel.nameAr;
   const money = (v: number) => (v > 0 ? formatMoneyWhole(v, locale, hotel.currency) : "—");
 
   const stats: { icon: LucideIcon; tone: Tone; label: string; value: ReactNode; id: string }[] = [
-    { icon: Tag, tone: "zinc", label: t("hero.fromNet"), value: money(fromNet), id: "net" },
-    { icon: TrendingUp, tone: "emerald", label: t("hero.fromGross"), value: money(fromGross), id: "gross" },
+    ...(canPrice ? [{ icon: Tag, tone: "zinc" as const, label: t("hero.fromNet"), value: money(fromNet), id: "net" }] : []),
+    { icon: TrendingUp, tone: "emerald", label: t("hero.fromSell"), value: money(fromSell), id: "gross" },
     { icon: BedDouble, tone: fill >= 90 ? "rose" : "indigo", label: t("hero.allotment"), value: rooms ? `${sold}/${rooms}` : "—", id: "rooms" },
     { icon: CalendarRange, tone: "sky", label: t("hero.seasons"), value: seasons.length, id: "seasons" },
     {
@@ -118,17 +116,11 @@ export function HotelHero({ detail, canWrite, onEdit }: Props) {
             <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12.5px] font-semibold text-zinc-600">
               <HotelStars stars={hotel.stars} label={t("card.stars", { n: hotel.stars })} />
               <span>{[hotel.location.district, hotel.location.city, hotel.location.country].filter(Boolean).join(" · ")}</span>
-              {landmark && LandmarkIcon && hotel.location.distanceM > 0 ? (
-                <span className="inline-flex items-center gap-1.5">
-                  <LandmarkIcon className={cn("h-4 w-4", TONES[landmark.tone].text)} aria-hidden />
-                  {t("distanceTo", { m: hotel.location.distanceM, place: t(`landmark.${hotel.location.landmark}`) })}
-                </span>
-              ) : null}
             </div>
           </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-5">
+        <div className={cn("mt-5 grid grid-cols-2 gap-2.5", canWrite ? "sm:grid-cols-5" : "sm:grid-cols-4")}>
           {stats.map(({ icon: Icon, tone: statTone, label, value, id }) => (
             <div key={id} className={cn("rounded-[22px] bg-gradient-to-br p-3 ring-1 ring-inset ring-zinc-900/[0.04]", TONES[statTone].tint)} data-testid={`hotel-stat-${id}`}>
               <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl", TONES[statTone].solid)} aria-hidden>

@@ -1,46 +1,43 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   BadgePercent,
   BedDouble,
   Building2,
+  CalendarDays,
   Coins,
   Hotel as HotelIcon,
   Mail,
   MapPin,
   MapPinned,
-  Navigation,
   NotebookPen,
   Phone,
   Power,
-  Ruler,
   Send,
   UserRound,
   UtensilsCrossed,
 } from "lucide-react";
 import {
   HOTEL_CURRENCIES,
-  LANDMARKS,
-  LANDMARK_LOOK,
   MEAL_LOOK,
   MEAL_PLANS,
   ROOM_LOOK,
   ROOM_TYPES,
   applyMarkup,
-  mapsUrl,
   type Hotel,
   type HotelRepository,
+  type MonthlyRate,
+  type RoomType,
 } from "@/entities/hotel";
 import { isApiError } from "@/shared/api/api-error";
-import { cn } from "@/shared/lib/cn";
+import { useCan } from "@/entities/viewer";
 import { formatMoney } from "@/shared/lib/format";
 import {
   ActionDialog,
   Button,
   ChipSet,
-  ChoiceGrid,
   Field,
   FormSection,
   IconInput,
@@ -60,6 +57,11 @@ import {
   type HotelDraft,
   type HotelDraftField,
 } from "../model/draft";
+import { emptyRoomYear, pricedMonthCount, ratesByYear, roomYearFromRates, type RoomYearDraft } from "../model/room-month-draft";
+import { RoomTypeRatesDialog } from "./room-type-rates-dialog";
+
+const SAMPLE_NET = 100_00;
+const EMPTY_RATES: MonthlyRate[] = [];
 
 type Props = {
   repository: HotelRepository;
@@ -67,10 +69,9 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   /** Edit mode when set. */
   hotel?: Hotel | null;
+  monthlyRates?: MonthlyRate[];
   onSaved: (hotel: Hotel) => void;
 };
-
-const SAMPLE_NET = 100_00;
 
 function FieldError({ children }: { children?: ReactNode }) {
   if (!children) return null;
@@ -78,21 +79,41 @@ function FieldError({ children }: { children?: ReactNode }) {
 }
 
 /** Create / edit the hotel profile: identity, location, contacts, offer and commercial terms. */
-export function HotelFormDialog({ repository, open, onOpenChange, hotel, onSaved }: Props) {
+export function HotelFormDialog({ repository, open, onOpenChange, hotel, monthlyRates = EMPTY_RATES, onSaved }: Props) {
   const t = useTranslations("hotels");
   const tc = useTranslations("common");
   const locale = useLocale();
+  const canPrice = useCan("hotels.pricing");
   const feedback = useMutationFeedback();
   const [draft, setDraft] = useState<HotelDraft>(newDraft);
   const [touched, setTouched] = useState(false);
   const [serverErrors, setServerErrors] = useState<Partial<Record<HotelDraftField, string>>>({});
   const [saving, setSaving] = useState(false);
+  const [sheets, setSheets] = useState<Partial<Record<RoomType, RoomYearDraft>>>({});
+  const [pricingRoom, setPricingRoom] = useState<RoomType | null>(null);
+  const ratesRef = useRef(monthlyRates);
+  ratesRef.current = monthlyRates;
+  const session = useRef(false);
 
   useEffect(() => {
-    if (!open) return;
-    setDraft(hotel ? draftFromHotel(hotel) : newDraft());
+    if (!open) {
+      session.current = false;
+      return;
+    }
+    if (session.current) return;
+    session.current = true;
+    const next = hotel ? draftFromHotel(hotel) : newDraft();
+    setDraft(next);
     setTouched(false);
     setServerErrors({});
+    setPricingRoom(null);
+    const year = new Date().getFullYear();
+    const fallback = hotel?.markup ?? { kind: "percent", value: 1500 };
+    const seeded: Partial<Record<RoomType, RoomYearDraft>> = {};
+    for (const room of next.roomTypes) {
+      seeded[room] = roomYearFromRates(room, year, ratesRef.current, fallback);
+    }
+    setSheets(seeded);
   }, [open, hotel]);
 
   const errors = useMemo(() => draftErrors(draft), [draft]);
@@ -108,18 +129,26 @@ export function HotelFormDialog({ repository, open, onOpenChange, hotel, onSaved
   const err = (f: HotelDraftField) =>
     serverErrors[f] ?? (touched && errors[f] ? t(`form.errors.${errors[f]}`) : undefined);
 
-  const preview = useMemo(() => {
-    const input = draftToInput(draft);
-    return applyMarkup(SAMPLE_NET, input.markup, 1);
-  }, [draft]);
-
   async function submit() {
     setTouched(true);
     if (invalid) return;
     setSaving(true);
     try {
+      const grouped = ratesByYear(sheets);
+      if (grouped === null) {
+        feedback.error(new Error("invalid monthly rates"), t("form.saveError"));
+        return;
+      }
+      const monthlyRates = canPrice ? [...grouped.values()].flat() : [];
       const input = draftToInput(draft, hotel ?? undefined);
-      const saved = hotel ? await repository.update(hotel.id, input) : await repository.create(input);
+      const saved = hotel
+        ? await repository.update(hotel.id, input)
+        : await repository.create({ ...input, monthlyRates });
+      if (hotel && canPrice) {
+        for (const [year, rates] of grouped) {
+          await repository.replaceMonthlyRates(saved.id, year, rates);
+        }
+      }
       feedback.success(hotel ? t("form.updated") : t("form.created"));
       onSaved(saved);
       onOpenChange(false);
@@ -135,9 +164,8 @@ export function HotelFormDialog({ repository, open, onOpenChange, hotel, onSaved
     }
   }
 
-  const mapsHref = draft.name.trim() || draft.city.trim() ? mapsUrl(draftToInput(draft)) : null;
-
   return (
+    <>
     <ActionDialog
       open={open}
       onOpenChange={onOpenChange}
@@ -200,55 +228,16 @@ export function HotelFormDialog({ repository, open, onOpenChange, hotel, onSaved
             <Field label={t("form.location.country")} htmlFor="hotel-country" hint={t("form.location.countryHint")}>
               <Input
                 id="hotel-country"
-                className="h-12 uppercase"
+                className="h-12"
                 value={draft.country}
-                onChange={(e) => set("country", e.target.value.toUpperCase().slice(0, 2))}
-                maxLength={2}
+                onChange={(e) => set("country", e.target.value)}
+                maxLength={80}
+                placeholder={t("form.location.countryPlaceholder")}
+                data-testid="hotel-country"
               />
               <FieldError>{err("country")}</FieldError>
             </Field>
           </div>
-          <div>
-            <p className="mb-2 text-[12.5px] font-semibold text-zinc-600">{t("form.location.landmark")}</p>
-            <ChoiceGrid
-              name="hotel-landmark"
-              columns={4}
-              value={draft.landmark}
-              onChange={(v) => set("landmark", v)}
-              options={LANDMARKS.map((l) => ({ value: l, label: t(`landmark.${l}`), ...LANDMARK_LOOK[l] }))}
-            />
-          </div>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <Field label={t("form.location.distance")} htmlFor="hotel-distance">
-              <div className="relative">
-                <IconInput
-                  id="hotel-distance"
-                  icon={Ruler}
-                  inputMode="numeric"
-                  value={draft.distance}
-                  onChange={(e) => set("distance", e.target.value.replace(/\D/g, ""))}
-                  className="pe-12 tabular-nums"
-                  data-testid="hotel-distance"
-                />
-                <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-[12px] font-bold text-zinc-400">m</span>
-              </div>
-              <FieldError>{err("distance")}</FieldError>
-            </Field>
-            <Field label={t("form.location.latitude")} htmlFor="hotel-lat">
-              <Input id="hotel-lat" dir="ltr" inputMode="decimal" className="h-12 tabular-nums" value={draft.latitude} onChange={(e) => set("latitude", e.target.value)} placeholder="21.4225" />
-              <FieldError>{err("latitude")}</FieldError>
-            </Field>
-            <Field label={t("form.location.longitude")} htmlFor="hotel-lng">
-              <Input id="hotel-lng" dir="ltr" inputMode="decimal" className="h-12 tabular-nums" value={draft.longitude} onChange={(e) => set("longitude", e.target.value)} placeholder="39.8262" />
-              <FieldError>{err("longitude")}</FieldError>
-            </Field>
-          </div>
-          {mapsHref ? (
-            <a href={mapsHref} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-emerald-700 hover:underline">
-              <Navigation className="h-3.5 w-3.5" aria-hidden />
-              {t("form.location.preview")}
-            </a>
-          ) : null}
         </FormSection>
 
         <FormSection icon={UserRound} tone="violet" title={t("form.contact.title")} hint={t("form.contact.hint")}>
@@ -289,9 +278,46 @@ export function HotelFormDialog({ repository, open, onOpenChange, hotel, onSaved
               name="hotel-room"
               tone="indigo"
               values={draft.roomTypes}
-              onChange={(v) => set("roomTypes", ROOM_TYPES.filter((r) => v.includes(r)))}
+              onChange={(v) => {
+                const next = ROOM_TYPES.filter((r) => v.includes(r));
+                const added = next.find((r) => !draft.roomTypes.includes(r));
+                set("roomTypes", next);
+                setSheets((s) => {
+                  const keep: Partial<Record<RoomType, RoomYearDraft>> = {};
+                  for (const r of next) if (s[r]) keep[r] = s[r];
+                  return keep;
+                });
+                if (added && canPrice) {
+                  const fallback = draftToInput(draft).markup;
+                  setSheets((s) => ({ ...s, [added]: s[added] ?? emptyRoomYear(new Date().getFullYear(), fallback) }));
+                  setPricingRoom(added);
+                }
+              }}
               options={ROOM_TYPES.map((r) => ({ value: r, label: t(`room.${r}`), icon: ROOM_LOOK[r].icon }))}
             />
+            {draft.roomTypes.length > 0 ? (
+              <ul className="mt-3 space-y-2">
+                {draft.roomTypes.map((r) => {
+                  const look = ROOM_LOOK[r];
+                  const Icon = look.icon;
+                  const n = sheets[r] ? pricedMonthCount(sheets[r]!) : 0;
+                  return (
+                    <li key={r} className="flex items-center justify-between gap-3 rounded-2xl bg-indigo-50/70 px-3 py-2">
+                      <span className="inline-flex min-w-0 items-center gap-2 text-[13px] font-semibold text-zinc-800">
+                        <Icon className="h-4 w-4 text-indigo-500" aria-hidden />
+                        {t(`room.${r}`)}
+                        <span className="truncate text-[12px] font-medium text-zinc-500">{t("rates.pricedMonths", { n })}</span>
+                      </span>
+                      {canPrice ? (
+                        <Button type="button" variant="outline" className="h-9 shrink-0" onClick={() => setPricingRoom(r)} data-testid={`hotel-room-prices-${r}`}>
+                          {t("rates.editRoomPrices")}
+                        </Button>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : null}
             <FieldError>{err("roomTypes")}</FieldError>
           </div>
           <div>
@@ -311,20 +337,20 @@ export function HotelFormDialog({ repository, open, onOpenChange, hotel, onSaved
         </FormSection>
 
         <FormSection icon={Coins} tone="amber" title={t("form.commercial.title")} hint={t("form.commercial.hint")}>
+          <div>
+            <p className="mb-2 text-[12.5px] font-semibold text-zinc-600">{t("form.commercial.currency")}</p>
+            <SegmentedControl
+              aria-label={t("form.commercial.currency")}
+              value={draft.currency}
+              onChange={(v) => set("currency", v)}
+              options={HOTEL_CURRENCIES.map((c) => ({ value: c, label: c }))}
+            />
+          </div>
           <div className="flex flex-wrap items-end gap-4">
             <div>
-              <p className="mb-2 text-[12.5px] font-semibold text-zinc-600">{t("form.commercial.currency")}</p>
+              <p className="mb-2 text-[12.5px] font-semibold text-zinc-600">{t("rates.marginKind")}</p>
               <SegmentedControl
-                aria-label={t("form.commercial.currency")}
-                value={draft.currency}
-                onChange={(v) => set("currency", v)}
-                options={HOTEL_CURRENCIES.map((c) => ({ value: c, label: c }))}
-              />
-            </div>
-            <div>
-              <p className="mb-2 text-[12.5px] font-semibold text-zinc-600">{t("form.commercial.markupKind")}</p>
-              <SegmentedControl
-                aria-label={t("form.commercial.markupKind")}
+                aria-label={t("rates.marginKind")}
                 value={draft.markupKind}
                 onChange={(v) => set("markupKind", v)}
                 options={[
@@ -334,7 +360,7 @@ export function HotelFormDialog({ repository, open, onOpenChange, hotel, onSaved
               />
             </div>
             <div className="w-40">
-              <p className="mb-2 text-[12.5px] font-semibold text-zinc-600">{t("form.commercial.markupValue")}</p>
+              <p className="mb-2 text-[12.5px] font-semibold text-zinc-600">{t("rates.marginValue")}</p>
               <div className="relative">
                 <Input
                   inputMode="decimal"
@@ -342,23 +368,24 @@ export function HotelFormDialog({ repository, open, onOpenChange, hotel, onSaved
                   onChange={(e) => set("markupValue", e.target.value.replace(/[^\d.,]/g, ""))}
                   className="h-11 pe-14 text-[15px] font-semibold tabular-nums"
                   data-testid="hotel-markup"
-                  aria-label={t("form.commercial.markupValue")}
+                  aria-label={t("rates.marginValue")}
                 />
                 <span className="pointer-events-none absolute end-2 top-1/2 -translate-y-1/2 rounded-lg bg-zinc-100 px-2 py-1 text-[11px] font-bold text-zinc-500">
                   {draft.markupKind === "percent" ? "%" : draft.currency}
                 </span>
               </div>
+              <FieldError>{err("markupValue")}</FieldError>
             </div>
           </div>
-          <FieldError>{err("markupValue")}</FieldError>
-          <div className={cn("flex items-center gap-3 rounded-2xl bg-amber-50/70 px-4 py-3 text-[13px] text-amber-900")} data-testid="hotel-markup-preview">
-            <BadgePercent className="h-5 w-5 shrink-0 text-amber-500" aria-hidden />
-            <span>
-              {t("form.commercial.preview", {
-                net: formatMoney(SAMPLE_NET, locale, draft.currency),
-                gross: formatMoney(preview, locale, draft.currency),
-              })}
-            </span>
+          <p className="rounded-2xl bg-amber-50/70 px-4 py-3 text-[13px] text-amber-900" data-testid="hotel-markup-preview">
+            {t("form.commercial.preview", {
+              net: formatMoney(SAMPLE_NET, locale, draft.currency),
+              gross: formatMoney(applyMarkup(SAMPLE_NET, draftToInput(draft).markup, 1), locale, draft.currency),
+            })}
+          </p>
+          <div className="flex items-start gap-3 rounded-2xl bg-zinc-50 px-4 py-3 text-[13px] text-zinc-600" data-testid="hotel-rates-pointer">
+            <CalendarDays className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" aria-hidden />
+            <span>{t("form.commercial.ratesPointer")}</span>
           </div>
         </FormSection>
 
@@ -367,5 +394,21 @@ export function HotelFormDialog({ repository, open, onOpenChange, hotel, onSaved
         </FormSection>
       </div>
     </ActionDialog>
+    <RoomTypeRatesDialog
+      key={pricingRoom ?? "closed"}
+      open={canPrice && Boolean(pricingRoom)}
+      room={pricingRoom}
+      currency={draft.currency}
+      fallback={draftToInput(draft).markup}
+      value={pricingRoom ? (sheets[pricingRoom] ?? null) : null}
+      onOpenChange={(next) => {
+        if (!next) setPricingRoom(null);
+      }}
+      onDone={(room, yearDraft) => {
+        setSheets((s) => ({ ...s, [room]: yearDraft }));
+        setPricingRoom(null);
+      }}
+    />
+    </>
   );
 }

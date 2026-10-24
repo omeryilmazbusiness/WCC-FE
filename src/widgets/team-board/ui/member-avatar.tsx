@@ -8,7 +8,7 @@ type Props = { name: string; role: AppRole; dimmed?: boolean; className?: string
 
 /** Rounded-square initials tile tinted by role, with the role icon as a corner badge. */
 export function MemberAvatar({ name, role, dimmed, className }: Props) {
-  const look = ROLE_LOOK[role] ?? ROLE_LOOK.employee;
+  const look = ROLE_LOOK[role] ?? ROLE_LOOK.agent;
   const Icon = look.icon;
   return (
     <span className={cn("relative inline-flex shrink-0", className)} aria-hidden>

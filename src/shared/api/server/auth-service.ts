@@ -4,7 +4,7 @@ import {
   homeFor,
   isPermission,
 } from "@/shared/config/permissions";
-import { isAppRole, routes, type AppRole } from "@/shared/config/routes";
+import { canonicalizeRole, isAppRole, routes, type AppRole } from "@/shared/config/routes";
 import { env } from "@/shared/config/env";
 import { withWorkspace, type WorkspaceRef } from "@/shared/lib/workspace-path";
 import { ApiError } from "../api-error";
@@ -157,14 +157,15 @@ export async function backendLogout(
 }
 
 function mapUser(user: BackendUser): SessionUser {
-  if (!isAppRole(user.role)) {
+  const role = canonicalizeRole(user.role);
+  if (!isAppRole(role)) {
     throw new ApiError({ status: 403, code: "unknown_role", message: "Unknown role" });
   }
   return {
     id: String(user.id),
     email: user.email,
     fullName: user.full_name,
-    role: user.role,
+    role,
     branchId: String(user.branch_id ?? ""),
     teamId: user.team_id ?? null,
     mfaEnabled: Boolean(user.mfa_enabled),
@@ -264,11 +265,9 @@ export function isDemoToken(token: string | undefined): boolean {
 
 const DEMO_USERS: Record<string, { id: string; fullName: string; role: AppRole }> = {
   "gm@wodi.local": { id: "22222222-2222-2222-2222-222222222201", fullName: "General Manager", role: "gm" },
-  "manager@wodi.local": { id: "22222222-2222-2222-2222-222222222202", fullName: "Branch Manager", role: "manager" },
-  "sales@wodi.local": { id: "22222222-2222-2222-2222-222222222203", fullName: "Sales Employee", role: "employee" },
+  "finance@wodi.local": { id: "22222222-2222-2222-2222-222222222205", fullName: "Finance", role: "finance" },
+  "sales@wodi.local": { id: "22222222-2222-2222-2222-222222222203", fullName: "Sales Agent", role: "agent" },
   "admin@wodi.local": { id: "22222222-2222-2222-2222-222222222204", fullName: "System Admin", role: "admin" },
-  "finance@wodi.local": { id: "22222222-2222-2222-2222-222222222205", fullName: "Finance User", role: "finance" },
-  "ops@wodi.local": { id: "22222222-2222-2222-2222-222222222206", fullName: "Operations User", role: "operations" },
 };
 
 function demoViewer(role: AppRole): ViewerSession {

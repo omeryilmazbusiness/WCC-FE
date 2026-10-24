@@ -16,7 +16,7 @@ export type DashboardKPI = {
 export type TeamMemberStat = {
   id: string;
   name: string;
-  /** Account role: gm | manager | employee | finance | operations. */
+  /** Account role: gm | finance | agent. */
   role: string;
   leadsHandled: number;
   leadsWon: number;

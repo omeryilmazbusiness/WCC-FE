@@ -4,10 +4,8 @@
     "shortName": "WCC",
     "roles": {
       "gm": "General Manager",
-      "manager": "Manager",
-      "employee": "Agent",
       "finance": "Finance",
-      "operations": "Operations",
+      "agent": "Agent",
       "admin": "Administrator"
     }
   },
@@ -157,10 +155,8 @@
       },
       "roles": {
         "gm": "GM",
-        "manager": "Manager",
-        "employee": "Agent",
         "finance": "Finance",
-        "operations": "Operations",
+        "agent": "Agent",
         "admin": "Admin"
       },
       "summary": "{won} of {leads} leads won",
@@ -533,8 +529,8 @@
     }
   },
   "workspace": {
-    "title": "My work today",
-    "subtitle": "One queue for tasks, pipeline, and your target pace",
+    "title": "My work",
+    "subtitle": "Today at a glance — your tasks, pipeline and pace",
     "tasksTitle": "My Work Today",
     "tasksBody": "Prioritized queue — overdue and escalated first. Complete or cancel here.",
     "openTasks": "All tasks",
@@ -553,7 +549,27 @@
       "on_track": "On track",
       "behind": "Behind",
       "placeholder": "No target set"
-    }
+    },
+    "kpi": {
+      "leadsOpen": "Open leads",
+      "tasksOverdue": "Overdue tasks",
+      "tasksOpen": "Open tasks",
+      "paymentDue": "Payments due"
+    },
+    "taskFilter": "Filter tasks",
+    "taskTiles": {
+      "all": "Open",
+      "overdue": "Overdue",
+      "progress": "In progress",
+      "critical": "Critical"
+    },
+    "overdueCount": "{count} overdue",
+    "overdueHint": "Overdue items stay at the top of the queue.",
+    "queueEmptyFiltered": "Nothing in this filter",
+    "pipelineFilter": "Filter pipeline",
+    "pipelineEmptyFiltered": "No leads in this stage",
+    "pipelineEmptyHint": "New leads land here when they are assigned to you.",
+    "targetOf": "of {goal}"
   },
   "branchScope": {
     "mainCenter": "Main center",
@@ -2260,11 +2276,26 @@
       "saveError": "Could not update the discount"
     },
     "steps": {
-      "party": { "title": "Party", "hint": "Customer and sales channel" },
-      "trip": { "title": "Trip", "hint": "Service type and departure" },
-      "travellers": { "title": "Travellers", "hint": "Name every passenger" },
-      "services": { "title": "Services", "hint": "What, for whom, at what price" },
-      "review": { "title": "Review", "hint": "Check and create the draft" }
+      "party": {
+        "title": "Party",
+        "hint": "Customer and sales channel"
+      },
+      "trip": {
+        "title": "Trip",
+        "hint": "Service type and departure"
+      },
+      "travellers": {
+        "title": "Travellers",
+        "hint": "Name every passenger"
+      },
+      "services": {
+        "title": "Services",
+        "hint": "What, for whom, at what price"
+      },
+      "review": {
+        "title": "Review",
+        "hint": "Check and create the draft"
+      }
     },
     "form": {
       "createTitle": "New booking",
@@ -2796,10 +2827,8 @@
       }
     },
     "roles": {
-      "manager": "Manager",
-      "employee": "Agent",
       "finance": "Finance",
-      "operations": "Operations"
+      "agent": "Agent"
     },
     "staff": {
       "title": "Your team",
@@ -3491,9 +3520,21 @@
     "emptyFilteredHint": "Clear the search or filters to see the full list.",
     "saving": "Saving…",
     "noCity": "City not set",
-    "quick": { "all": "All", "active": "Active", "inactive": "Inactive" },
-    "table": { "status": "Status", "city": "City" },
-    "classes": { "standard": "Standard", "vip": "VIP", "sleeper": "Sleeper", "mixed": "Mixed fleet" },
+    "quick": {
+      "all": "All",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "table": {
+      "status": "Status",
+      "city": "City"
+    },
+    "classes": {
+      "standard": "Standard",
+      "vip": "VIP",
+      "sleeper": "Sleeper",
+      "mixed": "Mixed fleet"
+    },
     "fields": {
       "name": "Company name",
       "phone": "Phone",
@@ -3529,7 +3570,6 @@
       }
     }
   },
-
   "hotels": {
     "title": "Hotels",
     "subtitle": "Contracted hotels, seasonal net rates, allotments and stop sales in one place.",
@@ -3578,7 +3618,10 @@
       "stopSale": "Stop sale",
       "stars": "{n} stars",
       "fromNet": "Net from",
+      "fromSell": "From",
       "perPerson": "/ person",
+      "perNight": "/ night",
+      "companyFrom": "Company {amount}",
       "noRate": "No rate today",
       "roomTypes": "{n, plural, one {# room type} other {# room types}}",
       "allotment": "{sold} of {total} rooms sold",
@@ -3594,16 +3637,30 @@
       "rates": "Rates & seasons",
       "policies": "Child & cancellation",
       "inventory": "Allotment & stop sale",
-      "quote": "Quick quote",
       "contract": "Contract"
     },
     "hero": {
-      "fromNet": "Net from today",
+      "fromNet": "Company from today",
       "fromGross": "Selling from",
+      "fromSell": "Selling from",
       "allotment": "Rooms sold",
       "seasons": "Seasons",
       "nextRelease": "Next release",
       "edit": "Edit hotel"
+    },
+    "month": {
+      "1": "Jan",
+      "2": "Feb",
+      "3": "Mar",
+      "4": "Apr",
+      "5": "May",
+      "6": "Jun",
+      "7": "Jul",
+      "8": "Aug",
+      "9": "Sep",
+      "10": "Oct",
+      "11": "Nov",
+      "12": "Dec"
     },
     "seasonKind": {
       "low": "Low",
@@ -3699,11 +3756,12 @@
       },
       "location": {
         "title": "Location",
-        "hint": "Where the hotel is and how far it is from the landmark.",
+        "hint": "City, district and country name.",
         "city": "City",
         "district": "District",
         "country": "Country",
-        "countryHint": "Two-letter code, e.g. SA",
+        "countryHint": "Full country name, e.g. Saudi Arabia",
+        "countryPlaceholder": "Saudi Arabia",
         "landmark": "Distance measured to",
         "distance": "Walking distance",
         "latitude": "Latitude",
@@ -3726,12 +3784,13 @@
         "mealPlans": "Meal plans"
       },
       "commercial": {
-        "title": "Currency & markup",
-        "hint": "Gross selling price = net + markup, unless a season overrides it.",
-        "currency": "Contract currency",
+        "title": "Currency & margin",
+        "hint": "The margin turns each month’s company price into the selling price staff and customers see.",
+        "currency": "Currency",
+        "preview": "Company {net} sells for {gross}",
+        "ratesPointer": "Select a room type to open its monthly prices. Company price plus margin becomes the selling price for that month.",
         "markupKind": "Markup type",
-        "markupValue": "Markup",
-        "preview": "Net {net} sells for {gross}"
+        "markupValue": "Markup"
       },
       "notes": {
         "title": "Notes",
@@ -3740,7 +3799,7 @@
       "errors": {
         "name": "Enter at least 2 characters.",
         "city": "City is required.",
-        "country": "Use a two-letter country code.",
+        "country": "Country name is too long.",
         "distance": "Distance must be 0–100,000 m.",
         "latitude": "Latitude must be between -90 and 90.",
         "longitude": "Longitude must be between -180 and 180.",
@@ -3767,7 +3826,28 @@
       "markupHint": "Applied to every net rate unless the season sets its own."
     },
     "rates": {
-      "hint": "Prices switch automatically by stay date. Gross includes the markup; net is the contract rate.",
+      "hint": "Season matrices are for special periods. The monthly sheet above is the default night rate.",
+      "monthlyTitle": "Monthly room prices",
+      "monthlyHintWrite": "Review each room type by month. Open the price desk to change company and selling prices.",
+      "monthlyHintRead": "Selling price per room night, by room type and month.",
+      "pickRoom": "Room type",
+      "noRooms": "Add room types to the hotel profile first.",
+      "marginKind": "Margin type",
+      "marginValue": "Profit margin",
+      "applyMargin": "Apply margin to months",
+      "roomPopupTitle": "{room} monthly prices",
+      "roomPopupHint": "Enter the company price and profit margin for each month. The selling price updates as you type.",
+      "profit": "Profit margin",
+      "pricedMonths": "{n, plural, one {# month priced} other {# months priced}}",
+      "editRoomPrices": "Monthly prices",
+      "saveRoomPrices": "Save room prices",
+      "company": "Company price",
+      "selling": "Selling price",
+      "saveYear": "Save {year}",
+      "monthlySaved": "Monthly prices saved",
+      "monthlySaveError": "Could not save monthly prices",
+      "prevYear": "Previous year",
+      "nextYear": "Next year",
       "add": "Add season",
       "empty": "No seasons yet",
       "emptyHint": "Add a low or peak period with its net rate matrix.",
@@ -3781,7 +3861,12 @@
       "deleted": "Season deleted",
       "deleteError": "Could not delete the season",
       "deleteTitle": "Delete “{name}”?",
-      "deleteHint": "Quotes for these dates will have no rate until another season covers them."
+      "deleteHint": "Quotes for these dates will have no rate until another season covers them.",
+      "editYearPrices": "Edit {room} prices",
+      "unpriced": "Not priced",
+      "pricedCount": "{n}/12",
+      "seasonsTitle": "Special seasons",
+      "seasonsHint": "Optional periods that override the monthly sheet — Ramadan, peak weeks, or a contracted window."
     },
     "season": {
       "createTitle": "New season",
@@ -3979,79 +4064,6 @@
       "legendAll": "Whole hotel closed",
       "legendSome": "Some rooms closed",
       "legendBlock": "Room block"
-    },
-    "quote": {
-      "stay": "Stay",
-      "checkIn": "Check-in",
-      "checkOut": "Check-out",
-      "roomAndBoard": "Room & board",
-      "guests": "Guests",
-      "perRoom": "Per room",
-      "rooms": "Rooms",
-      "adults": "Adults",
-      "childAge": "Child {n} age",
-      "withBed": "With bed",
-      "noBed": "No bed",
-      "removeChild": "Remove child",
-      "addChild": "Add child",
-      "extraBed": "Extra adult bed",
-      "extraBedNoPrice": "No contracted price",
-      "total": "Selling total",
-      "net": "Net cost",
-      "profit": "Profit",
-      "guestsCount": "Guests",
-      "left": "{n} left",
-      "copy": "Copy quote",
-      "copied": "Quote copied",
-      "copyFailed": "Could not copy",
-      "inactive": "This hotel is inactive and cannot be quoted.",
-      "missing": "{n, plural, one {# night has} other {# nights have}} no contract rate.",
-      "nightly": "Night by night",
-      "noRate": "no rate",
-      "childLine": "Child, {age} yrs",
-      "night": "night",
-      "freeUntil": "Free cancellation until",
-      "freeUntilLine": "Free cancellation until {date}",
-      "penaltyToday": "Cancelling today costs {amount}",
-      "tierFrom": "From {date}",
-      "noShow": "No-show",
-      "calculating": "Calculating…",
-      "guestsLine": "{adults, plural, one {# adult} other {# adults}}{children, plural, =0 {} one { + # child} other { + # children}}",
-      "text": {
-        "stay": "Stay",
-        "room": "Room",
-        "guests": "Guests"
-      },
-      "errors": {
-        "dates": "Check-out must be after check-in.",
-        "tooLong": "Stays are limited to 60 nights.",
-        "occupancy": "1–4 adults per room (older children count as adults), at most 4 children."
-      }
-    },
-    "voucher": {
-      "title": "Voucher to hotel",
-      "hint": "Opens an e-mail to {email} with the booking details (no prices).",
-      "noEmail": "Add a reservations e-mail in the profile to send vouchers.",
-      "guest": "Lead guest",
-      "reference": "Booking reference",
-      "notesPlaceholder": "Special requests (adjoining rooms, high floor…)",
-      "copy": "Copy text",
-      "send": "E-mail hotel",
-      "copied": "Voucher copied",
-      "subject": "Booking request – {hotel} – {stay} {ref}",
-      "greeting": "Dear {hotel} reservations team,",
-      "intro": "Please confirm the following booking under our contract:",
-      "closing": "Thank you, we look forward to your confirmation.",
-      "lines": {
-        "reference": "Reference",
-        "guest": "Lead guest",
-        "stay": "Stay",
-        "rooms": "Rooms",
-        "board": "Board",
-        "occupancy": "Occupancy",
-        "childAges": "Child ages",
-        "notes": "Notes"
-      }
     },
     "contract": {
       "title": "Contract",
@@ -6436,18 +6448,14 @@
     "joined": "Joined {date}",
     "roles": {
       "gm": "General Manager",
-      "manager": "Manager",
-      "operations": "Operations",
       "finance": "Finance",
-      "employee": "Agent",
+      "agent": "Agent",
       "admin": "Administrator"
     },
     "roleHint": {
       "gm": "Runs the whole company: every center, setting and report.",
-      "manager": "Leads a center: team, targets, approvals and reports.",
-      "operations": "Handles suppliers, hotels, flights and fulfilment.",
       "finance": "Payments, invoices, refunds and reconciliation.",
-      "employee": "Sells and serves customers, bookings and tasks.",
+      "agent": "Sells and serves customers, bookings and tasks.",
       "admin": "Platform operator outside any company."
     },
     "status": {
@@ -6661,7 +6669,8 @@
         "settings": "Settings",
         "setup": "Company setup",
         "companies": "Companies",
-        "support": "Support"
+        "support": "Support",
+        "buses": "Buses"
       },
       "actions": {
         "read": "View",
@@ -6676,7 +6685,8 @@
         "finance": "Finance details",
         "search": "Search",
         "export": "Export",
-        "setup": "Set up"
+        "setup": "Set up",
+        "pricing": "Pricing"
       }
     },
     "profile": {

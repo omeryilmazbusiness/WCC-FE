@@ -9,23 +9,21 @@ import {
   Mail,
   MapPin,
   MapPinned,
-  Navigation,
   NotebookPen,
   Phone,
   Send,
   UserRound,
   UtensilsCrossed,
 } from "lucide-react";
-import { LANDMARK_LOOK, MEAL_LOOK, MEAL_PLANS, ROOM_LOOK, ROOM_TYPES, mapsUrl, type Hotel } from "@/entities/hotel";
+import { MEAL_LOOK, MEAL_PLANS, ROOM_LOOK, ROOM_TYPES, type Hotel } from "@/entities/hotel";
 import { cn } from "@/shared/lib/cn";
 import { formatMoney } from "@/shared/lib/format";
-import { CopyButton, InfoRow, InfoSection, TONES, infoActionClass } from "@/shared/ui";
+import { CopyButton, InfoRow, InfoSection, TONES } from "@/shared/ui";
 
-export function OverviewTab({ hotel }: { hotel: Hotel }) {
+export function OverviewTab({ hotel, canWrite = false }: { hotel: Hotel; canWrite?: boolean }) {
   const t = useTranslations("hotels");
   const locale = useLocale();
   const { location: l, contact: c } = hotel;
-  const landmark = l.landmark ? LANDMARK_LOOK[l.landmark] : null;
   const none = <span className="text-zinc-400">{t("overview.notSet")}</span>;
 
   return (
@@ -34,26 +32,6 @@ export function OverviewTab({ hotel }: { hotel: Hotel }) {
         <div className="divide-y divide-zinc-100">
           <InfoRow icon={MapPin} tone="emerald" label={t("form.location.city")} value={[l.district, l.city].filter(Boolean).join(" · ") || none} />
           <InfoRow icon={Globe2} tone="sky" label={t("form.location.country")} value={l.country || none} />
-          {landmark ? (
-            <InfoRow
-              icon={landmark.icon}
-              tone={landmark.tone}
-              label={t("form.location.landmark")}
-              value={l.distanceM > 0 ? t("distanceTo", { m: l.distanceM, place: t(`landmark.${l.landmark}`) }) : t(`landmark.${l.landmark}`)}
-            />
-          ) : null}
-          <InfoRow
-            icon={Navigation}
-            tone="indigo"
-            label={t("overview.coordinates")}
-            dir="ltr"
-            value={l.latitude != null && l.longitude != null ? `${l.latitude}, ${l.longitude}` : none}
-            action={
-              <a href={mapsUrl(hotel)} target="_blank" rel="noreferrer" className={infoActionClass} data-testid="hotel-maps">
-                {t("overview.openMap")}
-              </a>
-            }
-          />
         </div>
       </InfoSection>
 
@@ -123,17 +101,18 @@ export function OverviewTab({ hotel }: { hotel: Hotel }) {
       <InfoSection icon={Coins} tone="amber" title={t("overview.commercial")} data-testid="hotel-commercial">
         <div className="divide-y divide-zinc-100">
           <InfoRow icon={Coins} tone="amber" label={t("form.commercial.currency")} value={hotel.currency} />
-          <InfoRow
-            icon={BadgePercent}
-            tone="emerald"
-            label={t("overview.markup")}
-            value={
-              hotel.markup.kind === "percent"
-                ? `${hotel.markup.value / 100}%`
-                : t("overview.fixedMarkup", { amount: formatMoney(hotel.markup.value, locale, hotel.currency) })
-            }
-            hint={t("overview.markupHint")}
-          />
+          {canWrite ? (
+            <InfoRow
+              icon={BadgePercent}
+              tone="emerald"
+              label={t("rates.marginValue")}
+              value={
+                hotel.markup.kind === "percent"
+                  ? `${hotel.markup.value / 100}%`
+                  : t("overview.fixedMarkup", { amount: formatMoney(hotel.markup.value, locale, hotel.currency) })
+              }
+            />
+          ) : null}
           {hotel.notes ? <InfoRow icon={NotebookPen} tone="zinc" label={t("form.notes.title")} value={<span className="whitespace-pre-wrap">{hotel.notes}</span>} /> : null}
         </div>
       </InfoSection>

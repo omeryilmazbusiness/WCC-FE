@@ -29,6 +29,7 @@ import {
   type HotelSummary,
   type Markup,
   type MealPlan,
+  type MonthlyRate,
   type Quote,
   type QuoteRequest,
   type Rate,
@@ -52,6 +53,7 @@ export interface HotelRepository {
   deleteAllotment(hotelId: string, allotmentId: string): Promise<void>;
   createStopSale(hotelId: string, input: StopSaleInput): Promise<StopSale>;
   deleteStopSale(hotelId: string, stopSaleId: string): Promise<void>;
+  replaceMonthlyRates(hotelId: string, year: number, rates: MonthlyRate[]): Promise<HotelDetail>;
   quote(hotelId: string, req: QuoteRequest): Promise<Quote>;
 }
 
@@ -156,6 +158,7 @@ function mapSummary(v: unknown): HotelSummary {
     seasonName: str(s.season_name),
     seasonKind: pick(s.season_kind, [...SEASON_KINDS, ""] as const, ""),
     fromNet: num(s.from_net),
+    fromSell: num(s.from_sell),
     roomsTotal: num(s.rooms_total),
     roomsSold: num(s.rooms_sold),
     nextRelease: s.next_release ? day(s.next_release) : null,
@@ -221,14 +224,30 @@ function mapStopSale(raw: Raw): StopSale {
   };
 }
 
+function mapMonthly(v: unknown): MonthlyRate {
+  const r = obj(v);
+  return {
+    year: num(r.year),
+    month: num(r.month),
+    roomType: pick(r.room_type, ROOM_TYPES, "standard"),
+    net: num(r.net),
+    sell: num(r.sell),
+  };
+}
+
 function mapDetail(raw: Raw): HotelDetail {
   return {
     hotel: mapHotel(obj(raw.hotel)),
     seasons: list(raw.seasons).map((s) => mapSeason(obj(s))),
+    monthlyRates: list(raw.monthly_rates).map(mapMonthly),
     allotments: list(raw.allotments).map((a) => mapAllotment(obj(a))),
     stopSales: list(raw.stop_sales).map((s) => mapStopSale(obj(s))),
     today: day(raw.today),
   };
+}
+
+function asHotel(raw: Raw): Hotel {
+  return raw.hotel && typeof raw.hotel === "object" ? mapDetail(raw).hotel : mapHotel(raw);
 }
 
 function mapQuote(raw: Raw): Quote {
@@ -302,7 +321,7 @@ export function hotelPayload(input: HotelInput): Raw {
     stars: input.stars,
     location: {
       city: l.city.trim(),
-      country: l.country.trim().toUpperCase(),
+      country: l.country.trim(),
       district: l.district.trim(),
       latitude: l.latitude,
       longitude: l.longitude,
@@ -340,6 +359,13 @@ export function hotelPayload(input: HotelInput): Raw {
       : undefined,
     notes: input.notes.trim(),
     is_active: input.isActive,
+    monthly_rates: (input.monthlyRates ?? []).map((r) => ({
+      year: r.year,
+      month: r.month,
+      room_type: r.roomType,
+      net: Math.round(r.net),
+      sell: Math.round(r.sell),
+    })),
   };
 }
 
@@ -395,11 +421,29 @@ export class ApiHotelRepository implements HotelRepository {
   }
 
   async create(input: HotelInput) {
-    return mapHotel(await this.client.request<Raw>(this.base(), { method: "POST", body: JSON.stringify(hotelPayload(input)) }));
+    return asHotel(await this.client.request<Raw>(this.base(), { method: "POST", body: JSON.stringify(hotelPayload(input)) }));
   }
 
   async update(id: string, input: HotelInput) {
-    return mapHotel(await this.client.request<Raw>(this.base(id), { method: "PUT", body: JSON.stringify(hotelPayload(input)) }));
+    return asHotel(await this.client.request<Raw>(this.base(id), { method: "PUT", body: JSON.stringify(hotelPayload(input)) }));
+  }
+
+  async replaceMonthlyRates(hotelId: string, year: number, rates: MonthlyRate[]) {
+    return mapDetail(
+      await this.client.request<Raw>(`${this.base(hotelId)}/monthly-rates`, {
+        method: "PUT",
+        body: JSON.stringify({
+          year,
+          rates: rates.map((r) => ({
+            year,
+            month: r.month,
+            room_type: r.roomType,
+            net: Math.round(r.net),
+            sell: Math.round(r.sell),
+          })),
+        }),
+      }),
+    );
   }
 
   async saveSeason(hotelId: string, seasonId: string | null, input: SeasonInput) {
@@ -499,6 +543,7 @@ const memoryId = () => `mem-hotel-${++memorySeq}`;
 export class MemoryHotelRepository implements HotelRepository {
   private hotels: Hotel[] = [];
   private seasons: Season[] = [];
+  private monthly: (MonthlyRate & { hotelId: string })[] = [];
   private allotments: Omit<Allotment, "status" | "available" | "releaseDate">[] = [];
   private stops: StopSale[] = [];
 
@@ -513,12 +558,12 @@ export class MemoryHotelRepository implements HotelRepository {
       stars: 5,
       location: {
         city: "Makkah",
-        country: "SA",
+        country: "Saudi Arabia",
         district: "Abraj Al Bait",
-        latitude: 21.4189,
-        longitude: 39.8262,
-        landmark: "haram",
-        distanceM: 150,
+        latitude: null,
+        longitude: null,
+        landmark: "",
+        distanceM: 0,
       },
       contact: {
         salesName: "Ahmed Al-Harbi",
@@ -542,7 +587,7 @@ export class MemoryHotelRepository implements HotelRepository {
       id: "mem-hotel-madinah",
       name: "Anwar Al Madinah Mövenpick",
       nameAr: "أنوار المدينة موفنبيك",
-      location: { ...makkah.location, city: "Madinah", district: "Central Area", latitude: 24.4686, longitude: 39.6106, landmark: "nabawi", distanceM: 80 },
+      location: { ...makkah.location, city: "Madinah", country: "Saudi Arabia", district: "Central Area" },
       mealPlans: ["bb", "hb"],
     };
     this.hotels = [makkah, madinah];
@@ -590,6 +635,13 @@ export class MemoryHotelRepository implements HotelRepository {
       { id: memoryId(), hotelId: makkah.id, roomType: "standard", kind: "guaranteed", startDate: addDays(today, 10), endDate: addDays(today, 40), rooms: 20, sold: 12, releaseDays: 7, notes: "" },
       { id: memoryId(), hotelId: madinah.id, roomType: "quad", kind: "on_request", startDate: addDays(today, 5), endDate: addDays(today, 50), rooms: 10, sold: 2, releaseDays: 0, notes: "" },
     ];
+    const year = Number(today.slice(0, 4));
+    const month = Number(today.slice(5, 7));
+    this.monthly = [
+      { hotelId: makkah.id, year, month, roomType: "standard", net: 400_00, sell: 520_00 },
+      { hotelId: makkah.id, year, month, roomType: "deluxe", net: 550_00, sell: 690_00 },
+      { hotelId: madinah.id, year, month, roomType: "standard", net: 350_00, sell: 450_00 },
+    ];
   }
 
   private hotel(id: string): Hotel {
@@ -615,6 +667,11 @@ export class MemoryHotelRepository implements HotelRepository {
             seasonName: current?.name ?? "",
             seasonKind: (current?.kind ?? "") as SeasonKind | "",
             fromNet: current ? seasonFrom(current) : 0,
+            fromSell: this.monthly
+              .filter((r) => r.hotelId === h.id)
+              .map((r) => r.sell)
+              .filter((n) => n > 0)
+              .sort((a, b) => a - b)[0] ?? 0,
             roomsTotal: blocks.reduce((s, a) => s + a.rooms, 0),
             roomsSold: blocks.reduce((s, a) => s + a.sold, 0),
             nextRelease: releases[0] ?? null,
@@ -632,16 +689,25 @@ export class MemoryHotelRepository implements HotelRepository {
     return {
       hotel: this.hotel(id),
       seasons: this.seasons.filter((s) => s.hotelId === id).sort((a, b) => a.startDate.localeCompare(b.startDate)),
+      monthlyRates: this.monthly.filter((r) => r.hotelId === id).map(({ hotelId: _id, ...r }) => r),
       allotments: this.allotments.filter((a) => a.hotelId === id).map((a) => withAllotmentState(a, today)),
       stopSales: this.stops.filter((s) => s.hotelId === id),
       today,
     };
   }
 
+  async replaceMonthlyRates(hotelId: string, year: number, rates: MonthlyRate[]) {
+    this.hotel(hotelId);
+    this.monthly = this.monthly.filter((r) => r.hotelId !== hotelId || r.year !== year);
+    this.monthly.push(...rates.filter((r) => r.net > 0 || r.sell > 0).map((r) => ({ ...r, year, hotelId })));
+    return this.get(hotelId);
+  }
+
   async create(input: HotelInput) {
     const now = new Date().toISOString();
+    const { monthlyRates, ...profile } = input;
     const h: Hotel = {
-      ...input,
+      ...profile,
       id: memoryId(),
       branchId: "",
       childPolicy: input.childPolicy ?? { ...DEFAULT_CHILD_POLICY },
@@ -651,6 +717,7 @@ export class MemoryHotelRepository implements HotelRepository {
       updatedAt: now,
     };
     this.hotels.push(h);
+    this.monthly.push(...(monthlyRates ?? []).filter((r) => r.net > 0 || r.sell > 0).map((r) => ({ ...r, hotelId: h.id })));
     return h;
   }
 

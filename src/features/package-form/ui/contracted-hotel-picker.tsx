@@ -135,12 +135,11 @@ export function ContractedHotelPicker({ city, repository = defaultRepository }: 
                       </span>
                       <span className="flex items-center gap-2 text-[11.5px] text-zinc-500">
                         <HotelStars stars={h.stars} />
-                        {h.location.city}
-                        {h.location.distanceM > 0 ? ` · ${th("distance", { m: h.location.distanceM })}` : ""}
+                        {[h.location.city, h.location.country].filter(Boolean).join(" · ")}
                       </span>
                     </span>
-                    {h.summary.fromNet > 0 ? (
-                      <span className="shrink-0 text-[12px] font-semibold tabular-nums text-zinc-600">{formatMoney(h.summary.fromNet, locale, h.currency)}</span>
+                    {h.summary.fromSell > 0 ? (
+                      <span className="shrink-0 text-[12px] font-semibold tabular-nums text-zinc-600">{formatMoney(h.summary.fromSell, locale, h.currency)}</span>
                     ) : null}
                   </button>
                 </li>

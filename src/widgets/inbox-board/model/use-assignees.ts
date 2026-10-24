@@ -8,7 +8,7 @@ export type Assignee = { id: string; name: string; role: string };
 export type AssigneeLoader = (branchId: string) => Promise<Assignee[]>;
 
 /** Roles that hold inbox.write, so they can answer what they are given. */
-const ASSIGNABLE_ROLES = new Set(["gm", "manager", "employee", "operations"]);
+const ASSIGNABLE_ROLES = new Set(["gm", "agent"]);
 
 /** Active front-office users of the branch, by name. */
 export const loadBranchAssignees: AssigneeLoader = async (branchId) => {

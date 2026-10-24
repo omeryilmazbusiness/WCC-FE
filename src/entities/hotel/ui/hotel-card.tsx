@@ -9,7 +9,7 @@ import { TONES } from "@/shared/ui";
 import { fillPct } from "../lib/pricing";
 import type { HotelListItem } from "../model";
 import { HotelStars } from "./hotel-stars";
-import { LANDMARK_LOOK, MEAL_LOOK, SEASON_LOOK } from "./look";
+import { MEAL_LOOK, SEASON_LOOK } from "./look";
 
 /** Contract card: identity, location, current season and from-rate, allotment fill and contract state. */
 export function HotelCard({ hotel, href }: { hotel: HotelListItem; href: string }) {
@@ -18,8 +18,6 @@ export function HotelCard({ hotel, href }: { hotel: HotelListItem; href: string 
   const s = hotel.summary;
   const season = s.seasonKind ? SEASON_LOOK[s.seasonKind] : null;
   const SeasonIcon = season?.icon;
-  const landmark = hotel.location.landmark ? LANDMARK_LOOK[hotel.location.landmark] : null;
-  const LandmarkIcon = landmark?.icon;
   const fill = fillPct(s.roomsSold, s.roomsTotal);
   const name = locale === "ar" && hotel.nameAr ? hotel.nameAr : hotel.name;
   const tone = !hotel.isActive ? "zinc" : s.stopSaleToday ? "rose" : (season?.tone ?? "sky");
@@ -61,7 +59,7 @@ export function HotelCard({ hotel, href }: { hotel: HotelListItem; href: string 
             <div className="mt-0.5 flex items-center gap-2">
               <HotelStars stars={hotel.stars} label={t("card.stars", { n: hotel.stars })} />
               <span className="truncate text-[12px] font-medium text-zinc-500">
-                {[hotel.location.district, hotel.location.city].filter(Boolean).join(" · ")}
+                {[hotel.location.district, hotel.location.city, hotel.location.country].filter(Boolean).join(" · ")}
               </span>
             </div>
           </div>
@@ -71,22 +69,19 @@ export function HotelCard({ hotel, href }: { hotel: HotelListItem; href: string 
       <div className="flex flex-1 flex-col gap-3 p-4 pt-3.5">
         <div className="flex items-end justify-between gap-3">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">{t("card.fromNet")}</p>
-            {s.fromNet > 0 ? (
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">{t("card.fromSell")}</p>
+            {s.fromSell > 0 ? (
               <p className="text-[22px] font-bold leading-tight tabular-nums tracking-tight text-zinc-950">
-                {formatMoneyWhole(s.fromNet, locale, hotel.currency)}
-                <span className="ms-1 text-[11.5px] font-medium text-zinc-400">{t("card.perPerson")}</span>
+                {formatMoneyWhole(s.fromSell, locale, hotel.currency)}
+                <span className="ms-1 text-[11.5px] font-medium text-zinc-400">{t("card.perNight")}</span>
               </p>
             ) : (
               <p className="text-[14px] font-semibold text-zinc-400">{t("card.noRate")}</p>
             )}
+            {s.fromNet > 0 ? (
+              <p className="mt-0.5 text-[12px] font-medium text-zinc-400">{t("card.companyFrom", { amount: formatMoneyWhole(s.fromNet, locale, hotel.currency) })}</p>
+            ) : null}
           </div>
-          {landmark && LandmarkIcon && hotel.location.distanceM > 0 ? (
-            <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-semibold", TONES[landmark.tone].soft)}>
-              <LandmarkIcon className="h-3.5 w-3.5" aria-hidden />
-              <span className="tabular-nums">{t("distance", { m: hotel.location.distanceM })}</span>
-            </span>
-          ) : null}
         </div>
 
         <div className="flex flex-wrap gap-1.5">

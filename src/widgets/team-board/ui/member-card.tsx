@@ -36,7 +36,7 @@ export function MemberCard({ member, teamName, self, platform, busy, can, onActi
   const t = useTranslations("team");
   const locale = useLocale();
   const status = memberStatus(member);
-  const role = ROLE_LOOK[member.role] ?? ROLE_LOOK.employee;
+  const role = ROLE_LOOK[member.role] ?? ROLE_LOOK.agent;
   const statusLook = STATUS_LOOK[status];
   const RoleIcon = role.icon;
   const StatusIcon = statusLook.icon;

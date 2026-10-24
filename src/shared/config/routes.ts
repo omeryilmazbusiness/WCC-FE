@@ -39,22 +39,24 @@ export const routes = {
   confirm: (token: string) => `/confirm/${token}`,
 } as const;
 
-export type AppRole =
-  | "gm"
-  | "manager"
-  | "employee"
-  | "finance"
-  | "operations"
-  | "admin";
+export type AppRole = "gm" | "finance" | "agent" | "admin";
 
-export const APP_ROLES: readonly AppRole[] = [
-  "gm",
-  "manager",
-  "employee",
-  "finance",
-  "operations",
-  "admin",
-];
+export const APP_ROLES: readonly AppRole[] = ["gm", "finance", "agent", "admin"];
+
+/** Titles a company can assign. Admin is the platform operator. */
+export const COMPANY_ROLES: readonly AppRole[] = ["gm", "finance", "agent"];
+
+const LEGACY_ROLES: Record<string, AppRole> = {
+  manager: "agent",
+  employee: "agent",
+  operations: "agent",
+};
+
+export function canonicalizeRole(value: unknown): AppRole {
+  if (typeof value !== "string") return "agent";
+  if (value in LEGACY_ROLES) return LEGACY_ROLES[value];
+  return isAppRole(value) ? value : "agent";
+}
 
 export function isAppRole(value: unknown): value is AppRole {
   return typeof value === "string" && (APP_ROLES as readonly string[]).includes(value);

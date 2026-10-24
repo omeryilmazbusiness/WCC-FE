@@ -19,6 +19,9 @@ import {
   hotelToInput,
   mailtoUrl,
   mapsUrl,
+  monthlyFromSell,
+  monthlyPricedCount,
+  replaceRoomInYear,
   overlappingSeason,
   parsePercentInput,
   pricedRates,
@@ -37,6 +40,8 @@ import {
   type StopSale,
 } from "./shims/hotel-entity.ts";
 import { draftErrors, draftFromHotel, draftToInput, newDraft } from "../src/features/hotel-form/model/draft.ts";
+import { applyNetToCell, sellInputFromNet } from "../src/features/hotel-form/model/monthly-sheet.ts";
+import { applyMonthMargin, applyMonthNet, emptyRoomYear, ratesByYear, roomYearToRates } from "../src/features/hotel-form/model/room-month-draft.ts";
 import {
   cancellationError,
   childDraft,
@@ -45,7 +50,6 @@ import {
   nextTier,
   parseRule,
 } from "../src/features/hotel-policy/model/policy-draft.ts";
-import { defaultQuoteRequest, payingAdults, quoteFormError } from "../src/features/hotel-quote/model/quote-form.ts";
 import { draftRates, seasonDraft, seasonDraftError, seasonInput } from "../src/features/hotel-season/model/season-draft.ts";
 
 const hotel: Hotel = {
@@ -54,7 +58,7 @@ const hotel: Hotel = {
   name: "Swissôtel Makkah",
   nameAr: "",
   stars: 5,
-  location: { city: "Makkah", country: "SA", district: "Ajyad", latitude: null, longitude: null, landmark: "haram", distanceM: 150 },
+  location: { city: "Makkah", country: "Saudi Arabia", district: "Ajyad", latitude: null, longitude: null, landmark: "", distanceM: 0 },
   contact: { salesName: "", salesPhone: "", salesEmail: "", reservationsEmail: "res@swiss.example" },
   roomTypes: ["deluxe", "standard"],
   mealPlans: ["bb", "ro"],
@@ -246,22 +250,75 @@ test("child policy draft round-trips and validates", () => {
 
 test("hotel draft validates and keeps policies on edit", () => {
   const fresh = newDraft();
-  assert.deepEqual(Object.keys(draftErrors(fresh)).sort(), ["city", "name"]);
+  assert.deepEqual(Object.keys(draftErrors(fresh)).sort(), ["city", "name", "roomTypes"]);
+  assert.deepEqual(fresh.roomTypes, []);
 
   const d = draftFromHotel({ ...hotel, childPolicy: { ...DEFAULT_CHILD_POLICY, extraBedAdult: 9900 } });
   assert.deepEqual(draftErrors(d), {});
-  assert.equal(draftErrors({ ...d, latitude: "21.4" }).longitude, "coordsPair");
-  assert.equal(draftErrors({ ...d, latitude: "91", longitude: "39" }).latitude, "latitude");
   assert.equal(draftErrors({ ...d, reservationsEmail: "nope" }).reservationsEmail, "email");
+  assert.equal(draftErrors({ ...d, country: "x".repeat(81) }).country, "country");
   assert.equal(draftErrors({ ...d, markupValue: "600" }).markupValue, "markupPercent");
-  assert.equal(draftErrors({ ...d, country: "SAU" }).country, "country");
 
-  const input = draftToInput({ ...d, country: "sa", latitude: "21,42", longitude: "39.82" }, { ...hotel, childPolicy: { ...DEFAULT_CHILD_POLICY, extraBedAdult: 9900 } });
-  assert.equal(input.location.country, "SA");
-  assert.equal(input.location.latitude, 21.42);
+  const input = draftToInput({ ...d, country: "  Saudi   Arabia  " }, { ...hotel, childPolicy: { ...DEFAULT_CHILD_POLICY, extraBedAdult: 9900 } });
+  assert.equal(input.location.country, "Saudi Arabia");
+  assert.equal(input.location.latitude, null);
   assert.equal(input.childPolicy?.extraBedAdult, 9900, "profile edits never reset policies");
   assert.deepEqual(input.markup, DEFAULT_MARKUP);
+  assert.deepEqual(draftToInput(newDraft()).markup, DEFAULT_MARKUP);
   assert.deepEqual(hotelToInput(hotel).location, hotel.location);
+});
+
+test("room-type month draft prices sell from company + margin", () => {
+  const year = emptyRoomYear(2026, { kind: "percent", value: 1500 });
+  const jan = applyMonthNet(year.months[1], "100");
+  assert.equal(jan.sell, "115.00");
+  const withFixed = applyMonthMargin(jan, "fixed", "25");
+  assert.equal(withFixed.sell, "125.00");
+  year.months[1] = withFixed;
+  const rows = roomYearToRates("standard", year);
+  assert.equal(rows?.[0]?.net, 100_00);
+  assert.equal(rows?.[0]?.sell, 125_00);
+  const grouped = ratesByYear({ standard: year });
+  assert.equal(grouped?.get(2026)?.length, 1);
+});
+
+test("monthly sell follows the hotel margin as the company price is typed", () => {
+  assert.equal(sellInputFromNet("100", { kind: "percent", value: 1500 }), "115.00");
+  assert.equal(sellInputFromNet("100", { kind: "fixed", value: 2500 }), "125.00");
+  assert.deepEqual(applyNetToCell("100", { kind: "percent", value: 1500 }), { net: "100", sell: "115.00" });
+  assert.equal(sellInputFromNet("", { kind: "percent", value: 1500 }), "");
+});
+
+test("replacing one room year keeps the other rooms on that sheet", () => {
+  const existing = [
+    { year: 2026, month: 1, roomType: "standard" as const, net: 300_00, sell: 390_00 },
+    { year: 2026, month: 1, roomType: "deluxe" as const, net: 500_00, sell: 650_00 },
+    { year: 2027, month: 1, roomType: "standard" as const, net: 310_00, sell: 400_00 },
+  ];
+  const next = replaceRoomInYear(existing, 2026, "standard", [
+    { year: 2026, month: 3, roomType: "standard", net: 320_00, sell: 400_00 },
+    { year: 2026, month: 4, roomType: "standard", net: 0, sell: 0 },
+  ]);
+  assert.deepEqual(
+    next.map((r) => `${r.roomType}/${r.month}/${r.sell}`).sort(),
+    ["deluxe/1/65000", "standard/3/40000"],
+  );
+  assert.equal(monthlyPricedCount(existing, 2026, "standard"), 1);
+});
+
+test("monthly selling floor is the cheapest priced room that month", () => {
+  assert.equal(
+    monthlyFromSell(
+      [
+        { year: 2026, month: 12, roomType: "standard", net: 400_00, sell: 520_00 },
+        { year: 2026, month: 12, roomType: "deluxe", net: 550_00, sell: 690_00 },
+        { year: 2026, month: 11, roomType: "standard", net: 300_00, sell: 100_00 },
+      ],
+      2026,
+      12,
+    ),
+    520_00,
+  );
 });
 
 test("season draft: matrix parsing, overlap and override markup", () => {
@@ -290,45 +347,10 @@ test("season draft: matrix parsing, overlap and override markup", () => {
   assert.equal(edit.markupValue, "12.5");
 });
 
-test("quote form defaults and limits", () => {
-  const req = defaultQuoteRequest(hotel, "2026-10-05");
-  assert.equal(req.checkIn, "2026-11-04");
-  assert.equal(req.checkOut, "2026-11-09");
-  assert.equal(req.roomType, "standard", "first contracted room in canonical order");
-  assert.equal(req.mealPlan, "ro");
-  assert.equal(quoteFormError(req, hotel), null);
-  assert.equal(quoteFormError({ ...req, checkOut: req.checkIn }, hotel), "dates");
-  assert.equal(quoteFormError({ ...req, checkOut: addDays(req.checkIn, 61) }, hotel), "tooLong");
-  const teen = { ...req, adults: 3, children: [{ age: 12 }, { age: 5 }] };
-  assert.equal(payingAdults(teen, hotel), 4, "children over the child-2 band pay as adults");
-  assert.equal(quoteFormError(teen, hotel), null);
-  assert.equal(quoteFormError({ ...teen, children: [{ age: 12 }, { age: 13 }] }, hotel), "occupancy");
-
-  const bbOnly: Rate[] = [
-    { ...rate, roomType: "deluxe", mealPlan: "bb" },
-    { ...rate, roomType: "standard", mealPlan: "bb" },
-    { ...rate, roomType: "suite", mealPlan: "ro" },
-  ];
-  const covering = defaultQuoteRequest(hotel, "2026-10-05", [season("s", "2026-11-01", "2026-12-20", bbOnly)]);
-  assert.equal(covering.checkIn, "2026-11-04");
-  assert.deepEqual([covering.roomType, covering.mealPlan], ["standard", "bb"], "first priced combination the hotel sells");
-
-  const later = defaultQuoteRequest(hotel, "2026-10-05", [
-    season("past", "2026-01-01", "2026-03-01"),
-    season("unpriced", "2026-11-01", "2026-11-30", []),
-    season("dec", "2026-12-21", "2027-01-05", bbOnly),
-  ]);
-  assert.equal(later.checkIn, "2026-12-21", "jumps to the next priced season");
-  assert.equal(later.checkOut, "2026-12-26");
-
-  const running = defaultQuoteRequest(hotel, "2026-10-05", [season("now", "2026-09-01", "2026-10-20")]);
-  assert.equal(running.checkIn, "2026-10-05", "a season ending before the default day starts today");
-});
-
 test("links", () => {
   assert.equal(
     mapsUrl(hotel),
-    "https://www.google.com/maps/search/?api=1&query=Swiss%C3%B4tel%20Makkah%2C%20Makkah%2C%20SA",
+    "https://www.google.com/maps/search/?api=1&query=Swiss%C3%B4tel%20Makkah%2C%20Makkah%2C%20Saudi%20Arabia",
   );
   assert.ok(mapsUrl({ ...hotel, location: { ...hotel.location, latitude: 21.42, longitude: 39.82 } }).endsWith("query=21.42%2C39.82"));
   assert.equal(mailtoUrl(" res@x.sa ", "Voucher #1", "a&b"), "mailto:res@x.sa?subject=Voucher%20%231&body=a%26b");

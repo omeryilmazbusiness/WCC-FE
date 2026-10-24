@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-export const HOTEL_TABS = ["overview", "rates", "policies", "inventory", "quote", "contract"] as const;
+export const HOTEL_TABS = ["overview", "rates", "policies", "inventory", "contract"] as const;
 
 export type HotelTab = (typeof HOTEL_TABS)[number];
 

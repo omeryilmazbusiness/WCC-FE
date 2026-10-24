@@ -46,10 +46,10 @@ function visibility() {
   const ids = (role: keyof typeof DEMO_ROLE_PERMISSIONS) =>
     visibleSettings(DEMO_ROLE_PERMISSIONS[role]).flatMap((g) => g.sections.map((s) => s.id));
   assert.deepEqual(ids("gm"), SETTINGS_SECTIONS.map((s) => s.id).filter((id) => id !== "supportInbox"), "the GM sees every company section");
-  assert.ok(ids("gm").includes("session") && !ids("manager").includes("session"), "desk lock is GM-only");
+  assert.ok(ids("gm").includes("session") && !ids("agent").includes("session"), "desk lock is GM-only");
   assert.deepEqual(ids("admin"), ["profile", "team", "audit", "faq", "supportInbox"], "platform operators: profile, team, audit, help and the support inbox");
-  assert.deepEqual(ids("employee"), ["profile", "faq", "ai", "support"], "agents get their profile, help, the AI protocol and help requests");
-  for (const role of ["gm", "manager", "employee", "finance", "operations"] as const) {
+  assert.deepEqual(ids("agent"), ["profile", "faq", "ai", "support"], "agents get their profile, help, the AI protocol and help requests");
+  for (const role of ["gm", "finance", "agent"] as const) {
     assert.ok(ids(role).includes("support") && !ids(role).includes("supportInbox"), `${role} sends requests but has no inbox`);
   }
   assert.ok(ids("finance").includes("audit") && !ids("finance").includes("roles"));
@@ -61,19 +61,17 @@ function guards() {
   assert.ok(can("admin", SETTINGS_ROOT), "audit.read alone opens the hub");
   assert.ok(can("admin", `${SETTINGS_ROOT}/audit`));
   assert.ok(!can("admin", `${SETTINGS_ROOT}/roles`), "sections keep their own permission");
-  assert.ok(can("manager", `${SETTINGS_ROOT}/roles`));
-  assert.ok(!can("operations", `${SETTINGS_ROOT}/audit`));
-  assert.ok(can("operations", SETTINGS_ROOT), "ai.read opens the hub for the AI protocol");
-  assert.ok(!can("operations", `${SETTINGS_ROOT}/roles`));
+  assert.ok(!can("agent", `${SETTINGS_ROOT}/roles`));
+  assert.ok(!can("agent", `${SETTINGS_ROOT}/audit`));
+  assert.ok(can("agent", SETTINGS_ROOT), "ai.read opens the hub for the AI protocol");
   for (const gone of ["sla", "escalation", "lost-reasons", "templates", "fields", "documents", "thresholds", "events"]) {
     assert.ok(!isSettingsDetail(gone), `${gone} was removed`);
   }
-  assert.ok(can("employee", `${SETTINGS_ROOT}/ai`), "agents can read the AI protocol");
-  assert.ok(!can("employee", `${SETTINGS_ROOT}/audit`));
-  assert.ok(can("gm", `${SETTINGS_ROOT}/session`) && !can("manager", `${SETTINGS_ROOT}/session`), "only the GM sets the desk lock");
+  assert.ok(can("agent", `${SETTINGS_ROOT}/ai`), "agents can read the AI protocol");
+  assert.ok(can("gm", `${SETTINGS_ROOT}/session`) && !can("agent", `${SETTINGS_ROOT}/session`), "only the GM sets the desk lock");
   assert.ok(can("gm", `${SETTINGS_ROOT}/profile`), "the GM edits their own profile");
   assert.ok(can("admin", `${SETTINGS_ROOT}/profile`), "the profile follows the hub rule");
-  assert.ok(can("employee", `${SETTINGS_ROOT}/profile`), "agents with the hub edit their own profile");
+  assert.ok(can("agent", `${SETTINGS_ROOT}/profile`), "agents with the hub edit their own profile");
   assert.ok(!can("admin", `${SETTINGS_ROOT}/ai`), "operators without ai.read don't see it");
   assert.ok(can("admin", `${SETTINGS_ROOT}/supportInbox`) && !can("admin", `${SETTINGS_ROOT}/support`), "operators answer, they don't ask");
   assert.ok(!can("gm", `${SETTINGS_ROOT}/supportInbox`), "company users never open the inbox");

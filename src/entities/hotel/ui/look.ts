@@ -1,5 +1,4 @@
 import {
-  Ban,
   BedDouble,
   BedSingle,
   Building2,
@@ -26,7 +25,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { Tone } from "@/shared/ui";
-import type { AllotmentKind, AllotmentStatus, Landmark as LandmarkKey, MealPlan, QuoteAvailability, RoomType, SeasonKind } from "../model";
+import type { AllotmentKind, AllotmentStatus, Landmark as LandmarkKey, MealPlan, RoomType, SeasonKind } from "../model";
 
 export type Look = { icon: LucideIcon; tone: Tone };
 
@@ -72,11 +71,4 @@ export const ALLOTMENT_STATUS_LOOK: Record<AllotmentStatus, Look> = {
   sold_out: { icon: XCircle, tone: "rose" },
   released: { icon: CalendarClock, tone: "zinc" },
   expired: { icon: CalendarClock, tone: "zinc" },
-};
-
-export const AVAILABILITY_LOOK: Record<QuoteAvailability, Look> = {
-  instant: { icon: CircleCheck, tone: "emerald" },
-  on_request: { icon: Hourglass, tone: "amber" },
-  stop_sale: { icon: Ban, tone: "rose" },
-  unavailable: { icon: XCircle, tone: "zinc" },
 };
