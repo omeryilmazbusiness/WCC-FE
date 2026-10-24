@@ -2,6 +2,7 @@ import {
   BedDouble,
   BedSingle,
   BookOpen,
+  Car,
   Building2,
   BusFront,
   CalendarRange,
@@ -45,6 +46,7 @@ export type Look = { icon: LucideIcon; tone: Tone };
 export const KIND_LOOK: Record<string, Look> = {
   umrah: { icon: Moon, tone: "emerald" },
   hajj: { icon: Landmark, tone: "amber" },
+  other: { icon: MapPin, tone: "teal" },
 };
 
 export const CATEGORY_LOOK: Record<string, Look> = {
@@ -84,6 +86,7 @@ export const ACCESS_LOOK: Record<string, Look> = {
 export const INTERCITY_LOOK: Record<string, Look> = {
   haramain_train: { icon: TrainFront, tone: "emerald" },
   bus: { icon: BusFront, tone: "amber" },
+  private_car: { icon: Car, tone: "violet" },
 };
 
 export const VISA_LOOK: Record<string, Look> = {

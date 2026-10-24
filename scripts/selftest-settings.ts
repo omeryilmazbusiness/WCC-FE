@@ -31,10 +31,12 @@ function registry() {
   assert.ok(!isSettingsDetail("nope"));
   assert.equal(settingsPath(findSettingsSection("audit")!), `${SETTINGS_ROOT}/audit`);
   assert.equal(settingsPath(findSettingsSection("team")!), "/team");
-  assert.deepEqual(ids, ["profile", "team", "roles", "audit", "faq", "ai", "support", "supportInbox"], "settings keeps only the essentials");
+  assert.deepEqual(ids, ["profile", "team", "roles", "audit", "session", "faq", "ai", "support", "supportInbox"], "settings keeps only the essentials");
   assert.ok(isSettingsDetail("profile"), "the profile opens inside settings");
   assert.equal(findSettingsSection("profile")!.permission, undefined, "the own profile needs no extra permission");
-  assert.deepEqual([...SETTINGS_HUB_PERMISSIONS].sort(), ["ai.read", "audit.read", "roles.read", "support.manage", "support.write"]);
+  assert.equal(findSettingsSection("session")!.permission, "setup.manage", "desk lock is GM-only");
+  assert.ok(isSettingsDetail("session"), "auto sign-out opens inside settings");
+  assert.deepEqual([...SETTINGS_HUB_PERMISSIONS].sort(), ["ai.read", "audit.read", "roles.read", "setup.manage", "support.manage", "support.write"]);
   assert.equal(findSettingsSection("support")!.permission, "support.write", "help requests need support.write");
   assert.equal(findSettingsSection("supportInbox")!.permission, "support.manage", "the inbox is for the platform team");
   assert.equal(findSettingsSection("ai")!.permission, "ai.read", "the AI protocol follows the assistant permission");
@@ -44,6 +46,7 @@ function visibility() {
   const ids = (role: keyof typeof DEMO_ROLE_PERMISSIONS) =>
     visibleSettings(DEMO_ROLE_PERMISSIONS[role]).flatMap((g) => g.sections.map((s) => s.id));
   assert.deepEqual(ids("gm"), SETTINGS_SECTIONS.map((s) => s.id).filter((id) => id !== "supportInbox"), "the GM sees every company section");
+  assert.ok(ids("gm").includes("session") && !ids("manager").includes("session"), "desk lock is GM-only");
   assert.deepEqual(ids("admin"), ["profile", "team", "audit", "faq", "supportInbox"], "platform operators: profile, team, audit, help and the support inbox");
   assert.deepEqual(ids("employee"), ["profile", "faq", "ai", "support"], "agents get their profile, help, the AI protocol and help requests");
   for (const role of ["gm", "manager", "employee", "finance", "operations"] as const) {
@@ -67,6 +70,7 @@ function guards() {
   }
   assert.ok(can("employee", `${SETTINGS_ROOT}/ai`), "agents can read the AI protocol");
   assert.ok(!can("employee", `${SETTINGS_ROOT}/audit`));
+  assert.ok(can("gm", `${SETTINGS_ROOT}/session`) && !can("manager", `${SETTINGS_ROOT}/session`), "only the GM sets the desk lock");
   assert.ok(can("gm", `${SETTINGS_ROOT}/profile`), "the GM edits their own profile");
   assert.ok(can("admin", `${SETTINGS_ROOT}/profile`), "the profile follows the hub rule");
   assert.ok(can("employee", `${SETTINGS_ROOT}/profile`), "agents with the hub edit their own profile");
@@ -97,6 +101,9 @@ function messages() {
     for (const key of ["title", "hint", "description"]) assert.ok(en.settings.sections[s.id]?.[key], `settings.sections.${s.id}.${key}`);
   }
   for (const g of SETTINGS_GROUPS) assert.ok(en.settings.groups[g], `settings.groups.${g}`);
+  for (const key of ["policyTitle", "enabled", "duration", "saved", "footer"]) {
+    assert.ok(en.settings.session[key], `settings.session.${key}`);
+  }
   for (const p of PERMISSIONS) {
     const [domain, action] = p.split(".");
     assert.ok(en.settings.roles.domains[domain], `domain label for ${domain}`);

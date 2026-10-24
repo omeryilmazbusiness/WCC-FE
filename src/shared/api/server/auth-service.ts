@@ -184,6 +184,8 @@ function mapWorkspace(me: BackendMeResponse): SessionWorkspace | undefined {
       slug: me.company.slug,
       nameEn: me.company.name_en ?? "",
       nameAr: me.company.name_ar ?? "",
+      idleLogoutMinutes:
+        typeof me.company.idle_logout_minutes === "number" ? me.company.idle_logout_minutes : undefined,
     },
     homeBranchId: String(me.home_branch_id ?? me.branch_id ?? ""),
     branches: me.branches
@@ -277,7 +279,7 @@ function demoViewer(role: AppRole): ViewerSession {
     permissions: [...DEMO_ROLE_PERMISSIONS[role]],
     scope: DEMO_ROLE_SCOPE[role],
     workspace: role === "admin" ? undefined : {
-      company: { id: DEMO_COMPANY, slug: "wodi", nameEn: "WODI Travel", nameAr: "ودي للسفر" },
+      company: { id: DEMO_COMPANY, slug: "wodi", nameEn: "WODI Travel", nameAr: "ودي للسفر", idleLogoutMinutes: 15 },
       homeBranchId: DEMO_BRANCH,
       branches: [
         { id: DEMO_BRANCH, slug: "main", code: "WODI", nameEn: "Main Center", nameAr: "المركز الرئيسي", kind: "main_center" },

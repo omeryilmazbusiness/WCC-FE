@@ -12,7 +12,7 @@ export function SessionEndedNotice({ reason }: { reason: SessionEndReason }) {
       data-testid="session-ended-notice"
       icon={<Info className="h-4 w-4" strokeWidth={1.75} />}
     >
-      {reason === "revoked" ? t("signedOutDevice") : t("sessionExpired")}
+      {reason === "revoked" ? t("signedOutDevice") : reason === "idle" ? t("signedOutIdle") : t("sessionExpired")}
     </GlassNotice>
   );
 }

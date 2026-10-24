@@ -3,10 +3,13 @@ import {
   AGE_TIERS,
   COST_LINES,
   DEFAULT_PACKAGE_CURRENCY,
-  PACKAGE_CATEGORIES,
+  applyKindOffer,
+  isPilgrimage,
+  isValidCategory,
   ROOM_TIERS,
   emptySpec,
   stayNights,
+  stayPlanNights,
   type CostLine,
   type CreatePackageInput,
   type PackageKind,
@@ -40,6 +43,8 @@ export type PackageFormValues = {
   prices: Record<string, string>;
   /** Net cost inputs (major units) per cost line. */
   costs: Record<CostLine, string>;
+  /** Bus seat price (major units). */
+  busPrice: string;
 };
 
 const money = (v: string) => v.trim() === "" || parseMoneyInput(v) !== null;
@@ -52,7 +57,7 @@ export function packageFormSchema(t: (key: string) => string) {
       nameEn: z.string().trim().min(3, t("errors.name")).max(160),
       nameAr: z.string().trim().max(160),
       description: z.string().trim().max(1000),
-      kind: z.enum(["umrah", "hajj"]),
+      kind: z.enum(["umrah", "hajj", "other"]),
       category: z.string(),
       durationDays: z.number(t("errors.duration")).int().min(1, t("errors.duration")).max(60, t("errors.duration")),
       transportMode: z.string(),
@@ -62,13 +67,19 @@ export function packageFormSchema(t: (key: string) => string) {
       spec: z.custom<PackageSpec>((v) => Boolean(v && typeof v === "object")),
       prices: z.record(z.string(), z.string()),
       costs: z.record(z.string(), z.string()),
+      busPrice: z.string(),
     })
     .superRefine((v, ctx) => {
       const issue = (path: (string | number)[], key: string) => ctx.addIssue({ code: "custom", path, message: t(key) });
-      if (!(PACKAGE_CATEGORIES[v.kind] as readonly string[]).includes(v.category)) issue(["category"], "errors.category");
+      if (!isValidCategory(v.kind, v.category)) issue(["category"], "errors.category");
 
       const s = v.spec;
-      if (s.nights.makkah + s.nights.madinah > v.durationDays) issue(["spec", "nights", "makkah"], "errors.nights");
+      if (v.kind === "other") {
+        if (s.destination.country.trim().length < 2) issue(["spec", "destination", "country"], "errors.country");
+        if (s.destination.districts.length === 0) issue(["spec", "destination", "districts"], "errors.districts");
+        if (stayPlanNights(s) > v.durationDays) issue(["spec", "stays"], "errors.stayNights");
+      }
+      if (isPilgrimage(v.kind) && s.nights.makkah + s.nights.madinah > v.durationDays) issue(["spec", "nights", "makkah"], "errors.nights");
       for (const city of ["makkah", "madinah"] as const) {
         const h = s[city];
         if (h.checkIn && h.checkOut && h.checkOut <= h.checkIn) issue(["spec", city, "checkOut"], "errors.checkOut");
@@ -85,7 +96,14 @@ export function packageFormSchema(t: (key: string) => string) {
       }
       for (const [code, value] of Object.entries(v.prices)) if (!money(value)) issue(["prices", code], "errors.money");
       for (const [line, value] of Object.entries(v.costs)) if (!money(value)) issue(["costs", line], "errors.money");
+      if (!money(v.busPrice)) issue(["busPrice"], "errors.money");
       if (s.costs.markupPct < 0 || s.costs.markupPct > 300) issue(["spec", "costs", "markupPct"], "errors.markup");
+
+      for (const field of ["services", "activities"] as const) {
+        s[field].forEach((a, i) => {
+          if (a.details.trim() && !a.title.trim()) issue(["spec", field, i, "title"], "errors.itemTitle");
+        });
+      }
 
       const seen = new Set<number>();
       s.itinerary.forEach((d, i) => {
@@ -122,6 +140,7 @@ export function packageFormDefaults(pkg?: TourPackage | null, tiers: readonly Pr
       spec,
       prices,
       costs: Object.fromEntries(COST_LINES.map((l) => [l, ""])) as Record<CostLine, string>,
+      busPrice: "",
     };
   }
   const spec = structuredClone(pkg.spec);
@@ -140,6 +159,7 @@ export function packageFormDefaults(pkg?: TourPackage | null, tiers: readonly Pr
     spec,
     prices,
     costs: Object.fromEntries(COST_LINES.map((l) => [l, spec.costs[l] ? minorToInput(spec.costs[l]) : ""])) as Record<CostLine, string>,
+    busPrice: spec.bus.price ? minorToInput(spec.bus.price) : "",
   };
 }
 
@@ -155,9 +175,11 @@ export function toPackageInput(
   const spec: PackageSpec = structuredClone(v.spec);
   for (const line of COST_LINES) spec.costs[line] = parseMoneyInput(v.costs[line] ?? "") ?? 0;
   spec.costs.currency = v.baseCurrency;
+  spec.bus.price = parseMoneyInput(v.busPrice ?? "") ?? 0;
   spec.flights.outbound.route = spec.flights.outbound.route.trim().toUpperCase();
   spec.flights.inbound.route = spec.flights.inbound.route.trim().toUpperCase();
   spec.itinerary = [...spec.itinerary].sort((a, b) => a.day - b.day);
+  applyKindOffer(spec, v.kind);
 
   const tiers: TierInput[] = [];
   for (const code of MATRIX_CODES) {

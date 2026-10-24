@@ -2,17 +2,22 @@
 
 import { useFormContext, useWatch } from "react-hook-form";
 import { useTranslations } from "next-intl";
-import { Banknote, CalendarDays, Globe2, Hash, Package, Plane, ShoppingBag, Sparkles, Ticket, Users, Wand2 } from "lucide-react";
+import { Banknote, CalendarDays, Globe2, Hash, MapPinned, Package, Plane, ShoppingBag, Sparkles, Ticket, Users, Wand2 } from "lucide-react";
+import { isCountryName, isCityName, normalizeCity, normalizeCountry } from "@/entities/company";
 import {
   CATEGORY_LOOK,
   KIND_LOOK,
-  PACKAGE_CATEGORIES,
   PACKAGE_CURRENCIES,
   PACKAGE_KINDS,
+  PACKAGE_TIERS,
   TRANSPORT_LOOK,
   TRANSPORT_MODES,
+  categoriesFor,
+  isPilgrimage,
   lookOf,
   suggestPackageCode,
+  stayPlanNights,
+  syncStaysWithDistricts,
   totalNights,
   type PackageKind,
 } from "@/entities/tourpackage";
@@ -33,19 +38,37 @@ import {
   Textarea,
 } from "@/shared/ui";
 import type { PackageFormValues } from "../model/form";
+import { AddableChipSet } from "./addable-chips";
 import { ChoiceGrid, Stepper, SwitchRow } from "./controls";
 
 export function IdentityStep({ takenCodes }: { takenCodes: readonly string[] }) {
   const t = useTranslations("packages");
   const { control, setValue, getValues, clearErrors } = useFormContext<PackageFormValues>();
-  const [kind, durationDays, nights] = useWatch({ control, name: ["kind", "durationDays", "spec.nights"] });
-  const categories = PACKAGE_CATEGORIES[kind];
+  const [kind, category, durationDays, nights, stays] = useWatch({
+    control,
+    name: ["kind", "category", "durationDays", "spec.nights", "spec.stays"],
+  });
+  const categories = categoriesFor(kind, category);
 
   function changeKind(next: PackageKind) {
     if (next === getValues("kind")) return;
     setValue("kind", next, { shouldDirty: true });
-    setValue("category", next === "hajj" ? "short" : "standard", { shouldDirty: true });
-    setValue("spec.visa.type", next === "hajj" ? "HAJJ_VISA" : "UMRAH_VISA", { shouldDirty: true });
+    if (!PACKAGE_TIERS.includes(getValues("category") as (typeof PACKAGE_TIERS)[number])) {
+      setValue("category", "standard", { shouldDirty: true });
+    }
+    setValue("spec.visa.type", next === "hajj" ? "HAJJ_VISA" : next === "other" ? "" : "UMRAH_VISA", { shouldDirty: true });
+    if (next === "other") {
+      setValue("spec.visa.healthInsurance", false, { shouldDirty: true });
+      setValue("spec.kit", [], { shouldDirty: true });
+      setValue("spec.ziyarat", { makkah: [], madinah: [] }, { shouldDirty: true });
+      setValue("spec.guidance.femaleGuide", false, { shouldDirty: true });
+      setValue("spec.included", [], { shouldDirty: true });
+      setValue("spec.requirements.mahram", false, { shouldDirty: true });
+      setValue("spec.requirements.meningitis", false, { shouldDirty: true });
+    } else {
+      setValue("spec.services", [], { shouldDirty: true });
+      setValue("spec.activities", [], { shouldDirty: true });
+    }
     clearErrors("category");
   }
 
@@ -56,22 +79,15 @@ export function IdentityStep({ takenCodes }: { takenCodes: readonly string[] }) 
 
   return (
     <div className="space-y-3.5">
-      <FormSection icon={Sparkles} tone="emerald" title={t("form.identity.kind")} hint={t("steps.identity.hint")} testId="package-form-kind">
-        <ChoiceGrid
-          name="package-kind"
-          value={kind}
-          onChange={changeKind}
-          options={PACKAGE_KINDS.map((k) => ({ value: k, label: t(`kind.${k}`), hint: t(`kindHint.${k}`), ...lookOf(KIND_LOOK, k) }))}
-        />
+      <FormSection icon={Sparkles} tone="emerald" title={t("form.identity.category")} hint={t("form.identity.categoryHint")} testId="package-form-tier">
         <FormField
           control={control}
           name="category"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("form.identity.category")}</FormLabel>
               <ChoiceGrid
                 name="package-category"
-                columns={kind === "umrah" ? 4 : 2}
+                columns={3}
                 value={field.value}
                 onChange={(v) => field.onChange(v)}
                 options={categories.map((c) => ({ value: c, label: t(`category.${c}`), hint: t(`categoryHint.${c}`), ...lookOf(CATEGORY_LOOK, c) }))}
@@ -81,6 +97,18 @@ export function IdentityStep({ takenCodes }: { takenCodes: readonly string[] }) 
           )}
         />
       </FormSection>
+
+      <FormSection icon={Ticket} tone="indigo" title={t("form.identity.kind")} hint={t("steps.identity.hint")} testId="package-form-kind">
+        <ChoiceGrid
+          name="package-kind"
+          columns={3}
+          value={kind}
+          onChange={changeKind}
+          options={PACKAGE_KINDS.map((k) => ({ value: k, label: t(`kind.${k}`), hint: t(`kindHint.${k}`), ...lookOf(KIND_LOOK, k) }))}
+        />
+      </FormSection>
+
+      {kind === "other" ? <DestinationFields /> : null}
 
       <FormSection icon={Package} tone="indigo" title={t("steps.identity.title")} testId="package-form-identity">
         <div className="grid gap-4 sm:grid-cols-2">
@@ -164,9 +192,13 @@ export function IdentityStep({ takenCodes }: { takenCodes: readonly string[] }) 
         hint={t("form.identity.nightsSummary", { days: durationDays, nights: Math.max(0, durationDays - 1) })}
         testId="package-form-duration"
         aside={
-          totalNights({ nights }) > 0 ? (
+          isPilgrimage(kind) && totalNights({ nights }) > 0 ? (
             <span className="rounded-full bg-sky-50 px-2.5 py-1 text-[11.5px] font-semibold text-sky-700">
               {t("card.split", { makkah: nights.makkah, madinah: nights.madinah })}
+            </span>
+          ) : kind === "other" && stayPlanNights({ stays }) > 0 ? (
+            <span className="rounded-full bg-sky-50 px-2.5 py-1 text-[11.5px] font-semibold text-sky-700">
+              {t("form.hotels.stayNights", { n: stayPlanNights({ stays }) })}
             </span>
           ) : null
         }
@@ -265,5 +297,60 @@ export function IdentityStep({ takenCodes }: { takenCodes: readonly string[] }) 
         </div>
       </FormSection>
     </div>
+  );
+}
+
+function DestinationFields() {
+  const t = useTranslations("packages");
+  const { control, setValue, getValues } = useFormContext<PackageFormValues>();
+
+  function setDistricts(districts: string[]) {
+    const clean = districts.map(normalizeCity).filter(isCityName);
+    setValue("spec.destination.districts", clean, { shouldDirty: true, shouldValidate: true });
+    setValue("spec.stays", syncStaysWithDistricts(getValues("spec.stays"), clean), { shouldDirty: true });
+  }
+
+  return (
+    <FormSection icon={MapPinned} tone="teal" title={t("form.identity.destination")} hint={t("form.identity.destinationHint")} testId="package-form-destination">
+      <FormField
+        control={control}
+        name="spec.destination.country"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t("form.identity.country")}</FormLabel>
+            <FormControl>
+              <IconInput
+                icon={Globe2}
+                iconClassName="text-teal-500"
+                {...field}
+                onChange={(e) => field.onChange(normalizeCountry(e.target.value))}
+                dir="auto"
+                placeholder={t("form.identity.countryPh")}
+                data-testid="package-form-country"
+              />
+            </FormControl>
+            {field.value && !isCountryName(field.value) ? <p className="text-[12px] font-medium text-rose-600">{t("form.errors.country")}</p> : <FormMessage />}
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={control}
+        name="spec.destination.districts"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{t("form.identity.districts")}</FormLabel>
+            <AddableChipSet
+              name="package-districts"
+              tone="teal"
+              values={field.value}
+              onChange={setDistricts}
+              addLabel={t("form.identity.addDistrict")}
+              placeholder={t("form.identity.districtPh")}
+            />
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </FormSection>
   );
 }

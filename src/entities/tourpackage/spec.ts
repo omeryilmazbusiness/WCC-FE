@@ -4,14 +4,41 @@
  * so `scripts/selftest-packages.ts` can run it under plain Node.
  */
 
-export const PACKAGE_KINDS = ["umrah", "hajj"] as const;
+export const PACKAGE_KINDS = ["umrah", "hajj", "other"] as const;
 export type PackageKind = (typeof PACKAGE_KINDS)[number];
 
+/** The only tiers offered when creating a package. Stored as `category`. */
+export const PACKAGE_TIERS = ["economy", "standard", "luxury"] as const;
+export type PackageTier = (typeof PACKAGE_TIERS)[number];
+
 export const PACKAGE_CATEGORIES = {
-  umrah: ["economy", "standard", "luxury", "boutique", "ramadan_first15", "ramadan_last15", "ramadan_full", "semester"],
-  hajj: ["short", "long", "special_mujamala", "special_commercial"],
+  umrah: PACKAGE_TIERS,
+  hajj: PACKAGE_TIERS,
+  other: PACKAGE_TIERS,
 } as const satisfies Record<PackageKind, readonly string[]>;
 export type PackageCategory = (typeof PACKAGE_CATEGORIES)[PackageKind][number];
+
+/** Older Umrah / Hajj categories still load and save. */
+export const LEGACY_CATEGORIES = {
+  umrah: ["boutique", "ramadan_first15", "ramadan_last15", "ramadan_full", "semester"],
+  hajj: ["short", "long", "special_mujamala", "special_commercial"],
+  other: [],
+} as const satisfies Record<PackageKind, readonly string[]>;
+
+export function isPilgrimage(kind: string): kind is "umrah" | "hajj" {
+  return kind === "umrah" || kind === "hajj";
+}
+
+export function isValidCategory(kind: PackageKind, category: string): boolean {
+  return (PACKAGE_TIERS as readonly string[]).includes(category) || (LEGACY_CATEGORIES[kind] as readonly string[]).includes(category);
+}
+
+/** Tiers plus the current value when editing a legacy package. */
+export function categoriesFor(kind: PackageKind, current?: string): string[] {
+  const out: string[] = [...PACKAGE_TIERS];
+  if (current && !out.includes(current)) out.push(current);
+  return out;
+}
 
 export const TRANSPORT_MODES = ["flight_scheduled", "flight_charter", "road"] as const;
 export type TransportMode = (typeof TRANSPORT_MODES)[number];
@@ -19,7 +46,7 @@ export type TransportMode = (typeof TRANSPORT_MODES)[number];
 export const BOARD_TYPES = ["bb", "hb", "fb", "tabldot", "buffet"] as const;
 export const HOTEL_ACCESS = ["walking", "shuttle"] as const;
 export const FLIGHT_ROUTINGS = ["direct", "connecting"] as const;
-export const INTERCITY_MODES = ["haramain_train", "bus"] as const;
+export const INTERCITY_MODES = ["haramain_train", "bus", "private_car"] as const;
 /** Mirrors the Nusuk Masar visa enums. */
 export const VISA_TYPES = ["UMRAH_VISA", "TOURIST_VISA", "PERSONAL_VISIT", "HAJJ_VISA", "BUSINESS_VISIT"] as const;
 export const KIT_ITEMS = ["ihram", "luggage", "prayer_book", "zamzam"] as const;
@@ -62,6 +89,11 @@ export type PackageSpec = {
     blockSeats: number;
   };
   transfers: { intercity: "" | (typeof INTERCITY_MODES)[number]; busClass: string; airportMeet: boolean; hotelTransfers: boolean };
+  destination: Destination;
+  stays: Stay[];
+  bus: Bus;
+  services: Activity[];
+  activities: Activity[];
   guidance: { leaderName: string; femaleGuide: boolean };
   visa: { type: "" | (typeof VISA_TYPES)[number]; healthInsurance: boolean };
   kit: string[];
@@ -73,7 +105,46 @@ export type PackageSpec = {
   excluded: string[];
 };
 
-export type ItineraryDay = { day: number; city: "" | (typeof ITINERARY_CITIES)[number]; title: string; details: string };
+export type Destination = { country: string; districts: string[] };
+export type Stay = { city: string; nights: number; hotel: Hotel };
+export type Bus = { company: string; seats: number; price: number; details: string };
+export type Activity = { title: string; details: string };
+export type ItineraryDay = { day: number; city: string; title: string; details: string };
+
+export function emptyDestination(): Destination {
+  return { country: "", districts: [] };
+}
+
+export function emptyBus(): Bus {
+  return { company: "", seats: 0, price: 0, details: "" };
+}
+
+export function emptyStay(city = ""): Stay {
+  return { city, nights: 0, hotel: emptyHotel() };
+}
+
+export function emptyActivity(): Activity {
+  return { title: "", details: "" };
+}
+
+/** Keep typed hotel nights when districts change; drop empty leftover cities. */
+export function syncStaysWithDistricts(stays: readonly Stay[], districts: readonly string[]): Stay[] {
+  const byCity = new Map(stays.map((s) => [s.city.trim().toLowerCase(), s]));
+  const used = new Set<string>();
+  const out: Stay[] = [];
+  for (const d of districts) {
+    const key = d.trim().toLowerCase();
+    if (!key) continue;
+    const existing = byCity.get(key);
+    out.push(existing ? { ...existing, city: existing.city || d } : emptyStay(d));
+    used.add(key);
+  }
+  for (const s of stays) {
+    const key = s.city.trim().toLowerCase();
+    if (key && !used.has(key) && (s.hotel.name || s.nights > 0)) out.push(s);
+  }
+  return out;
+}
 
 export type Requirements = {
   passportMonths: number;
@@ -125,6 +196,11 @@ export function emptySpec(currency: string = DEFAULT_PACKAGE_CURRENCY): PackageS
       blockSeats: 0,
     },
     transfers: { intercity: "", busClass: "", airportMeet: false, hotelTransfers: false },
+    destination: emptyDestination(),
+    stays: [],
+    bus: emptyBus(),
+    services: [],
+    activities: [],
     guidance: { leaderName: "", femaleGuide: false },
     visa: { type: "", healthInsurance: false },
     kit: [],
@@ -169,6 +245,30 @@ function mapLeg(raw: unknown): FlightLeg {
   return { route: str(l.route), flightNo: str(l.flight_no), date: str(l.date) };
 }
 
+function mapDestination(raw: unknown): Destination {
+  const d = rec(raw);
+  return { country: str(d.country), districts: strs(d.districts) };
+}
+
+function mapStays(raw: unknown): Stay[] {
+  return (Array.isArray(raw) ? raw : []).map((row) => {
+    const s = rec(row);
+    return { city: str(s.city), nights: num(s.nights), hotel: mapHotel(s.hotel) };
+  });
+}
+
+function mapBus(raw: unknown): Bus {
+  const b = rec(raw);
+  return { company: str(b.company), seats: num(b.seats), price: num(b.price), details: str(b.details) };
+}
+
+function mapActivities(raw: unknown): Activity[] {
+  return (Array.isArray(raw) ? raw : []).map((row) => {
+    const a = rec(row);
+    return { title: str(a.title), details: str(a.details) };
+  });
+}
+
 /** API `spec` (snake_case) → model. Missing parts fall back to empty values. */
 export function mapSpec(raw: unknown, currency: string = DEFAULT_PACKAGE_CURRENCY): PackageSpec {
   const s = rec(raw);
@@ -200,13 +300,18 @@ export function mapSpec(raw: unknown, currency: string = DEFAULT_PACKAGE_CURRENC
       airportMeet: bool(transfers.airport_meet),
       hotelTransfers: bool(transfers.hotel_transfers),
     },
+    destination: mapDestination(s.destination),
+    stays: mapStays(s.stays),
+    bus: mapBus(s.bus),
+    services: mapActivities(s.services),
+    activities: mapActivities(s.activities),
     guidance: { leaderName: str(guidance.leader_name), femaleGuide: bool(guidance.female_guide) },
     visa: { type: oneOf(VISA_TYPES, visa.type), healthInsurance: bool(visa.health_insurance) },
     kit: strs(s.kit),
     ziyarat: { makkah: strs(ziyarat.makkah), madinah: strs(ziyarat.madinah) },
     itinerary: (Array.isArray(s.itinerary) ? s.itinerary : []).map((d) => {
       const day = rec(d);
-      return { day: num(day.day), city: oneOf(ITINERARY_CITIES, day.city), title: str(day.title), details: str(day.details) };
+      return { day: num(day.day), city: str(day.city), title: str(day.title), details: str(day.details) };
     }),
     requirements: hasReq
       ? {
@@ -267,6 +372,11 @@ export function specPayload(s: PackageSpec): Raw {
       airport_meet: s.transfers.airportMeet,
       hotel_transfers: s.transfers.hotelTransfers,
     },
+    destination: s.destination,
+    stays: s.stays.map((stay) => ({ city: stay.city, nights: stay.nights, hotel: hotelPayload(stay.hotel) })),
+    bus: s.bus,
+    services: s.services,
+    activities: s.activities,
     guidance: { leader_name: s.guidance.leaderName, female_guide: s.guidance.femaleGuide },
     visa: { type: s.visa.type, health_insurance: s.visa.healthInsurance },
     kit: s.kit,
@@ -292,6 +402,26 @@ export function specPayload(s: PackageSpec): Raw {
     included: s.included,
     excluded: s.excluded,
   };
+}
+
+/** Other tours keep free-text services; pilgrimage keeps visa / kit / ziyarat. */
+export function applyKindOffer(s: PackageSpec, kind: string): void {
+  if (kind === "other") {
+    s.visa = { type: "", healthInsurance: false };
+    s.kit = [];
+    s.ziyarat = { makkah: [], madinah: [] };
+    s.guidance = { ...s.guidance, femaleGuide: false };
+    s.included = [];
+    s.services = namedItems(s.services);
+    s.activities = namedItems(s.activities);
+    return;
+  }
+  s.services = [];
+  s.activities = [];
+}
+
+function namedItems(items: readonly Activity[]): Activity[] {
+  return items.filter((a) => a.title.trim()).map((a) => ({ title: a.title.trim(), details: a.details.trim() }));
 }
 
 // ---------------------------------------------------------------- pricing matrix
@@ -401,6 +531,15 @@ export function totalNights(s: Pick<PackageSpec, "nights">): number {
   return s.nights.makkah + s.nights.madinah;
 }
 
+export function stayPlanNights(s: Pick<PackageSpec, "stays">): number {
+  return s.stays.reduce((sum, stay) => sum + (stay.nights || 0), 0);
+}
+
+/** Known catalogue label, or the operator's own text for a custom item. */
+export function catalogLabel(known: readonly string[], key: string, label: (id: string) => string): string {
+  return known.includes(key) ? label(key) : key;
+}
+
 // ---------------------------------------------------------------- itinerary
 
 export type ItineraryLabels = {
@@ -441,6 +580,43 @@ export function itineraryTemplate(
     next = madinahEnd + 1;
   }
   for (let d = next; d < days; d++) out.push({ day: d, city: "", title: labels.makkahDay, details: "" });
+  if (days > 1) out.push({ day: days, city: "", title: labels.farewell, details: labels.farewellDetails });
+  return out;
+}
+
+export type CustomItineraryLabels = {
+  arrival: (place: string) => string;
+  arrivalDetails: string;
+  cityDay: (city: string) => string;
+  activity: (title: string) => string;
+  farewell: string;
+  farewellDetails: string;
+};
+
+/** Starter programme for a custom tour: arrival, one day per district / activity, farewell. */
+export function customItineraryTemplate(
+  plan: { durationDays: number; country: string; districts: readonly string[]; activities: readonly Activity[] },
+  labels: CustomItineraryLabels,
+): ItineraryDay[] {
+  const days = Math.max(0, Math.min(60, plan.durationDays));
+  if (days === 0) return [];
+  const place = plan.districts[0] || plan.country;
+  const out: ItineraryDay[] = [{ day: 1, city: place, title: labels.arrival(place), details: labels.arrivalDetails }];
+  let next = 2;
+  for (const city of plan.districts.slice(place === plan.districts[0] ? 1 : 0)) {
+    if (next >= days) break;
+    out.push({ day: next, city, title: labels.cityDay(city), details: "" });
+    next++;
+  }
+  for (const activity of plan.activities) {
+    if (next >= days || !activity.title.trim()) continue;
+    out.push({ day: next, city: out.at(-1)?.city ?? place, title: labels.activity(activity.title), details: activity.details });
+    next++;
+  }
+  while (next < days) {
+    out.push({ day: next, city: out.at(-1)?.city ?? "", title: labels.cityDay(out.at(-1)?.city || plan.country), details: "" });
+    next++;
+  }
   if (days > 1) out.push({ day: days, city: "", title: labels.farewell, details: labels.farewellDetails });
   return out;
 }
@@ -510,7 +686,8 @@ const CATEGORY_CODES: Record<string, string> = {
 
 /** `UMR-2026-RAM-01` style code; the sequence skips codes already taken. */
 export function suggestPackageCode(kind: PackageKind, category: string, year: number, taken: readonly string[] = []): string {
-  const prefix = `${kind === "hajj" ? "HAJ" : "UMR"}-${year}-${CATEGORY_CODES[category] ?? "PKG"}-`;
+  const head = kind === "hajj" ? "HAJ" : kind === "other" ? "CUS" : "UMR";
+  const prefix = `${head}-${year}-${CATEGORY_CODES[category] ?? "PKG"}-`;
   const used = new Set(taken.map((c) => c.toUpperCase()));
   for (let n = 1; n < 100; n++) {
     const code = `${prefix}${String(n).padStart(2, "0")}`;
@@ -526,18 +703,20 @@ export type ReadinessCheck = (typeof READINESS_CHECKS)[number];
 
 /** Which parts of the product sheet are filled in; drives the "ready to sell" ring. */
 export function readinessChecks(
-  pkg: { transportMode: string; spec: PackageSpec },
+  pkg: { kind?: string; transportMode: string; spec: PackageSpec },
   hasRoomPrice: boolean,
 ): Record<ReadinessCheck, boolean> {
   const s = pkg.spec;
+  const other = pkg.kind === "other";
+  const stayReady = s.stays.some((stay) => Boolean(stay.hotel.name && stay.hotel.stars));
   return {
-    makkahHotel: Boolean(s.makkah.name && s.makkah.stars),
-    madinahHotel: s.nights.madinah === 0 || Boolean(s.madinah.name && s.madinah.stars),
-    flights: pkg.transportMode === "road" || Boolean(s.flights.airline && s.flights.outbound.route),
-    visa: Boolean(s.visa.type),
+    makkahHotel: other ? stayReady || Boolean(s.destination.country) : Boolean(s.makkah.name && s.makkah.stars),
+    madinahHotel: other ? true : s.nights.madinah === 0 || Boolean(s.madinah.name && s.madinah.stars),
+    flights: pkg.transportMode === "road" || Boolean(s.flights.airline && s.flights.outbound.route) || Boolean(s.bus.company),
+    visa: other ? true : Boolean(s.visa.type),
     pricing: hasRoomPrice,
     itinerary: s.itinerary.length > 0,
-    costs: costTotal(s.costs) > 0,
+    costs: true,
   };
 }
 

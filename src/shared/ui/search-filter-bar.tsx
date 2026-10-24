@@ -4,6 +4,7 @@ import * as React from "react";
 import { useTranslations } from "next-intl";
 import { Check, Loader2, X } from "lucide-react";
 import { activeFilters, defaultOf, type ActiveFilter } from "@/shared/lib/filters";
+import { useHydrated } from "@/shared/lib/use-hydrated";
 import { cn } from "@/shared/lib/cn";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/shared/ui/dropdown-menu";
 import { SearchField, type SearchFieldProps } from "@/shared/ui/search-field";
@@ -146,27 +147,30 @@ type FilterMenuButtonProps = {
 };
 
 function FilterMenuButton({ sections, activeCount, filtered, labels, onReset, round }: FilterMenuButtonProps) {
+  const hydrated = useHydrated();
+  const trigger = (
+    <button
+      type="button"
+      aria-label={labels.filter}
+      data-testid="search-filter-trigger"
+      className={cn(
+        "relative flex shrink-0 items-center justify-center text-zinc-400 transition-all duration-300 hover:bg-zinc-100 hover:text-zinc-950",
+        round ? "h-11 w-11 rounded-full bg-zinc-50" : "h-10 w-10 rounded-[14px]",
+        activeCount > 0 && "bg-zinc-950 text-white hover:bg-zinc-800 hover:text-white",
+      )}
+    >
+      <FilterEditIcon />
+      {activeCount > 0 ? (
+        <span className="absolute -end-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-sky-500 px-1 text-[10px] font-bold text-white">
+          {activeCount}
+        </span>
+      ) : null}
+    </button>
+  );
+  if (!hydrated) return trigger;
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          aria-label={labels.filter}
-          data-testid="search-filter-trigger"
-          className={cn(
-            "relative flex shrink-0 items-center justify-center text-zinc-400 transition-all duration-300 hover:bg-zinc-100 hover:text-zinc-950",
-            round ? "h-11 w-11 rounded-full bg-zinc-50" : "h-10 w-10 rounded-[14px]",
-            activeCount > 0 && "bg-zinc-950 text-white hover:bg-zinc-800 hover:text-white",
-          )}
-        >
-          <FilterEditIcon />
-          {activeCount > 0 ? (
-            <span className="absolute -end-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-sky-500 px-1 text-[10px] font-bold text-white">
-              {activeCount}
-            </span>
-          ) : null}
-        </button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={10} className="w-[min(100vw-2rem,20rem)] rounded-[22px] p-0">
         <div className="flex items-center justify-between px-4 py-3">
           <p className="text-[13px] font-semibold text-zinc-950">{labels.filter}</p>

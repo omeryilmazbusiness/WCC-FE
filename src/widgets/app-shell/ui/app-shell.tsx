@@ -12,6 +12,7 @@ import { ToastProvider } from "@/shared/ui";
 import { ViewerProvider, useCan, useViewer } from "@/entities/viewer";
 import { AssistantBubble, AssistantPanel, AssistantProvider, useAssistantTransport } from "@/features/ai-assistant";
 import { SessionExpiryWatcher } from "@/features/auth-by-credentials";
+import { IdleLogoutWatcher } from "@/features/idle-logout";
 import { createUiPreferenceRepository } from "@/entities/ui-preference";
 import { activeNavHref, visibleNavGroups } from "../model/nav";
 import { ScreenOpenerProvider } from "../model/screen-opener";
@@ -53,6 +54,7 @@ export function ShellProviders({ viewer, workspace = null, children }: Props) {
       >
         <ToastProvider>
           <SessionExpiryWatcher />
+          <IdleLogoutWatcher />
           {children}
         </ToastProvider>
       </ViewerProvider>

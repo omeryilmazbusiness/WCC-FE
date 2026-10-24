@@ -1,4 +1,4 @@
-import { http, type HttpClient } from "@/shared/api/http-client";
+import { downloadFilename, http, type HttpClient } from "@/shared/api/http-client";
 import { createRepository } from "@/shared/api/repository";
 import type {
   CloneDepartureInput,
@@ -12,6 +12,7 @@ import type {
   TourPackage,
   UpdatePackageInput,
 } from "./model";
+import { brochureFilename, brochurePath, type BrochureLang } from "./brochure";
 import { DEFAULT_PACKAGE_CURRENCY, PACKAGE_KINDS, emptySpec, mapSpec, specPayload, type PackageKind } from "./spec";
 
 export interface TourPackageRepository {
@@ -30,6 +31,7 @@ export interface TourPackageRepository {
   markFull(departureId: string): Promise<Departure>;
   readiness(departureId: string): Promise<DepartureReadiness>;
   listDepartureTiers(departureId: string): Promise<PricingTier[]>;
+  downloadBrochure(packageId: string, lang: BrochureLang): Promise<{ blob: Blob; filename: string }>;
 }
 
 type Raw = Record<string, unknown>;
@@ -280,6 +282,11 @@ export class ApiTourPackageRepository implements TourPackageRepository {
   async listDepartureTiers(departureId: string): Promise<PricingTier[]> {
     const data = await this.http.request<Raw[]>(`/departures/${departureId}/tiers`);
     return (Array.isArray(data) ? data : []).map(mapTier);
+  }
+
+  async downloadBrochure(packageId: string, lang: BrochureLang): Promise<{ blob: Blob; filename: string }> {
+    const res = await this.http.raw(brochurePath(packageId, lang), { headers: { Accept: "application/pdf" } });
+    return { blob: await res.blob(), filename: downloadFilename(res, brochureFilename("PACKAGE", lang)) };
   }
 }
 
@@ -658,6 +665,12 @@ export class MemoryTourPackageRepository implements TourPackageRepository {
 
   async listDepartureTiers(departureId: string): Promise<PricingTier[]> {
     return [...(departureTiers[departureId] ?? [])];
+  }
+
+  async downloadBrochure(packageId: string, lang: BrochureLang): Promise<{ blob: Blob; filename: string }> {
+    const pkg = await this.getPackage(packageId);
+    const body = `%PDF-1.4\n% demo brochure for ${pkg.code}\n%%EOF\n`;
+    return { blob: new Blob([body], { type: "application/pdf" }), filename: brochureFilename(pkg.code, lang) };
   }
 }
 

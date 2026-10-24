@@ -5,7 +5,7 @@ import type { SessionEndReason } from "./auth-contract";
 export const SESSION_END_PARAM = "reason";
 
 export function isSessionEndReason(value: unknown): value is SessionEndReason {
-  return value === "expired" || value === "revoked";
+  return value === "expired" || value === "revoked" || value === "idle";
 }
 
 /** Why the BFF ended the session; any other 401 is treated as a plain expiry. */

@@ -8,7 +8,16 @@ export type SettingsGroupId = "account" | "access" | "support";
 
 export const SETTINGS_GROUPS: readonly SettingsGroupId[] = ["account", "access", "support"];
 
-export type SettingsSectionId = "profile" | "team" | "roles" | "audit" | "faq" | "ai" | "support" | "supportInbox";
+export type SettingsSectionId =
+  | "profile"
+  | "team"
+  | "roles"
+  | "audit"
+  | "session"
+  | "faq"
+  | "ai"
+  | "support"
+  | "supportInbox";
 
 export type SettingsSection = {
   id: SettingsSectionId;
@@ -28,6 +37,7 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   { id: "team", group: "access", permission: "users.read", href: routes.team },
   { id: "roles", group: "access", permission: "roles.read" },
   { id: "audit", group: "access", permission: "audit.read" },
+  { id: "session", group: "access", permission: "setup.manage" },
   { id: "faq", group: "support" },
   { id: "ai", group: "support", permission: "ai.read" },
   { id: "support", group: "support", permission: "support.write" },

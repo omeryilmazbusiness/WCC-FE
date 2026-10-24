@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { BedDouble, CalendarClock, ChevronRight, Plane, Star, Users } from "lucide-react";
 import { Link } from "@/shared/i18n/navigation";
@@ -22,7 +23,7 @@ function Stars({ n }: { n: number }) {
 }
 
 /** Colourful product card: type, from-price, stay split, hotels, quota fill and next departure. */
-export function PackageCard({ pkg, href }: { pkg: TourPackage; href: string }) {
+export function PackageCard({ pkg, href, actions }: { pkg: TourPackage; href: string; actions?: ReactNode }) {
   const t = useTranslations("packages");
   const locale = useLocale();
   const cat = lookOf(CATEGORY_LOOK, pkg.category);
@@ -69,14 +70,23 @@ export function PackageCard({ pkg, href }: { pkg: TourPackage; href: string }) {
               {t(`category.${pkg.category}`)}
             </p>
           </div>
-          <ProgressRing
-            value={ready}
-            size={44}
-            thickness={5}
-            tone={ready === 100 ? "emerald" : "sky"}
-            aria-label={t("card.ready", { pct: ready })}
-            label={<span className="text-[10.5px] font-bold tabular-nums text-zinc-700">{ready}</span>}
-          />
+          <div
+            className="flex shrink-0 items-start gap-1.5"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
+            {actions}
+            <ProgressRing
+              value={ready}
+              size={44}
+              thickness={5}
+              tone={ready === 100 ? "emerald" : "sky"}
+              aria-label={t("card.ready", { pct: ready })}
+              label={<span className="text-[10.5px] font-bold tabular-nums text-zinc-700">{ready}</span>}
+            />
+          </div>
         </div>
       </div>
 
@@ -105,7 +115,18 @@ export function PackageCard({ pkg, href }: { pkg: TourPackage; href: string }) {
           </div>
         </div>
 
-        {s.nights.makkah + s.nights.madinah > 0 ? (
+        {pkg.kind === "other" && (s.destination.country || s.destination.districts.length) ? (
+          <div className="flex flex-wrap gap-1.5">
+            {s.destination.country ? (
+              <span className="inline-flex items-center rounded-full bg-teal-50 px-2.5 py-1 text-[11.5px] font-semibold text-teal-700">{s.destination.country}</span>
+            ) : null}
+            {s.destination.districts.slice(0, 3).map((d) => (
+              <span key={d} className="inline-flex items-center rounded-full bg-sky-50 px-2.5 py-1 text-[11.5px] font-semibold text-sky-700">
+                {d}
+              </span>
+            ))}
+          </div>
+        ) : s.nights.makkah + s.nights.madinah > 0 ? (
           <div className="flex gap-1.5">
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11.5px] font-semibold text-emerald-700">
               {t("city.makkah")} · {s.nights.makkah}

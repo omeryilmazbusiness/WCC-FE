@@ -28,6 +28,7 @@ import {
   Receipt,
   Route,
   ShieldCheck,
+  Sparkles,
   Stamp,
   Star,
   Syringe,
@@ -46,12 +47,15 @@ import {
   CITY_TONE,
   COST_LINES,
   INTERCITY_LOOK,
+  KIT_ITEMS,
   KIT_LOOK,
   READINESS_CHECKS,
   ROOM_TIERS,
   TIER_LOOK,
   VISA_LOOK,
+  ZIYARAT,
   ZIYARAT_LOOK,
+  catalogLabel,
   costTotal,
   lookOf,
   marginPct,
@@ -103,6 +107,10 @@ function Rows({ children }: { children: ReactNode }) {
   return <div className="divide-y divide-zinc-100">{children}</div>;
 }
 
+function readinessLabel(kind: string, key: ReadinessCheck, t: (key: string) => string) {
+  return kind === "other" && key === "visa" ? t("form.services.items") : t(`readiness.${key}`);
+}
+
 // ---------------------------------------------------------------- overview
 
 export function OverviewTab({ pkg, checks, onJump }: TabProps & { checks: Record<ReadinessCheck, boolean>; onJump: (tab: string) => void }) {
@@ -126,9 +134,13 @@ export function OverviewTab({ pkg, checks, onJump }: TabProps & { checks: Record
         <InfoSection icon={Ticket} tone="indigo" title={t("steps.identity.title")} data-testid="package-overview-identity">
           {pkg.description ? <p className="mb-3 text-start text-[13.5px] leading-relaxed text-zinc-600" dir="auto">{pkg.description}</p> : null}
           <Rows>
-            <InfoRow icon={lookOf(VISA_LOOK, s.visa.type).icon} tone="emerald" label={t("form.services.visa")} value={s.visa.type ? t(`visa.${s.visa.type}`) : t("detail.notSet")} muted={!s.visa.type} hint={s.visa.type ? `Nusuk · ${s.visa.type}` : undefined} />
-            <InfoRow icon={UserRound} tone="indigo" label={t("detail.leader")} value={s.guidance.leaderName || t("detail.notSet")} muted={!s.guidance.leaderName} hint={s.guidance.femaleGuide ? t("form.services.femaleGuide") : undefined} />
-            <InfoRow icon={HeartPulse} tone="rose" label={t("form.services.healthInsurance")} value={yesNo(s.visa.healthInsurance)} />
+            {pkg.kind === "other" ? (
+              <InfoRow icon={MapPin} tone="teal" label={t("form.identity.destination")} value={s.destination.country || t("detail.notSet")} muted={!s.destination.country} hint={s.destination.districts.join(" · ") || undefined} />
+            ) : (
+              <InfoRow icon={lookOf(VISA_LOOK, s.visa.type).icon} tone="emerald" label={t("form.services.visa")} value={s.visa.type ? t(`visa.${s.visa.type}`) : t("detail.notSet")} muted={!s.visa.type} hint={s.visa.type ? `Nusuk · ${s.visa.type}` : undefined} />
+            )}
+            <InfoRow icon={UserRound} tone="indigo" label={t("detail.leader")} value={s.guidance.leaderName || t("detail.notSet")} muted={!s.guidance.leaderName} hint={pkg.kind !== "other" && s.guidance.femaleGuide ? t("form.services.femaleGuide") : undefined} />
+            {pkg.kind !== "other" ? <InfoRow icon={HeartPulse} tone="rose" label={t("form.services.healthInsurance")} value={yesNo(s.visa.healthInsurance)} /> : null}
             <InfoRow icon={lookOf(INTERCITY_LOOK, s.transfers.intercity).icon} tone="sky" label={t("form.logistics.intercity")} value={s.transfers.intercity ? t(`intercity.${s.transfers.intercity}`) : t("detail.notSet")} muted={!s.transfers.intercity} />
           </Rows>
         </InfoSection>
@@ -150,13 +162,15 @@ export function OverviewTab({ pkg, checks, onJump }: TabProps & { checks: Record
                 className="flex w-full items-center gap-3 rounded-2xl px-2.5 py-2 text-start transition hover:bg-zinc-50"
               >
                 {checks[k] ? <CheckCircle2 className="h-5 w-5 text-emerald-500" aria-hidden /> : <CircleDashed className="h-5 w-5 text-amber-500" aria-hidden />}
-                <span className={cn("flex-1 text-[13.5px] font-semibold", checks[k] ? "text-zinc-800" : "text-zinc-500")}>{t(`readiness.${k}`)}</span>
+                <span className={cn("flex-1 text-[13.5px] font-semibold", checks[k] ? "text-zinc-800" : "text-zinc-500")}>
+                  {readinessLabel(pkg.kind, k, t)}
+                </span>
               </button>
             </li>
           ))}
         </ul>
         <p className={cn("mt-3 rounded-2xl px-3 py-2.5 text-[12.5px] font-semibold", missing.length ? TONES.amber.soft : TONES.emerald.soft)}>
-          {missing.length ? t("detail.incomplete", { items: missing.map((k) => t(`readiness.${k}`)).join(", ") }) : t("detail.complete")}
+          {missing.length ? t("detail.incomplete", { items: missing.map((k) => readinessLabel(pkg.kind, k, t)).join(", ") }) : t("detail.complete")}
         </p>
       </InfoSection>
     </div>
@@ -165,6 +179,22 @@ export function OverviewTab({ pkg, checks, onJump }: TabProps & { checks: Record
 
 function IncludedCard({ pkg }: TabProps) {
   const t = useTranslations("packages");
+  if (pkg.kind === "other") {
+    const items = pkg.spec.services;
+    if (!items.length) return null;
+    return (
+      <InfoSection icon={ListChecks} tone="emerald" title={t("form.services.items")}>
+        <ul className="space-y-2">
+          {items.map((a, i) => (
+            <li key={`${a.title}-${i}`} className="rounded-[18px] bg-zinc-50/80 p-3">
+              <p className="text-[13.5px] font-semibold text-zinc-900" dir="auto">{a.title}</p>
+              {a.details ? <p className="mt-1 text-[12.5px] text-zinc-500" dir="auto">{a.details}</p> : null}
+            </li>
+          ))}
+        </ul>
+      </InfoSection>
+    );
+  }
   const { included, excluded } = pkg.spec;
   if (!included.length && !excluded.length) return null;
   return (
@@ -196,6 +226,27 @@ function IncludedCard({ pkg }: TabProps) {
 export function HotelsTab({ pkg }: TabProps) {
   const t = useTranslations("packages");
   const s = pkg.spec;
+  if (pkg.kind === "other") {
+    return (
+      <div className="grid gap-4 lg:grid-cols-2">
+        {s.destination.country || s.destination.districts.length ? (
+          <InfoSection icon={MapPin} tone="teal" title={t("form.identity.destination")}>
+            <p className="mb-2 text-[15px] font-semibold text-zinc-900">{s.destination.country || t("detail.notSet")}</p>
+            <div className="flex flex-wrap gap-1.5">
+              {s.destination.districts.map((d) => (
+                <span key={d} className={cn("rounded-full px-2.5 py-1 text-[12px] font-semibold", TONES.teal.soft)}>
+                  {d}
+                </span>
+              ))}
+            </div>
+          </InfoSection>
+        ) : null}
+        {s.stays.map((stay, i) => (
+          <HotelCard key={`${stay.city}-${i}`} cityLabel={stay.city || t("form.hotels.stay", { n: i + 1 })} hotel={stay.hotel} nights={stay.nights} tone={i % 2 ? "sky" : "emerald"} />
+        ))}
+      </div>
+    );
+  }
   const cities = s.nights.madinah > 0 || s.madinah.name ? (["makkah", "madinah"] as const) : (["makkah"] as const);
   return (
     <div className="grid gap-4 lg:grid-cols-2">
@@ -212,19 +263,32 @@ export function HotelsTab({ pkg }: TabProps) {
   );
 }
 
-function HotelCard({ city, hotel, nights }: { city: "makkah" | "madinah"; hotel: HotelSpec; nights: number }) {
+function HotelCard({
+  city,
+  cityLabel,
+  hotel,
+  nights,
+  tone: toneProp,
+}: {
+  city?: "makkah" | "madinah";
+  cityLabel?: string;
+  hotel: HotelSpec;
+  nights: number;
+  tone?: Tone;
+}) {
   const t = useTranslations("packages");
   const locale = useLocale();
-  const tone: Tone = city === "makkah" ? "emerald" : "sky";
+  const tone: Tone = toneProp ?? (city === "makkah" ? "emerald" : "sky");
   const fromDates = stayNights(hotel);
+  const heading = cityLabel ?? (city ? t(`form.hotels.${city}`) : t("form.hotels.name"));
   return (
-    <section className="overflow-hidden rounded-[26px] border border-zinc-200/60 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]" data-testid={`package-hotel-${city}`}>
+    <section className="overflow-hidden rounded-[26px] border border-zinc-200/60 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]" data-testid={`package-hotel-${city ?? cityLabel ?? "stay"}`}>
       <div className={cn("flex items-center gap-4 bg-gradient-to-br p-5", TONES[tone].tint)}>
         <span className={cn("flex h-16 w-16 shrink-0 items-center justify-center rounded-[22px]", TONES[tone].gradient)} aria-hidden>
-          {city === "makkah" ? <Hotel className="h-8 w-8" /> : <Building2 className="h-8 w-8" />}
+          {city === "madinah" ? <Building2 className="h-8 w-8" /> : <Hotel className="h-8 w-8" />}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[12px] font-semibold uppercase tracking-wide text-zinc-500">{t(`form.hotels.${city}`)}</p>
+          <p className="text-[12px] font-semibold uppercase tracking-wide text-zinc-500">{heading}</p>
           <h3 className={cn("truncate text-start text-[18px] font-semibold tracking-tight", hotel.name ? "text-zinc-950" : "text-zinc-400")}>
             <bdi>{hotel.name || t("detail.noHotel")}</bdi>
           </h3>
@@ -237,20 +301,22 @@ function HotelCard({ city, hotel, nights }: { city: "makkah" | "madinah"; hotel:
       </div>
       <div className="p-5 pt-3">
         <Rows>
-          <InfoRow
-            icon={hotel.access === "shuttle" ? BusFront : Footprints}
-            tone="amber"
-            label={t("form.hotels.distance")}
-            value={hotel.distanceM > 0 ? t("detail.distanceM", { n: hotel.distanceM }) : t("detail.notSet")}
-            muted={!hotel.distanceM}
-            hint={
-              hotel.access === "shuttle" && hotel.shuttleMinutes > 0
-                ? t("detail.shuttle", { n: hotel.shuttleMinutes })
-                : hotel.access
-                  ? t(`access.${hotel.access}`)
-                  : undefined
-            }
-          />
+          {city ? (
+            <InfoRow
+              icon={hotel.access === "shuttle" ? BusFront : Footprints}
+              tone="amber"
+              label={t("form.hotels.distance")}
+              value={hotel.distanceM > 0 ? t("detail.distanceM", { n: hotel.distanceM }) : t("detail.notSet")}
+              muted={!hotel.distanceM}
+              hint={
+                hotel.access === "shuttle" && hotel.shuttleMinutes > 0
+                  ? t("detail.shuttle", { n: hotel.shuttleMinutes })
+                  : hotel.access
+                    ? t(`access.${hotel.access}`)
+                    : undefined
+              }
+            />
+          ) : null}
           <InfoRow
             icon={hotel.board ? lookOf(BOARD_LOOK, hotel.board).icon : Utensils}
             tone="rose"
@@ -258,8 +324,8 @@ function HotelCard({ city, hotel, nights }: { city: "makkah" | "madinah"; hotel:
             value={hotel.board ? `${t(`board.${hotel.board}`)} · ${t(`boardShort.${hotel.board}`)}` : t("detail.notSet")}
             muted={!hotel.board}
           />
-          {city === "madinah" ? (
-            <InfoRow icon={MapPin} tone="violet" label={t("form.hotels.zone")} value={hotel.zone ? t(`zone.${hotel.zone}`) : t("detail.notSet")} muted={!hotel.zone} />
+          {city === "madinah" && hotel.zone ? (
+            <InfoRow icon={MapPin} tone="violet" label={t("form.hotels.zone")} value={t(`zone.${hotel.zone}`)} />
           ) : null}
           <InfoRow
             icon={CalendarCheck2}
@@ -346,7 +412,7 @@ export function PricingTab({ pkg, tiers, action }: TabProps & { tiers: PricingTi
         {!fx.ready && show !== base ? <p className="mt-2 text-[11.5px] text-zinc-400">{t("form.pricing.fxUnavailable")}</p> : null}
       </InfoSection>
 
-      <CostCard pkg={pkg} />
+      {net > 0 ? <CostCard pkg={pkg} /> : null}
     </div>
   );
 }
@@ -433,6 +499,15 @@ export function LogisticsTab({ pkg }: TabProps) {
           </div>
         </InfoSection>
       )}
+      {(s.bus.company || s.bus.seats || s.bus.details) ? (
+        <InfoSection icon={BusFront} tone="amber" title={t("form.logistics.bus")} data-testid="package-logistics-bus">
+          <Rows>
+            <InfoRow icon={BusFront} tone="amber" label={t("form.logistics.busCompany")} value={s.bus.company || t("detail.notSet")} muted={!s.bus.company} />
+            <InfoRow icon={Armchair} tone="violet" label={t("form.logistics.busSeats")} value={s.bus.seats || t("detail.notSet")} muted={!s.bus.seats} />
+            <InfoRow icon={Ticket} tone="sky" label={t("form.logistics.busDetails")} value={s.bus.details || t("detail.notSet")} muted={!s.bus.details} />
+          </Rows>
+        </InfoSection>
+      ) : null}
       <InfoSection icon={Waypoints} tone="emerald" title={t("form.logistics.ground")} data-testid="package-logistics-ground">
         <Rows>
           <InfoRow
@@ -490,6 +565,31 @@ export function ServicesTab({ pkg }: TabProps) {
   const t = useTranslations("packages");
   const yesNo = useYesNo();
   const s = pkg.spec;
+  if (pkg.kind === "other") {
+    return (
+      <div className="grid gap-4 lg:grid-cols-2">
+        <NamedItemsCard icon={ListChecks} tone="emerald" title={t("form.services.items")} items={s.services} empty={t("form.services.itemsEmpty")} />
+        <NamedItemsCard icon={Sparkles} tone="teal" title={t("form.services.activities")} items={s.activities} empty={t("form.services.activitiesEmpty")} />
+        <InfoSection icon={UserRound} tone="indigo" title={t("form.services.tourLead")}>
+          <Rows>
+            <InfoRow icon={UserRound} tone="indigo" label={t("form.services.leader")} value={s.guidance.leaderName || t("detail.notSet")} muted={!s.guidance.leaderName} />
+          </Rows>
+        </InfoSection>
+        {s.excluded.length ? (
+          <InfoSection icon={XCircle} tone="rose" title={t("form.services.excluded")}>
+            <ul className="space-y-1.5">
+              {s.excluded.map((l, i) => (
+                <li key={i} className="flex items-start gap-2 text-[13px] text-zinc-700" dir="auto">
+                  <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" aria-hidden />
+                  {l}
+                </li>
+              ))}
+            </ul>
+          </InfoSection>
+        ) : null}
+      </div>
+    );
+  }
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <InfoSection icon={UserRound} tone="indigo" title={t("form.services.guidance")}>
@@ -505,15 +605,46 @@ export function ServicesTab({ pkg }: TabProps) {
         </Rows>
       </InfoSection>
       <InfoSection icon={Gift} tone="amber" title={t("form.services.kit")}>
-        <Chips tone="amber" items={s.kit.map((k) => ({ key: k, label: t(`kit.${k}`), icon: KIT_LOOK[k] }))} />
+        <Chips tone="amber" items={s.kit.map((k) => ({ key: k, label: catalogLabel(KIT_ITEMS, k, (id) => t(`kit.${id}`)), icon: KIT_LOOK[k] }))} />
       </InfoSection>
       <InfoSection icon={MapPinned} tone="violet" title={`${t("form.services.ziyaratMakkah")} · ${t("form.services.ziyaratMadinah")}`}>
         <div className="space-y-3">
-          <Chips tone="emerald" items={s.ziyarat.makkah.map((z) => ({ key: z, label: t(`ziyarat.${z}`), icon: ZIYARAT_LOOK[z] }))} />
-          <Chips tone="sky" items={s.ziyarat.madinah.map((z) => ({ key: z, label: t(`ziyarat.${z}`), icon: ZIYARAT_LOOK[z] }))} />
+          <Chips tone="emerald" items={s.ziyarat.makkah.map((z) => ({ key: z, label: catalogLabel(ZIYARAT.makkah, z, (id) => t(`ziyarat.${id}`)), icon: ZIYARAT_LOOK[z] }))} />
+          <Chips tone="sky" items={s.ziyarat.madinah.map((z) => ({ key: z, label: catalogLabel(ZIYARAT.madinah, z, (id) => t(`ziyarat.${id}`)), icon: ZIYARAT_LOOK[z] }))} />
         </div>
       </InfoSection>
     </div>
+  );
+}
+
+function NamedItemsCard({
+  icon: Icon,
+  tone,
+  title,
+  items,
+  empty,
+}: {
+  icon: typeof Sparkles;
+  tone: Tone;
+  title: string;
+  items: { title: string; details: string }[];
+  empty: string;
+}) {
+  return (
+    <InfoSection icon={Icon} tone={tone} title={title}>
+      {items.length ? (
+        <ul className="space-y-2">
+          {items.map((a, i) => (
+            <li key={`${a.title}-${i}`} className="rounded-[18px] bg-zinc-50/80 p-3">
+              <p className="text-[13.5px] font-semibold text-zinc-900" dir="auto">{a.title}</p>
+              {a.details ? <p className="mt-1 text-[12.5px] text-zinc-500" dir="auto">{a.details}</p> : null}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-[13px] font-medium text-zinc-400">{empty}</p>
+      )}
+    </InfoSection>
   );
 }
 
@@ -537,7 +668,7 @@ export function ItineraryTab({ pkg }: TabProps) {
               <div className="min-w-0 flex-1 rounded-[20px] bg-zinc-50/80 p-3 ring-1 ring-inset ring-zinc-900/[0.04]">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-start text-[14px] font-semibold text-zinc-900" dir="auto">{d.title}</p>
-                  {d.city ? <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", TONES[tone].soft)}>{t(`city.${d.city}`)}</span> : null}
+                  {d.city ? <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", TONES[tone].soft)}>{CITY_TONE[d.city] ? t(`city.${d.city}`) : d.city}</span> : null}
                 </div>
                 {d.details ? <p className="mt-1 text-start text-[12.5px] leading-relaxed text-zinc-500" dir="auto">{d.details}</p> : null}
               </div>

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import type { ColumnDef } from "@tanstack/react-table";
-import { CalendarClock, Landmark, LayoutGrid, Moon, Package, PackagePlus, Rows3, ShoppingBag, type LucideIcon } from "lucide-react";
+import { CalendarClock, Landmark, LayoutGrid, MapPin, Moon, Package, PackagePlus, Rows3, ShoppingBag, type LucideIcon } from "lucide-react";
 import {
   CATEGORY_LOOK,
   PackageCard,
@@ -14,6 +14,7 @@ import {
   type TourPackageRepository,
 } from "@/entities/tourpackage";
 import { useCan } from "@/entities/viewer";
+import { BrochureDownloadButton } from "@/features/package-brochure";
 import { PackageFormDialog } from "@/features/package-form";
 import { routes } from "@/shared/config/routes";
 import { Link, useRouter } from "@/shared/i18n/navigation";
@@ -23,7 +24,7 @@ import { formatDay, formatMoneyWhole } from "@/shared/lib/format";
 import { useApiQuery } from "@/shared/lib/use-api-query";
 import { DataTable, EmptyState, ListScreen, QueryState, SearchFilterBar, SegmentedControl, TONES, type Tone } from "@/shared/ui";
 
-type Quick = "all" | "umrah" | "hajj" | "open" | "soon";
+type Quick = "all" | "umrah" | "hajj" | "other" | "open" | "soon";
 type ViewMode = "cards" | "table";
 const VIEW_KEY = "wcc.packages.view";
 const SOON_DAYS = 30;
@@ -32,6 +33,7 @@ const QUICK: { key: Quick; icon: LucideIcon; tone: Tone }[] = [
   { key: "all", icon: Package, tone: "indigo" },
   { key: "umrah", icon: Moon, tone: "emerald" },
   { key: "hajj", icon: Landmark, tone: "amber" },
+  { key: "other", icon: MapPin, tone: "teal" },
   { key: "open", icon: ShoppingBag, tone: "sky" },
   { key: "soon", icon: CalendarClock, tone: "rose" },
 ];
@@ -42,6 +44,7 @@ function matches(p: TourPackage, q: Quick, today: string, soon: string): boolean
       return true;
     case "umrah":
     case "hajj":
+    case "other":
       return p.kind === q;
     case "open":
       return p.isActive && p.salesOpen;
@@ -52,7 +55,20 @@ function matches(p: TourPackage, q: Quick, today: string, soon: string): boolean
 
 function searchText(p: TourPackage): string {
   const s = p.spec;
-  return [p.code, p.nameEn, p.nameAr, s.makkah.name, s.madinah.name, s.flights.airline, s.guidance.leaderName].join(" ").toLowerCase();
+  return [
+    p.code,
+    p.nameEn,
+    p.nameAr,
+    s.makkah.name,
+    s.madinah.name,
+    s.flights.airline,
+    s.guidance.leaderName,
+    s.destination?.country,
+    ...(s.destination?.districts ?? []),
+    ...(s.stays ?? []).map((stay) => stay.city),
+  ]
+    .join(" ")
+    .toLowerCase();
 }
 
 function useViewMode(): [ViewMode, (v: ViewMode) => void] {
@@ -179,8 +195,13 @@ export function PackagesListBoard({ repository }: Props) {
           return <span className={cn("rounded-full px-2.5 py-1 text-[11.5px] font-semibold", TONES[tone].soft)}>{t(`card.${status}`)}</span>;
         },
       },
+      {
+        id: "brochure",
+        header: t("brochure.download"),
+        cell: ({ row }) => <BrochureDownloadButton packageId={row.original.id} code={row.original.code} repository={repository} />,
+      },
     ],
-    [t, locale],
+    [t, locale, repository],
   );
 
   const isFiltered = quick !== "all" || query.length > 0;
@@ -208,7 +229,7 @@ export function PackagesListBoard({ repository }: Props) {
       }
       toolbar={
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5" role="group" aria-label={t("fields.status")}>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6" role="group" aria-label={t("fields.status")}>
             {QUICK.map(({ key, icon: Icon, tone }) => {
               const active = quick === key;
               return (
@@ -218,21 +239,22 @@ export function PackagesListBoard({ repository }: Props) {
                   aria-pressed={active}
                   onClick={() => setQuick(active && key !== "all" ? "all" : key)}
                   className={cn(
-                    "flex items-center gap-3 rounded-[24px] border bg-gradient-to-br p-3.5 text-start transition duration-300",
-                    TONES[tone].tint,
+                    "min-w-0 overflow-hidden rounded-2xl border px-3.5 py-3 text-start transition duration-200",
                     active
-                      ? "border-zinc-900/80 shadow-[0_14px_34px_-22px_rgba(15,23,42,0.55)] ring-1 ring-zinc-900/80"
-                      : "border-zinc-200/60 hover:-translate-y-0.5 hover:shadow-[0_14px_34px_-26px_rgba(15,23,42,0.45)]",
+                      ? cn("border-transparent ring-1 ring-inset", TONES[tone].soft)
+                      : "border-zinc-200/80 bg-white hover:border-zinc-300 hover:bg-zinc-50/80",
                   )}
                   data-testid={`package-quick-${key}`}
                 >
-                  <span className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl", TONES[tone].solid)}>
-                    <Icon className="h-6 w-6" strokeWidth={2} aria-hidden />
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="min-w-0 truncate text-[22px] font-semibold leading-none tabular-nums tracking-tight text-zinc-900">
+                      {counts[key]}
+                    </span>
+                    <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-xl", active ? "bg-white/80" : TONES[tone].soft)} aria-hidden>
+                      <Icon className="h-4 w-4" strokeWidth={2} />
+                    </span>
                   </span>
-                  <span className="min-w-0">
-                    <span className="block text-[24px] font-semibold leading-none tabular-nums text-zinc-950">{counts[key]}</span>
-                    <span className="mt-1 block truncate text-[12.5px] font-medium text-zinc-500">{t(`quick.${key}`)}</span>
-                  </span>
+                  <span className="mt-2 block truncate text-[12px] font-medium text-zinc-500">{t(`quick.${key}`)}</span>
                 </button>
               );
             })}
@@ -292,7 +314,11 @@ export function PackagesListBoard({ repository }: Props) {
           <ul className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3" data-testid="package-cards">
             {filtered.map((p) => (
               <li key={p.id}>
-                <PackageCard pkg={p} href={routes.package(p.id)} />
+                <PackageCard
+                  pkg={p}
+                  href={routes.package(p.id)}
+                  actions={<BrochureDownloadButton packageId={p.id} code={p.code} repository={repository} />}
+                />
               </li>
             ))}
           </ul>

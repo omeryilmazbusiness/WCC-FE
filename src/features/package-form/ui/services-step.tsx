@@ -1,12 +1,14 @@
 "use client";
 
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 import { useTranslations } from "next-intl";
-import { Gift, HeartPulse, ListChecks, MapPinned, ShieldCheck, UserRound, UserRoundCheck, Stamp } from "lucide-react";
-import { KIT_ITEMS, KIT_LOOK, VISA_LOOK, VISA_TYPES, ZIYARAT, ZIYARAT_LOOK, lookOf } from "@/entities/tourpackage";
+import { Gift, HeartPulse, ListChecks, MapPinned, ShieldCheck, Sparkles, UserRound, UserRoundCheck, Stamp } from "lucide-react";
+import { KIT_ITEMS, KIT_LOOK, VISA_LOOK, VISA_TYPES, ZIYARAT, ZIYARAT_LOOK, isPilgrimage, lookOf } from "@/entities/tourpackage";
 import { FormControl, FormField, FormItem, FormLabel, FormSection, IconInput, Textarea } from "@/shared/ui";
 import type { PackageFormValues } from "../model/form";
-import { ChipSet, ChoiceGrid, SwitchRow } from "./controls";
+import { AddableChipSet } from "./addable-chips";
+import { ChoiceGrid, SwitchRow } from "./controls";
+import { NamedItemsEditor } from "./named-items-editor";
 
 const toLines = (v: string) =>
   v
@@ -16,6 +18,11 @@ const toLines = (v: string) =>
     .slice(0, 40);
 
 export function ServicesStep() {
+  const kind = useWatch({ name: "kind" });
+  return isPilgrimage(kind) ? <PilgrimageServices /> : <CustomTourServices />;
+}
+
+function PilgrimageServices() {
   const t = useTranslations("packages");
   const { control } = useFormContext<PackageFormValues>();
 
@@ -73,7 +80,15 @@ export function ServicesStep() {
           control={control}
           name="spec.kit"
           render={({ field }) => (
-            <ChipSet name="package-kit" tone="amber" values={field.value} onChange={field.onChange} options={KIT_ITEMS.map((k) => ({ value: k, label: t(`kit.${k}`), icon: KIT_LOOK[k] }))} />
+            <AddableChipSet
+              name="package-kit"
+              tone="amber"
+              values={field.value}
+              onChange={field.onChange}
+              options={KIT_ITEMS.map((k) => ({ value: k, label: t(`kit.${k}`), icon: KIT_LOOK[k] }))}
+              addLabel={t("form.services.addKit")}
+              placeholder={t("form.services.addKitPh")}
+            />
           )}
         />
       </FormSection>
@@ -83,7 +98,15 @@ export function ServicesStep() {
           control={control}
           name="spec.ziyarat.makkah"
           render={({ field }) => (
-            <ChipSet name="ziyarat-makkah" tone="emerald" values={field.value} onChange={field.onChange} options={ZIYARAT.makkah.map((z) => ({ value: z, label: t(`ziyarat.${z}`), icon: ZIYARAT_LOOK[z] }))} />
+            <AddableChipSet
+              name="ziyarat-makkah"
+              tone="emerald"
+              values={field.value}
+              onChange={field.onChange}
+              options={ZIYARAT.makkah.map((z) => ({ value: z, label: t(`ziyarat.${z}`), icon: ZIYARAT_LOOK[z] }))}
+              addLabel={t("form.services.addZiyarat")}
+              placeholder={t("form.services.addZiyaratPh")}
+            />
           )}
         />
         <div>
@@ -92,33 +115,108 @@ export function ServicesStep() {
             control={control}
             name="spec.ziyarat.madinah"
             render={({ field }) => (
-              <ChipSet name="ziyarat-madinah" tone="sky" values={field.value} onChange={field.onChange} options={ZIYARAT.madinah.map((z) => ({ value: z, label: t(`ziyarat.${z}`), icon: ZIYARAT_LOOK[z] }))} />
+              <AddableChipSet
+                name="ziyarat-madinah"
+                tone="sky"
+                values={field.value}
+                onChange={field.onChange}
+                options={ZIYARAT.madinah.map((z) => ({ value: z, label: t(`ziyarat.${z}`), icon: ZIYARAT_LOOK[z] }))}
+                addLabel={t("form.services.addZiyarat")}
+                placeholder={t("form.services.addZiyaratPh")}
+              />
             )}
           />
         </div>
       </FormSection>
 
-      <FormSection icon={ListChecks} tone="teal" title={t("form.services.lines")} hint={t("form.services.linesHint")} testId="package-form-lines">
-        <div className="grid gap-4 sm:grid-cols-2">
-          {(["included", "excluded"] as const).map((key) => (
-            <FormField
-              key={key}
-              control={control}
-              name={`spec.${key}`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-1.5">
-                    <ShieldCheck className={key === "included" ? "h-3.5 w-3.5 text-emerald-500" : "h-3.5 w-3.5 text-rose-500"} aria-hidden />
-                    {t(`form.services.${key}`)}
-                  </FormLabel>
-                  <LinesInput value={field.value} onChange={field.onChange} placeholder={t(`form.services.${key}Ph`)} label={t(`form.services.${key}`)} />
-                </FormItem>
-              )}
-            />
-          ))}
-        </div>
+      <OfferLines />
+    </div>
+  );
+}
+
+function CustomTourServices() {
+  const t = useTranslations("packages");
+  const { control } = useFormContext<PackageFormValues>();
+
+  return (
+    <div className="space-y-3.5">
+      <NamedItemsEditor
+        name="spec.services"
+        icon={ListChecks}
+        tone="emerald"
+        title={t("form.services.items")}
+        hint={t("form.services.itemsHint")}
+        testId="package-form-services"
+        empty={t("form.services.itemsEmpty")}
+        addLabel={t("form.services.addItem")}
+        removeLabel={t("form.services.removeItem")}
+        titlePlaceholder={t("form.services.itemTitle")}
+        detailsPlaceholder={t("form.services.itemDetails")}
+      />
+      <NamedItemsEditor
+        name="spec.activities"
+        icon={Sparkles}
+        tone="teal"
+        title={t("form.services.activities")}
+        hint={t("form.services.activitiesHint")}
+        testId="package-form-activities"
+        empty={t("form.services.activitiesEmpty")}
+        addLabel={t("form.services.addActivity")}
+        removeLabel={t("form.services.removeActivity")}
+        titlePlaceholder={t("form.services.activityTitle")}
+        detailsPlaceholder={t("form.services.activityDetails")}
+      />
+      <FormSection icon={UserRound} tone="indigo" title={t("form.services.tourLead")} hint={t("form.services.tourLeadHint")} testId="package-form-tour-lead">
+        <FormField
+          control={control}
+          name="spec.guidance.leaderName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("form.services.leader")}</FormLabel>
+              <FormControl>
+                <IconInput icon={UserRoundCheck} iconClassName="text-indigo-500" {...field} dir="auto" placeholder={t("form.services.tourLeadPh")} />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+      </FormSection>
+      <FormSection icon={ShieldCheck} tone="rose" title={t("form.services.excluded")} hint={t("form.services.excludedHint")} testId="package-form-excluded">
+        <FormField
+          control={control}
+          name="spec.excluded"
+          render={({ field }) => (
+            <LinesInput value={field.value} onChange={field.onChange} placeholder={t("form.services.excludedTourPh")} label={t("form.services.excluded")} />
+          )}
+        />
       </FormSection>
     </div>
+  );
+}
+
+function OfferLines() {
+  const t = useTranslations("packages");
+  const { control } = useFormContext<PackageFormValues>();
+  return (
+    <FormSection icon={ListChecks} tone="teal" title={t("form.services.lines")} hint={t("form.services.linesHint")} testId="package-form-lines">
+      <div className="grid gap-4 sm:grid-cols-2">
+        {(["included", "excluded"] as const).map((key) => (
+          <FormField
+            key={key}
+            control={control}
+            name={`spec.${key}`}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-1.5">
+                  <ShieldCheck className={key === "included" ? "h-3.5 w-3.5 text-emerald-500" : "h-3.5 w-3.5 text-rose-500"} aria-hidden />
+                  {t(`form.services.${key}`)}
+                </FormLabel>
+                <LinesInput value={field.value} onChange={field.onChange} placeholder={t(`form.services.${key}Ph`)} label={t(`form.services.${key}`)} />
+              </FormItem>
+            )}
+          />
+        ))}
+      </div>
+    </FormSection>
   );
 }
 

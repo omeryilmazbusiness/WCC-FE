@@ -72,6 +72,8 @@
     "error": "Invalid credentials",
     "sessionEnd": "End session",
     "sessionExpired": "Your session expired — please sign in again",
+    "signedOutIdle": "You were signed out after a period of inactivity",
+    "idleWarning": "You will be signed out in a minute if nobody uses this screen",
     "genericError": "Sign-in failed. Please try again.",
     "networkError": "Can't reach the server. Check your connection and try again.",
     "lockedTitle": "Account temporarily locked",
@@ -1585,7 +1587,8 @@
       "umrah": "Umrah",
       "hajj": "Hajj",
       "open": "Open for sale",
-      "soon": "Departing in 30 days"
+      "soon": "Departing in 30 days",
+      "other": "Custom tours"
     },
     "view": {
       "label": "View",
@@ -1612,14 +1615,16 @@
     },
     "kind": {
       "umrah": "Umrah",
-      "hajj": "Hajj"
+      "hajj": "Hajj",
+      "other": "Custom tour"
     },
     "kindHint": {
       "umrah": "Year-round pilgrimage",
-      "hajj": "Dhul Hijjah season"
+      "hajj": "Dhul Hijjah season",
+      "other": "Another country or city"
     },
     "category": {
-      "economy": "Economy",
+      "economy": "Eco",
       "standard": "Standard",
       "luxury": "Luxury",
       "boutique": "Boutique",
@@ -1680,7 +1685,8 @@
     },
     "intercity": {
       "haramain_train": "Haramain train",
-      "bus": "Bus"
+      "bus": "Bus",
+      "private_car": "Private car"
     },
     "visa": {
       "UMRAH_VISA": "Umrah visa",
@@ -1795,8 +1801,8 @@
       "saveError": "Could not save the package",
       "fixErrors": "Check the highlighted fields",
       "identity": {
-        "kind": "Pilgrimage",
-        "category": "Category",
+        "kind": "Package type",
+        "category": "Tier",
         "code": "Package code",
         "codeHint": "Letters, digits and dashes, e.g. UMR-2026-RAM-01",
         "suggest": "Suggest",
@@ -1815,7 +1821,15 @@
         "currency": "Base currency",
         "currencyHint": "Prices and costs are kept in this currency and converted live",
         "salesOpen": "Open for sale",
-        "salesOpenHint": "Agents can book departures of this package"
+        "salesOpenHint": "Agents can book departures of this package",
+        "categoryHint": "Eco, Standard or Luxury",
+        "destination": "Destination",
+        "destinationHint": "Country and the cities or districts you will visit",
+        "country": "Country",
+        "countryPh": "e.g. Turkey",
+        "districts": "Cities / districts",
+        "districtPh": "e.g. Istanbul",
+        "addDistrict": "Add"
       },
       "hotels": {
         "makkah": "Makkah hotel",
@@ -1853,7 +1867,16 @@
           "search": "Search hotels…",
           "loading": "Loading hotels…",
           "empty": "No active hotels found"
-        }
+        },
+        "stays": "Hotels",
+        "staysHint": "{n} stays · {nights} of {max} nights",
+        "stay": "Stay {n}",
+        "stayHint": "Hotel for this city",
+        "addStay": "Add hotel",
+        "removeStay": "Remove stay",
+        "city": "City",
+        "stayNights": "{n} hotel nights",
+        "noStayYet": "Add a hotel for each city"
       },
       "pricing": {
         "matrix": "Pricing matrix",
@@ -1898,7 +1921,15 @@
         "airportMeetHint": "Representative at arrivals",
         "hotelTransfers": "Hotel transfers",
         "hotelTransfersHint": "Airport ⇄ hotel and between hotels",
-        "road": "This package travels by road — no flights to plan."
+        "road": "This package travels by road — no flights to plan.",
+        "bus": "Bus",
+        "busHint": "Coach company, seats, price and notes — typed by hand",
+        "busCompany": "Bus company",
+        "busCompanyPh": "e.g. Metro Turizm",
+        "busSeats": "Seats",
+        "busPrice": "Seat price",
+        "busDetails": "Bus details",
+        "busDetailsPh": "VIP 2+1, Wi-Fi, meal stop"
       },
       "services": {
         "guidance": "Guidance",
@@ -1921,7 +1952,30 @@
         "included": "Included",
         "includedPh": "Return flights\nVisa fees",
         "excluded": "Not included",
-        "excludedPh": "Personal expenses\nQurbani"
+        "excludedPh": "Personal expenses\nQurbani",
+        "addKit": "Add",
+        "addKitPh": "Custom kit item",
+        "addZiyarat": "Add",
+        "addZiyaratPh": "Custom visit",
+        "activities": "Activities",
+        "activitiesHint": "Tours, tickets and experiences included in the programme",
+        "activitiesEmpty": "Add the activities travellers will do",
+        "addActivity": "Add activity",
+        "removeActivity": "Remove activity",
+        "activityTitle": "Activity title",
+        "activityDetails": "What is included",
+        "items": "Services",
+        "itemsHint": "What this tour includes — add as many as you need",
+        "itemsEmpty": "Add the services travellers receive",
+        "addItem": "Add service",
+        "removeItem": "Remove service",
+        "itemTitle": "Service name",
+        "itemDetails": "What is included, when, and any notes",
+        "tourLead": "Tour leader",
+        "tourLeadHint": "Optional — who accompanies the group",
+        "tourLeadPh": "Guide name",
+        "excludedHint": "One item per line — not part of the price",
+        "excludedTourPh": "Personal expenses\nTravel insurance"
       },
       "itinerary": {
         "title": "Day-by-day programme",
@@ -1980,7 +2034,11 @@
         "dayRange": "Outside the package duration",
         "dayDuplicate": "This day is already planned",
         "passportMonths": "0–24 months",
-        "stay": "Dates don’t match the planned nights"
+        "stay": "Dates don’t match the planned nights",
+        "country": "Enter a country name",
+        "districts": "Add at least one city or district",
+        "stayNights": "Hotel nights exceed the duration",
+        "itemTitle": "Give this item a name"
       }
     },
     "template": {
@@ -1993,7 +2051,12 @@
       "madinahDay": "Worship at Al-Masjid an-Nabawi",
       "madinahZiyarat": "Madinah ziyarat & Rawdah",
       "farewell": "Farewell tawaf & return",
-      "farewellDetails": "Check-out, farewell tawaf, transfer to the airport."
+      "farewellDetails": "Check-out, farewell tawaf, transfer to the airport.",
+      "customArrival": "Arrival in {place}",
+      "customArrivalDetails": "Meet and transfer to the hotel",
+      "customCityDay": "Day in {city}",
+      "customFarewell": "Departure",
+      "customFarewellDetails": "Check-out and airport transfer"
     },
     "eligibility": {
       "passport_missing": "No passport on file",
@@ -2074,6 +2137,12 @@
         "empty": "No bookings on this package's departures yet."
       },
       "locked": "You don't have access to this list."
+    },
+    "brochure": {
+      "download": "Download brochure",
+      "en": "English brochure",
+      "ar": "Arabic brochure",
+      "failed": "Could not create the brochure"
     }
   },
   "bookings": {
@@ -6355,7 +6424,29 @@
         "title": "Support inbox",
         "hint": "Help requests from every company",
         "description": "Requests sent from Settings by every company. Set a status and reply — the requester sees your note."
+      },
+      "session": {
+        "title": "Auto sign-out",
+        "hint": "Lock the desk after inactivity",
+        "description": "If nobody clicks, types or scrolls for the time you choose, everyone in the company is signed out. Use this on shared counters so a walked-away screen cannot be used."
       }
+    },
+    "session": {
+      "policyTitle": "Inactivity lock",
+      "enabled": "Auto sign-out",
+      "enabledHint": "Turn this on to lock the desk when nobody is using it.",
+      "duration": "Sign out after",
+      "minutes": "Sign out after",
+      "off": "Off — never lock",
+      "minutesValue": "{n} minutes",
+      "hour": "1 hour",
+      "hours": "{n} hours",
+      "saved": "Auto sign-out updated",
+      "saveFailed": "Could not save auto sign-out",
+      "footer": "Applies to every signed-in person in this company. Moving the mouse does not count — they need to click, type or scroll. A hidden or locked tab still counts as idle.",
+      "unsaved": "Unsaved changes",
+      "discard": "Discard",
+      "save": "Save"
     },
     "roles": {
       "pick": "Choose a role",

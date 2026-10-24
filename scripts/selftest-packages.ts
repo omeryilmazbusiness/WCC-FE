@@ -6,12 +6,17 @@
 import assert from "node:assert/strict";
 import {
   DEFAULT_REQUIREMENTS,
+  applyKindOffer,
   convertViaUsd,
   costTotal,
   eligibilityIssues,
+  customItineraryTemplate,
   emptySpec,
   fromPrice,
+  isValidCategory,
   itineraryTemplate,
+  stayPlanNights,
+  syncStaysWithDistricts,
   mapSpec,
   marginPct,
   readinessChecks,
@@ -23,6 +28,7 @@ import {
   suggestPackageCode,
   type PackageSpec,
 } from "../src/entities/tourpackage/spec.ts";
+import { brochureFilename, brochurePath, parseBrochureLang } from "../src/entities/tourpackage/brochure.ts";
 import { PACKAGE_STEPS, errorPaths, firstErrorStep, stepOfPath } from "../src/features/package-form/model/steps.ts";
 
 function roundTrip() {
@@ -32,8 +38,13 @@ function roundTrip() {
     makkah: { ...emptySpec().makkah, name: "Swissôtel", stars: 5, distanceM: 50, access: "walking", board: "bb", checkIn: "2026-03-01", checkOut: "2026-03-11" },
     flights: { ...emptySpec().flights, airline: "Saudia", routing: "direct", outbound: { route: "IST-JED", flightNo: "SV262", date: "2026-03-01" }, pnr: "ABC123", blockSeats: 40 },
     transfers: { intercity: "haramain_train", busClass: "2025 Mercedes Tourismo", airportMeet: true, hotelTransfers: true },
+    destination: { country: "", districts: [] },
+    stays: [],
+    bus: { company: "SAPTCO", seats: 45, price: 150000, details: "VIP 2+1" },
+    services: [],
+    activities: [],
     visa: { type: "UMRAH_VISA", healthInsurance: true },
-    kit: ["ihram", "zamzam"],
+    kit: ["ihram", "zamzam", "City map"],
     ziyarat: { makkah: ["hira"], madinah: ["quba", "uhud"] },
     itinerary: [{ day: 1, city: "makkah", title: "Arrival", details: "First Umrah" }],
     costs: { currency: "SAR", flight: 300000, hotel: 500000, visa: 50000, transfer: 20000, guidance: 10000, gifts: 5050, markupPct: 20 },
@@ -51,6 +62,9 @@ function mappingDefaults() {
   assert.equal(s.makkah.board, "", "unknown board ignored");
   assert.deepEqual(s.requirements, DEFAULT_REQUIREMENTS, "requirements default for legacy packages");
   assert.equal(s.costs.currency, "USD", "costs follow the package currency");
+  assert.deepEqual(s.destination, { country: "", districts: [] }, "missing destination is empty");
+  assert.deepEqual(s.bus, { company: "", seats: 0, price: 0, details: "" });
+  assert.deepEqual(s.services, [], "missing services is empty");
 }
 
 function pricing() {
@@ -135,19 +149,22 @@ function eligibility() {
 function readiness() {
   const spec = emptySpec();
   const empty = readinessChecks({ transportMode: "flight_scheduled", spec }, false);
-  assert.equal(readinessPct(empty), 14, "only Madinah (no nights planned) counts as done");
+  assert.equal(readinessPct(empty), 29, "Madinah (no nights) and optional costs count as done");
   spec.makkah = { ...spec.makkah, name: "Hilton", stars: 5 };
   spec.visa.type = "UMRAH_VISA";
   spec.itinerary = [{ day: 1, city: "makkah", title: "Arrival", details: "" }];
   spec.costs.hotel = 1;
   const road = readinessChecks({ transportMode: "road", spec }, true);
   assert.equal(readinessPct(road), 100, "road trips need no flights");
+  const other = readinessChecks({ kind: "other", transportMode: "road", spec: emptySpec() }, true);
+  assert.equal(other.visa, true, "other tours do not require a Nusuk visa");
 }
 
 function codes() {
   assert.equal(suggestPackageCode("umrah", "ramadan_last15", 2026), "UMR-2026-RAM-01");
   assert.equal(suggestPackageCode("umrah", "ramadan_full", 2026, ["umr-2026-ram-01", "UMR-2026-RAM-02"]), "UMR-2026-RAM-03", "skips taken codes case-insensitively");
   assert.equal(suggestPackageCode("hajj", "special_mujamala", 2027), "HAJ-2027-MJM-01");
+  assert.equal(suggestPackageCode("other", "economy", 2026), "CUS-2026-ECO-01");
   assert.equal(suggestPackageCode("umrah", "unknown", 2026), "UMR-2026-PKG-01");
   assert.match(suggestPackageCode("hajj", "long", 2026), /^[A-Z0-9][A-Z0-9-]{1,31}$/, "matches the form/BE code rule");
 }
@@ -160,6 +177,11 @@ function steps() {
   assert.equal(stepOfPath("prices.DOUBLE"), "pricing");
   assert.equal(stepOfPath("spec.costs.markupPct"), "pricing");
   assert.equal(stepOfPath("spec.flights.inbound.date"), "logistics");
+  assert.equal(stepOfPath("spec.bus.company"), "logistics");
+  assert.equal(stepOfPath("spec.destination.country"), "identity");
+  assert.equal(stepOfPath("spec.stays.0.hotel.name"), "hotels");
+  assert.equal(stepOfPath("spec.activities.0.title"), "services");
+  assert.equal(stepOfPath("spec.services.0.title"), "services");
   assert.equal(stepOfPath("spec.visa.type"), "services");
   assert.equal(stepOfPath("spec.itinerary.3.title"), "itinerary");
   assert.equal(stepOfPath("spec.requirements.passportMonths"), "requirements");
@@ -178,7 +200,60 @@ function steps() {
   assert.equal(firstErrorStep({}), null);
 }
 
-const tests = { roundTrip, mappingDefaults, pricing, costs, currency, stays, itinerary, eligibility, readiness, codes, steps };
+function customTour() {
+  assert.equal(isValidCategory("umrah", "economy"), true);
+  assert.equal(isValidCategory("hajj", "luxury"), true);
+  assert.equal(isValidCategory("other", "standard"), true);
+  assert.equal(isValidCategory("umrah", "ramadan_last15"), true, "legacy umrah still valid");
+  assert.equal(isValidCategory("other", "short"), false);
+  const stays = syncStaysWithDistricts([], ["Istanbul", "Cappadocia"]);
+  assert.deepEqual(stays.map((s) => s.city), ["Istanbul", "Cappadocia"]);
+  const kept = syncStaysWithDistricts([{ city: "Istanbul", nights: 3, hotel: emptySpec().makkah }, { city: "Ankara", nights: 2, hotel: { ...emptySpec().makkah, name: "Divan" } }], ["Istanbul"]);
+  assert.equal(kept.length, 2, "typed extra stay is kept");
+  assert.equal(stayPlanNights({ stays: kept }), 5);
+  const days = customItineraryTemplate(
+    { durationDays: 5, country: "Turkey", districts: ["Istanbul", "Cappadocia"], activities: [{ title: "Balloon", details: "Sunrise" }] },
+    {
+      arrival: (place) => `Arrive ${place}`,
+      arrivalDetails: "Meet",
+      cityDay: (city) => `Day in ${city}`,
+      activity: (title) => title,
+      farewell: "Leave",
+      farewellDetails: "Airport",
+    },
+  );
+  assert.equal(days.length, 5);
+  assert.equal(days[0].title, "Arrive Istanbul");
+  assert.equal(days[1].city, "Cappadocia");
+  assert.equal(days[2].title, "Balloon");
+  assert.equal(days[4].title, "Leave");
+  const custom: PackageSpec = {
+    ...emptySpec(),
+    destination: { country: "Turkey", districts: ["Istanbul"] },
+    services: [{ title: "Airport transfer", details: "Private car" }, { title: "City card", details: "48h" }],
+    activities: [{ title: "Balloon", details: "Sunrise" }],
+    visa: { type: "UMRAH_VISA", healthInsurance: true },
+    kit: ["ihram"],
+    included: ["Umrah visa"],
+  };
+  applyKindOffer(custom, "other");
+  assert.equal(custom.visa.type, "");
+  assert.deepEqual(custom.kit, []);
+  assert.deepEqual(custom.included, []);
+  assert.equal(custom.services.length, 2);
+  const wire = specPayload(custom);
+  assert.deepEqual(mapSpec(JSON.parse(JSON.stringify(wire))).services, custom.services, "custom services survive the wire");
+}
+
+function brochure() {
+  assert.equal(parseBrochureLang(""), "en");
+  assert.equal(parseBrochureLang("AR"), "ar");
+  assert.equal(brochureFilename("umr-2026-eco-01", "en"), "UMR-2026-ECO-01-brochure-en.pdf");
+  assert.equal(brochureFilename("  messy name!! ", "ar"), "MESSY-NAME-brochure-ar.pdf");
+  assert.equal(brochurePath("pkg-1", "ar"), "/packages/pkg-1/brochure?lang=ar");
+}
+
+const tests = { roundTrip, mappingDefaults, pricing, costs, currency, stays, itinerary, eligibility, readiness, codes, steps, customTour, brochure };
 for (const [name, fn] of Object.entries(tests)) {
   try {
     fn();

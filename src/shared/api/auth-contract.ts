@@ -49,7 +49,7 @@ export type BackendUnauthorizedCode = typeof SESSION_REVOKED_CODE | typeof TOKEN
  * BFF → browser: why the session ended (`error.reason` next to code `session_expired`,
  * and the `?reason=` query on the login page).
  */
-export type SessionEndReason = "expired" | "revoked";
+export type SessionEndReason = "expired" | "revoked" | "idle";
 
 /** Set by the proxy when it re-signed the viewer snapshot after a `token_stale` refresh. */
 export const VIEWER_REFRESHED_HEADER = "x-wcc-viewer-refreshed";
@@ -113,7 +113,7 @@ export type BackendWorkspaceBranch = {
 export type BackendMeResponse = BackendUser & {
   permissions: string[];
   scope: AccessScope;
-  company?: { id: string; slug: string; name_en: string; name_ar: string };
+  company?: { id: string; slug: string; name_en: string; name_ar: string; idle_logout_minutes?: number };
   home_branch_id?: string;
   active_branch_id?: string;
   branches?: BackendWorkspaceBranch[];

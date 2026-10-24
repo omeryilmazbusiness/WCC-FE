@@ -31,10 +31,17 @@ import {
 import type { PackageFormValues } from "../model/form";
 import { ContractedHotelPicker } from "./contracted-hotel-picker";
 import { ChoiceGrid, StarPicker, Stepper } from "./controls";
+import { DestinationHotelsStep } from "./destination-hotels-step";
 
 type City = "makkah" | "madinah";
 
 export function HotelsStep() {
+  const kind = useWatch({ name: "kind" });
+  if (kind === "other") return <DestinationHotelsStep />;
+  return <PilgrimageHotelsStep />;
+}
+
+function PilgrimageHotelsStep() {
   const t = useTranslations("packages");
   const { control } = useFormContext<PackageFormValues>();
   const [durationDays, nights] = useWatch({ control, name: ["durationDays", "spec.nights"] });

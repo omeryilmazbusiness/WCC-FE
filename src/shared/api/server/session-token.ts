@@ -58,8 +58,15 @@ function parseWorkspace(raw: unknown): SessionWorkspace | undefined {
       kind: b.kind === "main_center" ? "main_center" : "branch",
     }));
   if (branches.length === 0) return undefined;
+  const idle = company.idleLogoutMinutes;
   return {
-    company: { id: str(company.id), slug: str(company.slug), nameEn: str(company.nameEn), nameAr: str(company.nameAr) },
+    company: {
+      id: str(company.id),
+      slug: str(company.slug),
+      nameEn: str(company.nameEn),
+      nameAr: str(company.nameAr),
+      idleLogoutMinutes: typeof idle === "number" && Number.isFinite(idle) ? idle : undefined,
+    },
     homeBranchId: str(r.homeBranchId),
     branches,
   };

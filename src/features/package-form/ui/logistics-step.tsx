@@ -17,16 +17,20 @@ import {
   UserCheck,
   Waypoints,
 } from "lucide-react";
-import { AIRLINES, FLIGHT_ROUTINGS, INTERCITY_LOOK, INTERCITY_MODES, lookOf } from "@/entities/tourpackage";
+import { AIRLINES, FLIGHT_ROUTINGS, INTERCITY_LOOK, INTERCITY_MODES, isPilgrimage, lookOf } from "@/entities/tourpackage";
 import { cn } from "@/shared/lib/cn";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage, FormSection, IconInput, SegmentedControl, TONES } from "@/shared/ui";
 import type { PackageFormValues } from "../model/form";
-import { ChoiceGrid, Stepper, SwitchRow } from "./controls";
+import { ChoiceGrid, MoneyInput, Stepper, SwitchRow } from "./controls";
 
 export function LogisticsStep() {
   const t = useTranslations("packages");
   const { control } = useFormContext<PackageFormValues>();
-  const [transportMode, intercity] = useWatch({ control, name: ["transportMode", "spec.transfers.intercity"] });
+  const [kind, transportMode, intercity, currency] = useWatch({
+    control,
+    name: ["kind", "transportMode", "spec.transfers.intercity", "baseCurrency"],
+  });
+  const groundModes = isPilgrimage(kind) ? INTERCITY_MODES : INTERCITY_MODES.filter((m) => m !== "haramain_train");
 
   return (
     <div className="space-y-3.5">
@@ -126,6 +130,61 @@ export function LogisticsStep() {
         </FormSection>
       )}
 
+      <FormSection icon={BusFront} tone="amber" title={t("form.logistics.bus")} hint={t("form.logistics.busHint")} testId="package-form-bus">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormField
+            control={control}
+            name="spec.bus.company"
+            render={({ field }) => (
+              <FormItem className="sm:col-span-2">
+                <FormLabel>{t("form.logistics.busCompany")}</FormLabel>
+                <FormControl>
+                  <IconInput icon={BusFront} iconClassName="text-amber-500" {...field} dir="auto" placeholder={t("form.logistics.busCompanyPh")} data-testid="package-form-bus-company" />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={control}
+            name="spec.bus.seats"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-1.5">
+                  <Armchair className="h-3.5 w-3.5 text-amber-500" aria-hidden />
+                  {t("form.logistics.busSeats")}
+                </FormLabel>
+                <Stepper value={field.value} onChange={field.onChange} min={0} max={2000} label={t("form.logistics.busSeats")} />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={control}
+            name="busPrice"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("form.logistics.busPrice")}</FormLabel>
+                <FormControl>
+                  <MoneyInput {...field} currency={currency} aria-label={t("form.logistics.busPrice")} data-testid="package-form-bus-price" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={control}
+            name="spec.bus.details"
+            render={({ field }) => (
+              <FormItem className="sm:col-span-2">
+                <FormLabel>{t("form.logistics.busDetails")}</FormLabel>
+                <FormControl>
+                  <IconInput icon={Ticket} iconClassName="text-amber-500" {...field} dir="auto" placeholder={t("form.logistics.busDetailsPh")} />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        </div>
+      </FormSection>
+
       <FormSection icon={Waypoints} tone="emerald" title={t("form.logistics.ground")} hint={t("form.logistics.groundHint")} testId="package-form-ground">
         <FormField
           control={control}
@@ -140,7 +199,7 @@ export function LogisticsStep() {
                 name="package-intercity"
                 value={field.value}
                 onChange={(v) => field.onChange(v)}
-                options={INTERCITY_MODES.map((m) => ({ value: m, label: t(`intercity.${m}`), ...lookOf(INTERCITY_LOOK, m) }))}
+                options={groundModes.map((m) => ({ value: m, label: t(`intercity.${m}`), ...lookOf(INTERCITY_LOOK, m) }))}
               />
             </FormItem>
           )}

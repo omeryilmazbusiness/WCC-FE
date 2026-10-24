@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { readinessChecks, type Departure, type PricingTier, type TourPackage, type TourPackageRepository } from "@/entities/tourpackage";
 import { useCan } from "@/entities/viewer";
+import { BrochureDownloadButton } from "@/features/package-brochure";
 import { ClonePackageDialog } from "@/features/clone-package";
 import { CreateDepartureDialog } from "@/features/create-departure";
 import { PackageFormDialog } from "@/features/package-form";
@@ -131,16 +132,19 @@ export function PackageDetailBoard({ packageId, repository }: Props) {
         canWrite={canWrite}
         onEdit={() => setEditing(true)}
         actions={
-          canWrite ? (
-            <ClonePackageDialog
-              source={pkg}
-              repository={repository}
-              onCloned={(clone) => {
-                push({ title: t("packageClonedTitle"), tone: "success" });
-                if (clone?.id) router.push(routes.package(clone.id));
-              }}
-            />
-          ) : null
+          <>
+            <BrochureDownloadButton packageId={pkg.id} code={pkg.code} repository={repository} size="hero" />
+            {canWrite ? (
+              <ClonePackageDialog
+                source={pkg}
+                repository={repository}
+                onCloned={(clone) => {
+                  push({ title: t("packageClonedTitle"), tone: "success" });
+                  if (clone?.id) router.push(routes.package(clone.id));
+                }}
+              />
+            ) : null}
+          </>
         }
       />
 

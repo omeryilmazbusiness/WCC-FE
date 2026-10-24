@@ -6,6 +6,7 @@ import { AuditSection } from "./audit/audit-section";
 import { FaqSection } from "./faq/faq-section";
 import { ProfileSection } from "./profile/profile-section";
 import { RolesSection } from "./roles-section";
+import { SessionSection } from "./session/session-section";
 import { SupportInboxSection } from "./support/support-inbox-section";
 import { SupportSection } from "./support/support-section";
 
@@ -18,6 +19,8 @@ export function SettingsSectionBody({ section }: { section: SettingsDetailId }) 
       return <RolesSection />;
     case "audit":
       return <AuditSection />;
+    case "session":
+      return <SessionSection />;
     case "faq":
       return <FaqSection />;
     case "ai":

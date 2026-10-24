@@ -3,7 +3,7 @@
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { useTranslations } from "next-intl";
 import { CalendarPlus, MapPin, Route, Sparkles, Trash2 } from "lucide-react";
-import { CITY_TONE, ITINERARY_CITIES, itineraryTemplate } from "@/entities/tourpackage";
+import { CITY_TONE, ITINERARY_CITIES, customItineraryTemplate, isPilgrimage, itineraryTemplate } from "@/entities/tourpackage";
 import { cn } from "@/shared/lib/cn";
 import { Button, FormControl, FormField, FormItem, FormMessage, FormSection, Input, Textarea, TONES } from "@/shared/ui";
 import type { PackageFormValues } from "../model/form";
@@ -16,10 +16,27 @@ export function ItineraryStep() {
 
   function generate() {
     const s = getValues("spec");
-    const intercity = s.transfers.intercity;
+    const kind = getValues("kind");
+    const durationDays = getValues("durationDays");
+    if (kind === "other") {
+      replace(
+        customItineraryTemplate(
+          { durationDays, country: s.destination.country, districts: s.destination.districts, activities: s.activities },
+          {
+            arrival: (place) => t("template.customArrival", { place }),
+            arrivalDetails: t("template.customArrivalDetails"),
+            cityDay: (city) => t("template.customCityDay", { city }),
+            activity: (title) => title,
+            farewell: t("template.customFarewell"),
+            farewellDetails: t("template.customFarewellDetails"),
+          },
+        ),
+      );
+      return;
+    }
     replace(
       itineraryTemplate(
-        { durationDays: getValues("durationDays"), makkahNights: s.nights.makkah, madinahNights: s.nights.madinah, intercity },
+        { durationDays, makkahNights: s.nights.makkah, madinahNights: s.nights.madinah, intercity: s.transfers.intercity },
         {
           arrival: t("template.arrival"),
           arrivalDetails: t("template.arrivalDetails"),
@@ -87,7 +104,10 @@ function DayRow({ index, onRemove }: { index: number; onRemove: () => void }) {
   const t = useTranslations("packages");
   const { control } = useFormContext<PackageFormValues>();
   const city = useWatch({ control, name: `spec.itinerary.${index}.city` });
+  const kind = useWatch({ control, name: "kind" });
+  const districts = useWatch({ control, name: "spec.destination.districts" });
   const tone = CITY_TONE[city] ?? "zinc";
+  const cities = isPilgrimage(kind) ? [...ITINERARY_CITIES] : districts;
 
   return (
     <li className="relative flex gap-3" data-testid={`package-form-day-${index}`}>
@@ -133,7 +153,7 @@ function DayRow({ index, onRemove }: { index: number; onRemove: () => void }) {
           name={`spec.itinerary.${index}.city`}
           render={({ field }) => (
             <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t("form.itinerary.city")}>
-              {ITINERARY_CITIES.map((c) => {
+              {cities.map((c) => {
                 const on = field.value === c;
                 return (
                   <button
@@ -144,11 +164,11 @@ function DayRow({ index, onRemove }: { index: number; onRemove: () => void }) {
                     onClick={() => field.onChange(on ? "" : c)}
                     className={cn(
                       "inline-flex h-7 items-center gap-1 rounded-full px-2.5 text-[11.5px] font-semibold transition",
-                      on ? TONES[CITY_TONE[c]].solid : "bg-white text-zinc-500 ring-1 ring-zinc-200 hover:text-zinc-800",
+                      on ? TONES[CITY_TONE[c] ?? "teal"].solid : "bg-white text-zinc-500 ring-1 ring-zinc-200 hover:text-zinc-800",
                     )}
                   >
                     <MapPin className="h-3 w-3" aria-hidden />
-                    {t(`city.${c}`)}
+                    {CITY_TONE[c] ? t(`city.${c}`) : c}
                   </button>
                 );
               })}

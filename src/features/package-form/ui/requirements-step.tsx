@@ -11,7 +11,7 @@ import { EligibilityChecker } from "./eligibility-checker";
 export function RequirementsStep() {
   const t = useTranslations("packages");
   const { control } = useFormContext<PackageFormValues>();
-  const [requirements, outboundDate] = useWatch({ control, name: ["spec.requirements", "spec.flights.outbound.date"] });
+  const [kind, requirements, outboundDate] = useWatch({ control, name: ["kind", "spec.requirements", "spec.flights.outbound.date"] });
 
   return (
     <div className="space-y-3.5">
@@ -36,18 +36,21 @@ export function RequirementsStep() {
         </div>
         <FormField
           control={control}
-          name="spec.requirements.meningitis"
-          render={({ field }) => (
-            <SwitchRow icon={Syringe} tone="emerald" label={t("form.requirements.meningitis")} hint={t("form.requirements.meningitisHint")} checked={field.value} onChange={field.onChange} />
-          )}
-        />
-        <FormField
-          control={control}
           name="spec.requirements.biometricPhoto"
           render={({ field }) => (
             <SwitchRow icon={Camera} tone="sky" label={t("form.requirements.photo")} hint={t("form.requirements.photoHint")} checked={field.value} onChange={field.onChange} />
           )}
         />
+        {kind !== "other" ? (
+          <FormField
+            control={control}
+            name="spec.requirements.meningitis"
+            render={({ field }) => (
+              <SwitchRow icon={Syringe} tone="emerald" label={t("form.requirements.meningitis")} hint={t("form.requirements.meningitisHint")} checked={field.value} onChange={field.onChange} />
+            )}
+          />
+        ) : null}
+        {kind !== "other" ? (
         <FormField
           control={control}
           name="spec.requirements.mahram"
@@ -55,7 +58,8 @@ export function RequirementsStep() {
             <SwitchRow icon={UsersRound} tone="amber" label={t("form.requirements.mahram")} hint={t("form.requirements.mahramHint")} checked={field.value} onChange={field.onChange} testId="package-form-mahram" />
           )}
         />
-        {requirements.mahram ? (
+        ) : null}
+        {kind !== "other" && requirements.mahram ? (
           <div className="grid gap-3 ps-[52px] sm:grid-cols-[1fr_220px] sm:items-center">
             <span className="text-[13px] font-semibold text-zinc-700">{t("form.requirements.mahramAge")}</span>
             <FormField
