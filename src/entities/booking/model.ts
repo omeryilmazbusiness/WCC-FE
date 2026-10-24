@@ -61,7 +61,7 @@ export function toLineCategory(kind: unknown, category: unknown): LineCategory |
   return toLineKind(kind) === "item" ? "extras" : null;
 }
 
-export const SERVICE_TYPES = ["flight", "hotel", "package", "transfer", "visa", "tour"] as const;
+export const SERVICE_TYPES = ["flight", "bus", "hotel", "package", "transfer", "visa", "tour"] as const;
 export type ServiceType = (typeof SERVICE_TYPES)[number];
 
 export const SUPPLIER_SOURCES = [

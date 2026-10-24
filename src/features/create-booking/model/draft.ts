@@ -15,7 +15,7 @@ import { parseMoneyInput } from "@/shared/lib/money";
 export const BOOKING_CREATE_STEPS = ["party", "trip", "travellers", "services", "review"] as const;
 export type BookingCreateStep = (typeof BOOKING_CREATE_STEPS)[number];
 
-export const BOOKING_SERVICE_KINDS = ["package", "hotel", "flight", "transfer", "visa", "tour", "extras"] as const;
+export const BOOKING_SERVICE_KINDS = ["package", "hotel", "flight", "bus", "transfer", "visa", "tour", "extras"] as const;
 export type BookingServiceKind = (typeof BOOKING_SERVICE_KINDS)[number];
 
 export const BOOKING_CURRENCIES = ["USD", "SAR", "EUR", "TRY", "AED", "GBP"] as const;
@@ -29,6 +29,34 @@ export type TravellerDraft = {
   passportNo: string;
   nationalId: string;
   healthOk: boolean;
+};
+
+export const BUS_CLASSES = ["standard", "vip", "sleeper"] as const;
+export type BusClass = (typeof BUS_CLASSES)[number];
+
+/** One desk-entered coach segment on the booking. */
+export type BusRide = {
+  key: string;
+  company: string;
+  companyPhone: string;
+  origin: string;
+  destination: string;
+  pickup: string;
+  dropoff: string;
+  departDate: string;
+  arriveDate: string;
+  departTime: string;
+  arriveTime: string;
+  vehicleClass: BusClass | "";
+  plateNo: string;
+  seats: number;
+  seatNumbers: string;
+  driverName: string;
+  driverPhone: string;
+  confirmation: string;
+  unitPrice: string;
+  unitCost: string;
+  notes: string;
 };
 
 /** Snapshot of a fare chosen in the flight picker — not an Aviasales ticket. */
@@ -71,6 +99,7 @@ export type BookingDraft = {
   currency: string;
   discountAmt: string;
   flight: FlightPick | null;
+  buses: BusRide[];
   travellers: TravellerDraft[];
   services: ServiceDraft[];
 };
@@ -117,13 +146,14 @@ export function emptyBookingDraft(seed?: {
     currency: "USD",
     discountAmt: "0",
     flight: null,
+    buses: [],
     travellers: [emptyTraveller()],
     services: [emptyService("package")],
   };
 }
 
 export function serviceLineCategory(kind: BookingServiceKind): LineCategory {
-  if (kind === "transfer") return "transport";
+  if (kind === "transfer" || kind === "bus") return "transport";
   if (kind === "visa" || kind === "tour") return "extras";
   return kind;
 }
@@ -177,6 +207,14 @@ export function draftIssues(draft: BookingDraft): DraftIssues {
   if (!SERVICE_TYPES.includes(draft.serviceType)) trip.push("serviceType");
   if (!draft.departureId) trip.push("departure");
   if (draft.serviceType === "flight" && !draft.flight) trip.push("flight");
+  if (draft.serviceType === "bus" && draft.buses.length === 0) trip.push("bus");
+  if (draft.serviceType === "bus") {
+    draft.buses.forEach((ride, i) => {
+      if (ride.company.trim().length < 2) trip.push(`busCompany:${i}`);
+      if (!ride.origin.trim() || !ride.destination.trim()) trip.push(`busRoute:${i}`);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(ride.departDate)) trip.push(`busDepart:${i}`);
+    });
+  }
   if (draft.pnr && !/^[A-Z0-9][A-Z0-9-]{0,31}$/.test(draft.pnr.trim().toUpperCase())) trip.push("pnr");
   if (trip.length) out.trip = trip;
 

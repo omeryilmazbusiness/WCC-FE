@@ -2,6 +2,7 @@ import {
   BedDouble,
   Building2,
   Bus,
+  BusFront,
   CircleDollarSign,
   CircleSlash,
   Clock3,
@@ -28,6 +29,7 @@ export type Look = { icon: LucideIcon; tone: Tone };
 
 export const SERVICE_LOOK: Record<ServiceType, Look> = {
   flight: { icon: Plane, tone: "sky" },
+  bus: { icon: BusFront, tone: "amber" },
   hotel: { icon: BedDouble, tone: "violet" },
   package: { icon: Landmark, tone: "emerald" },
   transfer: { icon: Bus, tone: "amber" },

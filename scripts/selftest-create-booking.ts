@@ -19,6 +19,7 @@ import {
   type ServiceDraft,
   type TravellerDraft,
 } from "../src/features/create-booking/model/draft.ts";
+import { applyBusRide, busRideIssues, busRideLabel, emptyBusRide, removeBusRide } from "../src/features/create-booking/model/bus-ride.ts";
 import { applyCustomer } from "../src/features/create-booking/model/party.ts";
 import { applyFlightPick, flightPickFromOffer, flightSummary } from "../src/features/create-booking/model/flight-pick.ts";
 import { CREATE_LOOK, KIND_LOOK, STEP_LOOK } from "../src/features/create-booking/ui/look.ts";
@@ -100,6 +101,9 @@ function validation() {
   assert.ok(draftIssues(flightTrip).trip?.includes("flight"));
   const flightOk = { ...flightTrip, flight: samplePick() };
   assert.ok(!draftIssues(flightOk).trip?.includes("flight"));
+
+  const busTrip = { ...validDraft(), serviceType: "bus" as const, buses: [] };
+  assert.ok(draftIssues(busTrip).trip?.includes("bus"));
 }
 
 function samplePick(extra: Partial<FlightPick> = {}): FlightPick {
@@ -161,11 +165,53 @@ function partyAndFlight() {
   assert.equal(added.services?.[1].kind, "visa");
 }
 
+function busRides() {
+  const blank = emptyBusRide(2);
+  assert.ok(busRideIssues(blank).includes("company"));
+  assert.ok(busRideIssues(blank).includes("origin"));
+  assert.ok(busRideIssues(blank).includes("departDate"));
+
+  const ride = {
+    ...emptyBusRide(3),
+    company: "Kamil Koç",
+    origin: "IST",
+    destination: "ANK",
+    departDate: "2026-12-10",
+    departTime: "22:00",
+    unitPrice: "350",
+    unitCost: "280",
+  };
+  assert.deepEqual(busRideIssues(ride), []);
+  assert.equal(busRideLabel(ride), "Kamil Koç · IST–ANK · 2026-12-10 22:00");
+  assert.ok(busRideIssues({ ...ride, arriveDate: "2026-12-09" }).includes("arriveDate"));
+
+  const draft = emptyBookingDraft();
+  const applied = { ...draft, ...applyBusRide(draft, ride) };
+  assert.equal(applied.serviceType, "bus");
+  assert.equal(applied.buses.length, 1);
+  assert.equal(applied.buses[0].company, "Kamil Koç");
+  assert.equal(applied.services[0].kind, "bus");
+  assert.equal(applied.services[0].quantity, 3);
+  assert.equal(applied.services[0].unitPrice, "350");
+  assert.equal(serviceLineCategory("bus"), "transport");
+  const input = toCreateInput({ ...applied, customerId: "c1", departureId: "d1", travellers: [traveller("a", "Ali")] });
+  assert.equal(input.profile?.serviceType, "bus");
+  assert.equal(input.items?.[0].category, "transport");
+
+  const second = { ...emptyBusRide(1), company: "Metro", origin: "ANK", destination: "ADA", departDate: "2026-12-11", unitPrice: "200", unitCost: "0" };
+  const two = { ...applied, ...applyBusRide(applied, second) };
+  assert.equal(two.buses.length, 2);
+  const removed = { ...two, ...removeBusRide(two, ride.key) };
+  assert.equal(removed.buses.length, 1);
+  assert.equal(removed.buses[0].company, "Metro");
+}
+
 function mapping() {
   assert.equal(serviceLineCategory("transfer"), "transport");
   assert.equal(serviceLineCategory("visa"), "extras");
   assert.equal(serviceLineCategory("tour"), "extras");
   assert.equal(serviceLineCategory("hotel"), "hotel");
+  assert.equal(serviceLineCategory("bus"), "transport");
   const d = validDraft();
   assert.equal(serviceLineLabel(d.services[0], d.travellers), "Umrah — Ali Hassan, Fatima Hassan");
   assert.equal(serviceLineLabel(d.services[1], d.travellers), "Visa — Ali Hassan");
@@ -198,6 +244,7 @@ function mapping() {
 function look() {
   assert.deepEqual(Object.keys(STEP_LOOK), [...BOOKING_CREATE_STEPS]);
   assert.ok(CREATE_LOOK.icon && CREATE_LOOK.tone === "emerald");
+  assert.equal(KIND_LOOK.bus.tone, "amber");
   assert.equal(KIND_LOOK.transfer.tone, "amber");
   assert.equal(KIND_LOOK.visa.tone, "rose");
   assert.equal(KIND_LOOK.extras.tone, "zinc");
@@ -217,10 +264,16 @@ function wiring() {
   assert.match(steps, /size="lg"/);
   assert.match(steps, /CustomerFormDialog/);
   assert.match(steps, /PickFlightDialog/);
+  assert.match(steps, /BusRideDialog/);
   assert.match(steps, /applyCustomer/);
   assert.match(steps, /applyFlightPick/);
+  assert.match(steps, /applyBusRide/);
   assert.match(steps, /create-booking-new-customer/);
   assert.match(steps, /create-booking-pick-flight/);
+  assert.match(steps, /create-booking-add-bus/);
+  const busDlg = read("src/features/create-booking/ui/bus-ride-dialog.tsx");
+  assert.match(busDlg, /data-testid="create-booking-bus-dialog"/);
+  assert.match(busDlg, /create-booking-bus-company/);
   const picker = read("src/features/create-booking/ui/pick-flight-dialog.tsx");
   assert.match(picker, /data-testid="create-booking-flight-dialog"/);
   assert.match(picker, /FlightSearchForm/);
@@ -249,6 +302,9 @@ function wiring() {
     "pickFlightTitle",
     "selectFlight",
     "flightRequired",
+    "addBus",
+    "busRequired",
+    "busCompany",
   ]) {
     assert.ok(en.bookings.form[key] && ar.bookings.form[key], `form.${key}`);
   }
@@ -256,6 +312,7 @@ function wiring() {
 
 validation();
 partyAndFlight();
+busRides();
 mapping();
 look();
 wiring();

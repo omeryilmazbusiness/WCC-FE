@@ -33,6 +33,7 @@ export const routes = {
   adminCompanies: "/admin/companies",
   hotels: "/hotels",
   hotel: (id: string) => `/hotels/${id}`,
+  buses: "/buses",
   flights: "/flights",
   /** Public balance confirmation link of a reconciliation letter. */
   confirm: (token: string) => `/confirm/${token}`,

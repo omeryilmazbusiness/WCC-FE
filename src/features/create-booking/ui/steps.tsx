@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Building2, Check, Plane, Plus, Stamp, Ticket, Trash2, UserRound, UserRoundPlus } from "lucide-react";
+import { Building2, BusFront, Check, Pencil, Plane, Plus, Stamp, Ticket, Trash2, UserRound, UserRoundPlus } from "lucide-react";
 import {
   CHANNEL_LOOK,
   GENDERS,
@@ -17,6 +17,7 @@ import { createCustomerRepository } from "@/entities/customer";
 import { useCan } from "@/entities/viewer";
 import { CustomerFormDialog } from "@/features/customer-form";
 import { PackagePicker, pickOf, type PackagePick } from "@/features/package-link";
+import { applyBusRide, busRideLabel, removeBusRide, type BusRide } from "../model/bus-ride";
 import { applyCustomer } from "../model/party";
 import { applyFlightPick, flightPickFromOffer, flightSummary } from "../model/flight-pick";
 import { formatMoney } from "@/shared/lib/format";
@@ -51,6 +52,7 @@ import {
   draftLineTotal,
   draftSubtotal,
   emptyService,
+  moneyMinor,
   emptyTraveller,
   serviceLineLabel,
   type BookingCreateStep,
@@ -60,6 +62,7 @@ import {
   type ServiceDraft,
   type TravellerDraft,
 } from "../model/draft";
+import { BusRideDialog } from "./bus-ride-dialog";
 import { KIND_LOOK, STEP_LOOK } from "./look";
 import { PickFlightDialog } from "./pick-flight-dialog";
 
@@ -262,10 +265,18 @@ function PartyStep({
 function TripStep({ draft, issues, onPatch }: { draft: BookingDraft; issues: string[]; onPatch: Patch }) {
   const t = useTranslations("bookings.form");
   const tw = useTranslations("bookingWorkspace");
+  const locale = useLocale();
   const canSearchFlights = useCan("flights.search");
   const [flightOpen, setFlightOpen] = useState(false);
+  const [busOpen, setBusOpen] = useState(false);
+  const [editingBus, setEditingBus] = useState<BusRide | null>(null);
   const pick: PackagePick = pickOf(draft.packageId || null, draft.departureId || null);
   const adults = Math.max(1, draft.travellers.filter((p) => p.fullName.trim()).length);
+
+  function openNewBus() {
+    setEditingBus(null);
+    setBusOpen(true);
+  }
 
   return (
     <StepShell step="trip">
@@ -286,6 +297,7 @@ function TripStep({ draft, issues, onPatch }: { draft: BookingDraft; issues: str
                 : draft.services,
             });
             if (serviceType === "flight" && canSearchFlights) setFlightOpen(true);
+            if (serviceType === "bus" && draft.buses.length === 0) openNewBus();
           }}
           options={SERVICE_TYPES.map((s) => ({
             value: s,
@@ -326,6 +338,82 @@ function TripStep({ draft, issues, onPatch }: { draft: BookingDraft; issues: str
             currency={draft.currency}
             adults={adults}
             onPicked={(offer) => onPatch(applyFlightPick(draft, flightPickFromOffer(offer)))}
+          />
+        </Field>
+      ) : null}
+
+      {draft.serviceType === "bus" ? (
+        <Field label={t("busList")} hint={t("busHint")}>
+          {draft.buses.length === 0 ? (
+            <div className="flex flex-col items-center rounded-[22px] bg-amber-50/60 px-4 py-8 text-center ring-1 ring-amber-100">
+              <GlyphTile icon={BusFront} tone="amber" size="section" />
+              <p className="mt-3 text-[13.5px] font-semibold text-zinc-700">{t("busEmpty")}</p>
+              <Button type="button" className="mt-4 h-11 gap-1.5" data-testid="create-booking-add-bus" onClick={openNewBus}>
+                <Plus className="h-4 w-4" aria-hidden />
+                {t("addBus")}
+              </Button>
+            </div>
+          ) : (
+            <ol className="space-y-2" data-testid="create-booking-bus-list">
+              {draft.buses.map((ride) => (
+                <li
+                  key={ride.key}
+                  className="flex flex-col gap-3 rounded-[20px] bg-amber-50/70 px-3.5 py-3 ring-1 ring-amber-100 sm:flex-row sm:items-center"
+                  data-testid={`create-booking-bus-${ride.key}`}
+                >
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <GlyphTile icon={BusFront} tone="amber" size="section" />
+                    <div className="min-w-0">
+                      <p className="truncate text-[15px] font-semibold leading-tight text-zinc-950">{busRideLabel(ride)}</p>
+                      <p className="mt-1 truncate text-[12.5px] font-medium text-zinc-500">
+                        {[
+                          ride.vehicleClass === "vip" ? t("busClassVip") : ride.vehicleClass === "sleeper" ? t("busClassSleeper") : t("busClassStandard"),
+                          ride.plateNo,
+                          formatMoney((moneyMinor(ride.unitPrice) ?? 0) * Math.max(1, ride.seats), locale, draft.currency),
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-11"
+                      data-testid="create-booking-edit-bus"
+                      onClick={() => {
+                        setEditingBus(ride);
+                        setBusOpen(true);
+                      }}
+                    >
+                      <Pencil className="h-4 w-4" aria-hidden />
+                      {t("editBus")}
+                    </Button>
+                    <Button type="button" variant="ghost" className="h-11 px-2.5 text-rose-600" onClick={() => onPatch(removeBusRide(draft, ride.key))}>
+                      <Trash2 className="h-4 w-4" aria-hidden />
+                      {t("removeBus")}
+                    </Button>
+                  </div>
+                </li>
+              ))}
+              <Button type="button" variant="outline" className="h-12 w-full gap-2 rounded-[18px]" data-testid="create-booking-add-bus" onClick={openNewBus}>
+                <Plus className="h-5 w-5" aria-hidden />
+                {t("addBus")}
+              </Button>
+            </ol>
+          )}
+          {issues.includes("bus") ? <FieldIssue>{t("busRequired")}</FieldIssue> : null}
+          <BusRideDialog
+            open={busOpen}
+            onOpenChange={(open) => {
+              setBusOpen(open);
+              if (!open) setEditingBus(null);
+            }}
+            currency={draft.currency}
+            adults={adults}
+            initial={editingBus}
+            onSaved={(ride) => onPatch(applyBusRide(draft, ride))}
           />
         </Field>
       ) : null}
@@ -613,6 +701,9 @@ function ReviewStep({ draft }: { draft: BookingDraft }) {
       <FormSection icon={STEP_LOOK.trip.icon} tone={STEP_LOOK.trip.tone} title={t("reviewTrip")}>
         <ReviewRow label={t("serviceType")} value={tw(`service.${draft.serviceType}`)} />
         {draft.flight ? <ReviewRow label={t("pickFlight")} value={flightSummary(draft.flight)} /> : null}
+        {draft.buses.map((ride) => (
+          <ReviewRow key={ride.key} label={t("addBus")} value={busRideLabel(ride)} />
+        ))}
         <ReviewRow label={t("summary")} value={draft.summary || t("reviewEmpty")} />
         <ReviewRow label={t("pnr")} value={draft.pnr || t("reviewEmpty")} />
         <ReviewRow label={t("supplier")} value={draft.supplierSource ? tw(`supplier.${draft.supplierSource}`) : tw("supplier.none")} />

@@ -71,7 +71,7 @@ const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])$/;
 export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
   "api", "app", "admin", "auth", "login", "logout", "setup", "manager", "workspace", "pipeline",
   "inbox", "tasks", "notifications", "customers", "packages", "bookings", "finance", "targets",
-  "reports", "suppliers", "rooming", "hotels", "integrations", "security", "settings", "import-export",
+  "reports", "suppliers", "rooming", "hotels", "buses", "integrations", "security", "settings", "import-export",
   "missing-docs", "flights", "static", "public", "assets", "en", "ar", "www", "help", "support", "status", "platform", "confirm", "team",
 ]);
 

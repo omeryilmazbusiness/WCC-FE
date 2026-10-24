@@ -3,6 +3,7 @@ import {
   Bell,
   Briefcase,
   Building2,
+  BusFront,
   CalendarCheck2,
   FileBarChart2,
   FileSpreadsheet,
@@ -58,6 +59,7 @@ export type NavLabel =
   | "aiSetup"
   | "suppliers"
   | "hotels"
+  | "buses"
   | "flights"
   | "missingDocs"
   | "team"
@@ -118,6 +120,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
       { href: routes.packages, label: "packages", icon: Package },
       { href: routes.bookings, label: "bookings", icon: CalendarCheck2 },
       { href: routes.flights, label: "flights", icon: PlaneTakeoff },
+      { href: routes.buses, label: "buses", icon: BusFront },
       { href: routes.hotels, label: "hotels", icon: Hotel },
       { href: routes.suppliers, label: "suppliers", icon: Truck },
       { href: routes.missingDocs, label: "missingDocs", icon: FileWarning },

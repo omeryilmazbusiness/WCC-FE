@@ -17,6 +17,7 @@ export const KIND_LOOK: Record<BookingServiceKind, Look> = {
   package: SERVICE_LOOK.package,
   hotel: SERVICE_LOOK.hotel,
   flight: SERVICE_LOOK.flight,
+  bus: SERVICE_LOOK.bus,
   transfer: SERVICE_LOOK.transfer,
   visa: SERVICE_LOOK.visa,
   tour: SERVICE_LOOK.tour,
