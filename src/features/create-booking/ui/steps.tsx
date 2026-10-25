@@ -20,7 +20,10 @@ import { PackagePicker, pickOf, type PackagePick } from "@/features/package-link
 import { applyBusRide, busRideLabel, removeBusRide, type BusRide } from "../model/bus-ride";
 import { applyCustomer } from "../model/party";
 import { applyFlightPick, flightPickFromOffer, flightSummary } from "../model/flight-pick";
+import { hotelSummary } from "../model/hotel-pick";
 import { visaSummary } from "../model/visa-pick";
+import { HotelPickedCard, PickHotelDialog } from "./pick-hotel-dialog";
+import { HotelServiceField } from "./hotel-service-field";
 import { PickVisaDialog } from "./pick-visa-dialog";
 import { VisaServiceField } from "./visa-service-field";
 import { formatMoney } from "@/shared/lib/format";
@@ -272,6 +275,7 @@ function TripStep({ draft, issues, onPatch }: { draft: BookingDraft; issues: str
   const canSearchFlights = useCan("flights.search");
   const [flightOpen, setFlightOpen] = useState(false);
   const [visaOpen, setVisaOpen] = useState(false);
+  const [hotelOpen, setHotelOpen] = useState(false);
   const [busOpen, setBusOpen] = useState(false);
   const [editingBus, setEditingBus] = useState<BusRide | null>(null);
   const pick: PackagePick = pickOf(draft.packageId || null, draft.departureId || null);
@@ -297,12 +301,14 @@ function TripStep({ draft, issues, onPatch }: { draft: BookingDraft; issues: str
               serviceType,
               flight: serviceType === "flight" ? draft.flight : null,
               visa: serviceType === "visa" ? draft.visa : null,
+              hotel: serviceType === "hotel" ? draft.hotel : null,
               services: onlyDefault && BOOKING_SERVICE_KINDS.includes(serviceType as BookingServiceKind)
                 ? [{ ...draft.services[0], kind: serviceType as BookingServiceKind }]
                 : draft.services,
             });
             if (serviceType === "flight" && canSearchFlights) setFlightOpen(true);
             if (serviceType === "visa") setVisaOpen(true);
+            if (serviceType === "hotel") setHotelOpen(true);
             if (serviceType === "bus" && draft.buses.length === 0) openNewBus();
           }}
           options={SERVICE_TYPES.map((s) => ({
@@ -379,6 +385,21 @@ function TripStep({ draft, issues, onPatch }: { draft: BookingDraft; issues: str
             customerId={draft.customerId || null}
             onPicked={onPatch}
           />
+        </Field>
+      ) : null}
+
+      {draft.serviceType === "hotel" ? (
+        <Field label={t("pickHotel")} hint={t("pickHotelHint")}>
+          {draft.hotel ? (
+            <HotelPickedCard draft={draft} onChange={() => setHotelOpen(true)} />
+          ) : (
+            <Button type="button" className="h-12 w-full gap-2 rounded-[18px]" data-testid="create-booking-pick-hotel" onClick={() => setHotelOpen(true)}>
+              <Building2 className="h-5 w-5" aria-hidden />
+              {t("pickHotel")}
+            </Button>
+          )}
+          {issues.includes("hotel") ? <FieldIssue>{t("hotelRequired")}</FieldIssue> : null}
+          <PickHotelDialog open={hotelOpen} onOpenChange={setHotelOpen} draft={draft} onPicked={onPatch} />
         </Field>
       ) : null}
 
@@ -615,6 +636,7 @@ function ServicesStep({
 }) {
   const t = useTranslations("bookings.form");
   const locale = useLocale();
+  const canPrice = useCan("hotels.pricing");
   const named = draft.travellers.filter((p) => p.fullName.trim());
 
   function setService(i: number, patch: Partial<ServiceDraft>) {
@@ -657,6 +679,7 @@ function ServicesStep({
                 />
               </Field>
               {svc.kind === "visa" ? <VisaServiceField draft={draft} serviceKey={svc.key} onPatch={onPatch} /> : null}
+              {svc.kind === "hotel" ? <HotelServiceField draft={draft} serviceKey={svc.key} onPatch={onPatch} /> : null}
               <Field label={t("serviceLabel")} hint={t("serviceLabelHint")}>
                 <Input
                   className="h-12"
@@ -685,9 +708,11 @@ function ServicesStep({
                 <Field label={t("unitPrice")}>
                   <MoneyInput currency={draft.currency} value={svc.unitPrice} onChange={(unitPrice) => setService(i, { unitPrice })} />
                 </Field>
-                <Field label={t("unitCost")}>
-                  <MoneyInput currency={draft.currency} value={svc.unitCost} onChange={(unitCost) => setService(i, { unitCost })} />
-                </Field>
+                {canPrice ? (
+                  <Field label={t("unitCost")}>
+                    <MoneyInput currency={draft.currency} value={svc.unitCost} onChange={(unitCost) => setService(i, { unitCost })} />
+                  </Field>
+                ) : null}
               </div>
               {issues.includes(`money:${i}`) ? <FieldIssue>{t("moneyInvalid")}</FieldIssue> : null}
               <div className="flex items-center justify-end rounded-[16px] bg-zinc-50 px-3.5 py-2.5">
@@ -747,6 +772,7 @@ function ReviewStep({ draft }: { draft: BookingDraft }) {
         <ReviewRow label={t("serviceType")} value={tw(`service.${draft.serviceType}`)} />
         {draft.flight ? <ReviewRow label={t("pickFlight")} value={flightSummary(draft.flight)} /> : null}
         {draft.visa ? <ReviewRow label={t("pickVisa")} value={visaSummary(draft.visa)} /> : null}
+        {draft.hotel ? <ReviewRow label={t("pickHotel")} value={hotelSummary(draft.hotel)} /> : null}
         {draft.buses.map((ride) => (
           <ReviewRow key={ride.key} label={t("addBus")} value={busRideLabel(ride)} />
         ))}

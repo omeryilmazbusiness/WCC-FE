@@ -11,6 +11,7 @@ import {
   type SupplierSource,
 } from "@/entities/booking/model";
 import { parseMoneyInput } from "@/shared/lib/money";
+import type { HotelPick } from "./hotel-pick";
 
 export const BOOKING_CREATE_STEPS = ["party", "trip", "travellers", "services", "review"] as const;
 export type BookingCreateStep = (typeof BOOKING_CREATE_STEPS)[number];
@@ -112,6 +113,7 @@ export type BookingDraft = {
   discountAmt: string;
   flight: FlightPick | null;
   visa: VisaPick | null;
+  hotel: HotelPick | null;
   buses: BusRide[];
   travellers: TravellerDraft[];
   services: ServiceDraft[];
@@ -160,6 +162,7 @@ export function emptyBookingDraft(seed?: {
     discountAmt: "0",
     flight: null,
     visa: null,
+    hotel: null,
     buses: [],
     travellers: [emptyTraveller()],
     services: [emptyService("package")],
@@ -222,6 +225,7 @@ export function draftIssues(draft: BookingDraft): DraftIssues {
   if (!draft.departureId) trip.push("departure");
   if (draft.serviceType === "flight" && !draft.flight) trip.push("flight");
   if (draft.serviceType === "visa" && !draft.visa) trip.push("visa");
+  if (draft.serviceType === "hotel" && !draft.hotel) trip.push("hotel");
   if (draft.serviceType === "bus" && draft.buses.length === 0) trip.push("bus");
   if (draft.serviceType === "bus") {
     draft.buses.forEach((ride, i) => {

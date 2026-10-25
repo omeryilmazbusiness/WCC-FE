@@ -22,6 +22,26 @@ export function monthlyCell(rates: readonly MonthlyRate[], year: number, month: 
   };
 }
 
+/** Nightly satış for one room type on the check-in month. */
+export function roomSellForStay(roomType: RoomType, rates: readonly MonthlyRate[], checkIn: string): { sell: number; net: number } {
+  const year = Number(checkIn.slice(0, 4));
+  const month = Number(checkIn.slice(5, 7));
+  if (!year || month < 1 || month > 12) return { sell: 0, net: 0 };
+  const cell = monthlyCell(rates, year, month, roomType);
+  return { sell: cell.sell, net: cell.net };
+}
+
+/** Room types that have a satış price for the stay month. */
+export function pricedRoomTypes(
+  roomTypes: readonly RoomType[],
+  rates: readonly MonthlyRate[],
+  checkIn: string,
+): { roomType: RoomType; sell: number; net: number }[] {
+  return roomTypes
+    .map((roomType) => ({ roomType, ...roomSellForStay(roomType, rates, checkIn) }))
+    .filter((row) => row.sell > 0);
+}
+
 export function monthlyPricedCount(rates: readonly MonthlyRate[], year: number, roomType: RoomType): number {
   return CALENDAR_MONTHS.filter((month) => {
     const cell = monthlyCell(rates, year, month, roomType);

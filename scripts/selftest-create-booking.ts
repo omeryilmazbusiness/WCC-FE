@@ -25,6 +25,9 @@ import { applyBusRide, busRideIssues, busRideLabel, emptyBusRide, removeBusRide 
 import { applyCustomer } from "../src/features/create-booking/model/party.ts";
 import { applyFlightPick, flightPickFromOffer, flightSummary } from "../src/features/create-booking/model/flight-pick.ts";
 import { applyVisaPick, visaPickFromOffer, visaSummary } from "../src/features/create-booking/model/visa-pick.ts";
+import { applyHotelPick, hotelPickFromRoom, hotelSummary, roomSellsOn } from "../src/features/create-booking/model/hotel-pick.ts";
+import { pricedRoomTypes } from "../src/entities/hotel/lib/monthly.ts";
+import type { HotelDetail } from "../src/entities/hotel/model.ts";
 import { emptySpec } from "../src/entities/tourpackage/spec.ts";
 import { CREATE_LOOK, KIND_LOOK, STEP_LOOK } from "../src/features/create-booking/ui/look.ts";
 
@@ -111,6 +114,8 @@ function validation() {
 
   const visaTrip = { ...validDraft(), serviceType: "visa" as const, visa: null };
   assert.ok(draftIssues(visaTrip).trip?.includes("visa"));
+  const hotelTrip = { ...validDraft(), serviceType: "hotel" as const, hotel: null };
+  assert.ok(draftIssues(hotelTrip).trip?.includes("hotel"));
 
   const emptyGate = draftIssues(empty);
   assert.equal(isStepUnlocked("party", emptyGate), true);
@@ -216,6 +221,25 @@ function partyAndFlight() {
   assert.equal(extraApplied.services[1].kind, "visa");
   assert.equal(extraApplied.services[1].unitPrice, "650.00");
   assert.equal(extraApplied.visa?.packageId, "vis-1");
+
+  const rates = [{ year: 2026, month: 12, roomType: "deluxe" as const, net: 40000, sell: 52000 }];
+  assert.deepEqual(pricedRoomTypes(["deluxe", "standard"], rates, "2026-12-10").map((r) => r.roomType), ["deluxe"]);
+  const hotelDetail = {
+    hotel: { id: "h1", name: "Hilton", roomTypes: ["deluxe"], currency: "SAR" },
+    monthlyRates: rates,
+    seasons: [],
+  } as HotelDetail;
+  assert.equal(roomSellsOn(hotelDetail, "2026-12-10")[0]?.sell, 52000);
+  const hotelPick = hotelPickFromRoom(hotelDetail, "deluxe", "2026-12-10", 3);
+  assert.ok(hotelPick);
+  assert.equal(hotelSummary(hotelPick), "Hilton · deluxe · 2026-12-10");
+  const hotelDraft = { ...emptyBookingDraft(), services: [service("s0", { kind: "package", label: "" })] };
+  const hotelApplied = { ...hotelDraft, ...applyHotelPick(hotelDraft, hotelPick) };
+  assert.equal(hotelApplied.serviceType, "hotel");
+  assert.equal(hotelApplied.services[0].kind, "hotel");
+  assert.equal(hotelApplied.services[0].quantity, 3);
+  assert.equal(hotelApplied.services[0].unitPrice, "520.00");
+  assert.equal(hotelApplied.hotel?.roomType, "deluxe");
 
   const withVisa = {
     ...twoPax,
@@ -331,11 +355,19 @@ function wiring() {
   assert.match(steps, /PickFlightDialog/);
   assert.match(steps, /PickVisaDialog/);
   assert.match(steps, /VisaServiceField/);
+  assert.match(steps, /HotelServiceField/);
+  assert.match(steps, /PickHotelDialog/);
+  assert.match(steps, /hotels.pricing/);
   assert.match(steps, /BusRideDialog/);
   const visaField = read("src/features/create-booking/ui/visa-service-field.tsx");
   assert.match(visaField, /kind="visa"/);
   assert.match(visaField, /applyVisaPick/);
   assert.match(visaField, /serviceKey/);
+  const hotelDlg = read("src/features/create-booking/ui/pick-hotel-dialog.tsx");
+  assert.match(hotelDlg, /data-testid="create-booking-hotel-dialog"/);
+  assert.match(hotelDlg, /roomSellsOn/);
+  const visaEditor = read("src/features/package-form/ui/visa-offers-editor.tsx");
+  assert.match(visaEditor, /hotels.pricing/);
   assert.match(steps, /applyCustomer/);
   assert.match(steps, /applyFlightPick/);
   assert.match(steps, /applyBusRide/);
@@ -381,6 +413,9 @@ function wiring() {
     "visaRequired",
     "stepLocked",
     "stepDone",
+    "pickHotel",
+    "pickHotelTitle",
+    "hotelRequired",
   ]) {
     assert.ok(en.bookings.form[key] && ar.bookings.form[key], `form.${key}`);
   }

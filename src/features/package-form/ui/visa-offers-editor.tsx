@@ -4,6 +4,7 @@ import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { useLocale, useTranslations } from "next-intl";
 import { Plus, Stamp, Trash2 } from "lucide-react";
 import { VISA_LOOK, VISA_TYPES, lookOf } from "@/entities/tourpackage";
+import { useCan } from "@/entities/viewer";
 import { formatMoney } from "@/shared/lib/format";
 import { parseMoneyInput } from "@/shared/lib/money";
 import { Button, FormControl, FormField, FormItem, FormLabel, FormMessage, FormSection, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea } from "@/shared/ui";
@@ -14,6 +15,7 @@ import { MoneyInput, Stepper, SwitchRow } from "./controls";
 export function VisaOffersEditor() {
   const t = useTranslations("packages");
   const locale = useLocale();
+  const canPrice = useCan("hotels.pricing");
   const { control, formState } = useFormContext<PackageFormValues>();
   const { fields, append, remove } = useFieldArray({ control, name: "visaOffers" });
   const [currency, offers] = useWatch({ control, name: ["baseCurrency", "visaOffers"] });
@@ -70,7 +72,8 @@ export function VisaOffersEditor() {
                     <Trash2 className="h-4 w-4" aria-hidden />
                   </Button>
                 </div>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div className={`mt-3 grid gap-3 ${canPrice ? "sm:grid-cols-2" : ""}`}>
+                  {canPrice ? (
                   <FormField
                     control={control}
                     name={`visaOffers.${i}.net`}
@@ -84,6 +87,7 @@ export function VisaOffersEditor() {
                       </FormItem>
                     )}
                   />
+                  ) : null}
                   <FormField
                     control={control}
                     name={`visaOffers.${i}.sell`}
