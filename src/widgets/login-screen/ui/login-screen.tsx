@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { getTranslations } from "next-intl/server";
 import { LocaleSwitcher } from "@/features/switch-locale";
+import { WCC_CREDIT } from "@/shared/config/brand";
 import { cn } from "@/shared/lib/cn";
 
 type Props = {
@@ -12,7 +13,7 @@ type Props = {
   aside?: ReactNode;
 };
 
-/** Night-aurora sign-in frame: app-icon over a liquid-glass card, "by WCC" at the foot. */
+/** Night-aurora sign-in frame: product or company mark over a liquid-glass card. */
 export async function LoginScreen({ icon, title, subtitle, children, aside }: Props) {
   const t = await getTranslations("auth");
   return (
@@ -46,7 +47,7 @@ export async function LoginScreen({ icon, title, subtitle, children, aside }: Pr
       </main>
 
       <footer className="pb-7 text-center text-[11px] font-medium tracking-[0.16em] text-white/35" dir="ltr">
-        {t("poweredBy")} <span className="font-semibold text-white/60">WCC</span>
+        {t("poweredBy")} <span className="font-semibold tracking-normal text-white/60">{WCC_CREDIT}</span>
       </footer>
     </div>
   );

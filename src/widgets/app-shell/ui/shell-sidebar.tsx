@@ -6,9 +6,9 @@ import { avatarUrl } from "@/entities/profile";
 import type { GuardedRoute } from "@/shared/config/permissions";
 import { routes } from "@/shared/config/routes";
 import { Link } from "@/shared/i18n/navigation";
-import { WCC_LOGO } from "@/shared/config/brand";
 import { initials } from "@/shared/lib/avatar";
 import { cn } from "@/shared/lib/cn";
+import { WodiMark } from "@/shared/ui/wodi-mark";
 import type { NavGroup } from "../model/nav";
 import { planBrandTone } from "../model/plan-brand";
 import { useScreenOpener } from "../model/screen-opener";
@@ -180,19 +180,15 @@ export function ShellSidebar({
   );
 }
 
-/** WCC logo on a white app-icon tile (the artwork is drawn for a light background). */
+/** Official WODI mark; plan ring tints the tile on Premium / Ultimate. */
 function BrandMark({ className, tone }: { className?: string; tone: ReturnType<typeof planBrandTone> }) {
   return (
-    <span
-      aria-hidden
+    <WodiMark
       className={cn(
-        "flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-white p-[3px] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_6px_16px_-6px_rgba(0,0,0,0.7)] ring-1",
+        "shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_6px_16px_-6px_rgba(0,0,0,0.7)] ring-1",
         planMarkRing(tone),
         className,
       )}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element -- tiny static asset, no optimisation needed */}
-      <img src={WCC_LOGO} alt="" className="h-full w-full object-contain" draggable={false} />
-    </span>
+    />
   );
 }

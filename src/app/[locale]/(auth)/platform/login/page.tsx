@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { LoginForm, SessionEndedNotice } from "@/features/auth-by-credentials";
 import { isSessionEndReason, SESSION_END_PARAM } from "@/shared/api/session-end";
-import { WCC_LOGO } from "@/shared/config/brand";
-import { LoginScreen, LogoIcon } from "@/widgets/login-screen";
+import { WodiMark } from "@/shared/ui/wodi-mark";
+import { LoginScreen } from "@/widgets/login-screen";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -25,7 +25,7 @@ export default async function PlatformLoginPage({ params, searchParams }: Props)
 
   return (
     <LoginScreen
-      icon={<LogoIcon src={WCC_LOGO} alt={ta("name")} />}
+      icon={<WodiMark size="lg" alt={ta("name")} />}
       title={t("platformTitle")}
       subtitle={t("platformSubtitle")}
     >

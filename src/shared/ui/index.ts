@@ -156,3 +156,4 @@ export { InfoRow, InfoSection, infoActionClass } from "./info-section";
 export { Sparkline } from "./sparkline";
 export { Switch } from "./switch";
 export { GlyphTile, InsetGroup } from "./inset-group";
+export { WodiMark } from "./wodi-mark";
