@@ -424,6 +424,7 @@ function TripStep({ draft, issues, onPatch }: { draft: BookingDraft; issues: str
           onChange={(next) => onPatch({ packageId: next.packageId ?? "", departureId: next.departureId ?? "" })}
           requireDeparture
           required
+          customerId={draft.customerId || null}
           testId="create-booking-package"
         />
         {issues.includes("departure") ? <FieldIssue>{t("departureRequired")}</FieldIssue> : null}

@@ -13,6 +13,7 @@ import {
   TRANSPORT_LOOK,
   TRANSPORT_MODES,
   categoriesFor,
+  isPersonalCategory,
   isPilgrimage,
   lookOf,
   suggestPackageCode,
@@ -40,6 +41,7 @@ import {
 import type { PackageFormValues } from "../model/form";
 import { AddableChipSet } from "./addable-chips";
 import { ChoiceGrid, Stepper, SwitchRow } from "./controls";
+import { PersonalCustomerField } from "./personal-customer-field";
 
 export function IdentityStep({ takenCodes }: { takenCodes: readonly string[] }) {
   const t = useTranslations("packages");
@@ -87,9 +89,15 @@ export function IdentityStep({ takenCodes }: { takenCodes: readonly string[] }) 
             <FormItem>
               <ChoiceGrid
                 name="package-category"
-                columns={3}
+                columns={4}
                 value={field.value}
-                onChange={(v) => field.onChange(v)}
+                onChange={(v) => {
+                  field.onChange(v);
+                  if (!isPersonalCategory(v)) {
+                    setValue("customerId", "", { shouldDirty: true });
+                    setValue("customerName", "", { shouldDirty: true });
+                  }
+                }}
                 options={categories.map((c) => ({ value: c, label: t(`category.${c}`), hint: t(`categoryHint.${c}`), ...lookOf(CATEGORY_LOOK, c) }))}
               />
               <FormMessage />
@@ -97,6 +105,18 @@ export function IdentityStep({ takenCodes }: { takenCodes: readonly string[] }) 
           )}
         />
       </FormSection>
+
+      {isPersonalCategory(category) ? (
+        <FormSection
+          icon={Users}
+          tone="violet"
+          title={t("form.identity.customer")}
+          hint={t("form.identity.customerHint")}
+          testId="package-form-personal"
+        >
+          <PersonalCustomerField />
+        </FormSection>
+      ) : null}
 
       <FormSection icon={Ticket} tone="indigo" title={t("form.identity.kind")} hint={t("steps.identity.hint")} testId="package-form-kind">
         <ChoiceGrid

@@ -101,6 +101,11 @@ export function PackageHero({ pkg, checks, canWrite, onEdit, onOpenReserved, act
                 <KindIcon className="h-3.5 w-3.5" aria-hidden />
                 {t(`kind.${pkg.kind}`)} · {t(`category.${pkg.category}`)}
               </span>
+              {pkg.category === "personal" && (pkg.customerName || pkg.customerNameAr) ? (
+                <span className={cn("rounded-full px-2.5 py-1 text-[11.5px] font-semibold", TONES.violet.soft)}>
+                  {locale === "ar" && pkg.customerNameAr ? pkg.customerNameAr : pkg.customerName}
+                </span>
+              ) : null}
               <span className={cn("rounded-full px-2.5 py-1 text-[11.5px] font-semibold", TONES[statusTone].soft)}>{t(`card.${status}`)}</span>
               <span dir="ltr" className="rounded-full bg-zinc-100 px-2.5 py-1 text-[11.5px] font-bold tracking-wide text-zinc-700">
                 {pkg.code}

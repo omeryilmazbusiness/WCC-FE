@@ -22,9 +22,13 @@ export function packageOptionLabel(p: Pick<TourPackage, "code" | "nameEn" | "nam
   return [p.code, packageName(p, locale)].filter(Boolean).join(" · ");
 }
 
+export function isCataloguePackage(p: Pick<TourPackage, "category">): boolean {
+  return p.category !== "personal";
+}
+
 function haystack(p: TourPackage): string {
   const hotels = [p.spec?.makkah?.name, p.spec?.madinah?.name].filter(Boolean).join(" ");
-  return `${p.code} ${p.nameEn} ${p.nameAr} ${p.kind} ${p.category} ${hotels}`.toLocaleLowerCase();
+  return `${p.code} ${p.nameEn} ${p.nameAr} ${p.kind} ${p.category} ${p.customerName} ${p.customerNameAr} ${hotels}`.toLocaleLowerCase();
 }
 
 /**
@@ -35,12 +39,13 @@ function haystack(p: TourPackage): string {
 export function searchPackages(
   pkgs: readonly TourPackage[],
   q: string,
-  opts: { keepId?: string | null } = {},
+  opts: { keepId?: string | null; customerId?: string | null } = {},
 ): TourPackage[] {
   const words = q.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
   const rank = (p: TourPackage) => (p.isActive ? 0 : 2) + (p.salesOpen ? 0 : 1);
   return pkgs
     .filter((p) => p.isActive || p.id === opts.keepId)
+    .filter((p) => isCataloguePackage(p) || p.id === opts.keepId || (opts.customerId != null && p.customerId === opts.customerId))
     .filter((p) => {
       if (words.length === 0) return true;
       const text = haystack(p);

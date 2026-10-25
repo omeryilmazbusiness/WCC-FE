@@ -4,6 +4,7 @@ import {
   COST_LINES,
   DEFAULT_PACKAGE_CURRENCY,
   applyKindOffer,
+  isPersonalCategory,
   isPilgrimage,
   isValidCategory,
   ROOM_TIERS,
@@ -38,6 +39,8 @@ export type PackageFormValues = {
   capacityTotal: number;
   baseCurrency: string;
   salesOpen: boolean;
+  customerId: string;
+  customerName: string;
   spec: PackageSpec;
   /** Per-person price inputs (major units) keyed by tier code. */
   prices: Record<string, string>;
@@ -64,6 +67,8 @@ export function packageFormSchema(t: (key: string) => string) {
       capacityTotal: z.number(t("errors.capacity")).int().min(0, t("errors.capacity")).max(10000, t("errors.capacity")),
       baseCurrency: z.string().length(3),
       salesOpen: z.boolean(),
+      customerId: z.string(),
+      customerName: z.string(),
       spec: z.custom<PackageSpec>((v) => Boolean(v && typeof v === "object")),
       prices: z.record(z.string(), z.string()),
       costs: z.record(z.string(), z.string()),
@@ -72,6 +77,7 @@ export function packageFormSchema(t: (key: string) => string) {
     .superRefine((v, ctx) => {
       const issue = (path: (string | number)[], key: string) => ctx.addIssue({ code: "custom", path, message: t(key) });
       if (!isValidCategory(v.kind, v.category)) issue(["category"], "errors.category");
+      if (isPersonalCategory(v.category) && !v.customerId.trim()) issue(["customerId"], "errors.customer");
 
       const s = v.spec;
       if (v.kind === "other") {
@@ -137,6 +143,8 @@ export function packageFormDefaults(pkg?: TourPackage | null, tiers: readonly Pr
       capacityTotal: 45,
       baseCurrency: DEFAULT_PACKAGE_CURRENCY,
       salesOpen: true,
+      customerId: "",
+      customerName: "",
       spec,
       prices,
       costs: Object.fromEntries(COST_LINES.map((l) => [l, ""])) as Record<CostLine, string>,
@@ -156,6 +164,8 @@ export function packageFormDefaults(pkg?: TourPackage | null, tiers: readonly Pr
     capacityTotal: pkg.capacityTotal,
     baseCurrency: pkg.baseCurrency,
     salesOpen: pkg.salesOpen,
+    customerId: pkg.customerId ?? "",
+    customerName: pkg.customerName || pkg.customerNameAr || "",
     spec,
     prices,
     costs: Object.fromEntries(COST_LINES.map((l) => [l, spec.costs[l] ? minorToInput(spec.costs[l]) : ""])) as Record<CostLine, string>,
@@ -205,6 +215,7 @@ export function toPackageInput(
     capacityTotal: v.capacityTotal,
     baseCurrency: v.baseCurrency,
     salesOpen: v.salesOpen,
+    customerId: isPersonalCategory(v.category) ? v.customerId.trim() || null : null,
     spec,
     tiers,
   };

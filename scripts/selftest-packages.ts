@@ -4,6 +4,7 @@
  * Run: npm run test:packages
  */
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   DEFAULT_REQUIREMENTS,
   applyKindOffer,
@@ -165,12 +166,14 @@ function codes() {
   assert.equal(suggestPackageCode("umrah", "ramadan_full", 2026, ["umr-2026-ram-01", "UMR-2026-RAM-02"]), "UMR-2026-RAM-03", "skips taken codes case-insensitively");
   assert.equal(suggestPackageCode("hajj", "special_mujamala", 2027), "HAJ-2027-MJM-01");
   assert.equal(suggestPackageCode("other", "economy", 2026), "CUS-2026-ECO-01");
+  assert.equal(suggestPackageCode("umrah", "personal", 2026), "UMR-2026-PER-01");
   assert.equal(suggestPackageCode("umrah", "unknown", 2026), "UMR-2026-PKG-01");
   assert.match(suggestPackageCode("hajj", "long", 2026), /^[A-Z0-9][A-Z0-9-]{1,31}$/, "matches the form/BE code rule");
 }
 
 function steps() {
   assert.equal(PACKAGE_STEPS.length, 7);
+  assert.equal(stepOfPath("customerId"), "identity");
   assert.equal(stepOfPath("code"), "identity");
   assert.equal(stepOfPath("spec.nights.makkah"), "hotels");
   assert.equal(stepOfPath("spec.madinah.checkOut"), "hotels");
@@ -204,8 +207,15 @@ function customTour() {
   assert.equal(isValidCategory("umrah", "economy"), true);
   assert.equal(isValidCategory("hajj", "luxury"), true);
   assert.equal(isValidCategory("other", "standard"), true);
+  assert.equal(isValidCategory("umrah", "personal"), true);
+  assert.equal(isValidCategory("hajj", "personal"), true);
+  assert.equal(isValidCategory("other", "personal"), true);
   assert.equal(isValidCategory("umrah", "ramadan_last15"), true, "legacy umrah still valid");
   assert.equal(isValidCategory("other", "short"), false);
+  const identity = readFileSync(new URL("../src/features/package-form/ui/identity-step.tsx", import.meta.url), "utf8");
+  assert.match(identity, /PersonalCustomerField/);
+  assert.match(identity, /isPersonalCategory/);
+  assert.match(identity, /columns=\{4\}/);
   const stays = syncStaysWithDistricts([], ["Istanbul", "Cappadocia"]);
   assert.deepEqual(stays.map((s) => s.city), ["Istanbul", "Cappadocia"]);
   const kept = syncStaysWithDistricts([{ city: "Istanbul", nights: 3, hotel: emptySpec().makkah }, { city: "Ankara", nights: 2, hotel: { ...emptySpec().makkah, name: "Divan" } }], ["Istanbul"]);

@@ -68,6 +68,12 @@ export function PackageCard({ pkg, href, actions }: { pkg: TourPackage; href: st
               </span>
               {" · "}
               {t(`category.${pkg.category}`)}
+              {pkg.category === "personal" && (pkg.customerName || pkg.customerNameAr) ? (
+                <span>
+                  {" · "}
+                  {locale === "ar" && pkg.customerNameAr ? pkg.customerNameAr : pkg.customerName}
+                </span>
+              ) : null}
             </p>
           </div>
           <div

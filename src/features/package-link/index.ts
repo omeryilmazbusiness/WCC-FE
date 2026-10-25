@@ -7,6 +7,7 @@ export {
   defaultDepartureId,
   departureSeatsLeft,
   isBookable,
+  isCataloguePackage,
   packageName,
   packageOptionLabel,
   pickOf,

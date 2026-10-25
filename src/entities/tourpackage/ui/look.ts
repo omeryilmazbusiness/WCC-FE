@@ -53,6 +53,7 @@ export const CATEGORY_LOOK: Record<string, Look> = {
   economy: { icon: Wallet, tone: "teal" },
   standard: { icon: Star, tone: "sky" },
   luxury: { icon: Crown, tone: "amber" },
+  personal: { icon: UsersRound, tone: "violet" },
   boutique: { icon: Gem, tone: "violet" },
   ramadan_first15: { icon: MoonStar, tone: "indigo" },
   ramadan_last15: { icon: MoonStar, tone: "violet" },

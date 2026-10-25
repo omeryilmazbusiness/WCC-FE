@@ -28,6 +28,9 @@ export type TourPackage = {
   transportMode: TransportMode | string;
   capacityTotal: number;
   baseCurrency: string;
+  customerId: string | null;
+  customerName: string;
+  customerNameAr: string;
   spec: PackageSpec;
   stats: PackageStats;
   createdAt: string;
@@ -100,6 +103,7 @@ export type CreatePackageInput = PackageHeaderInput & {
   nameAr?: string;
   description?: string;
   spec?: PackageSpec;
+  customerId?: string | null;
   /** Replaces the pricing matrix in the same request. */
   tiers?: TierInput[];
 };
@@ -111,6 +115,7 @@ export type UpdatePackageInput = PackageHeaderInput & {
   description?: string;
   isActive?: boolean;
   spec?: PackageSpec;
+  customerId?: string | null;
   tiers?: TierInput[];
 };
 

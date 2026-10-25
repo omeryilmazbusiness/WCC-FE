@@ -3,7 +3,7 @@ export const PACKAGE_STEPS = ["identity", "hotels", "pricing", "logistics", "ser
 export type PackageStep = (typeof PACKAGE_STEPS)[number];
 
 const STEP_PREFIXES: Record<PackageStep, readonly string[]> = {
-  identity: ["code", "nameEn", "nameAr", "description", "kind", "category", "durationDays", "transportMode", "capacityTotal", "baseCurrency", "salesOpen", "spec.destination"],
+  identity: ["code", "nameEn", "nameAr", "description", "kind", "category", "customerId", "customerName", "durationDays", "transportMode", "capacityTotal", "baseCurrency", "salesOpen", "spec.destination"],
   hotels: ["spec.nights", "spec.makkah", "spec.madinah", "spec.stays"],
   pricing: ["prices", "costs", "spec.costs"],
   logistics: ["spec.flights", "spec.transfers", "spec.bus", "busPrice"],

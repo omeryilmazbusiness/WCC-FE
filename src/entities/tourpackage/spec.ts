@@ -8,7 +8,7 @@ export const PACKAGE_KINDS = ["umrah", "hajj", "other"] as const;
 export type PackageKind = (typeof PACKAGE_KINDS)[number];
 
 /** The only tiers offered when creating a package. Stored as `category`. */
-export const PACKAGE_TIERS = ["economy", "standard", "luxury"] as const;
+export const PACKAGE_TIERS = ["economy", "standard", "luxury", "personal"] as const;
 export type PackageTier = (typeof PACKAGE_TIERS)[number];
 
 export const PACKAGE_CATEGORIES = {
@@ -27,6 +27,10 @@ export const LEGACY_CATEGORIES = {
 
 export function isPilgrimage(kind: string): kind is "umrah" | "hajj" {
   return kind === "umrah" || kind === "hajj";
+}
+
+export function isPersonalCategory(category: string): boolean {
+  return category === "personal";
 }
 
 export function isValidCategory(kind: PackageKind, category: string): boolean {
@@ -673,6 +677,7 @@ const CATEGORY_CODES: Record<string, string> = {
   economy: "ECO",
   standard: "STD",
   luxury: "LUX",
+  personal: "PER",
   boutique: "BTQ",
   ramadan_first15: "RAM",
   ramadan_last15: "RAM",

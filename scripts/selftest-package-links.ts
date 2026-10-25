@@ -14,6 +14,7 @@ import {
   NO_PACKAGE,
   defaultDepartureId,
   isBookable,
+  isCataloguePackage,
   packageOptionLabel,
   pickOf,
   reconcileDeparture,
@@ -40,6 +41,9 @@ function pkg(over: Partial<TourPackage> & { id: string; code: string }): TourPac
     transportMode: "flight_scheduled",
     capacityTotal: 40,
     baseCurrency: "SAR",
+    customerId: null,
+    customerName: "",
+    customerNameAr: "",
     spec: emptySpec(),
     stats: {
       departures: 0,
@@ -105,6 +109,17 @@ function search() {
   assert.deepEqual(searchPackages(list, "vip ramadan").map((p) => p.code), ["UMR-VIP"], "every word must match");
   assert.deepEqual(searchPackages(list, "hajj").map((p) => p.code), ["HAJ-1"], "matches the kind");
   assert.equal(searchPackages(list, "nothing-like-this").length, 0);
+  const personal = pkg({
+    id: "6",
+    code: "UMR-PER",
+    category: "personal",
+    customerId: "cust-1",
+    customerName: "Ahmed",
+  });
+  assert.ok(!isCataloguePackage(personal));
+  assert.equal(searchPackages([...list, personal], "").some((p) => p.id === "6"), false, "personal sheets stay out of the catalogue");
+  assert.deepEqual(searchPackages([...list, personal], "", { customerId: "cust-1" }).map((p) => p.code).filter((c) => c === "UMR-PER"), ["UMR-PER"]);
+  assert.deepEqual(searchPackages([...list, personal], "ahmed", { customerId: "cust-1" }).map((p) => p.code), ["UMR-PER"]);
 }
 
 function departures() {

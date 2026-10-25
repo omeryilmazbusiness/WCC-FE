@@ -33,6 +33,8 @@ type Props = {
   disabled?: boolean;
   label?: string;
   hint?: string;
+  /** Show this customer's personal sheets next to the catalogue. */
+  customerId?: string | null;
   testId?: string;
 };
 
@@ -46,6 +48,7 @@ export function PackagePicker({
   disabled = false,
   label,
   hint,
+  customerId,
   testId = "package-picker",
 }: Props) {
   const t = useTranslations("packageLink");
@@ -59,7 +62,10 @@ export function PackagePicker({
   const { departures, loading: depsLoading } = usePackageDepartures(showDepartures ? value.packageId : null);
   const today = todayLocal();
 
-  const results = useMemo(() => searchPackages(packages, q, { keepId: value.packageId }), [packages, q, value.packageId]);
+  const results = useMemo(
+    () => searchPackages(packages, q, { keepId: value.packageId, customerId }),
+    [packages, q, value.packageId, customerId],
+  );
 
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;

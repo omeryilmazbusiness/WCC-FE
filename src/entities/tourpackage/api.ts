@@ -55,6 +55,9 @@ function mapPackage(raw: Raw): TourPackage {
     transportMode: String(raw.transport_mode ?? raw.transportMode ?? "flight_scheduled"),
     capacityTotal: Number(raw.capacity_total ?? raw.capacityTotal ?? 0),
     baseCurrency: currency,
+    customerId: raw.customer_id || raw.customerId ? String(raw.customer_id ?? raw.customerId) : null,
+    customerName: String(raw.customer_name ?? raw.customerName ?? ""),
+    customerNameAr: String(raw.customer_name_ar ?? raw.customerNameAr ?? ""),
     spec: mapSpec(raw.spec, currency),
     stats: {
       departures: Number(stats.departures ?? 0),
@@ -92,6 +95,7 @@ function headerPayload(input: CreatePackageInput | UpdatePackageInput): Raw {
     capacity_total: input.capacityTotal,
     base_currency: input.baseCurrency,
     sales_open: input.salesOpen,
+    customer_id: input.customerId || null,
     spec: input.spec ? specPayload(input.spec) : undefined,
     tiers: input.tiers ? tiersPayload(input.tiers) : undefined,
   };
@@ -303,6 +307,9 @@ function memoryHeader(kind: PackageKind, category: string, durationDays: number,
     salesOpen: true,
     transportMode: "flight_scheduled",
     baseCurrency: DEFAULT_PACKAGE_CURRENCY,
+    customerId: null,
+    customerName: "",
+    customerNameAr: "",
     spec: emptySpec(),
     stats: {
       departures: 0,
@@ -506,6 +513,9 @@ export class MemoryTourPackageRepository implements TourPackageRepository {
     if (input.baseCurrency) p.baseCurrency = input.baseCurrency;
     if (input.salesOpen !== undefined) p.salesOpen = input.salesOpen;
     if (input.spec) p.spec = structuredClone(input.spec);
+    if (input.customerId) {
+      p.customerId = input.customerId;
+    }
     packages.unshift(p);
     packageTiers[p.id] = [];
     if (input.tiers) await this.setPackageTiers(p.id, input.tiers);
@@ -527,6 +537,7 @@ export class MemoryTourPackageRepository implements TourPackageRepository {
     if (input.capacityTotal !== undefined) p.capacityTotal = input.capacityTotal;
     if (input.baseCurrency !== undefined) p.baseCurrency = input.baseCurrency;
     if (input.salesOpen !== undefined) p.salesOpen = input.salesOpen;
+    if (input.customerId !== undefined) p.customerId = input.customerId;
     if (input.spec) p.spec = structuredClone(input.spec);
     if (input.tiers) await this.setPackageTiers(p.id, input.tiers);
     p.updatedAt = nowIso();
