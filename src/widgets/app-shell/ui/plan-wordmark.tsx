@@ -55,16 +55,6 @@ export function PlanWordmark({ tone, name, badge }: Props) {
   );
 }
 
-export function planMarkRing(tone: PlanBrandTone): string {
-  if (tone === "premium") {
-    return "ring-sky-300/45 shadow-[0_0_16px_-4px_rgba(56,189,248,0.7)]";
-  }
-  if (tone === "ultimate") {
-    return "ring-amber-300/50 shadow-[0_0_16px_-4px_rgba(245,158,11,0.65)]";
-  }
-  return "ring-white/20";
-}
-
 export function planHairline(tone: PlanBrandTone): string {
   if (tone === "premium") {
     return "bg-gradient-to-r from-transparent via-sky-400/55 to-transparent";

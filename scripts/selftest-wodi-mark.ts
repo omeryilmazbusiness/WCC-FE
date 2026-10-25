@@ -37,7 +37,9 @@ assert.equal(WCC_LOGO, "/brand/wcc-logo.png");
   const sidebar = src("src/widgets/app-shell/ui/shell-sidebar.tsx");
   assert.match(sidebar, /WodiMark/);
   assert.doesNotMatch(sidebar, /WCC_LOGO/);
+  assert.doesNotMatch(sidebar, /planMarkRing/);
   assert.doesNotMatch(sidebar, /bg-white p-\[3px\]/);
+  assert.match(sidebar, /rounded-none/);
 }
 
 {

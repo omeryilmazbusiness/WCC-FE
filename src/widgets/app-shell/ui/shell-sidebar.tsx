@@ -14,7 +14,7 @@ import { planBrandTone } from "../model/plan-brand";
 import { useScreenOpener } from "../model/screen-opener";
 import type { NavFavorites } from "../model/use-nav-favorites";
 import { FOCUS_RING } from "./nav-tone";
-import { PlanWordmark, planEdge, planHairline, planMarkRing } from "./plan-wordmark";
+import { PlanWordmark, planEdge, planHairline } from "./plan-wordmark";
 import { SidebarNav } from "./sidebar-nav";
 import { SidebarRail } from "./sidebar-rail";
 
@@ -74,14 +74,14 @@ export function ShellSidebar({
             data-testid="shell-sidebar-toggle"
             className={cn("group/brand relative rounded-[12px]", FOCUS_RING)}
           >
-            <BrandMark tone={tone} className="transition-opacity duration-150 group-hover/brand:opacity-0 group-focus-visible/brand:opacity-0" />
+            <BrandMark className="transition-opacity duration-150 group-hover/brand:opacity-0 group-focus-visible/brand:opacity-0" />
             <span className="absolute inset-0 flex items-center justify-center rounded-[12px] bg-white/[0.08] text-white opacity-0 ring-1 ring-inset ring-white/15 transition-opacity duration-150 group-hover/brand:opacity-100 group-focus-visible/brand:opacity-100">
               <PanelLeftOpen className="h-4 w-4 rtl:-scale-x-100" strokeWidth={1.9} />
             </span>
           </button>
         ) : (
           <>
-            <BrandMark tone={tone} />
+            <BrandMark />
             <div className="min-w-0 flex-1 leading-none">
               {tone === "standard" ? (
                 <>
@@ -180,15 +180,7 @@ export function ShellSidebar({
   );
 }
 
-/** Official WODI mark; plan ring tints the tile on Premium / Ultimate. */
-function BrandMark({ className, tone }: { className?: string; tone: ReturnType<typeof planBrandTone> }) {
-  return (
-    <WodiMark
-      className={cn(
-        "shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_6px_16px_-6px_rgba(0,0,0,0.7)] ring-1",
-        planMarkRing(tone),
-        className,
-      )}
-    />
-  );
+/** Official WODI mark — no tile, ring, or shadow in the drawer. */
+function BrandMark({ className }: { className?: string }) {
+  return <WodiMark className={cn("rounded-none bg-transparent", className)} />;
 }
