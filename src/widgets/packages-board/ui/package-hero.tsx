@@ -23,10 +23,11 @@ type Props = {
   checks: Record<ReadinessCheck, boolean>;
   canWrite: boolean;
   onEdit: () => void;
+  onOpenReserved?: () => void;
   actions?: ReactNode;
 };
 
-export function PackageHero({ pkg, checks, canWrite, onEdit, actions }: Props) {
+export function PackageHero({ pkg, checks, canWrite, onEdit, onOpenReserved, actions }: Props) {
   const t = useTranslations("packages");
   const locale = useLocale();
   const cat = lookOf(CATEGORY_LOOK, pkg.category);
@@ -44,7 +45,7 @@ export function PackageHero({ pkg, checks, canWrite, onEdit, actions }: Props) {
   const primary = locale === "ar" && pkg.nameAr ? pkg.nameAr : pkg.nameEn;
   const secondary = locale === "ar" ? pkg.nameEn : pkg.nameAr;
 
-  const stats: { icon: LucideIcon; tone: Tone; label: string; value: ReactNode; testId: string }[] = [
+  const stats: { icon: LucideIcon; tone: Tone; label: string; value: ReactNode; testId: string; onClick?: () => void }[] = [
     {
       icon: Ticket,
       tone: "emerald",
@@ -53,7 +54,14 @@ export function PackageHero({ pkg, checks, canWrite, onEdit, actions }: Props) {
       testId: "package-stat-from",
     },
     { icon: Users, tone: "indigo", label: t("detail.stats.quota"), value: total || "—", testId: "package-stat-quota" },
-    { icon: UserCheck, tone: "violet", label: t("detail.stats.reserved"), value: pkg.stats.reserved, testId: "package-stat-reserved" },
+    {
+      icon: UserCheck,
+      tone: "violet",
+      label: t("detail.stats.reserved"),
+      value: pkg.stats.reserved,
+      testId: "package-stat-reserved",
+      onClick: onOpenReserved,
+    },
     { icon: Armchair, tone: fill >= 90 ? "rose" : "sky", label: t("detail.stats.remaining"), value: total ? packageRemaining(pkg) : "—", testId: "package-stat-remaining" },
     { icon: CalendarClock, tone: "amber", label: t("detail.stats.departures"), value: pkg.stats.departures, testId: "package-stat-departures" },
   ];
@@ -143,15 +151,32 @@ export function PackageHero({ pkg, checks, canWrite, onEdit, actions }: Props) {
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-5">
-          {stats.map(({ icon: Icon, tone, label, value, testId }) => (
-            <div key={testId} className={cn("rounded-[22px] bg-gradient-to-br p-3", TONES[tone].tint, "ring-1 ring-inset ring-zinc-900/[0.04]")} data-testid={testId}>
-              <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl", TONES[tone].solid)} aria-hidden>
-                <Icon className="h-[18px] w-[18px]" strokeWidth={2.1} />
-              </span>
-              <p className="mt-2 truncate text-[19px] font-semibold leading-none tabular-nums text-zinc-950">{value}</p>
-              <p className="mt-1 truncate text-[11.5px] font-medium text-zinc-500">{label}</p>
-            </div>
-          ))}
+          {stats.map(({ icon: Icon, tone, label, value, testId, onClick }) => {
+            const tile = cn(
+              "rounded-[22px] bg-gradient-to-br p-3 text-start",
+              TONES[tone].tint,
+              "ring-1 ring-inset ring-zinc-900/[0.04]",
+              onClick && "transition hover:ring-zinc-900/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400",
+            );
+            const body = (
+              <>
+                <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl", TONES[tone].solid)} aria-hidden>
+                  <Icon className="h-[18px] w-[18px]" strokeWidth={2.1} />
+                </span>
+                <p className="mt-2 truncate text-[19px] font-semibold leading-none tabular-nums text-zinc-950">{value}</p>
+                <p className="mt-1 truncate text-[11.5px] font-medium text-zinc-500">{label}</p>
+              </>
+            );
+            return onClick ? (
+              <button key={testId} type="button" onClick={onClick} className={tile} data-testid={testId}>
+                {body}
+              </button>
+            ) : (
+              <div key={testId} className={tile} data-testid={testId}>
+                {body}
+              </div>
+            );
+          })}
         </div>
         {total > 0 ? (
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-100" aria-hidden>

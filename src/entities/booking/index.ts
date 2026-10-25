@@ -61,6 +61,7 @@ export {
   type ShareDocument,
 } from "./workspace-model";
 export { BOOKING_STATUS_TONES, SYSTEM_DRIVEN_STATUSES } from "./lib/status-tone";
+export { consumesSeat, isFullyPaid, isPaidReserved } from "./lib/lifecycle";
 export {
   HOLD_DEFAULT_DAYS,
   HOLD_MAX_DAYS,

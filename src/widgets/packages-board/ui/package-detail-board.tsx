@@ -12,6 +12,7 @@ import {
   Receipt,
   Route,
   Sparkles,
+  UserCheck,
   type LucideIcon,
 } from "lucide-react";
 import { readinessChecks, type Departure, type PricingTier, type TourPackage, type TourPackageRepository } from "@/entities/tourpackage";
@@ -24,11 +25,13 @@ import { PricingTiersDialog } from "@/features/pricing-tiers";
 import { routes } from "@/shared/config/routes";
 import { Link, useRouter } from "@/shared/i18n/navigation";
 import { EmptyState, LoadingState, QueryState, Screen, Tabs, TabsContent, TabsList, TabsTrigger, errorKind, useToast } from "@/shared/ui";
+import { summarizeReserved } from "../model/reserved";
 import { usePackageLinks } from "../model/use-package-links";
 import { PACKAGE_TABS, usePackageTab, type PackageTab } from "../model/use-package-tab";
 import { DepartureCard } from "./departure-card";
 import { PackageHero } from "./package-hero";
 import { PackageLinksTab } from "./package-links-tab";
+import { PackageReservedTab } from "./package-reserved-tab";
 import { HotelsTab, ItineraryTab, LogisticsTab, OverviewTab, PricingTab, RequirementsTab, ServicesTab } from "./package-tabs";
 
 const TAB_ICON: Record<PackageTab, LucideIcon> = {
@@ -40,6 +43,7 @@ const TAB_ICON: Record<PackageTab, LucideIcon> = {
   itinerary: Route,
   requirements: ClipboardCheck,
   departures: CalendarClock,
+  reserved: UserCheck,
   links: Link2,
 };
 
@@ -60,6 +64,7 @@ export function PackageDetailBoard({ packageId, repository }: Props) {
   const [error, setError] = useState<unknown>(null);
   const [editing, setEditing] = useState(false);
   const links = usePackageLinks(packageId);
+  const reservedCount = useMemo(() => summarizeReserved(links.bookings).reservations, [links.bookings]);
 
   const refresh = useCallback(async () => {
     try {
@@ -131,6 +136,7 @@ export function PackageDetailBoard({ packageId, repository }: Props) {
         checks={checks}
         canWrite={canWrite}
         onEdit={() => setEditing(true)}
+        onOpenReserved={() => selectTab("reserved")}
         actions={
           <>
             <BrochureDownloadButton packageId={pkg.id} code={pkg.code} repository={repository} size="hero" />
@@ -157,9 +163,9 @@ export function PackageDetailBoard({ packageId, repository }: Props) {
                 <TabsTrigger key={key} value={key} className="group gap-2 rounded-2xl px-3.5 py-2.5 text-[13.5px]" data-testid={`package-tab-${key}`}>
                   <Icon className="h-[18px] w-[18px]" strokeWidth={2.1} aria-hidden />
                   {t(`detail.tabs.${key}`)}
-                  {key === "departures" || (key === "links" && links.summary.total > 0) ? (
+                  {key === "departures" || key === "reserved" || (key === "links" && links.summary.total > 0) ? (
                     <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-zinc-600">
-                      {key === "departures" ? deps.length : links.summary.total}
+                      {key === "departures" ? deps.length : key === "reserved" ? reservedCount : links.summary.total}
                     </span>
                   ) : null}
                 </TabsTrigger>
@@ -196,6 +202,9 @@ export function PackageDetailBoard({ packageId, repository }: Props) {
           ) : (
             deps.map((d) => <DepartureCard key={d.id} departure={d} repository={repository} onChanged={upsertDeparture} />)
           )}
+        </TabsContent>
+        <TabsContent value="reserved" className="mt-4">
+          <PackageReservedTab departures={deps} links={links} />
         </TabsContent>
         <TabsContent value="links" className="mt-4">
           <PackageLinksTab pkg={pkg} departures={deps} links={links} />

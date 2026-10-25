@@ -2107,8 +2107,9 @@
         "services": "Services",
         "itinerary": "Itinerary",
         "requirements": "Requirements",
-        "departures": "Departures",
-        "links": "Linked work"
+      "departures": "Departures",
+      "reserved": "Reserved",
+      "links": "Linked work"
       },
       "stats": {
         "quota": "Quota",
@@ -2135,6 +2136,20 @@
       "noItineraryHint": "Generate one from the stay plan in the editor.",
       "costShare": "{pct}% of cost",
       "leader": "Group leader"
+    },
+    "reserved": {
+      "customers": "Customers",
+      "reservations": "Paid bookings",
+      "pax": "Travellers",
+      "travellers": "{n} travellers",
+      "paid": "Paid",
+      "total": "Total",
+      "empty": "No paid reservations yet",
+      "emptyHint": "Customers who hold a seat and have paid in full appear here.",
+      "locked": "You need booking access to see reserved customers.",
+      "unnamed": "Customer",
+      "openCustomer": "Open customer",
+      "openBooking": "Open booking"
     },
     "links": {
       "stats": {
