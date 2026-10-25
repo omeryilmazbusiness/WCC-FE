@@ -27,6 +27,7 @@ import {
   Shirt,
   Soup,
   Sparkles,
+  Stamp,
   Star,
   Sunrise,
   Tent,
@@ -47,6 +48,7 @@ export const KIND_LOOK: Record<string, Look> = {
   umrah: { icon: Moon, tone: "emerald" },
   hajj: { icon: Landmark, tone: "amber" },
   other: { icon: MapPin, tone: "teal" },
+  visa: { icon: Stamp, tone: "rose" },
 };
 
 export const CATEGORY_LOOK: Record<string, Look> = {

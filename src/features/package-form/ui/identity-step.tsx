@@ -15,6 +15,7 @@ import {
   categoriesFor,
   isPersonalCategory,
   isPilgrimage,
+  isVisaKind,
   lookOf,
   suggestPackageCode,
   stayPlanNights,
@@ -38,7 +39,7 @@ import {
   SelectValue,
   Textarea,
 } from "@/shared/ui";
-import type { PackageFormValues } from "../model/form";
+import { emptyVisaOfferForm, type PackageFormValues } from "../model/form";
 import { AddableChipSet } from "./addable-chips";
 import { ChoiceGrid, Stepper, SwitchRow } from "./controls";
 import { PersonalCustomerField } from "./personal-customer-field";
@@ -58,7 +59,17 @@ export function IdentityStep({ takenCodes }: { takenCodes: readonly string[] }) 
     if (!PACKAGE_TIERS.includes(getValues("category") as (typeof PACKAGE_TIERS)[number])) {
       setValue("category", "standard", { shouldDirty: true });
     }
-    setValue("spec.visa.type", next === "hajj" ? "HAJJ_VISA" : next === "other" ? "" : "UMRAH_VISA", { shouldDirty: true });
+    setValue("spec.visa.type", next === "hajj" ? "HAJJ_VISA" : next === "other" || next === "visa" ? "" : "UMRAH_VISA", { shouldDirty: true });
+    if (next === "visa") {
+      setValue("transportMode", "road", { shouldDirty: true });
+      setValue(
+        "visaOffers",
+        getValues("visaOffers").length ? getValues("visaOffers") : [emptyVisaOfferForm("UMRAH_VISA")],
+        { shouldDirty: true },
+      );
+    } else {
+      setValue("visaOffers", [], { shouldDirty: true });
+    }
     if (next === "other") {
       setValue("spec.visa.healthInsurance", false, { shouldDirty: true });
       setValue("spec.kit", [], { shouldDirty: true });
@@ -121,7 +132,7 @@ export function IdentityStep({ takenCodes }: { takenCodes: readonly string[] }) 
       <FormSection icon={Ticket} tone="indigo" title={t("form.identity.kind")} hint={t("steps.identity.hint")} testId="package-form-kind">
         <ChoiceGrid
           name="package-kind"
-          columns={3}
+          columns={4}
           value={kind}
           onChange={changeKind}
           options={PACKAGE_KINDS.map((k) => ({ value: k, label: t(`kind.${k}`), hint: t(`kindHint.${k}`), ...lookOf(KIND_LOOK, k) }))}
@@ -208,8 +219,8 @@ export function IdentityStep({ takenCodes }: { takenCodes: readonly string[] }) 
       <FormSection
         icon={CalendarDays}
         tone="sky"
-        title={t("form.identity.duration")}
-        hint={t("form.identity.nightsSummary", { days: durationDays, nights: Math.max(0, durationDays - 1) })}
+        title={isVisaKind(kind) ? t("form.identity.processing") : t("form.identity.duration")}
+        hint={isVisaKind(kind) ? t("form.identity.processingHint") : t("form.identity.nightsSummary", { days: durationDays, nights: Math.max(0, durationDays - 1) })}
         testId="package-form-duration"
         aside={
           isPilgrimage(kind) && totalNights({ nights }) > 0 ? (
@@ -229,8 +240,8 @@ export function IdentityStep({ takenCodes }: { takenCodes: readonly string[] }) 
             name="durationDays"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("form.identity.duration")}</FormLabel>
-                <Stepper value={field.value} onChange={field.onChange} min={1} max={60} suffix={t("form.identity.days")} label={t("form.identity.duration")} testId="package-form-duration-stepper" />
+                <FormLabel>{isVisaKind(kind) ? t("form.identity.processing") : t("form.identity.duration")}</FormLabel>
+                <Stepper value={field.value} onChange={field.onChange} min={1} max={60} suffix={t("form.identity.days")} label={isVisaKind(kind) ? t("form.identity.processing") : t("form.identity.duration")} testId="package-form-duration-stepper" />
                 <FormMessage />
               </FormItem>
             )}
@@ -253,22 +264,24 @@ export function IdentityStep({ takenCodes }: { takenCodes: readonly string[] }) 
         </div>
       </FormSection>
 
-      <FormSection icon={Plane} tone="violet" title={t("form.identity.transport")} testId="package-form-transport">
-        <FormField
-          control={control}
-          name="transportMode"
-          render={({ field }) => (
-            <FormItem>
-              <ChoiceGrid
-                name="package-transport"
-                columns={3}
-                value={field.value}
-                onChange={(v) => field.onChange(v)}
-                options={TRANSPORT_MODES.map((m) => ({ value: m, label: t(`transport.${m}`), hint: t(`transportHint.${m}`), ...lookOf(TRANSPORT_LOOK, m) }))}
-              />
-            </FormItem>
-          )}
-        />
+      <FormSection icon={isVisaKind(kind) ? Banknote : Plane} tone="violet" title={isVisaKind(kind) ? t("form.identity.currency") : t("form.identity.transport")} testId="package-form-transport">
+        {isVisaKind(kind) ? null : (
+          <FormField
+            control={control}
+            name="transportMode"
+            render={({ field }) => (
+              <FormItem>
+                <ChoiceGrid
+                  name="package-transport"
+                  columns={3}
+                  value={field.value}
+                  onChange={(v) => field.onChange(v)}
+                  options={TRANSPORT_MODES.map((m) => ({ value: m, label: t(`transport.${m}`), hint: t(`transportHint.${m}`), ...lookOf(TRANSPORT_LOOK, m) }))}
+                />
+              </FormItem>
+            )}
+          />
+        )}
         <div className="grid gap-3 sm:grid-cols-2">
           <FormField
             control={control}

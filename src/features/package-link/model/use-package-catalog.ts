@@ -11,10 +11,11 @@ export function usePackageCatalog(enabled = true) {
   const query = useApiQuery<TourPackage[]>(() => repo.listPackages(false), [], {
     cacheKey: ["packages", "catalog"],
     enabled,
+    liveTopics: ["package"],
   });
   const packages = useMemo(() => query.data ?? [], [query.data]);
   const byId = useMemo(() => new Map(packages.map((p) => [p.id, p])), [packages]);
-  return { packages, byId, loading: query.loading, error: query.error, reload: query.reload };
+  return { packages, byId, loading: query.loading, error: query.error, reload: query.reload, refresh: query.refresh };
 }
 
 /** Departures of one package; idle without a package. */

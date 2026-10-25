@@ -59,6 +59,18 @@ export type BusRide = {
   notes: string;
 };
 
+/** Snapshot of a visa type chosen from a visa package. */
+export type VisaPick = {
+  packageId: string;
+  departureId: string | null;
+  type: string;
+  label: string;
+  sellMinor: number;
+  netMinor: number;
+  currency: string;
+  processingDays: number;
+};
+
 /** Snapshot of a fare chosen in the flight picker — not an Aviasales ticket. */
 export type FlightPick = {
   airline: string;
@@ -99,6 +111,7 @@ export type BookingDraft = {
   currency: string;
   discountAmt: string;
   flight: FlightPick | null;
+  visa: VisaPick | null;
   buses: BusRide[];
   travellers: TravellerDraft[];
   services: ServiceDraft[];
@@ -146,6 +159,7 @@ export function emptyBookingDraft(seed?: {
     currency: "USD",
     discountAmt: "0",
     flight: null,
+    visa: null,
     buses: [],
     travellers: [emptyTraveller()],
     services: [emptyService("package")],
@@ -207,6 +221,7 @@ export function draftIssues(draft: BookingDraft): DraftIssues {
   if (!SERVICE_TYPES.includes(draft.serviceType)) trip.push("serviceType");
   if (!draft.departureId) trip.push("departure");
   if (draft.serviceType === "flight" && !draft.flight) trip.push("flight");
+  if (draft.serviceType === "visa" && !draft.visa) trip.push("visa");
   if (draft.serviceType === "bus" && draft.buses.length === 0) trip.push("bus");
   if (draft.serviceType === "bus") {
     draft.buses.forEach((ride, i) => {
@@ -241,6 +256,21 @@ export function draftIssues(draft: BookingDraft): DraftIssues {
 
 export function firstIssueStep(issues: DraftIssues): BookingCreateStep | null {
   return BOOKING_CREATE_STEPS.find((step) => (issues[step]?.length ?? 0) > 0) ?? null;
+}
+
+export function stepHasIssues(issues: DraftIssues, step: BookingCreateStep): boolean {
+  return (issues[step]?.length ?? 0) > 0;
+}
+
+/** A later step opens only after every earlier step is complete. Party is always open. */
+export function isStepUnlocked(step: BookingCreateStep, issues: DraftIssues): boolean {
+  const i = BOOKING_CREATE_STEPS.indexOf(step);
+  if (i <= 0) return true;
+  return BOOKING_CREATE_STEPS.slice(0, i).every((s) => !stepHasIssues(issues, s));
+}
+
+export function isStepComplete(step: BookingCreateStep, issues: DraftIssues): boolean {
+  return isStepUnlocked(step, issues) && !stepHasIssues(issues, step);
 }
 
 export function toCreateInput(draft: BookingDraft): BookingCreateInput {

@@ -4,7 +4,7 @@
  * so `scripts/selftest-packages.ts` can run it under plain Node.
  */
 
-export const PACKAGE_KINDS = ["umrah", "hajj", "other"] as const;
+export const PACKAGE_KINDS = ["umrah", "hajj", "other", "visa"] as const;
 export type PackageKind = (typeof PACKAGE_KINDS)[number];
 
 /** The only tiers offered when creating a package. Stored as `category`. */
@@ -15,6 +15,7 @@ export const PACKAGE_CATEGORIES = {
   umrah: PACKAGE_TIERS,
   hajj: PACKAGE_TIERS,
   other: PACKAGE_TIERS,
+  visa: PACKAGE_TIERS,
 } as const satisfies Record<PackageKind, readonly string[]>;
 export type PackageCategory = (typeof PACKAGE_CATEGORIES)[PackageKind][number];
 
@@ -23,10 +24,15 @@ export const LEGACY_CATEGORIES = {
   umrah: ["boutique", "ramadan_first15", "ramadan_last15", "ramadan_full", "semester"],
   hajj: ["short", "long", "special_mujamala", "special_commercial"],
   other: [],
+  visa: [],
 } as const satisfies Record<PackageKind, readonly string[]>;
 
 export function isPilgrimage(kind: string): kind is "umrah" | "hajj" {
   return kind === "umrah" || kind === "hajj";
+}
+
+export function isVisaKind(kind: string): kind is "visa" {
+  return kind === "visa";
 }
 
 export function isPersonalCategory(category: string): boolean {
@@ -100,6 +106,7 @@ export type PackageSpec = {
   activities: Activity[];
   guidance: { leaderName: string; femaleGuide: boolean };
   visa: { type: "" | (typeof VISA_TYPES)[number]; healthInsurance: boolean };
+  visaOffers: VisaOffer[];
   kit: string[];
   ziyarat: { makkah: string[]; madinah: string[] };
   itinerary: ItineraryDay[];
@@ -113,6 +120,28 @@ export type Destination = { country: string; districts: string[] };
 export type Stay = { city: string; nights: number; hotel: Hotel };
 export type Bus = { company: string; seats: number; price: number; details: string };
 export type Activity = { title: string; details: string };
+export type VisaOffer = {
+  type: "" | (typeof VISA_TYPES)[number];
+  net: number;
+  sell: number;
+  processingDays: number;
+  healthInsurance: boolean;
+  notes: string;
+};
+
+export function emptyVisaOffer(type: VisaOffer["type"] = ""): VisaOffer {
+  return { type, net: 0, sell: 0, processingDays: 7, healthInsurance: false, notes: "" };
+}
+
+export function cheapestVisaSell(offers: readonly VisaOffer[]): number | null {
+  const priced = offers.filter((o) => o.sell > 0).map((o) => o.sell);
+  return priced.length ? Math.min(...priced) : null;
+}
+
+export function findVisaOffer(offers: readonly VisaOffer[], type: string): VisaOffer | null {
+  const key = type.trim().toUpperCase();
+  return offers.find((o) => o.type === key) ?? null;
+}
 export type ItineraryDay = { day: number; city: string; title: string; details: string };
 
 export function emptyDestination(): Destination {
@@ -207,6 +236,7 @@ export function emptySpec(currency: string = DEFAULT_PACKAGE_CURRENCY): PackageS
     activities: [],
     guidance: { leaderName: "", femaleGuide: false },
     visa: { type: "", healthInsurance: false },
+    visaOffers: [],
     kit: [],
     ziyarat: { makkah: [], madinah: [] },
     itinerary: [],
@@ -273,6 +303,20 @@ function mapActivities(raw: unknown): Activity[] {
   });
 }
 
+function mapVisaOffers(raw: unknown): VisaOffer[] {
+  return (Array.isArray(raw) ? raw : []).map((row) => {
+    const o = rec(row);
+    return {
+      type: oneOf(VISA_TYPES, o.type),
+      net: num(o.net),
+      sell: num(o.sell),
+      processingDays: num(o.processing_days),
+      healthInsurance: bool(o.health_insurance),
+      notes: str(o.notes),
+    };
+  });
+}
+
 /** API `spec` (snake_case) → model. Missing parts fall back to empty values. */
 export function mapSpec(raw: unknown, currency: string = DEFAULT_PACKAGE_CURRENCY): PackageSpec {
   const s = rec(raw);
@@ -311,6 +355,7 @@ export function mapSpec(raw: unknown, currency: string = DEFAULT_PACKAGE_CURRENC
     activities: mapActivities(s.activities),
     guidance: { leaderName: str(guidance.leader_name), femaleGuide: bool(guidance.female_guide) },
     visa: { type: oneOf(VISA_TYPES, visa.type), healthInsurance: bool(visa.health_insurance) },
+    visaOffers: mapVisaOffers(s.visa_offers),
     kit: strs(s.kit),
     ziyarat: { makkah: strs(ziyarat.makkah), madinah: strs(ziyarat.madinah) },
     itinerary: (Array.isArray(s.itinerary) ? s.itinerary : []).map((d) => {
@@ -383,6 +428,14 @@ export function specPayload(s: PackageSpec): Raw {
     activities: s.activities,
     guidance: { leader_name: s.guidance.leaderName, female_guide: s.guidance.femaleGuide },
     visa: { type: s.visa.type, health_insurance: s.visa.healthInsurance },
+    visa_offers: (s.visaOffers ?? []).map((o) => ({
+      type: o.type,
+      net: o.net,
+      sell: o.sell,
+      processing_days: o.processingDays,
+      health_insurance: o.healthInsurance,
+      notes: o.notes,
+    })),
     kit: s.kit,
     ziyarat: s.ziyarat,
     itinerary: s.itinerary,
@@ -408,10 +461,11 @@ export function specPayload(s: PackageSpec): Raw {
   };
 }
 
-/** Other tours keep free-text services; pilgrimage keeps visa / kit / ziyarat. */
+/** Other tours keep free-text services; visa keeps priced types; pilgrimage keeps visa / kit / ziyarat. */
 export function applyKindOffer(s: PackageSpec, kind: string): void {
   if (kind === "other") {
     s.visa = { type: "", healthInsurance: false };
+    s.visaOffers = [];
     s.kit = [];
     s.ziyarat = { makkah: [], madinah: [] };
     s.guidance = { ...s.guidance, femaleGuide: false };
@@ -420,8 +474,26 @@ export function applyKindOffer(s: PackageSpec, kind: string): void {
     s.activities = namedItems(s.activities);
     return;
   }
+  if (kind === "visa") {
+    s.kit = [];
+    s.ziyarat = { makkah: [], madinah: [] };
+    s.included = [];
+    s.services = [];
+    s.activities = [];
+    s.destination = emptyDestination();
+    s.stays = [];
+    s.guidance = { ...s.guidance, femaleGuide: false };
+    s.nights = { makkah: 0, madinah: 0 };
+    s.visaOffers = s.visaOffers.filter((o) => o.type);
+    s.visa = {
+      type: s.visaOffers[0]?.type ?? "",
+      healthInsurance: s.visaOffers.some((o) => o.healthInsurance),
+    };
+    return;
+  }
   s.services = [];
   s.activities = [];
+  s.visaOffers = [];
 }
 
 function namedItems(items: readonly Activity[]): Activity[] {
@@ -691,7 +763,7 @@ const CATEGORY_CODES: Record<string, string> = {
 
 /** `UMR-2026-RAM-01` style code; the sequence skips codes already taken. */
 export function suggestPackageCode(kind: PackageKind, category: string, year: number, taken: readonly string[] = []): string {
-  const head = kind === "hajj" ? "HAJ" : kind === "other" ? "CUS" : "UMR";
+  const head = kind === "hajj" ? "HAJ" : kind === "other" ? "CUS" : kind === "visa" ? "VIS" : "UMR";
   const prefix = `${head}-${year}-${CATEGORY_CODES[category] ?? "PKG"}-`;
   const used = new Set(taken.map((c) => c.toUpperCase()));
   for (let n = 1; n < 100; n++) {
@@ -713,14 +785,15 @@ export function readinessChecks(
 ): Record<ReadinessCheck, boolean> {
   const s = pkg.spec;
   const other = pkg.kind === "other";
+  const visa = pkg.kind === "visa";
   const stayReady = s.stays.some((stay) => Boolean(stay.hotel.name && stay.hotel.stars));
   return {
-    makkahHotel: other ? stayReady || Boolean(s.destination.country) : Boolean(s.makkah.name && s.makkah.stars),
-    madinahHotel: other ? true : s.nights.madinah === 0 || Boolean(s.madinah.name && s.madinah.stars),
-    flights: pkg.transportMode === "road" || Boolean(s.flights.airline && s.flights.outbound.route) || Boolean(s.bus.company),
-    visa: other ? true : Boolean(s.visa.type),
-    pricing: hasRoomPrice,
-    itinerary: s.itinerary.length > 0,
+    makkahHotel: visa || other ? stayReady || Boolean(s.destination.country) || visa : Boolean(s.makkah.name && s.makkah.stars),
+    madinahHotel: visa || other ? true : s.nights.madinah === 0 || Boolean(s.madinah.name && s.madinah.stars),
+    flights: visa || pkg.transportMode === "road" || Boolean(s.flights.airline && s.flights.outbound.route) || Boolean(s.bus.company),
+    visa: other ? true : visa ? s.visaOffers.some((o) => o.type && o.sell > 0) : Boolean(s.visa.type),
+    pricing: visa ? s.visaOffers.some((o) => o.sell > 0) : hasRoomPrice,
+    itinerary: visa ? true : s.itinerary.length > 0,
     costs: true,
   };
 }

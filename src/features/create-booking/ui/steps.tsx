@@ -20,6 +20,9 @@ import { PackagePicker, pickOf, type PackagePick } from "@/features/package-link
 import { applyBusRide, busRideLabel, removeBusRide, type BusRide } from "../model/bus-ride";
 import { applyCustomer } from "../model/party";
 import { applyFlightPick, flightPickFromOffer, flightSummary } from "../model/flight-pick";
+import { visaSummary } from "../model/visa-pick";
+import { PickVisaDialog } from "./pick-visa-dialog";
+import { VisaServiceField } from "./visa-service-field";
 import { formatMoney } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/cn";
 import {
@@ -268,6 +271,7 @@ function TripStep({ draft, issues, onPatch }: { draft: BookingDraft; issues: str
   const locale = useLocale();
   const canSearchFlights = useCan("flights.search");
   const [flightOpen, setFlightOpen] = useState(false);
+  const [visaOpen, setVisaOpen] = useState(false);
   const [busOpen, setBusOpen] = useState(false);
   const [editingBus, setEditingBus] = useState<BusRide | null>(null);
   const pick: PackagePick = pickOf(draft.packageId || null, draft.departureId || null);
@@ -292,11 +296,13 @@ function TripStep({ draft, issues, onPatch }: { draft: BookingDraft; issues: str
             onPatch({
               serviceType,
               flight: serviceType === "flight" ? draft.flight : null,
+              visa: serviceType === "visa" ? draft.visa : null,
               services: onlyDefault && BOOKING_SERVICE_KINDS.includes(serviceType as BookingServiceKind)
                 ? [{ ...draft.services[0], kind: serviceType as BookingServiceKind }]
                 : draft.services,
             });
             if (serviceType === "flight" && canSearchFlights) setFlightOpen(true);
+            if (serviceType === "visa") setVisaOpen(true);
             if (serviceType === "bus" && draft.buses.length === 0) openNewBus();
           }}
           options={SERVICE_TYPES.map((s) => ({
@@ -338,6 +344,40 @@ function TripStep({ draft, issues, onPatch }: { draft: BookingDraft; issues: str
             currency={draft.currency}
             adults={adults}
             onPicked={(offer) => onPatch(applyFlightPick(draft, flightPickFromOffer(offer)))}
+          />
+        </Field>
+      ) : null}
+
+      {draft.serviceType === "visa" ? (
+        <Field label={t("pickVisa")} hint={t("pickVisaHint")}>
+          {draft.visa ? (
+            <div className="flex flex-col gap-3 rounded-[22px] bg-rose-50/70 px-3.5 py-3 ring-1 ring-rose-100 sm:flex-row sm:items-center" data-testid="create-booking-visa-picked">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <GlyphTile icon={Stamp} tone="rose" size="section" />
+                <div className="min-w-0">
+                  <p className="truncate text-[15px] font-semibold leading-tight text-zinc-950">{visaSummary(draft.visa)}</p>
+                  <p className="mt-1 truncate text-[12.5px] font-medium text-zinc-500">
+                    {draft.visa.processingDays ? t("visaProcessing", { days: draft.visa.processingDays }) : draft.visa.type}
+                  </p>
+                </div>
+              </div>
+              <Button type="button" variant="outline" className="h-11 shrink-0" data-testid="create-booking-change-visa" onClick={() => setVisaOpen(true)}>
+                {t("changeVisa")}
+              </Button>
+            </div>
+          ) : (
+            <Button type="button" className="h-12 w-full gap-2 rounded-[18px]" data-testid="create-booking-pick-visa" onClick={() => setVisaOpen(true)}>
+              <Stamp className="h-5 w-5" aria-hidden />
+              {t("pickVisa")}
+            </Button>
+          )}
+          {issues.includes("visa") ? <FieldIssue>{t("visaRequired")}</FieldIssue> : null}
+          <PickVisaDialog
+            open={visaOpen}
+            onOpenChange={setVisaOpen}
+            draft={draft}
+            customerId={draft.customerId || null}
+            onPicked={onPatch}
           />
         </Field>
       ) : null}
@@ -418,17 +458,20 @@ function TripStep({ draft, issues, onPatch }: { draft: BookingDraft; issues: str
         </Field>
       ) : null}
 
-      <Field label={t("departure")} hint={t("departureHint")}>
-        <PackagePicker
-          value={pick}
-          onChange={(next) => onPatch({ packageId: next.packageId ?? "", departureId: next.departureId ?? "" })}
-          requireDeparture
-          required
-          customerId={draft.customerId || null}
-          testId="create-booking-package"
-        />
-        {issues.includes("departure") ? <FieldIssue>{t("departureRequired")}</FieldIssue> : null}
-      </Field>
+      {draft.serviceType === "visa" ? null : (
+        <Field label={t("departure")} hint={t("departureHint")}>
+          <PackagePicker
+            value={pick}
+            onChange={(next) => onPatch({ packageId: next.packageId ?? "", departureId: next.departureId ?? "" })}
+            requireDeparture
+            required
+            customerId={draft.customerId || null}
+            excludeKinds={["visa"]}
+            testId="create-booking-package"
+          />
+          {issues.includes("departure") ? <FieldIssue>{t("departureRequired")}</FieldIssue> : null}
+        </Field>
+      )}
 
       <div className="grid items-start gap-4 sm:grid-cols-2">
         <Field label={t("supplier")}>
@@ -613,6 +656,7 @@ function ServicesStep({
                   }))}
                 />
               </Field>
+              {svc.kind === "visa" ? <VisaServiceField draft={draft} serviceKey={svc.key} onPatch={onPatch} /> : null}
               <Field label={t("serviceLabel")} hint={t("serviceLabelHint")}>
                 <Input
                   className="h-12"
@@ -702,6 +746,7 @@ function ReviewStep({ draft }: { draft: BookingDraft }) {
       <FormSection icon={STEP_LOOK.trip.icon} tone={STEP_LOOK.trip.tone} title={t("reviewTrip")}>
         <ReviewRow label={t("serviceType")} value={tw(`service.${draft.serviceType}`)} />
         {draft.flight ? <ReviewRow label={t("pickFlight")} value={flightSummary(draft.flight)} /> : null}
+        {draft.visa ? <ReviewRow label={t("pickVisa")} value={visaSummary(draft.visa)} /> : null}
         {draft.buses.map((ride) => (
           <ReviewRow key={ride.key} label={t("addBus")} value={busRideLabel(ride)} />
         ))}

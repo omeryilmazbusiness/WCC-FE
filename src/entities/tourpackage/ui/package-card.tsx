@@ -121,7 +121,15 @@ export function PackageCard({ pkg, href, actions }: { pkg: TourPackage; href: st
           </div>
         </div>
 
-        {pkg.kind === "other" && (s.destination.country || s.destination.districts.length) ? (
+        {pkg.kind === "visa" && s.visaOffers.length ? (
+          <div className="flex flex-wrap gap-1.5">
+            {s.visaOffers.slice(0, 4).map((o) => (
+              <span key={o.type} className="inline-flex items-center rounded-full bg-rose-50 px-2.5 py-1 text-[11.5px] font-semibold text-rose-700">
+                {t(`visa.${o.type}`)}
+              </span>
+            ))}
+          </div>
+        ) : pkg.kind === "other" && (s.destination.country || s.destination.districts.length) ? (
           <div className="flex flex-wrap gap-1.5">
             {s.destination.country ? (
               <span className="inline-flex items-center rounded-full bg-teal-50 px-2.5 py-1 text-[11.5px] font-semibold text-teal-700">{s.destination.country}</span>

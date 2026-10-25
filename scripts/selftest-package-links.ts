@@ -120,6 +120,10 @@ function search() {
   assert.equal(searchPackages([...list, personal], "").some((p) => p.id === "6"), false, "personal sheets stay out of the catalogue");
   assert.deepEqual(searchPackages([...list, personal], "", { customerId: "cust-1" }).map((p) => p.code).filter((c) => c === "UMR-PER"), ["UMR-PER"]);
   assert.deepEqual(searchPackages([...list, personal], "ahmed", { customerId: "cust-1" }).map((p) => p.code), ["UMR-PER"]);
+  const visa = pkg({ id: "7", code: "VIS-1", kind: "visa", spec: { ...emptySpec(), visaOffers: [{ type: "UMRAH_VISA", net: 1, sell: 2, processingDays: 7, healthInsurance: false, notes: "" }] } });
+  assert.equal(searchPackages([...list, visa], "", { excludeKinds: ["visa"] }).some((p) => p.kind === "visa"), false);
+  assert.deepEqual(searchPackages([...list, visa], "", { kind: "visa" }).map((p) => p.code), ["VIS-1"]);
+  assert.deepEqual(searchPackages([...list, visa], "umrah_visa", { kind: "visa" }).map((p) => p.code), ["VIS-1"]);
 }
 
 function departures() {

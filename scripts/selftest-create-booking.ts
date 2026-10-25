@@ -11,6 +11,8 @@ import {
   draftIssues,
   emptyBookingDraft,
   firstIssueStep,
+  isStepComplete,
+  isStepUnlocked,
   serviceLineCategory,
   serviceLineLabel,
   toCreateInput,
@@ -22,6 +24,8 @@ import {
 import { applyBusRide, busRideIssues, busRideLabel, emptyBusRide, removeBusRide } from "../src/features/create-booking/model/bus-ride.ts";
 import { applyCustomer } from "../src/features/create-booking/model/party.ts";
 import { applyFlightPick, flightPickFromOffer, flightSummary } from "../src/features/create-booking/model/flight-pick.ts";
+import { applyVisaPick, visaPickFromOffer, visaSummary } from "../src/features/create-booking/model/visa-pick.ts";
+import { emptySpec } from "../src/entities/tourpackage/spec.ts";
 import { CREATE_LOOK, KIND_LOOK, STEP_LOOK } from "../src/features/create-booking/ui/look.ts";
 
 const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
@@ -104,6 +108,21 @@ function validation() {
 
   const busTrip = { ...validDraft(), serviceType: "bus" as const, buses: [] };
   assert.ok(draftIssues(busTrip).trip?.includes("bus"));
+
+  const visaTrip = { ...validDraft(), serviceType: "visa" as const, visa: null };
+  assert.ok(draftIssues(visaTrip).trip?.includes("visa"));
+
+  const emptyGate = draftIssues(empty);
+  assert.equal(isStepUnlocked("party", emptyGate), true);
+  assert.equal(isStepUnlocked("trip", emptyGate), false);
+  assert.equal(isStepUnlocked("review", emptyGate), false);
+  assert.equal(isStepComplete("party", emptyGate), false);
+  const partyOk = draftIssues({ ...empty, customerId: "c1", channel: "agent" });
+  assert.equal(isStepUnlocked("trip", partyOk), true);
+  assert.equal(isStepUnlocked("travellers", partyOk), false);
+  const allOk = draftIssues(validDraft());
+  assert.equal(isStepUnlocked("review", allOk), true);
+  assert.equal(isStepComplete("services", allOk), true);
 }
 
 function samplePick(extra: Partial<FlightPick> = {}): FlightPick {
@@ -155,6 +174,48 @@ function partyAndFlight() {
   assert.equal(applied.services[0].quantity, 2);
   assert.equal(applied.services[0].unitPrice, "450.5");
   assert.equal(applied.services[0].key, "s0");
+
+  const visaPkg = {
+    id: "vis-1",
+    kind: "visa",
+    baseCurrency: "SAR",
+    spec: { ...emptySpec(), visaOffers: [{ type: "UMRAH_VISA", net: 40000, sell: 65000, processingDays: 7, healthInsurance: true, notes: "" }] },
+    nameEn: "Visa desk",
+    nameAr: "",
+  };
+  const visaPick = visaPickFromOffer(visaPkg, "UMRAH_VISA", "dep-open", "Umrah visa · Visa desk");
+  assert.ok(visaPick);
+  assert.equal(visaSummary(visaPick), "Umrah visa · Visa desk");
+  const visaDraft = {
+    ...emptyBookingDraft(),
+    travellers: [traveller("a", "Ali"), traveller("b", "Fatima")],
+    services: [service("s0", { kind: "package", label: "" })],
+  };
+  const visaApplied = { ...visaDraft, ...applyVisaPick(visaDraft, visaPick) };
+  assert.equal(visaApplied.serviceType, "visa");
+  assert.equal(visaApplied.packageId, "vis-1");
+  assert.equal(visaApplied.departureId, "dep-open");
+  assert.equal(visaApplied.services[0].kind, "visa");
+  assert.equal(visaApplied.services[0].unitPrice, "650.00");
+  assert.equal(visaApplied.services[0].unitCost, "400.00");
+  assert.ok(!draftIssues({ ...validDraft(), ...visaApplied, customerId: "c1", departureId: "dep-open" }).trip?.includes("visa"));
+
+  const extraVisa = {
+    ...emptyBookingDraft(),
+    serviceType: "package" as const,
+    packageId: "umr-1",
+    departureId: "dep-umr",
+    travellers: [traveller("a", "Ali")],
+    services: [service("pkg", { kind: "package", label: "Umrah" }), service("vis", { kind: "visa", label: "" })],
+  };
+  const extraApplied = { ...extraVisa, ...applyVisaPick(extraVisa, visaPick, { serviceKey: "vis" }) };
+  assert.equal(extraApplied.serviceType, "package", "visa add-on does not steal a linked tour");
+  assert.equal(extraApplied.packageId, "umr-1");
+  assert.equal(extraApplied.departureId, "dep-umr");
+  assert.equal(extraApplied.services[0].kind, "package");
+  assert.equal(extraApplied.services[1].kind, "visa");
+  assert.equal(extraApplied.services[1].unitPrice, "650.00");
+  assert.equal(extraApplied.visa?.packageId, "vis-1");
 
   const withVisa = {
     ...twoPax,
@@ -258,13 +319,23 @@ function wiring() {
   assert.match(dialog, /GlyphTile/);
   assert.match(dialog, /data-testid="create-booking-dialog"/);
   assert.match(dialog, /create-booking-rail-\$\{s\}/);
+  assert.match(dialog, /isStepUnlocked/);
+  assert.match(dialog, /stepLocked/);
+  assert.match(dialog, /disabled=\{!currentReady\}/);
+  assert.match(dialog, /data-state=/);
   assert.match(steps, /FormSection/);
   assert.match(steps, /GlyphTile/);
   assert.match(steps, /InitialsAvatar/);
   assert.match(steps, /size="lg"/);
   assert.match(steps, /CustomerFormDialog/);
   assert.match(steps, /PickFlightDialog/);
+  assert.match(steps, /PickVisaDialog/);
+  assert.match(steps, /VisaServiceField/);
   assert.match(steps, /BusRideDialog/);
+  const visaField = read("src/features/create-booking/ui/visa-service-field.tsx");
+  assert.match(visaField, /kind="visa"/);
+  assert.match(visaField, /applyVisaPick/);
+  assert.match(visaField, /serviceKey/);
   assert.match(steps, /applyCustomer/);
   assert.match(steps, /applyFlightPick/);
   assert.match(steps, /applyBusRide/);
@@ -305,6 +376,11 @@ function wiring() {
     "addBus",
     "busRequired",
     "busCompany",
+    "pickVisa",
+    "pickVisaTitle",
+    "visaRequired",
+    "stepLocked",
+    "stepDone",
   ]) {
     assert.ok(en.bookings.form[key] && ar.bookings.form[key], `form.${key}`);
   }

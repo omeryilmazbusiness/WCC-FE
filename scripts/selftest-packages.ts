@@ -8,6 +8,9 @@ import { readFileSync } from "node:fs";
 import {
   DEFAULT_REQUIREMENTS,
   applyKindOffer,
+  cheapestVisaSell,
+  findVisaOffer,
+  isVisaKind,
   convertViaUsd,
   costTotal,
   eligibilityIssues,
@@ -30,7 +33,7 @@ import {
   type PackageSpec,
 } from "../src/entities/tourpackage/spec.ts";
 import { brochureFilename, brochurePath, parseBrochureLang } from "../src/entities/tourpackage/brochure.ts";
-import { PACKAGE_STEPS, errorPaths, firstErrorStep, stepOfPath } from "../src/features/package-form/model/steps.ts";
+import { PACKAGE_STEPS, errorPaths, firstErrorStep, stepOfPath, stepsForKind } from "../src/features/package-form/model/steps.ts";
 
 function roundTrip() {
   const spec: PackageSpec = {
@@ -167,6 +170,7 @@ function codes() {
   assert.equal(suggestPackageCode("hajj", "special_mujamala", 2027), "HAJ-2027-MJM-01");
   assert.equal(suggestPackageCode("other", "economy", 2026), "CUS-2026-ECO-01");
   assert.equal(suggestPackageCode("umrah", "personal", 2026), "UMR-2026-PER-01");
+  assert.equal(suggestPackageCode("visa", "standard", 2026), "VIS-2026-STD-01");
   assert.equal(suggestPackageCode("umrah", "unknown", 2026), "UMR-2026-PKG-01");
   assert.match(suggestPackageCode("hajj", "long", 2026), /^[A-Z0-9][A-Z0-9-]{1,31}$/, "matches the form/BE code rule");
 }
@@ -186,6 +190,8 @@ function steps() {
   assert.equal(stepOfPath("spec.activities.0.title"), "services");
   assert.equal(stepOfPath("spec.services.0.title"), "services");
   assert.equal(stepOfPath("spec.visa.type"), "services");
+  assert.equal(stepOfPath("visaOffers.0.sell"), "services");
+  assert.deepEqual(stepsForKind("visa"), ["identity", "services", "requirements"]);
   assert.equal(stepOfPath("spec.itinerary.3.title"), "itinerary");
   assert.equal(stepOfPath("spec.requirements.passportMonths"), "requirements");
   assert.equal(stepOfPath("spec.kitchen"), "identity", "prefix match is per segment");
@@ -200,6 +206,8 @@ function steps() {
   assert.deepEqual(errorPaths(errors).sort(), ["prices.SINGLE", "spec.flights.outbound.route", "spec.itinerary.1.title"]);
   assert.equal(firstErrorStep(errors), "pricing", "earliest step in sheet order wins");
   assert.equal(firstErrorStep({ code: { message: "x" }, spec: { requirements: { passportMonths: { message: "y" } } } }), "identity");
+  assert.deepEqual(errorPaths({ visaOffers: { root: { message: "need a price", type: "custom" } } }), ["visaOffers"]);
+  assert.equal(firstErrorStep({ visaOffers: { root: { message: "need a price", type: "custom" } }, spec: { makkah: { checkOut: { message: "x" } } } }, "visa"), "services");
   assert.equal(firstErrorStep({}), null);
 }
 
@@ -210,12 +218,33 @@ function customTour() {
   assert.equal(isValidCategory("umrah", "personal"), true);
   assert.equal(isValidCategory("hajj", "personal"), true);
   assert.equal(isValidCategory("other", "personal"), true);
+  assert.equal(isValidCategory("visa", "luxury"), true);
+  assert.equal(isValidCategory("visa", "personal"), true);
+  assert.ok(isVisaKind("visa"));
   assert.equal(isValidCategory("umrah", "ramadan_last15"), true, "legacy umrah still valid");
   assert.equal(isValidCategory("other", "short"), false);
   const identity = readFileSync(new URL("../src/features/package-form/ui/identity-step.tsx", import.meta.url), "utf8");
   assert.match(identity, /PersonalCustomerField/);
   assert.match(identity, /isPersonalCategory/);
   assert.match(identity, /columns=\{4\}/);
+  assert.match(identity, /isVisaKind/);
+  const visaSheet = emptySpec();
+  visaSheet.visaOffers = [
+    { type: "UMRAH_VISA", net: 40000, sell: 65000, processingDays: 7, healthInsurance: true, notes: "Nusuk" },
+    { type: "HAJJ_VISA", net: 90000, sell: 140000, processingDays: 21, healthInsurance: false, notes: "" },
+  ];
+  applyKindOffer(visaSheet, "visa");
+  assert.equal(visaSheet.visa.type, "UMRAH_VISA");
+  assert.equal(cheapestVisaSell(visaSheet.visaOffers), 65000);
+  assert.equal(findVisaOffer(visaSheet.visaOffers, "hajj_visa")?.sell, 140000);
+  const visaWire = specPayload(visaSheet);
+  assert.deepEqual(mapSpec(JSON.parse(JSON.stringify(visaWire))).visaOffers, visaSheet.visaOffers);
+  const visaReady = readinessChecks({ kind: "visa", transportMode: "road", spec: visaSheet }, false);
+  assert.equal(visaReady.visa, true);
+  assert.equal(visaReady.pricing, true);
+  assert.equal(visaReady.itinerary, true);
+  const services = readFileSync(new URL("../src/features/package-form/ui/services-step.tsx", import.meta.url), "utf8");
+  assert.match(services, /VisaOffersEditor/);
   const stays = syncStaysWithDistricts([], ["Istanbul", "Cappadocia"]);
   assert.deepEqual(stays.map((s) => s.city), ["Istanbul", "Cappadocia"]);
   const kept = syncStaysWithDistricts([{ city: "Istanbul", nights: 3, hotel: emptySpec().makkah }, { city: "Ankara", nights: 2, hotel: { ...emptySpec().makkah, name: "Divan" } }], ["Istanbul"]);

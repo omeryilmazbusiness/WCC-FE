@@ -35,6 +35,12 @@ type Props = {
   hint?: string;
   /** Show this customer's personal sheets next to the catalogue. */
   customerId?: string | null;
+  /** Restrict the catalogue to one kind (e.g. visa desk). */
+  kind?: string | null;
+  /** Hide kinds the current booking service should not sell. */
+  excludeKinds?: readonly string[];
+  /** Open the search list immediately (visa service row, empty pick). */
+  defaultOpen?: boolean;
   testId?: string;
 };
 
@@ -49,12 +55,15 @@ export function PackagePicker({
   label,
   hint,
   customerId,
+  kind = null,
+  excludeKinds,
+  defaultOpen = false,
   testId = "package-picker",
 }: Props) {
   const t = useTranslations("packageLink");
   const locale = useLocale();
-  const { packages, byId, loading } = usePackageCatalog();
-  const [open, setOpen] = useState(false);
+  const { packages, byId, loading, refresh } = usePackageCatalog();
+  const [open, setOpen] = useState(defaultOpen && !value.packageId);
   const [q, setQ] = useState("");
   const listId = useId();
   const selected = value.packageId ? byId.get(value.packageId) ?? null : null;
@@ -63,12 +72,15 @@ export function PackagePicker({
   const today = todayLocal();
 
   const results = useMemo(
-    () => searchPackages(packages, q, { keepId: value.packageId, customerId }),
-    [packages, q, value.packageId, customerId],
+    () => searchPackages(packages, q, { keepId: value.packageId, customerId, kind, excludeKinds }),
+    [packages, q, value.packageId, customerId, kind, excludeKinds],
   );
 
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  useEffect(() => {
+    if (open) void refresh();
+  }, [open, refresh]);
   useEffect(() => {
     if (!showDepartures || depsLoading) return;
     const next = reconcileDeparture(value, departures, today, requireDeparture);

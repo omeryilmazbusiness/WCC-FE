@@ -27,7 +27,7 @@ import { Link, useRouter } from "@/shared/i18n/navigation";
 import { EmptyState, LoadingState, QueryState, Screen, Tabs, TabsContent, TabsList, TabsTrigger, errorKind, useToast } from "@/shared/ui";
 import { summarizeReserved } from "../model/reserved";
 import { usePackageLinks } from "../model/use-package-links";
-import { PACKAGE_TABS, usePackageTab, type PackageTab } from "../model/use-package-tab";
+import { tabsForKind, usePackageTab, type PackageTab } from "../model/use-package-tab";
 import { DepartureCard } from "./departure-card";
 import { PackageHero } from "./package-hero";
 import { PackageLinksTab } from "./package-links-tab";
@@ -157,7 +157,7 @@ export function PackageDetailBoard({ packageId, repository }: Props) {
       <Tabs value={tab} onValueChange={selectTab} className="mt-5">
         <div className="-mx-1 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <TabsList className="h-auto w-max min-w-full gap-1 rounded-[22px] p-1.5" aria-label={t("title")}>
-            {PACKAGE_TABS.map((key) => {
+            {tabsForKind(pkg.kind).map((key) => {
               const Icon = TAB_ICON[key];
               return (
                 <TabsTrigger key={key} value={key} className="group gap-2 rounded-2xl px-3.5 py-2.5 text-[13.5px]" data-testid={`package-tab-${key}`}>

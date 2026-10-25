@@ -35,7 +35,7 @@ import {
   type Tone,
 } from "@/shared/ui";
 import { packageFormDefaults, packageFormSchema, toPackageInput, type PackageFormValues } from "../model/form";
-import { PACKAGE_STEPS, errorPaths, firstErrorStep, stepOfPath, type PackageStep } from "../model/steps";
+import { errorPaths, firstErrorStep, stepOfPath, stepsForKind, type PackageStep } from "../model/steps";
 import { HotelsStep } from "./hotels-step";
 import { IdentityStep } from "./identity-step";
 import { ItineraryStep } from "./itinerary-step";
@@ -112,9 +112,15 @@ export function PackageFormDialog({ repository, pkg, takenCodes = [], open, onOp
     bodyRef.current?.scrollTo({ top: 0 });
   }, [step]);
 
+  const kind = form.watch("kind");
+  const steps = stepsForKind(kind);
   const errorSteps = new Set(errorPaths(form.formState.errors).map(stepOfPath));
-  const index = PACKAGE_STEPS.indexOf(step);
-  const last = index === PACKAGE_STEPS.length - 1;
+  const index = Math.max(0, steps.indexOf(step));
+  const last = index === steps.length - 1;
+
+  useEffect(() => {
+    if (!steps.includes(step)) setStep(steps[0] ?? "identity");
+  }, [steps, step]);
 
   async function onSubmit(values: PackageFormValues) {
     const input = toPackageInput(values, (code) => t(`tier.${code}`), tiers);
@@ -125,7 +131,7 @@ export function PackageFormDialog({ repository, pkg, takenCodes = [], open, onOp
       onOpenChange(false);
     } catch (err) {
       if (applyFieldErrors(form.setError, err, SERVER_FIELDS)) {
-        setStep(firstErrorStep(form.formState.errors) ?? "identity");
+        setStep(firstErrorStep(form.formState.errors, form.getValues("kind")) ?? "identity");
       } else {
         feedback.error(err, t("form.saveError"));
       }
@@ -133,7 +139,7 @@ export function PackageFormDialog({ repository, pkg, takenCodes = [], open, onOp
   }
 
   function onInvalid(errors: FieldErrors<PackageFormValues>) {
-    const target = firstErrorStep(errors);
+    const target = firstErrorStep(errors, form.getValues("kind"));
     if (target) setStep(target);
     toast.push({ title: t("form.fixErrors"), tone: "error" });
   }
@@ -151,7 +157,7 @@ export function PackageFormDialog({ repository, pkg, takenCodes = [], open, onOp
               <DialogDescription className="mt-1 text-[13px]">{creating ? t("form.createSubtitle") : t("form.editSubtitle")}</DialogDescription>
             </div>
           </div>
-          <StepRail current={step} errors={errorSteps} onSelect={setStep} />
+          <StepRail steps={steps} current={step} errors={errorSteps} onSelect={setStep} />
         </DialogHeader>
 
         <FormProvider {...form}>
@@ -172,18 +178,18 @@ export function PackageFormDialog({ repository, pkg, takenCodes = [], open, onOp
                 variant="ghost"
                 className="gap-1.5"
                 disabled={index === 0}
-                onClick={() => setStep(PACKAGE_STEPS[Math.max(0, index - 1)])}
+                onClick={() => setStep(steps[Math.max(0, index - 1)])}
                 data-testid="package-form-back"
               >
                 <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden />
                 {t("form.back")}
               </Button>
               <span className="hidden flex-1 text-center text-[12px] font-medium text-zinc-400 sm:block">
-                {t("form.stepOf", { n: index + 1, total: PACKAGE_STEPS.length })}
+                {t("form.stepOf", { n: index + 1, total: steps.length })}
               </span>
               <span className="flex-1 sm:hidden" />
               {!last ? (
-                <Button type="button" variant="outline" className="gap-1.5" onClick={() => setStep(PACKAGE_STEPS[index + 1])} data-testid="package-form-next">
+                <Button type="button" variant="outline" className="gap-1.5" onClick={() => setStep(steps[index + 1])} data-testid="package-form-next">
                   {t("form.next")}
                   <ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden />
                 </Button>
@@ -209,12 +215,12 @@ function SubmitButton({ label }: { label: string }) {
   );
 }
 
-function StepRail({ current, errors, onSelect }: { current: PackageStep; errors: Set<PackageStep>; onSelect: (s: PackageStep) => void }) {
+function StepRail({ steps, current, errors, onSelect }: { steps: readonly PackageStep[]; current: PackageStep; errors: Set<PackageStep>; onSelect: (s: PackageStep) => void }) {
   const t = useTranslations("packages");
   return (
-    <nav className="-mx-5 mt-4 overflow-x-auto px-5 pb-1 sm:-mx-7 sm:px-7" aria-label={t("form.stepOf", { n: PACKAGE_STEPS.indexOf(current) + 1, total: PACKAGE_STEPS.length })}>
+    <nav className="-mx-5 mt-4 overflow-x-auto px-5 pb-1 sm:-mx-7 sm:px-7" aria-label={t("form.stepOf", { n: steps.indexOf(current) + 1, total: steps.length })}>
       <ol className="flex min-w-max gap-1.5">
-        {PACKAGE_STEPS.map((s, i) => {
+        {steps.map((s, i) => {
           const look = STEP_LOOK[s];
           const Icon = look.icon;
           const active = s === current;

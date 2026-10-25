@@ -7,6 +7,12 @@ export const PACKAGE_TABS = ["overview", "hotels", "pricing", "logistics", "serv
 
 export type PackageTab = (typeof PACKAGE_TABS)[number];
 
+const VISA_HIDDEN = new Set<PackageTab>(["hotels", "pricing", "logistics", "itinerary"]);
+
+export function tabsForKind(kind: string): PackageTab[] {
+  return kind === "visa" ? PACKAGE_TABS.filter((tab) => !VISA_HIDDEN.has(tab)) : [...PACKAGE_TABS];
+}
+
 function isPackageTab(v: string | null): v is PackageTab {
   return v !== null && (PACKAGE_TABS as readonly string[]).includes(v);
 }

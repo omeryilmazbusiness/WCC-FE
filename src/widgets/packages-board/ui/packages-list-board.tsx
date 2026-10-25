@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import type { ColumnDef } from "@tanstack/react-table";
-import { CalendarClock, Landmark, LayoutGrid, MapPin, Moon, Package, PackagePlus, Rows3, ShoppingBag, UsersRound, type LucideIcon } from "lucide-react";
+import { CalendarClock, Landmark, LayoutGrid, MapPin, Moon, Package, PackagePlus, Rows3, ShoppingBag, Stamp, UsersRound, type LucideIcon } from "lucide-react";
 import {
   CATEGORY_LOOK,
   PackageCard,
@@ -24,7 +24,7 @@ import { formatDay, formatMoneyWhole } from "@/shared/lib/format";
 import { useApiQuery } from "@/shared/lib/use-api-query";
 import { DataTable, EmptyState, ListScreen, QueryState, SearchFilterBar, SegmentedControl, TONES, type Tone } from "@/shared/ui";
 
-type Quick = "all" | "umrah" | "hajj" | "other" | "personal" | "open" | "soon";
+type Quick = "all" | "umrah" | "hajj" | "other" | "visa" | "personal" | "open" | "soon";
 type ViewMode = "cards" | "table";
 const VIEW_KEY = "wcc.packages.view";
 const SOON_DAYS = 30;
@@ -34,6 +34,7 @@ const QUICK: { key: Quick; icon: LucideIcon; tone: Tone }[] = [
   { key: "umrah", icon: Moon, tone: "emerald" },
   { key: "hajj", icon: Landmark, tone: "amber" },
   { key: "other", icon: MapPin, tone: "teal" },
+  { key: "visa", icon: Stamp, tone: "rose" },
   { key: "personal", icon: UsersRound, tone: "violet" },
   { key: "open", icon: ShoppingBag, tone: "sky" },
   { key: "soon", icon: CalendarClock, tone: "rose" },
@@ -46,6 +47,7 @@ function matches(p: TourPackage, q: Quick, today: string, soon: string): boolean
     case "umrah":
     case "hajj":
     case "other":
+    case "visa":
       return p.kind === q;
     case "personal":
       return p.category === "personal";
@@ -71,6 +73,7 @@ function searchText(p: TourPackage): string {
     s.destination?.country,
     ...(s.destination?.districts ?? []),
     ...(s.stays ?? []).map((stay) => stay.city),
+    ...(s.visaOffers ?? []).map((o) => o.type),
   ]
     .join(" ")
     .toLowerCase();

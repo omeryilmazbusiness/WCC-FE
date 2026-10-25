@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2, Lock } from "lucide-react";
 import type { BookingRepository } from "@/entities/booking";
 import { createCustomerRepository } from "@/entities/customer";
 import { createTourPackageRepository } from "@/entities/tourpackage";
@@ -31,6 +31,9 @@ import {
   draftIssues,
   emptyBookingDraft,
   firstIssueStep,
+  isStepComplete,
+  isStepUnlocked,
+  stepHasIssues,
   toCreateInput,
   type BookingCreateStep,
   type BookingDraft,
@@ -114,21 +117,28 @@ export function CreateBookingDialog({
   if (!allowed) return null;
 
   const issues = draftIssues(draft);
-  const errorSteps = new Set(BOOKING_CREATE_STEPS.filter((s) => (issues[s]?.length ?? 0) > 0));
   const index = BOOKING_CREATE_STEPS.indexOf(step);
   const last = index === BOOKING_CREATE_STEPS.length - 1;
+  const currentReady = !stepHasIssues(issues, step);
 
   function patch(next: Partial<BookingDraft>) {
     setDraft((cur) => ({ ...cur, ...next }));
   }
 
+  function openStep(next: BookingCreateStep) {
+    if (!isStepUnlocked(next, issues)) {
+      push({ title: tf("stepLocked"), tone: "error" });
+      return;
+    }
+    setStep(next);
+  }
+
   function goNext() {
-    const currentIssues = issues[step] ?? [];
-    if (currentIssues.length) {
+    if (!currentReady) {
       push({ title: tf("fixErrors"), tone: "error" });
       return;
     }
-    setStep(BOOKING_CREATE_STEPS[Math.min(index + 1, BOOKING_CREATE_STEPS.length - 1)]);
+    openStep(BOOKING_CREATE_STEPS[Math.min(index + 1, BOOKING_CREATE_STEPS.length - 1)]);
   }
 
   async function submit() {
@@ -169,7 +179,7 @@ export function CreateBookingDialog({
               <DrawerDescription className="mt-1 text-[13px] leading-snug sm:text-[13.5px]">{tf("createSubtitle")}</DrawerDescription>
             </div>
           </div>
-          <StepRail current={step} errors={errorSteps} onSelect={setStep} />
+          <StepRail current={step} issues={issues} onSelect={openStep} />
         </DrawerHeader>
 
         <DrawerBody ref={bodyRef} className="bg-transparent px-5 py-5 sm:px-6" data-testid={`create-booking-step-${step}`}>
@@ -194,7 +204,7 @@ export function CreateBookingDialog({
             variant="ghost"
             className="h-11 shrink-0 gap-1.5 px-3 sm:px-4"
             disabled={index === 0}
-            onClick={() => setStep(BOOKING_CREATE_STEPS[Math.max(0, index - 1)])}
+            onClick={() => openStep(BOOKING_CREATE_STEPS[Math.max(0, index - 1)])}
             data-testid="create-booking-back"
           >
             <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden />
@@ -204,7 +214,7 @@ export function CreateBookingDialog({
             {tf("stepOf", { n: index + 1, total: BOOKING_CREATE_STEPS.length })}
           </span>
           {!last ? (
-            <Button type="button" className="h-11 shrink-0 gap-1.5 px-4 sm:px-5" onClick={goNext} data-testid="create-booking-next">
+            <Button type="button" className="h-11 shrink-0 gap-1.5 px-4 sm:px-5" disabled={!currentReady} onClick={goNext} data-testid="create-booking-next">
               {tf("next")}
               <ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden />
             </Button>
@@ -222,45 +232,64 @@ export function CreateBookingDialog({
 
 function StepRail({
   current,
-  errors,
+  issues,
   onSelect,
 }: {
   current: BookingCreateStep;
-  errors: Set<BookingCreateStep>;
+  issues: ReturnType<typeof draftIssues>;
   onSelect: (s: BookingCreateStep) => void;
 }) {
   const t = useTranslations("bookings");
+  const currentIndex = BOOKING_CREATE_STEPS.indexOf(current);
+  const doneCount = BOOKING_CREATE_STEPS.filter((s) => isStepComplete(s, issues)).length;
   return (
-    <nav className="mt-4" aria-label={t("form.stepOf", { n: BOOKING_CREATE_STEPS.indexOf(current) + 1, total: BOOKING_CREATE_STEPS.length })}>
+    <nav className="mt-4" aria-label={t("form.stepOf", { n: currentIndex + 1, total: BOOKING_CREATE_STEPS.length })}>
+      <div className="relative mb-2 h-1 overflow-hidden rounded-full bg-zinc-200/80" aria-hidden>
+        <div
+          className="h-full rounded-full bg-zinc-950 transition-[width] duration-300"
+          style={{ width: `${(Math.max(doneCount, currentIndex) / (BOOKING_CREATE_STEPS.length - 1)) * 100}%` }}
+        />
+      </div>
       <ol className="grid grid-cols-5 items-stretch gap-1 sm:gap-1.5">
-        {BOOKING_CREATE_STEPS.map((s) => {
+        {BOOKING_CREATE_STEPS.map((s, i) => {
           const look = STEP_LOOK[s];
           const Icon = look.icon;
           const active = s === current;
+          const unlocked = isStepUnlocked(s, issues);
+          const done = isStepComplete(s, issues) && !active;
+          const locked = !unlocked;
           return (
             <li key={s} className="min-w-0">
               <button
                 type="button"
                 onClick={() => onSelect(s)}
+                disabled={locked}
                 aria-current={active ? "step" : undefined}
-                aria-label={t(`steps.${s}.title`)}
+                aria-disabled={locked || undefined}
+                aria-label={locked ? `${t(`steps.${s}.title`)} — ${t("form.stepLocked")}` : done ? `${t(`steps.${s}.title`)} — ${t("form.stepDone")}` : t(`steps.${s}.title`)}
+                data-state={active ? "current" : done ? "done" : locked ? "locked" : "open"}
                 data-testid={`create-booking-rail-${s}`}
                 className={cn(
                   "relative flex h-full min-h-[4.75rem] w-full flex-col items-center justify-center gap-1 rounded-[18px] px-0.5 py-2 transition sm:min-h-[5.25rem] sm:gap-1.5 sm:rounded-[20px] sm:py-2.5",
-                  active ? "bg-zinc-950 text-white shadow-[0_14px_28px_-18px_rgba(15,23,42,0.65)]" : "text-zinc-500 hover:bg-white/80 hover:text-zinc-900",
+                  active && "bg-zinc-950 text-white shadow-[0_14px_28px_-18px_rgba(15,23,42,0.65)]",
+                  done && "bg-white text-zinc-800 ring-1 ring-zinc-200/80 hover:bg-zinc-50",
+                  locked && "cursor-not-allowed text-zinc-400 opacity-55",
+                  !active && !done && !locked && "text-zinc-500 hover:bg-white/80 hover:text-zinc-900",
                 )}
               >
                 <span
                   className={cn(
                     "flex h-9 w-9 items-center justify-center rounded-[12px] sm:h-11 sm:w-11 sm:rounded-[14px]",
-                    active ? TONES[look.tone].gradient : TONES[look.tone].soft,
+                    active ? TONES[look.tone].gradient : done ? "bg-emerald-50 text-emerald-700" : TONES[look.tone].soft,
                   )}
                   aria-hidden
                 >
-                  <Icon className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={2.15} />
+                  {locked ? <Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={2.2} /> : done ? <Check className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={2.6} /> : <Icon className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={2.15} />}
                 </span>
-                <span className="w-full truncate px-0.5 text-center text-[10px] font-semibold leading-none sm:text-[11px]">{t(`steps.${s}.title`)}</span>
-                {errors.has(s) ? <span className="absolute end-1 top-1 h-1.5 w-1.5 rounded-full bg-rose-500 ring-2 ring-white sm:end-1.5 sm:top-1.5 sm:h-2 sm:w-2" /> : null}
+                <span className="w-full truncate px-0.5 text-center text-[10px] font-semibold leading-none sm:text-[11px]">
+                  <span className="me-0.5 tabular-nums text-[9px] font-bold opacity-60 sm:text-[10px]">{i + 1}</span>
+                  {t(`steps.${s}.title`)}
+                </span>
               </button>
             </li>
           );

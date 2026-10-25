@@ -3,12 +3,13 @@
 import { useFormContext, useWatch } from "react-hook-form";
 import { useTranslations } from "next-intl";
 import { Gift, HeartPulse, ListChecks, MapPinned, ShieldCheck, Sparkles, UserRound, UserRoundCheck, Stamp } from "lucide-react";
-import { KIT_ITEMS, KIT_LOOK, VISA_LOOK, VISA_TYPES, ZIYARAT, ZIYARAT_LOOK, isPilgrimage, lookOf } from "@/entities/tourpackage";
+import { KIT_ITEMS, KIT_LOOK, VISA_LOOK, VISA_TYPES, ZIYARAT, ZIYARAT_LOOK, isPilgrimage, isVisaKind, lookOf } from "@/entities/tourpackage";
 import { FormControl, FormField, FormItem, FormLabel, FormSection, IconInput, Textarea } from "@/shared/ui";
 import type { PackageFormValues } from "../model/form";
 import { AddableChipSet } from "./addable-chips";
 import { ChoiceGrid, SwitchRow } from "./controls";
 import { NamedItemsEditor } from "./named-items-editor";
+import { VisaOffersEditor } from "./visa-offers-editor";
 
 const toLines = (v: string) =>
   v
@@ -19,6 +20,7 @@ const toLines = (v: string) =>
 
 export function ServicesStep() {
   const kind = useWatch({ name: "kind" });
+  if (isVisaKind(kind)) return <VisaOffersEditor />;
   return isPilgrimage(kind) ? <PilgrimageServices /> : <CustomTourServices />;
 }
 

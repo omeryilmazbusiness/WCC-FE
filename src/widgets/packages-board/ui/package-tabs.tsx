@@ -134,14 +134,16 @@ export function OverviewTab({ pkg, checks, onJump }: TabProps & { checks: Record
         <InfoSection icon={Ticket} tone="indigo" title={t("steps.identity.title")} data-testid="package-overview-identity">
           {pkg.description ? <p className="mb-3 text-start text-[13.5px] leading-relaxed text-zinc-600" dir="auto">{pkg.description}</p> : null}
           <Rows>
-            {pkg.kind === "other" ? (
+            {pkg.kind === "visa" ? (
+              <InfoRow icon={Stamp} tone="rose" label={t("form.services.visaOffers")} value={s.visaOffers.length ? s.visaOffers.map((o) => t(`visa.${o.type}`)).join(" · ") : t("detail.notSet")} muted={!s.visaOffers.length} />
+            ) : pkg.kind === "other" ? (
               <InfoRow icon={MapPin} tone="teal" label={t("form.identity.destination")} value={s.destination.country || t("detail.notSet")} muted={!s.destination.country} hint={s.destination.districts.join(" · ") || undefined} />
             ) : (
               <InfoRow icon={lookOf(VISA_LOOK, s.visa.type).icon} tone="emerald" label={t("form.services.visa")} value={s.visa.type ? t(`visa.${s.visa.type}`) : t("detail.notSet")} muted={!s.visa.type} hint={s.visa.type ? `Nusuk · ${s.visa.type}` : undefined} />
             )}
             <InfoRow icon={UserRound} tone="indigo" label={t("detail.leader")} value={s.guidance.leaderName || t("detail.notSet")} muted={!s.guidance.leaderName} hint={pkg.kind !== "other" && s.guidance.femaleGuide ? t("form.services.femaleGuide") : undefined} />
-            {pkg.kind !== "other" ? <InfoRow icon={HeartPulse} tone="rose" label={t("form.services.healthInsurance")} value={yesNo(s.visa.healthInsurance)} /> : null}
-            <InfoRow icon={lookOf(INTERCITY_LOOK, s.transfers.intercity).icon} tone="sky" label={t("form.logistics.intercity")} value={s.transfers.intercity ? t(`intercity.${s.transfers.intercity}`) : t("detail.notSet")} muted={!s.transfers.intercity} />
+            {pkg.kind !== "other" && pkg.kind !== "visa" ? <InfoRow icon={HeartPulse} tone="rose" label={t("form.services.healthInsurance")} value={yesNo(s.visa.healthInsurance)} /> : null}
+            {pkg.kind === "visa" ? null : <InfoRow icon={lookOf(INTERCITY_LOOK, s.transfers.intercity).icon} tone="sky" label={t("form.logistics.intercity")} value={s.transfers.intercity ? t(`intercity.${s.transfers.intercity}`) : t("detail.notSet")} muted={!s.transfers.intercity} />}
           </Rows>
         </InfoSection>
         <IncludedCard pkg={pkg} />
@@ -179,6 +181,22 @@ export function OverviewTab({ pkg, checks, onJump }: TabProps & { checks: Record
 
 function IncludedCard({ pkg }: TabProps) {
   const t = useTranslations("packages");
+  if (pkg.kind === "visa") {
+    const items = pkg.spec.visaOffers;
+    if (!items.length) return null;
+    return (
+      <InfoSection icon={Stamp} tone="rose" title={t("form.services.visaOffers")}>
+        <ul className="space-y-2">
+          {items.map((o) => (
+            <li key={o.type} className="rounded-[18px] bg-rose-50/70 p-3">
+              <p className="text-[13.5px] font-semibold text-zinc-900">{t(`visa.${o.type}`)}</p>
+              {o.notes ? <p className="mt-1 text-[12.5px] text-zinc-500" dir="auto">{o.notes}</p> : null}
+            </li>
+          ))}
+        </ul>
+      </InfoSection>
+    );
+  }
   if (pkg.kind === "other") {
     const items = pkg.spec.services;
     if (!items.length) return null;
@@ -564,7 +582,32 @@ function LegCard({ icon: Icon, tone, label, leg }: { icon: typeof Plane; tone: T
 export function ServicesTab({ pkg }: TabProps) {
   const t = useTranslations("packages");
   const yesNo = useYesNo();
+  const locale = useLocale();
   const s = pkg.spec;
+  if (pkg.kind === "visa") {
+    return (
+      <InfoSection icon={Stamp} tone="rose" title={t("form.services.visaOffers")}>
+        {s.visaOffers.length === 0 ? (
+          <p className="text-[13.5px] font-medium text-zinc-500">{t("form.services.visaOffersEmpty")}</p>
+        ) : (
+          <ul className="space-y-2">
+            {s.visaOffers.map((o) => (
+              <li key={o.type} className="flex items-center justify-between gap-3 rounded-[18px] bg-rose-50/70 px-3.5 py-3">
+                <div>
+                  <p className="text-[14px] font-semibold text-zinc-900">{t(`visa.${o.type}`)}</p>
+                  <p className="text-[12.5px] text-zinc-500">
+                    {o.processingDays ? t("form.identity.processingDays", { n: o.processingDays }) : null}
+                    {o.healthInsurance ? ` · ${t("form.services.healthInsurance")}` : ""}
+                  </p>
+                </div>
+                <p className="text-[15px] font-bold tabular-nums text-zinc-950">{formatMoney(o.sell, locale, pkg.baseCurrency)}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </InfoSection>
+    );
+  }
   if (pkg.kind === "other") {
     return (
       <div className="grid gap-4 lg:grid-cols-2">
