@@ -6,7 +6,7 @@ import {
   normalizeCity,
   normalizeCountry,
 } from "@/entities/company/place";
-import type { RegisterCompanyInput } from "@/entities/company";
+import { parseCompanyPlan, type CompanyPlan } from "@/entities/company/plan";
 import { passwordIssue, slugify } from "@/features/gm-setup/model/flow";
 
 export type RegisterCompanyForm = {
@@ -16,6 +16,7 @@ export type RegisterCompanyForm = {
   country: string;
   city: string;
   address: string;
+  plan: CompanyPlan;
   gmName: string;
   gmEmail: string;
   gmPassword: string;
@@ -30,6 +31,7 @@ export const EMPTY_REGISTER_FORM: Omit<RegisterCompanyForm, "gmPassword"> = {
   country: "",
   city: "",
   address: "",
+  plan: "standard",
   gmName: "",
   gmEmail: "",
 };
@@ -44,6 +46,7 @@ export const REGISTER_SERVER_FIELDS: Record<string, RegisterField> = {
   country: "country",
   city: "city",
   address: "address",
+  plan: "plan",
   gm_full_name: "gmName",
   gm_email: "gmEmail",
   email: "gmEmail",
@@ -60,6 +63,7 @@ export function registerCompanyHints(f: RegisterCompanyForm): Partial<Record<Reg
   if (!isCountryName(f.country)) out.country = "country";
   if (!isCityName(f.city)) out.city = "city";
   if (!isStreetAddress(f.address)) out.address = "address";
+  if (!parseCompanyPlan(f.plan)) out.plan = "plan";
   if (f.gmName.trim().length < 2) out.gmName = "gmName";
   if (!EMAIL.test(f.gmEmail.trim())) out.gmEmail = "gmEmail";
   const pw = passwordIssue(f.gmPassword);
@@ -67,7 +71,7 @@ export function registerCompanyHints(f: RegisterCompanyForm): Partial<Record<Reg
   return out;
 }
 
-export function registerCompanyPayload(f: RegisterCompanyForm): RegisterCompanyInput {
+export function registerCompanyPayload(f: RegisterCompanyForm) {
   return {
     name_en: f.nameEn.trim(),
     name_ar: f.nameAr.trim() || undefined,
@@ -75,6 +79,7 @@ export function registerCompanyPayload(f: RegisterCompanyForm): RegisterCompanyI
     country: normalizeCountry(f.country),
     city: normalizeCity(f.city),
     address: normalizeAddress(f.address),
+    plan: parseCompanyPlan(f.plan) ?? "standard",
     gm: { full_name: f.gmName.trim(), email: f.gmEmail.trim(), password: f.gmPassword },
   };
 }

@@ -1,8 +1,9 @@
 "use client";
 
 import { memo, type DragEvent } from "react";
-import { ChevronDown, Star } from "lucide-react";
+import { ChevronDown, Lock, Star } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useUpgradePlan } from "@/features/request-plan-upgrade";
 import { MAX_NAV_FAVORITES } from "@/entities/ui-preference";
 import type { GuardedRoute } from "@/shared/config/permissions";
 import { Link } from "@/shared/i18n/navigation";
@@ -148,9 +149,27 @@ export function NavItemLink({
 }: ItemProps) {
   const tf = useTranslations("nav.favorites");
   const openScreen = useScreenOpener();
+  const upgrade = useUpgradePlan();
   const Icon = item.icon;
   const pinned = favorites.has(item.href);
   const full = !pinned && favorites.isFull;
+  if (item.locked) {
+    return (
+      <button
+        type="button"
+        onClick={() => upgrade.open(item.href, item.label)}
+        data-testid={`shell-nav-locked-${item.label}`}
+        className={cn(
+          "flex h-10 w-full items-center gap-3 rounded-xl px-3 text-[13.5px] font-medium text-zinc-600 transition-colors duration-200 hover:bg-white/[0.04] hover:text-zinc-500",
+          FOCUS_RING,
+        )}
+      >
+        <Icon className="h-5 w-5 shrink-0 text-zinc-700" strokeWidth={1.9} />
+        <span className="min-w-0 flex-1 truncate text-start">{label}</span>
+        <Lock className="h-3.5 w-3.5 shrink-0 text-zinc-700" strokeWidth={2.2} aria-hidden />
+      </button>
+    );
+  }
   return (
     <div className="group/item relative">
       <Link

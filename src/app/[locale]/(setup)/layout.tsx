@@ -1,4 +1,4 @@
-import { setRequestLocale } from "next-intl/server";
+import { getMessages, setRequestLocale } from "next-intl/server";
 import { redirect } from "@/shared/i18n/navigation";
 import { getServerSession, getServerWorkspace } from "@/shared/api/get-server-session";
 import { homeFor } from "@/shared/config/permissions";
@@ -25,7 +25,12 @@ export default async function SetupLayout({ children, params }: Props) {
   }
 
   return (
-    <ShellProviders viewer={session} workspace={await getServerWorkspace()}>
+    <ShellProviders
+      viewer={session}
+      workspace={await getServerWorkspace()}
+      locale={locale}
+      messages={await getMessages()}
+    >
       {children}
     </ShellProviders>
   );

@@ -29,6 +29,7 @@ function form(patch: Partial<RegisterCompanyForm> = {}): RegisterCompanyForm {
     country: "Syria",
     city: "Damascus",
     address: "Mazzeh, next to the mosque",
+    plan: "standard",
     gmName: "Sara Ahmad",
     gmEmail: "sara@alnoor.test",
     gmPassword: "Sahra2026Trip",
@@ -74,6 +75,7 @@ function payload() {
   assert.equal(body.address, "Mazzeh, next to the mosque");
   assert.equal(body.slug, undefined, "empty slug is derived on the server");
   assert.equal(body.gm.email, "sara@alnoor.test");
+  assert.equal(body.plan, "standard");
   const iso = registerCompanyPayload(form({ country: "sy" }));
   assert.equal(iso.country, "SY", "two-letter tokens stay ISO codes");
 }
@@ -83,6 +85,7 @@ function wiring() {
   assert.match(dialog, /FormSection icon=\{MapPinned\}/);
   assert.match(dialog, /FormSection icon=\{Building2\}/);
   assert.match(dialog, /FormSection icon=\{UserRound\}/);
+  assert.match(dialog, /PlanPicker/);
   assert.match(dialog, /data-testid="company-field-country"/);
   assert.match(dialog, /data-testid="company-field-city"/);
   assert.match(dialog, /data-testid="company-field-address"/);

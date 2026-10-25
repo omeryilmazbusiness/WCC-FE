@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { setRequestLocale } from "next-intl/server";
+import { getMessages, setRequestLocale } from "next-intl/server";
 import { redirect } from "@/shared/i18n/navigation";
 import { getServerSession, getServerWorkspace } from "@/shared/api/get-server-session";
 import { routes } from "@/shared/config/routes";
@@ -20,15 +20,18 @@ export default async function ShellLayout({ children, params }: Props) {
     return null;
   }
 
-  const [workspace, preferences, jar] = await Promise.all([
+  const [workspace, preferences, jar, messages] = await Promise.all([
     getServerWorkspace(),
     loadUiPreferences(),
     cookies(),
+    getMessages(),
   ]);
   return (
     <AppShell
       viewer={session}
       workspace={workspace}
+      locale={locale}
+      messages={messages}
       navFavorites={preferences?.navFavorites ?? null}
       sidebarCollapsed={isSidebarCollapsed(jar.get(SIDEBAR_COOKIE)?.value)}
     >

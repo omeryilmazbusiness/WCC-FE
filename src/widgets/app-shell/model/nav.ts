@@ -31,7 +31,7 @@ import {
   Wrench,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { MAX_NAV_FAVORITES } from "@/entities/ui-preference";
+import { MAX_NAV_FAVORITES } from "@/entities/ui-preference/model";
 import {
   ROUTE_PERMISSIONS,
   grants,
@@ -74,6 +74,8 @@ export type NavItem = {
   icon: LucideIcon;
   /** Hide when the viewer also holds this (e.g. managers land on the dashboard). */
   unless?: Permission;
+  /** Role would open it; the company plan does not. */
+  locked?: boolean;
 };
 
 export type NavGroupId = "overview" | "sales" | "operations" | "finance" | "tools" | "admin";
@@ -176,9 +178,21 @@ function canSee(item: NavItem, permissions: readonly string[]): boolean {
 
 /** Groups trimmed to the viewer's permitted items; empty groups are dropped. */
 export function visibleNavGroups(permissions: readonly string[]): NavGroup[] {
+  return navGroupsFor(permissions, permissions);
+}
+
+/**
+ * Unlocked items the session may open, plus plan-locked items the role would
+ * have on a higher package. `roleGranted` is the role matrix before the plan cut.
+ */
+export function navGroupsFor(granted: readonly string[], roleGranted: readonly string[]): NavGroup[] {
   return NAV_GROUPS.map((group) => ({
     ...group,
-    items: group.items.filter((item) => canSee(item, permissions)),
+    items: group.items.flatMap((item) => {
+      if (canSee(item, granted)) return [{ ...item, locked: false }];
+      if (canSee(item, roleGranted)) return [{ ...item, locked: true }];
+      return [];
+    }),
   })).filter((group) => group.items.length > 0);
 }
 
@@ -204,7 +218,7 @@ export function resolveFavorites(
   const out: FavoriteItem[] = [];
   for (const href of saved ?? DEFAULT_FAVORITES) {
     const item = byHref.get(RENAMED_HREFS[href] ?? href);
-    if (item && !out.some((f) => f.href === href)) out.push(item);
+    if (item && !item.locked && !out.some((f) => f.href === href)) out.push(item);
     if (out.length === MAX_NAV_FAVORITES) break;
   }
   return out;

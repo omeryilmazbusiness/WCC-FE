@@ -172,7 +172,7 @@ export function homeFor(role: AppRole, granted: readonly string[]): string {
 export const DEMO_ROLE_PERMISSIONS: Record<AppRole, readonly Permission[]> = {
   gm: PERMISSIONS.filter((p) => p !== "companies.manage" && p !== "support.manage"),
   // Platform operator: belongs to no company and holds no company-data permission.
-  admin: ["companies.manage", "users.read", "users.write", "users.unlock", "audit.read", "ops.read", "support.manage"],
+  admin: ["companies.manage", "users.read", "users.write", "users.unlock", "audit.read", "ops.read", "support.manage", "notifications.read"],
   agent: [
     "branches.read", "customers.read", "customers.write", "leads.read", "leads.write",
     "bookings.read", "bookings.write", "documents.read", "documents.write", "visa.read",
@@ -191,6 +191,9 @@ export const DEMO_ROLE_PERMISSIONS: Record<AppRole, readonly Permission[]> = {
     "ai.read", "settings.read", "support.write",
   ],
 };
+
+/** Client mirror of the backend role matrix; used to show plan-locked nav items. */
+export const ROLE_PERMISSIONS = DEMO_ROLE_PERMISSIONS;
 
 export const DEMO_ROLE_SCOPE: Record<AppRole, AccessScope> = {
   gm: "company",

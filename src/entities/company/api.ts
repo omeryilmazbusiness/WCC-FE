@@ -1,4 +1,6 @@
 import { http } from "@/shared/api/http-client";
+import { parsePlanTerm, type PlanTerm } from "./term";
+import type { CompanyPlan } from "./plan";
 
 /** Tenant row in the platform console (`GET /platform/companies`). */
 export type PlatformCompany = {
@@ -17,6 +19,8 @@ export type PlatformCompany = {
   has_logo: boolean;
   /** Changes with every logo upload; `null` without a logo. */
   logo_version: string | null;
+  plan: CompanyPlan;
+  term?: PlanTerm | null;
 };
 
 export type RegisterCompanyInput = {
@@ -28,6 +32,7 @@ export type RegisterCompanyInput = {
   city?: string;
   address?: string;
   gm: { full_name: string; email: string; password: string };
+  plan: "standard" | "premium" | "ultimate";
 };
 
 export type RegisteredCompany = {
@@ -38,10 +43,48 @@ export type RegisteredCompany = {
 
 export const COMPANY_LIST_LIMIT = 100;
 
+function mapCompany(raw: PlatformCompany): PlatformCompany {
+  const term = parsePlanTerm((raw as PlatformCompany & { term?: unknown }).term);
+  return { ...raw, term };
+}
+
 export async function listCompanies(params?: { q?: string }): Promise<PlatformCompany[]> {
   const sp = new URLSearchParams({ limit: String(COMPANY_LIST_LIMIT) });
   if (params?.q) sp.set("q", params.q);
-  return http.request<PlatformCompany[]>(`/platform/companies?${sp}`);
+  const rows = await http.request<PlatformCompany[]>(`/platform/companies?${sp}`);
+  return Array.isArray(rows) ? rows.map(mapCompany) : [];
+}
+
+export async function getCompany(id: string): Promise<PlatformCompany> {
+  return mapCompany(await http.request<PlatformCompany>(`/platform/companies/${id}`));
+}
+
+export async function saveCompany(
+  id: string,
+  body: {
+    name_en: string;
+    name_ar?: string;
+    slug?: string;
+    country?: string;
+    city?: string;
+    address?: string;
+  },
+): Promise<PlatformCompany> {
+  return mapCompany(
+    await http.request<PlatformCompany>(`/platform/companies/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  );
+}
+
+export async function updateCompanyPlan(id: string, plan: CompanyPlan): Promise<PlatformCompany> {
+  return mapCompany(
+    await http.request<PlatformCompany>(`/platform/companies/${id}/plan`, {
+      method: "PUT",
+      body: JSON.stringify({ plan }),
+    }),
+  );
 }
 
 /** Creates the company, its main center and the GM account in one transaction. */

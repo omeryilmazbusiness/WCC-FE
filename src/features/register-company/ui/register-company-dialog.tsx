@@ -13,10 +13,12 @@ import {
   MapPin,
   MapPinned,
   RefreshCw,
+  Sparkles,
   Trash2,
   UserRound,
 } from "lucide-react";
 import { registerCompany } from "@/entities/company";
+import type { CompanyPlan } from "@/entities/company";
 import {
   companyLogoUrl,
   createCompanyBrandingApi,
@@ -44,6 +46,7 @@ import {
   type RegisterCompanyForm,
   type RegisterField,
 } from "../model/form";
+import { PlanPicker } from "./plan-picker";
 
 type Props = {
   open: boolean;
@@ -415,6 +418,15 @@ export function RegisterCompanyDialog({ open, onOpenChange, onRegistered }: Prop
               />
               <FieldError>{message("slug")}</FieldError>
             </Field>
+          </FormSection>
+
+          <FormSection icon={Sparkles} tone="sky" title={t("groups.plan")} hint={t("groups.planHint")}>
+            <PlanPicker
+              value={form.plan}
+              invalid={Boolean(errors.plan)}
+              onChange={(plan: CompanyPlan) => set("plan", plan)}
+            />
+            <FieldError>{message("plan")}</FieldError>
           </FormSection>
 
           <FormSection icon={MapPinned} tone="emerald" title={t("groups.location")} hint={t("groups.locationHint")}>

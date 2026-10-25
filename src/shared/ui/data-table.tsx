@@ -30,6 +30,7 @@ type DataTableProps<TData, TValue> = {
   emptyMessage?: string;
   /** Extra classes for the card wrapper, e.g. cell padding overrides via `[&_td]:`. */
   className?: string;
+  onRowClick?: (row: TData) => void;
 };
 
 export function DataTable<TData, TValue>({
@@ -37,6 +38,7 @@ export function DataTable<TData, TValue>({
   data,
   emptyMessage = "No results",
   className,
+  onRowClick,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -71,7 +73,12 @@ export function DataTable<TData, TValue>({
         <TableBody>
           {table.getRowModel().rows.length ? (
             table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
+              <TableRow
+                key={row.id}
+                onClick={onRowClick ? () => onRowClick(row.original) : undefined}
+                className={onRowClick ? "cursor-pointer hover:bg-zinc-50" : undefined}
+                data-testid={onRowClick ? "data-table-row" : undefined}
+              >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id} className={metaClass(cell.column.columnDef.meta)}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}

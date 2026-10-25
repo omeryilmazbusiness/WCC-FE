@@ -51,6 +51,7 @@ export type SessionCompany = {
   nameAr: string;
   /** Desk lock in minutes; 0 = off. Absent on older session cookies until /auth/me refreshes. */
   idleLogoutMinutes?: number;
+  plan?: "standard" | "premium" | "ultimate";
 };
 
 /** The viewer's tenant: company-wide viewers see every branch, staff only their own. */

@@ -10,9 +10,11 @@ import { WCC_LOGO } from "@/shared/config/brand";
 import { initials } from "@/shared/lib/avatar";
 import { cn } from "@/shared/lib/cn";
 import type { NavGroup } from "../model/nav";
+import { planBrandTone } from "../model/plan-brand";
 import { useScreenOpener } from "../model/screen-opener";
 import type { NavFavorites } from "../model/use-nav-favorites";
 import { FOCUS_RING } from "./nav-tone";
+import { PlanWordmark, planEdge, planHairline, planMarkRing } from "./plan-wordmark";
 import { SidebarNav } from "./sidebar-nav";
 import { SidebarRail } from "./sidebar-rail";
 
@@ -24,6 +26,7 @@ type Props = {
   activeHref: GuardedRoute | undefined;
   securityActive: boolean;
   user: { fullName: string; role: string; avatarVersion?: string | null };
+  plan?: string | null;
 };
 
 /** Dark sidebar frame: brand + collapse control, navigation, signed-in user. */
@@ -35,10 +38,13 @@ export function ShellSidebar({
   activeHref,
   securityActive,
   user,
+  plan,
 }: Props) {
   const t = useTranslations("nav");
   const ta = useTranslations("app");
   const openScreen = useScreenOpener();
+  const tone = planBrandTone(plan);
+  const badge = tone === "premium" || tone === "ultimate" ? ta(`planBadge.${tone}`) : "";
   const toggleLabel = `${collapsed ? t("expand") : t("collapse")} (Ctrl/⌘ B)`;
   const roleLabel = ta.has(`roles.${user.role}`) ? ta(`roles.${user.role}` as "roles.gm") : user.role;
 
@@ -47,14 +53,15 @@ export function ShellSidebar({
       data-collapsed={collapsed || undefined}
       data-testid="shell-sidebar"
       className={cn(
-        "sticky top-0 flex h-screen shrink-0 flex-col overflow-hidden bg-zinc-950 text-white transition-[width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
+        "relative sticky top-0 flex h-screen shrink-0 flex-col overflow-hidden bg-zinc-950 text-white transition-[width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
         collapsed ? "w-[76px]" : "w-64",
       )}
     >
+      <span aria-hidden className={cn("pointer-events-none absolute inset-x-0 top-0 h-px", planEdge(tone))} />
       <div
         className={cn(
-          "relative flex h-14 shrink-0 items-center",
-          collapsed ? "justify-center" : "gap-3 ps-4 pe-2",
+          "relative flex shrink-0 items-center",
+          collapsed ? "h-14 justify-center" : "min-h-14 gap-3 py-2.5 ps-4 pe-2",
         )}
       >
         {collapsed ? (
@@ -62,22 +69,33 @@ export function ShellSidebar({
             type="button"
             onClick={onToggle}
             aria-label={toggleLabel}
-            title={toggleLabel}
+            title={badge ? `${ta("name")} · ${badge}` : toggleLabel}
             aria-expanded={false}
             data-testid="shell-sidebar-toggle"
             className={cn("group/brand relative rounded-[12px]", FOCUS_RING)}
           >
-            <BrandMark className="transition-opacity duration-150 group-hover/brand:opacity-0 group-focus-visible/brand:opacity-0" />
+            <BrandMark tone={tone} className="transition-opacity duration-150 group-hover/brand:opacity-0 group-focus-visible/brand:opacity-0" />
             <span className="absolute inset-0 flex items-center justify-center rounded-[12px] bg-white/[0.08] text-white opacity-0 ring-1 ring-inset ring-white/15 transition-opacity duration-150 group-hover/brand:opacity-100 group-focus-visible/brand:opacity-100">
               <PanelLeftOpen className="h-4 w-4 rtl:-scale-x-100" strokeWidth={1.9} />
             </span>
           </button>
         ) : (
           <>
-            <BrandMark />
+            <BrandMark tone={tone} />
             <div className="min-w-0 flex-1 leading-none">
-              <p className="truncate text-[14px] font-semibold tracking-[0.12em] text-white">{ta("shortName")}</p>
-              <p className="mt-1.5 truncate text-[10.5px] font-medium tracking-wide text-zinc-400">{ta("name")}</p>
+              {tone === "standard" ? (
+                <>
+                  <p className="truncate text-[14px] font-semibold tracking-[0.12em] text-white">{ta("shortName")}</p>
+                  <div className="mt-1.5">
+                    <PlanWordmark tone={tone} name={ta("name")} badge={badge} />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <PlanWordmark tone={tone} name={ta("name")} badge={badge} />
+                  <p className="mt-1.5 truncate text-[10.5px] font-medium tracking-[0.14em] text-zinc-500">{ta("shortName")}</p>
+                </>
+              )}
             </div>
             <button
               type="button"
@@ -97,7 +115,7 @@ export function ShellSidebar({
         )}
         <span
           aria-hidden
-          className="pointer-events-none absolute inset-x-3 bottom-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent"
+          className={cn("pointer-events-none absolute inset-x-3 bottom-0 h-px", planHairline(tone))}
         />
       </div>
 
@@ -163,12 +181,13 @@ export function ShellSidebar({
 }
 
 /** WCC logo on a white app-icon tile (the artwork is drawn for a light background). */
-function BrandMark({ className }: { className?: string }) {
+function BrandMark({ className, tone }: { className?: string; tone: ReturnType<typeof planBrandTone> }) {
   return (
     <span
       aria-hidden
       className={cn(
-        "flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-white p-[3px] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_6px_16px_-6px_rgba(0,0,0,0.7)] ring-1 ring-white/20",
+        "flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-white p-[3px] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_6px_16px_-6px_rgba(0,0,0,0.7)] ring-1",
+        planMarkRing(tone),
         className,
       )}
     >

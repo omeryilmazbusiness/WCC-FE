@@ -65,6 +65,7 @@ function parseWorkspace(raw: unknown): SessionWorkspace | undefined {
       slug: str(company.slug),
       nameEn: str(company.nameEn),
       nameAr: str(company.nameAr),
+      plan: company.plan === "standard" || company.plan === "premium" || company.plan === "ultimate" ? company.plan : undefined,
       idleLogoutMinutes: typeof idle === "number" && Number.isFinite(idle) ? idle : undefined,
     },
     homeBranchId: str(r.homeBranchId),

@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Plus } from "lucide-react";
 import { COMPANY_LIST_LIMIT, listCompanies, type PlatformCompany } from "@/entities/company";
+import { EditCompanyDrawer } from "@/features/edit-company";
 import { CompanyLogoThumb, RegisterCompanyDialog } from "@/features/register-company";
 import { formatDateTime } from "@/shared/lib/format";
 import { useApiQuery } from "@/shared/lib/use-api-query";
@@ -23,7 +24,8 @@ export function CompaniesAdminView() {
   const tc = useTranslations("common");
   const locale = useLocale();
   const [query, setQuery] = useState("");
-  const [open, setOpen] = useState(false);
+  const [registerOpen, setRegisterOpen] = useState(false);
+  const [selected, setSelected] = useState<PlatformCompany | null>(null);
   const q = useDebouncedValue(query.trim(), 250);
 
   const companies = useApiQuery(() => listCompanies({ q: q || undefined }), [q], {
@@ -48,6 +50,14 @@ export function CompaniesAdminView() {
               <p className="truncate font-mono text-[11px] text-zinc-500">/{row.original.slug}</p>
             </div>
           </div>
+        ),
+      },
+      {
+        header: t("columns.plan"),
+        cell: ({ row }) => (
+          <Badge className="bg-zinc-50 font-medium capitalize text-zinc-700">
+            {t(`plans.${row.original.plan === "premium" || row.original.plan === "ultimate" ? row.original.plan : "standard"}.name`)}
+          </Badge>
         ),
       },
       {
@@ -94,7 +104,7 @@ export function CompaniesAdminView() {
       title={t("title")}
       description={t("subtitle")}
       actions={
-        <Button size="sm" onClick={() => setOpen(true)} data-testid="companies-register">
+        <Button size="sm" onClick={() => setRegisterOpen(true)} data-testid="companies-register">
           <Plus className="h-4 w-4" />
           {t("register")}
         </Button>
@@ -121,13 +131,25 @@ export function CompaniesAdminView() {
         empty={rows.length === 0}
         emptyTitle={t("empty")}
       >
-        <DataTable columns={columns} data={rows} />
+        <DataTable columns={columns} data={rows} onRowClick={setSelected} />
         {rows.length >= COMPANY_LIST_LIMIT ? (
           <p className="mt-3 text-[12px] text-zinc-500">{t("limitHint", { count: COMPANY_LIST_LIMIT })}</p>
         ) : null}
       </QueryState>
 
-      <RegisterCompanyDialog open={open} onOpenChange={setOpen} onRegistered={() => void companies.reload()} />
+      <RegisterCompanyDialog
+        open={registerOpen}
+        onOpenChange={setRegisterOpen}
+        onRegistered={() => void companies.reload()}
+      />
+      <EditCompanyDrawer
+        company={selected}
+        open={Boolean(selected)}
+        onOpenChange={(next) => {
+          if (!next) setSelected(null);
+        }}
+        onSaved={() => void companies.reload()}
+      />
     </ListScreen>
   );
 }

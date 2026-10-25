@@ -113,7 +113,14 @@ export type BackendWorkspaceBranch = {
 export type BackendMeResponse = BackendUser & {
   permissions: string[];
   scope: AccessScope;
-  company?: { id: string; slug: string; name_en: string; name_ar: string; idle_logout_minutes?: number };
+  company?: {
+    id: string;
+    slug: string;
+    name_en: string;
+    name_ar: string;
+    plan?: "standard" | "premium" | "ultimate";
+    idle_logout_minutes?: number;
+  };
   home_branch_id?: string;
   active_branch_id?: string;
   branches?: BackendWorkspaceBranch[];

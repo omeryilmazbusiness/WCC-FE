@@ -525,3 +525,23 @@ html:has(.night-aurora) body {
     animation: none;
   }
 }
+
+/* Sidebar product name: a slow sheen across Premium (blue) / Ultimate (gold). */
+@keyframes plan-sheen {
+  0% {
+    background-position: 130% 50%;
+  }
+  100% {
+    background-position: -30% 50%;
+  }
+}
+.plan-sheen {
+  background-size: 240% 100%;
+  animation: plan-sheen 5.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .plan-sheen {
+    animation: none;
+    background-position: 50% 50%;
+  }
+}

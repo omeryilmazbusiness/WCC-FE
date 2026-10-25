@@ -1,20 +1,24 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations, type AbstractIntlMessages } from "next-intl";
 import type { ViewerSession } from "@/shared/api/session";
 import { loginHref, sessionEndReason } from "@/shared/api/session-end";
 import { routes } from "@/shared/config/routes";
+import { IntlClientProvider } from "@/shared/i18n/intl-client-provider";
 import { usePathname, useWorkspaceRef, WorkspaceRefProvider } from "@/shared/i18n/navigation";
+import { routing } from "@/shared/i18n/routing";
 import { cn } from "@/shared/lib/cn";
 import type { WorkspaceRef } from "@/shared/lib/workspace-path";
 import { ToastProvider } from "@/shared/ui";
 import { ViewerProvider, useCan, useViewer } from "@/entities/viewer";
+import { UpgradePlanProvider } from "@/features/request-plan-upgrade";
+import { ROLE_PERMISSIONS } from "@/shared/config/permissions";
 import { AssistantBubble, AssistantPanel, AssistantProvider, useAssistantTransport } from "@/features/ai-assistant";
 import { SessionExpiryWatcher } from "@/features/auth-by-credentials";
 import { IdleLogoutWatcher } from "@/features/idle-logout";
 import { createUiPreferenceRepository } from "@/entities/ui-preference";
-import { activeNavHref, visibleNavGroups } from "../model/nav";
+import { activeNavHref, navGroupsFor, visibleNavGroups } from "../model/nav";
 import { ScreenOpenerProvider } from "../model/screen-opener";
 import { useNavFavorites } from "../model/use-nav-favorites";
 import { useSidebarCollapse } from "../model/use-sidebar-collapse";
@@ -27,6 +31,10 @@ type Props = {
   viewer: ViewerSession;
   /** Workspace of the request, so SSR markup matches the client (see `WorkspaceRefProvider`). */
   workspace?: WorkspaceRef | null;
+  /** From the server locale segment — never read via `useLocale` here. */
+  locale: string;
+  /** Same catalog the locale layout loaded, so the shell keeps intl if a 404 remounts it. */
+  messages: AbstractIntlMessages;
   children: React.ReactNode;
 };
 
@@ -38,39 +46,51 @@ type AppShellProps = Props & {
 };
 
 /** Session, permission and toast context shared by every signed-in surface. */
-export function ShellProviders({ viewer, workspace = null, children }: Props) {
-  const locale = useLocale();
+export function ShellProviders({
+  viewer,
+  workspace = null,
+  locale,
+  messages,
+  children,
+}: Props) {
+  const lang = routing.locales.includes(locale as (typeof routing.locales)[number])
+    ? locale
+    : routing.defaultLocale;
   const onSessionExpired = useCallback(
     (err: unknown) =>
-      window.location.assign(loginHref(locale, sessionEndReason(err))),
-    [locale],
+      window.location.assign(loginHref(lang, sessionEndReason(err))),
+    [lang],
   );
 
   return (
-    <WorkspaceRefProvider value={workspace}>
-      <ViewerProvider
-        initialViewer={viewer}
-        onSessionExpired={onSessionExpired}
-      >
-        <ToastProvider>
-          <SessionExpiryWatcher />
-          <IdleLogoutWatcher />
-          {children}
-        </ToastProvider>
-      </ViewerProvider>
-    </WorkspaceRefProvider>
+    <IntlClientProvider locale={lang} messages={messages}>
+      <WorkspaceRefProvider value={workspace}>
+        <ViewerProvider
+          initialViewer={viewer}
+          onSessionExpired={onSessionExpired}
+        >
+          <ToastProvider>
+            <SessionExpiryWatcher />
+            <IdleLogoutWatcher />
+            {children}
+          </ToastProvider>
+        </ViewerProvider>
+      </WorkspaceRefProvider>
+    </IntlClientProvider>
   );
 }
 
 export function AppShell({
   viewer,
   workspace,
+  locale,
+  messages,
   navFavorites = null,
   sidebarCollapsed = false,
   children,
 }: AppShellProps) {
   return (
-    <ShellProviders viewer={viewer} workspace={workspace}>
+    <ShellProviders viewer={viewer} workspace={workspace} locale={locale} messages={messages}>
       <ShellFrame navFavorites={navFavorites} sidebarCollapsed={sidebarCollapsed}>
         {children}
       </ShellFrame>
@@ -90,8 +110,11 @@ function ShellFrame({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { user, permissions } = useViewer();
-  const groups = useMemo(() => visibleNavGroups(permissions), [permissions]);
+  const { user, permissions, workspace } = useViewer();
+  const groups = useMemo(
+    () => navGroupsFor(permissions, ROLE_PERMISSIONS[user.role] ?? permissions),
+    [permissions, user.role],
+  );
   const activeHref = activeNavHref(groups, pathname);
   const preferences = useMemo(() => createUiPreferenceRepository(), []);
   const favorites = useNavFavorites({ groups, initial: navFavorites, repository: preferences });
@@ -101,6 +124,7 @@ function ShellFrame({
 
   return (
     <AssistantProvider enabled={canAssist}>
+    <UpgradePlanProvider>
     <ScreenOpenerProvider value={tabs.openFromLink}>
       <div className="flex min-h-screen bg-[#F9FAFB]" data-testid="app-shell">
         <ShellSidebar
@@ -111,6 +135,7 @@ function ShellFrame({
           activeHref={activeHref}
           securityActive={pathname === routes.security}
           user={user}
+          plan={workspace?.company.plan}
         />
 
         <div className="flex min-w-0 flex-1 flex-col">
@@ -130,6 +155,7 @@ function ShellFrame({
       </div>
       <ShellAssistant groups={groups} activeHref={activeHref} />
     </ScreenOpenerProvider>
+    </UpgradePlanProvider>
     </AssistantProvider>
   );
 }

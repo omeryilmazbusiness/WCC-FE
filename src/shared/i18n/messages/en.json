@@ -2,6 +2,10 @@
   "app": {
     "name": "WODI Command Center",
     "shortName": "WCC",
+    "planBadge": {
+      "premium": "Premium",
+      "ultimate": "Ultimate"
+    },
     "roles": {
       "gm": "General Manager",
       "finance": "Finance",
@@ -4651,6 +4655,19 @@
     "settingsHint": "Thresholds, SLA A/B and escalation rules are managed in",
     "settingsLink": "admin settings"
   },
+  "planUpgrade": {
+    "title": "Upgrade your package",
+    "subtitle": "{feature} is not on your current package.",
+    "current": "Now: {plan}",
+    "next": "Upgrade to {plan}",
+    "notice": "Confirm and we will notify the WCC platform team. They will move the company when ready.",
+    "confirm": "Upgrade package",
+    "sending": "Sending…",
+    "cancel": "Not now",
+    "sent": "The platform team has the request.",
+    "already": "An upgrade request is already open.",
+    "error": "Could not send the upgrade request"
+  },
   "adminCompanies": {
     "title": "Companies",
     "subtitle": "Every tenant on the platform, its general manager and footprint.",
@@ -4666,8 +4683,60 @@
       "location": "Location",
       "branches": "Branches",
       "users": "Users",
+      "plan": "Package",
       "status": "Status",
       "created": "Created"
+    },
+    "plans": {
+      "label": "WCC package",
+      "unlimited": "Unlimited",
+      "seats": "{n} seats",
+      "branches": "{n} branches",
+      "ai": "{n} AI answers / day",
+      "standard": {
+        "name": "Standard",
+        "blurb": "Starter desk for 2–3 people. Inbox, tasks, pipeline, packages, bookings, flights, buses, hotels, customers and targets — each one capped."
+      },
+      "premium": {
+        "name": "Premium",
+        "blurb": "Growing agency. Adds dashboard, payments, reports, visa, suppliers, hotel pricing and more seats."
+      },
+      "ultimate": {
+        "name": "Ultimate",
+        "blurb": "Full WCC. Unlimited seats, AI setup, FX, integrations depth and finance."
+      }
+    },
+    "edit": {
+      "title": "Company",
+      "subtitle": "Profile and the current 1-year package.",
+      "fixedYear": "Every package is a fixed 1-year term.",
+      "started": "Started",
+      "ends": "Ends",
+      "remaining": "Time left",
+      "daysLeft": "{n} days left",
+      "expiredHint": "This package year has ended. Renew to open a new year.",
+      "status": {
+        "active": "Active",
+        "expiring": "Expiring",
+        "expired": "Expired"
+      },
+      "fields": {
+        "nameEn": "Name",
+        "nameAr": "Arabic name",
+        "slug": "Web address",
+        "country": "Country",
+        "city": "City",
+        "address": "Address",
+        "plan": "Package"
+      },
+      "planHint": "Changing the package starts a new 1-year term.",
+      "loading": "Loading…",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Company updated",
+      "renew": "Renew year",
+      "renewed": "A new 1-year term started",
+      "error": "Could not save the company"
     },
     "form": {
       "title": "Register company",
@@ -4677,6 +4746,8 @@
         "companyHint": "How the tenant appears on the platform and its sign-in page.",
         "location": "Location",
         "locationHint": "Country, city and street address — typed as names, not codes.",
+        "plan": "WCC package",
+        "planHint": "Standard is the starter desk. Premium adds money and reports. Ultimate is the full house.",
         "gm": "General manager"
       },
       "fields": {
@@ -4686,6 +4757,7 @@
         "country": "Country",
         "city": "City",
         "address": "Address",
+        "plan": "Package",
         "gmName": "Full name",
         "gmEmail": "Email",
         "gmPassword": "Temporary password",
@@ -4718,6 +4790,7 @@
         "country": "Enter the country name.",
         "city": "Enter the city name.",
         "address": "Enter the street address.",
+        "plan": "Choose Standard, Premium or Ultimate.",
         "gmName": "Enter the full name.",
         "gmEmail": "Enter a valid email.",
         "emailTaken": "This email is already in use.",
