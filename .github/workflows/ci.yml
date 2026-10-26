@@ -25,4 +25,10 @@ jobs:
       - name: Lint
         run: pnpm lint
       - name: Build
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: wodi
+          SENTRY_PROJECT: wodi-crm-fe
+          NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
+          NEXT_PUBLIC_SENTRY_RELEASE: ${{ github.sha }}
         run: pnpm build
