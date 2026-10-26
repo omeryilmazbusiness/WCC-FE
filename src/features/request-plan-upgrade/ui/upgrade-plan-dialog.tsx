@@ -6,7 +6,7 @@ import { Sparkles } from "lucide-react";
 import { PLAN_CATALOG } from "@/entities/company/plan";
 import { ActionDialog, Button, useMutationFeedback } from "@/shared/ui";
 import { requestPlanUpgrade } from "../api";
-import type { UpgradeTarget } from "../model/target";
+import { upgradeFeatureName, type UpgradeTarget } from "../model/target";
 
 type Props = {
   target: UpgradeTarget | null;
@@ -22,6 +22,7 @@ export function UpgradePlanDialog({ target, onClose }: Props) {
   const [busy, setBusy] = useState(false);
   const open = target !== null;
   const limits = target ? PLAN_CATALOG[target.next].limits : null;
+  const feature = target ? upgradeFeatureName(target, tn) : "";
 
   async function submit() {
     if (!target) return;
@@ -29,7 +30,7 @@ export function UpgradePlanDialog({ target, onClose }: Props) {
     try {
       const out = await requestPlanUpgrade({
         target: target.next,
-        feature: tn(target.label),
+        feature,
         locale,
       });
       feedback.success(out.duplicate ? t("already") : t("sent"));
@@ -50,7 +51,7 @@ export function UpgradePlanDialog({ target, onClose }: Props) {
       icon={Sparkles}
       tone="violet"
       title={t("title")}
-      description={target ? t("subtitle", { feature: tn(target.label) }) : undefined}
+      description={target ? t("subtitle", { feature }) : undefined}
       testId="plan-upgrade-dialog"
       footer={
         <>

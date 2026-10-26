@@ -1,2 +1,2 @@
 export { UpgradePlanProvider, useUpgradePlan } from "./ui/upgrade-plan-provider";
-export { upgradeTarget } from "./model/target";
+export { upgradeAskForPlan, upgradeFeatureName, upgradeTarget } from "./model/target";

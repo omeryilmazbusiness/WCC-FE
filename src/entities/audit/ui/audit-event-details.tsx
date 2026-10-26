@@ -1,128 +1,64 @@
 "use client";
 
-import { useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { cn } from "@/shared/lib/cn";
-import { diffObjects, formatDiffValue, type DiffKind } from "@/shared/lib/diff-objects";
-import { Badge } from "@/shared/ui";
-import type { AuditActorType, AuditEvent } from "../model";
+import { formatDiffValue } from "@/shared/lib/diff-objects";
+import { readableChanges, readableFacts } from "../story";
+import type { AuditEvent } from "../model";
 
-const ACTOR_TONE: Record<AuditActorType, string> = {
-  user: "bg-sky-50 text-sky-700",
-  system: "bg-zinc-100 text-zinc-700",
-  webhook: "bg-violet-50 text-violet-700",
-};
-
-export function AuditActorTypeBadge({ type }: { type: AuditActorType }) {
-  const t = useTranslations("audit.actorType");
-  return <Badge className={cn("normal-case", ACTOR_TONE[type])}>{t(type)}</Badge>;
+function humanize(code: string): string {
+  const text = code.replace(/[._]+/g, " ").trim();
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-const ROW_TONE: Record<DiffKind, string> = {
-  added: "bg-emerald-50/70",
-  removed: "bg-red-50/70",
-  changed: "bg-amber-50/70",
-  unchanged: "",
-};
+function pretty(value: unknown): string {
+  if (value === undefined || value === null || value === "") return "—";
+  if (typeof value === "boolean") return value ? "yes" : "no";
+  return formatDiffValue(value);
+}
 
-const KIND_TONE: Record<Exclude<DiffKind, "unchanged">, string> = {
-  added: "bg-emerald-100 text-emerald-800",
-  removed: "bg-red-100 text-red-800",
-  changed: "bg-amber-100 text-amber-800",
-};
-
-/** Expanded audit row: before/after diff, extra payload and request metadata. */
+/** Expanded row: only the fields a person can read. No IDs, JSON or request metadata. */
 export function AuditEventDetails({ event }: { event: AuditEvent }) {
   const t = useTranslations("audit.details");
-  const diff = useMemo(() => diffObjects(event.before, event.after), [event.before, event.after]);
-  const hasExtra = Object.keys(event.extra).length > 0;
+  const tf = useTranslations("audit.fields");
+  const changes = readableChanges(event);
+  const facts = readableFacts(event.extra);
+
+  if (changes.length === 0 && facts.length === 0) {
+    return (
+      <p className="text-[13px] text-zinc-500" data-testid="audit-event-details">
+        {t("noChanges")}
+      </p>
+    );
+  }
 
   return (
-    <div className="space-y-5" data-testid="audit-event-details">
-      <section className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{t("changes")}</h3>
-        {diff.entries.length === 0 ? (
-          <p className="text-sm text-zinc-500">{t("noChanges")}</p>
-        ) : (
-          <div className="overflow-x-auto rounded-2xl border border-zinc-200/80 bg-white">
-            <table className="w-full text-sm" data-testid="audit-diff-table">
-              <thead>
-                <tr className="border-b border-zinc-100 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                  <th className="px-4 py-2 text-start">{t("field")}</th>
-                  <th className="px-4 py-2 text-start">{t("before")}</th>
-                  <th className="px-4 py-2 text-start">{t("after")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {diff.entries.map((entry) => (
-                  <tr
-                    key={entry.key}
-                    className={cn("border-b border-zinc-100 last:border-0", ROW_TONE[entry.kind])}
-                    data-diff-kind={entry.kind}
-                  >
-                    <td className="px-4 py-2 align-top">
-                      <span className="font-mono text-xs text-zinc-800">{entry.key}</span>
-                      {entry.kind !== "unchanged" ? (
-                        <Badge className={cn("ms-2 px-1.5 py-0.5 text-[10px] normal-case", KIND_TONE[entry.kind])}>
-                          {t(entry.kind)}
-                        </Badge>
-                      ) : null}
-                    </td>
-                    <DiffCell value={entry.before} struck={entry.kind === "changed" || entry.kind === "removed"} />
-                    <DiffCell value={entry.after} />
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-      {hasExtra ? (
-        <section className="space-y-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{t("extra")}</h3>
-          <pre dir="ltr" className="overflow-x-auto rounded-2xl bg-zinc-50 p-3 font-mono text-xs text-zinc-700">
-            {JSON.stringify(event.extra, null, 2)}
-          </pre>
-        </section>
-      ) : null}
-
-      <dl className="grid grid-cols-1 gap-x-8 gap-y-3 text-sm sm:grid-cols-2">
-        <Meta label={t("requestId")} value={event.request_id} />
-        <Meta label={t("sessionId")} value={event.session_id} />
-        <Meta label={t("entityId")} value={event.entity_id} />
-        <Meta label={t("actorId")} value={event.actor_id} />
-        <Meta label={t("branchId")} value={event.branch_id} />
-        <Meta label={t("userAgent")} value={event.user_agent} className="sm:col-span-2" />
-      </dl>
-    </div>
-  );
-}
-
-function DiffCell({ value, struck = false }: { value: unknown; struck?: boolean }) {
-  return (
-    <td className="max-w-[28rem] px-4 py-2 align-top">
-      {value === undefined ? (
-        <span className="text-zinc-300">—</span>
-      ) : (
-        <bdi
-          dir="ltr"
-          className={cn("break-all font-mono text-xs text-zinc-800", struck && "text-zinc-500 line-through")}
-        >
-          {formatDiffValue(value)}
-        </bdi>
-      )}
-    </td>
-  );
-}
-
-function Meta({ label, value, className }: { label: string; value: string | null; className?: string }) {
-  return (
-    <div className={cn("min-w-0", className)}>
-      <dt className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{label}</dt>
-      <dd className="mt-1 break-all font-mono text-xs text-zinc-800">
-        {value ? <bdi dir="ltr">{value}</bdi> : "—"}
-      </dd>
-    </div>
+    <ul className="space-y-2.5" data-testid="audit-event-details">
+      {changes.map((entry) => (
+        <li key={entry.key} className="text-[13.5px] leading-snug" data-diff-kind={entry.kind}>
+          <span className="font-medium text-zinc-800">{tf.has(entry.key) ? tf(entry.key) : humanize(entry.key)}</span>
+          <span className="mt-0.5 block text-zinc-500">
+            {entry.kind === "added" ? (
+              pretty(entry.after)
+            ) : entry.kind === "removed" ? (
+              <span className="line-through">{pretty(entry.before)}</span>
+            ) : (
+              <>
+                <span className="line-through">{pretty(entry.before)}</span>
+                <span className="mx-1.5 text-zinc-300" aria-hidden>
+                  →
+                </span>
+                <span className="font-medium text-zinc-700">{pretty(entry.after)}</span>
+              </>
+            )}
+          </span>
+        </li>
+      ))}
+      {facts.map((fact) => (
+        <li key={fact.key} className="text-[13.5px] leading-snug">
+          <span className="font-medium text-zinc-800">{tf.has(fact.key) ? tf(fact.key) : humanize(fact.key)}</span>
+          <span className="mt-0.5 block text-zinc-500">{tf.has(`values.${fact.value}`) ? tf(`values.${fact.value}`) : fact.value}</span>
+        </li>
+      ))}
+    </ul>
   );
 }

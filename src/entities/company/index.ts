@@ -18,10 +18,21 @@ export {
   planAllows,
   cheapestPlanFor,
   canUpgradeTo,
+  nextCompanyPlan,
   type CompanyPlan,
   type PlanLimits,
   type PlanSpec,
 } from "./plan";
+export {
+  MEMBERSHIP_FEATURES,
+  featureCap,
+  featuresOn,
+  planIncludes,
+  planRank,
+  type FeatureCap,
+  type MembershipFeature,
+  type MembershipFeatureId,
+} from "./membership";
 export {
   ADDRESS_MAX,
   CITY_MAX,

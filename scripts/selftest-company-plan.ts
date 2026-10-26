@@ -47,6 +47,9 @@ function catalog() {
   assert.ok(planAllows("standard", "packages.write"));
   assert.ok(planAllows("standard", "ai.write"));
   assert.ok(planAllows("standard", "integrations.write"));
+  assert.ok(planAllows("standard", "visa.read") && planAllows("standard", "visa.write"));
+  assert.equal(PLAN_CATALOG.standard.limits.inbox, 0);
+  assert.equal(PLAN_CATALOG.premium.limits.inbox, 0);
   assert.ok(!planAllows("standard", "dashboard.read"));
   assert.ok(!planAllows("standard", "hotels.pricing"));
   assert.ok(!planAllows("standard", "payments.read"));
@@ -87,8 +90,8 @@ function wiring() {
 
 function backendParity() {
   const go = read("../WCC-BE/internal/domain/company/plan.go");
-  assert.match(go, /Users: 3, Branches: 1, Packages: 8, Hotels: 8, Buses: 3, Inbox: 1, AIPerDay: 50/);
-  assert.match(go, /Users: 12, Branches: 3, Packages: 40, Hotels: 40, Buses: 15, Inbox: 3, AIPerDay: 300/);
+  assert.match(go, /Users: 3, Branches: 1, Packages: 8, Hotels: 8, Buses: 3, Inbox: 0, AIPerDay: 50/);
+  assert.match(go, /Users: 12, Branches: 3, Packages: 40, Hotels: 40, Buses: 15, Inbox: 0, AIPerDay: 300/);
   assert.match(go, /PlanUltimate/);
   assert.match(read("../WCC-BE/migrations/00064_company_plan.sql"), /plan TEXT NOT NULL DEFAULT 'ultimate'/);
 }

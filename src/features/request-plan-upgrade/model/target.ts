@@ -3,11 +3,13 @@ import { ROUTE_PERMISSIONS, type GuardedRoute, type Permission } from "@/shared/
 import type { NavLabel } from "@/widgets/app-shell/model/nav";
 
 export type UpgradeTarget = {
-  href: GuardedRoute;
-  label: NavLabel;
+  href?: GuardedRoute;
+  label?: NavLabel;
+  /** Already-translated feature name sent to support. Wins over `label`. */
+  feature?: string;
   current: CompanyPlan;
   next: CompanyPlan;
-  permission: Permission;
+  permission?: Permission;
 };
 
 export function upgradeTarget(
@@ -22,4 +24,17 @@ export function upgradeTarget(
   const current = ofCompanyPlan(plan).plan;
   if (!next || !canUpgradeTo(current, next)) return null;
   return { href, label, current, next, permission };
+}
+
+/** Membership page: ask to move up to a specific package. */
+export function upgradeAskForPlan(plan: string | undefined, next: CompanyPlan, feature: string): UpgradeTarget | null {
+  const current = ofCompanyPlan(plan).plan;
+  if (!canUpgradeTo(current, next)) return null;
+  return { current, next, feature };
+}
+
+export function upgradeFeatureName(target: UpgradeTarget, navLabel: (key: NavLabel) => string): string {
+  if (target.feature) return target.feature;
+  if (target.label) return navLabel(target.label);
+  return target.next;
 }

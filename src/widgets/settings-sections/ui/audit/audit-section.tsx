@@ -10,17 +10,27 @@ import {
   ChevronRight,
   CreditCard,
   Download,
+  FileText,
+  Hotel,
   KeyRound,
   MapPin,
   Plane,
+  Stamp,
   UserRound,
   Users,
 } from "lucide-react";
 import {
+  AUDIT_AREAS,
   AUDIT_PAGE_SIZE,
   AuditEventDetails,
+  auditArea,
   createAuditRepository,
+  entityTypeForArea,
+  fallbackActionTitle,
+  hasReadableDetails,
+  isKnownAction,
   startOfDayRfc3339,
+  type AuditArea,
   type AuditEvent,
   type AuditFilters,
 } from "@/entities/audit";
@@ -47,7 +57,7 @@ const ALL = "all";
 type Period = "all" | "today" | "week" | "month";
 const PERIOD_DAYS: Record<Exclude<Period, "all">, number> = { today: 0, week: 6, month: 29 };
 
-const orUndefined = (value: string) => (value === ALL || !value ? undefined : value);
+const FILTER_AREAS = AUDIT_AREAS.filter((a) => a !== "auth" && a !== "privacy" && a !== "setup");
 
 function localDay(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -63,27 +73,25 @@ function periodStart(period: Period): string | undefined {
 
 type Look = { icon: LucideIcon; tint: string };
 
-const LOOKS: Record<string, Look> = {
+const AREA_LOOK: Record<AuditArea, Look> = {
   auth: { icon: KeyRound, tint: "bg-indigo-50 text-indigo-500" },
   user: { icon: UserRound, tint: "bg-sky-50 text-sky-500" },
-  company: { icon: Building2, tint: "bg-violet-50 text-violet-500" },
-  company_setup: { icon: Building2, tint: "bg-violet-50 text-violet-500" },
-  setup: { icon: Building2, tint: "bg-violet-50 text-violet-500" },
-  branch: { icon: MapPin, tint: "bg-teal-50 text-teal-500" },
   customer: { icon: Users, tint: "bg-amber-50 text-amber-500" },
   booking: { icon: Plane, tint: "bg-cyan-50 text-cyan-500" },
   payment: { icon: CreditCard, tint: "bg-emerald-50 text-emerald-500" },
+  document: { icon: FileText, tint: "bg-zinc-100 text-zinc-500" },
+  visa: { icon: Stamp, tint: "bg-orange-50 text-orange-500" },
+  company: { icon: Building2, tint: "bg-violet-50 text-violet-500" },
+  branch: { icon: MapPin, tint: "bg-teal-50 text-teal-500" },
+  hotel: { icon: Hotel, tint: "bg-amber-50 text-amber-600" },
+  privacy: { icon: KeyRound, tint: "bg-rose-50 text-rose-500" },
+  setup: { icon: Building2, tint: "bg-violet-50 text-violet-500" },
 };
 const DEFAULT_LOOK: Look = { icon: Activity, tint: "bg-zinc-100 text-zinc-500" };
 
 function lookOf(event: AuditEvent): Look {
-  return LOOKS[event.action.split(".")[0]] ?? LOOKS[event.entity_type] ?? DEFAULT_LOOK;
-}
-
-/** "auth.login_succeeded" → "Auth login succeeded". */
-function humanizeAction(action: string): string {
-  const text = action.replace(/[._]+/g, " ").trim();
-  return text.charAt(0).toUpperCase() + text.slice(1);
+  const area = auditArea(event);
+  return area ? AREA_LOOK[area] : DEFAULT_LOOK;
 }
 
 function capitalize(text: string): string {
@@ -107,7 +115,7 @@ function dayLabel(day: string, locale: string): string {
   }).format(date);
 }
 
-/** Who did what and when: day-grouped audit trail with filters and CSV export. */
+/** Who did what, in everyday words, grouped by day. */
 export function AuditSection() {
   const t = useTranslations("audit");
   const locale = useLocale();
@@ -115,8 +123,7 @@ export function AuditSection() {
   const canReadUsers = useCan("users.read");
 
   const [period, setPeriod] = useState<Period>("all");
-  const [entityType, setEntityType] = useState(ALL);
-  const [action, setAction] = useState(ALL);
+  const [area, setArea] = useState<string>(ALL);
   const [actorId, setActorId] = useState(ALL);
   const [offset, setOffset] = useState(0);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -124,24 +131,17 @@ export function AuditSection() {
 
   const filters = useMemo<AuditFilters>(
     () => ({
-      entityType: orUndefined(entityType),
-      action: orUndefined(action),
-      actorId: orUndefined(actorId),
+      entityType: area === ALL ? undefined : entityTypeForArea(area as AuditArea),
+      actorId: actorId === ALL ? undefined : actorId,
       from: periodStart(period),
     }),
-    [entityType, action, actorId, period],
+    [area, actorId, period],
   );
 
   const events = useApiQuery(() => repo.list(filters, { limit: AUDIT_PAGE_SIZE, offset }), [filters, offset], {
     cacheKey: ["audit", filters, offset],
   });
-  const actions = useApiQuery(() => repo.listActions(), [], { cacheKey: ["audit-actions"] });
   const users = useApiQuery(() => listAllUsers(), [], { enabled: canReadUsers, cacheKey: ["team-members", "all"] });
-
-  const entityTypes = useMemo(() => {
-    const fromActions = (actions.data ?? []).map((a) => a.split(".")[0]).filter(Boolean);
-    return [...new Set<string>(fromActions)].sort();
-  }, [actions.data]);
 
   const page = events.data;
   const rows = useMemo(() => page?.items ?? [], [page]);
@@ -169,8 +169,7 @@ export function AuditSection() {
 
   function resetFilters() {
     setPeriod("all");
-    setEntityType(ALL);
-    setAction(ALL);
+    setArea(ALL);
     setActorId(ALL);
     setOffset(0);
   }
@@ -199,22 +198,15 @@ export function AuditSection() {
           className="rounded-full border-0 bg-zinc-100 shadow-none [&>button]:rounded-full"
         />
         <PillSelect
-          label={t("filters.entityType")}
+          label={t("filters.area")}
           allLabel={t("filters.all")}
-          value={entityType}
-          onChange={withPageReset(setEntityType)}
-          options={entityTypes.map((v) => ({ value: v, label: humanizeAction(v) }))}
-        />
-        <PillSelect
-          label={t("filters.action")}
-          allLabel={t("filters.all")}
-          value={action}
-          onChange={withPageReset(setAction)}
-          options={(actions.data ?? []).map((v) => ({ value: v, label: humanizeAction(v) }))}
+          value={area}
+          onChange={withPageReset(setArea)}
+          options={FILTER_AREAS.map((v) => ({ value: v, label: t(`areas.${v}`) }))}
         />
         {canReadUsers ? (
           <PillSelect
-            label={t("filters.actor")}
+            label={t("filters.person")}
             allLabel={t("filters.all")}
             value={actorId}
             onChange={withPageReset(setActorId)}
@@ -235,7 +227,7 @@ export function AuditSection() {
           disabled={exporting}
           onClick={() => void exportCsv()}
           data-testid="audit-export-csv"
-          className="ms-auto inline-flex h-9 items-center gap-1.5 rounded-full bg-[#007AFF] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-[#0062cc] disabled:opacity-50"
+          className="ms-auto inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-50"
         >
           <Download className="h-3.5 w-3.5" strokeWidth={2.2} />
           {t("exportCsv")}
@@ -251,10 +243,7 @@ export function AuditSection() {
         empty={rows.length === 0}
         emptyTitle={isFiltered ? t("emptyFiltered") : t("empty")}
       >
-        <div
-          className={cn("space-y-6 transition-opacity", events.loading && "opacity-60")}
-          data-testid="audit-table"
-        >
+        <div className={cn("space-y-6 transition-opacity", events.loading && "opacity-60")} data-testid="audit-table">
           {groups.map((group) => (
             <section key={group.day}>
               <h2 className="px-4 pb-2 text-[13px] font-semibold text-zinc-400">{dayLabel(group.day, locale)}</h2>
@@ -303,6 +292,10 @@ export function AuditSection() {
   );
 }
 
+function actionTitle(event: AuditEvent, t: ReturnType<typeof useTranslations<"audit">>): string {
+  return isKnownAction(event.action) ? t(`actions.${event.action}`) : fallbackActionTitle(event.action);
+}
+
 function AuditRow({
   event,
   time,
@@ -317,41 +310,75 @@ function AuditRow({
   const t = useTranslations("audit");
   const { icon: Icon, tint } = lookOf(event);
   const actor = event.actor_name || t(`actorType.${event.actor_type}`);
+  const expandable = hasReadableDetails(event);
+  const title = actionTitle(event, t);
+
   return (
     <div data-testid="audit-row">
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-label={open ? t("details.collapse") : t("details.expand")}
-        onClick={onToggle}
-        className="flex w-full items-center gap-3 px-4 py-3 text-start transition-colors hover:bg-zinc-50/80"
-      >
-        <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", tint)}>
-          <Icon className="h-4 w-4" strokeWidth={2} />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-[14px] font-medium text-zinc-900">{humanizeAction(event.action)}</span>
-          <span className="block truncate text-[12px] text-zinc-500">
-            {actor}
-            {event.ip ? <bdi dir="ltr"> · {event.ip}</bdi> : null}
-          </span>
-        </span>
-        <time dateTime={event.created_at} className="shrink-0 text-[12px] tabular-nums text-zinc-400">
-          {time}
-        </time>
-        <ChevronRight
-          className={cn(
-            "h-4 w-4 shrink-0 text-zinc-300 transition-transform duration-200 rtl:-scale-x-100",
-            open && "rotate-90 rtl:rotate-90",
-          )}
-        />
-      </button>
-      {open ? (
-        <div className="bg-zinc-50/70 px-4 py-4 sm:px-16">
+      {expandable ? (
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-label={open ? t("details.collapse") : t("details.expand")}
+          onClick={onToggle}
+          className="flex w-full items-center gap-3 px-4 py-3 text-start transition-colors hover:bg-zinc-50/80"
+        >
+          <RowBody icon={Icon} tint={tint} title={title} actor={actor} time={time} dateTime={event.created_at} chevron={open} />
+        </button>
+      ) : (
+        <div className="flex items-center gap-3 px-4 py-3">
+          <RowBody icon={Icon} tint={tint} title={title} actor={actor} time={time} dateTime={event.created_at} />
+        </div>
+      )}
+      {open && expandable ? (
+        <div className="bg-zinc-50/70 px-4 py-4 sm:ps-[4.25rem] sm:pe-6">
           <AuditEventDetails event={event} />
         </div>
       ) : null}
     </div>
+  );
+}
+
+function RowBody({
+  icon: Icon,
+  tint,
+  title,
+  actor,
+  time,
+  dateTime,
+  chevron,
+}: {
+  icon: LucideIcon;
+  tint: string;
+  title: string;
+  actor: string;
+  time: string;
+  dateTime: string;
+  chevron?: boolean;
+}) {
+  return (
+    <>
+      <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", tint)}>
+        <Icon className="h-4 w-4" strokeWidth={2} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[14px] font-medium text-zinc-900">{title}</span>
+        <span className="block truncate text-[12px] text-zinc-500">{actor}</span>
+      </span>
+      <time dateTime={dateTime} className="shrink-0 text-[12px] tabular-nums text-zinc-400">
+        {time}
+      </time>
+      {chevron !== undefined ? (
+        <ChevronRight
+          className={cn(
+            "h-4 w-4 shrink-0 text-zinc-300 transition-transform duration-200 rtl:-scale-x-100",
+            chevron && "rotate-90 rtl:rotate-90",
+          )}
+        />
+      ) : (
+        <span className="h-4 w-4 shrink-0" aria-hidden />
+      )}
+    </>
   );
 }
 

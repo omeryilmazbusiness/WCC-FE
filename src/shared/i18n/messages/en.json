@@ -4341,54 +4341,160 @@
     "activeBookings": "This customer still has active bookings. Complete or cancel them before anonymizing."
   },
   "audit": {
-    "exportCsv": "Export CSV",
-    "exported": "Audit log exported",
-    "exportError": "Could not export the audit log",
-    "loadError": "Could not load audit events",
-    "empty": "No audit events yet",
-    "emptyFiltered": "No audit events match these filters",
+    "exportCsv": "Export",
+    "exported": "Activity exported",
+    "exportError": "Could not export the activity",
+    "loadError": "Could not load activity",
+    "empty": "Nothing has been recorded yet",
+    "emptyFiltered": "Nothing matches these filters",
     "filters": {
-      "entityType": "Entity type",
-      "action": "Action",
-      "actor": "Actor",
-      "from": "From",
-      "to": "To",
-      "entityId": "Entity ID",
-      "entityIdPlaceholder": "Paste an ID…",
+      "area": "Area",
+      "person": "Person",
       "all": "All",
-      "reset": "Reset filters"
-    },
-    "columns": {
-      "time": "Time",
-      "actor": "Actor",
-      "action": "Action",
-      "entity": "Entity",
-      "ip": "IP",
-      "session": "Session"
+      "reset": "Clear"
     },
     "actorType": {
-      "user": "User",
-      "system": "System",
-      "webhook": "Webhook"
+      "user": "Someone on the team",
+      "system": "The system",
+      "webhook": "A connected service"
+    },
+    "areas": {
+      "user": "Team & sign-in",
+      "customer": "Customers",
+      "booking": "Bookings",
+      "payment": "Payments",
+      "document": "Documents",
+      "visa": "Visa",
+      "company": "Company",
+      "branch": "Branches",
+      "hotel": "Hotels"
     },
     "details": {
-      "expand": "Show details",
-      "collapse": "Hide details",
-      "changes": "Changes",
-      "noChanges": "No field changes recorded",
-      "field": "Field",
-      "before": "Before",
-      "after": "After",
-      "added": "added",
-      "removed": "removed",
-      "changed": "changed",
-      "extra": "Extra",
-      "requestId": "Request ID",
-      "sessionId": "Session ID",
-      "entityId": "Entity ID",
-      "actorId": "Actor ID",
-      "branchId": "Branch ID",
-      "userAgent": "User agent"
+      "expand": "Show what changed",
+      "collapse": "Hide what changed",
+      "noChanges": "No further detail"
+    },
+    "fields": {
+      "status": "Status",
+      "full_name": "Name",
+      "notes": "Notes",
+      "email": "Email",
+      "phone": "Phone",
+      "role": "Role",
+      "is_active": "Can sign in",
+      "plan": "Package",
+      "currency": "Currency",
+      "pax_count": "Travellers",
+      "total_amount": "Total",
+      "discount_amt": "Discount",
+      "collected_amt": "Collected",
+      "balance_amt": "Balance",
+      "method": "How",
+      "reason": "Reason",
+      "pnr": "PNR",
+      "nationality": "Nationality",
+      "gender": "Gender",
+      "values": {
+        "yes": "Yes",
+        "no": "No",
+        "password": "Password",
+        "totp": "Authenticator app",
+        "recovery": "Recovery code"
+      }
+    },
+    "actions": {
+      "auth": {
+        "login": "Signed in",
+        "logout": "Signed out",
+        "login_failed": "Failed to sign in",
+        "login_wrong_company": "Tried the wrong company page",
+        "account_locked": "Account locked",
+        "account_unlocked": "Account unlocked",
+        "password_changed": "Changed password",
+        "mfa_enabled": "Turned on two-step verification",
+        "mfa_disabled": "Turned off two-step verification",
+        "mfa_failed": "Failed two-step verification",
+        "mfa_verified": "Passed two-step verification",
+        "mfa_enroll_started": "Started two-step verification setup",
+        "mfa_recovery_used": "Used a recovery code",
+        "mfa_recovery_regenerated": "Made new recovery codes",
+        "sessions_revoked": "Signed out every device",
+        "session_revoked": "Ended a session",
+        "session_expired": "Session expired"
+      },
+      "user": {
+        "created": "Added a team member",
+        "updated": "Updated a team member",
+        "profile_updated": "Updated their profile",
+        "email_changed": "Changed email",
+        "avatar_updated": "Changed photo",
+        "avatar_removed": "Removed photo"
+      },
+      "booking": {
+        "created": "Created a booking",
+        "updated": "Updated a booking",
+        "status_changed": "Changed a booking status",
+        "status_overridden": "Forced a booking status",
+        "discount_changed": "Changed a booking discount",
+        "participant_added": "Added a traveller",
+        "participant_removed": "Removed a traveller",
+        "participant_updated": "Updated a traveller",
+        "note_added": "Added a booking note",
+        "note_deleted": "Deleted a booking note",
+        "shared": "Shared a booking",
+        "hold_extended": "Extended a hold",
+        "change_requested": "Asked to change a booking",
+        "payment_link_created": "Created a payment link",
+        "profile_updated": "Updated booking details",
+        "line_items_changed": "Changed booking services"
+      },
+      "customer": {
+        "updated": "Updated a customer",
+        "merged": "Merged two customers"
+      },
+      "payment": {
+        "recorded": "Recorded a payment",
+        "verified": "Confirmed a payment",
+        "reversed": "Reversed a payment",
+        "refund_requested": "Asked for a refund",
+        "refund_approved": "Approved a refund",
+        "refund_rejected": "Rejected a refund",
+        "schedule_created": "Set a payment plan",
+        "schedule_cancelled": "Cancelled a payment plan"
+      },
+      "document": {
+        "approved": "Approved a document",
+        "rejected": "Rejected a document"
+      },
+      "company": {
+        "updated": "Updated the company",
+        "plan_changed": "Changed the company package",
+        "registered": "Registered the company",
+        "logo_updated": "Changed the company logo",
+        "logo_removed": "Removed the company logo"
+      },
+      "branch": {
+        "created": "Opened a branch",
+        "updated": "Updated a branch"
+      },
+      "pii": {
+        "revealed": "Viewed hidden personal data"
+      },
+      "privacy": {
+        "exported": "Exported personal data",
+        "anonymized": "Anonymized a customer"
+      },
+      "audit": {
+        "exported": "Exported the activity list"
+      },
+      "setup": {
+        "completed": "Finished setup",
+        "company_saved": "Saved company setup",
+        "security_saved": "Saved security settings"
+      },
+      "hotel": {
+        "created": "Added a hotel"
+      }
     },
     "pagination": {
       "summary": "{from}–{to} of {total}",
@@ -4396,7 +4502,7 @@
       "next": "Next",
       "page": "Page {page} of {pages}"
     },
-    "periodLabel": "Period",
+    "periodLabel": "When",
     "period": {
       "all": "All",
       "today": "Today",
@@ -4768,11 +4874,11 @@
       "ai": "{n} AI answers / day",
       "standard": {
         "name": "Standard",
-        "blurb": "Starter desk for 2–3 people. Inbox, tasks, pipeline, packages, bookings, flights, buses, hotels, customers and targets — each one capped."
+        "blurb": "Starter desk for 2–3 people. Visa, every inbox channel, tasks, pipeline, packages, bookings, flights, buses, hotels, customers and targets."
       },
       "premium": {
         "name": "Premium",
-        "blurb": "Growing agency. Adds dashboard, payments, reports, visa, suppliers, hotel pricing and more seats."
+        "blurb": "Growing agency. Adds dashboard, payments, reports, suppliers, hotel pricing and more seats."
       },
       "ultimate": {
         "name": "Ultimate",
@@ -6716,6 +6822,11 @@
         "hint": "Photo, personal info and password",
         "description": "How you appear to your team, and how you sign in. Changes apply right away."
       },
+      "membership": {
+        "title": "Membership & subscription",
+        "hint": "Compare packages and request an upgrade",
+        "description": "Three WCC packages. Each card lists what you get — seats, branches, modules and daily AI — so you can see the difference at a glance."
+      },
       "team": {
         "title": "Team",
         "hint": "Members, roles and sign-in",
@@ -6727,9 +6838,9 @@
         "description": "What every role is allowed to see and change. Roles are defined by the platform and apply to every company."
       },
       "audit": {
-        "title": "Audit log",
-        "hint": "Who changed what, and when",
-        "description": "Every sign-in and change, grouped by day. Filter by area, action or person and export as CSV."
+        "title": "Activity",
+        "hint": "Who did what, and when",
+        "description": "A simple list of what people did, grouped by day. Open a row only when there is something to read."
       },
       "faq": {
         "title": "Help & FAQ",
@@ -6755,6 +6866,141 @@
         "title": "Auto sign-out",
         "hint": "Lock the desk after inactivity",
         "description": "If nobody clicks, types or scrolls for the time you choose, everyone in the company is signed out. Use this on shared counters so a walked-away screen cannot be used."
+      }
+    },
+    "membership": {
+      "statusTitle": "Your package",
+      "statusBody": "This company is on {plan}. The commercial term is one year from the day the package started.",
+      "noPlanTitle": "Company packages",
+      "noPlanBody": "Platform operators are not billed on a package. The three cards below are what every company can subscribe to.",
+      "termYears": "1-year term",
+      "catalogTitle": "Compare packages",
+      "catalogHint": "Each card lists only what that package includes. Higher packages keep everything below them and add more seats, modules and daily AI.",
+      "yourPlan": "Your plan",
+      "bestValue": "Most chosen",
+      "included": "What's included",
+      "upgrade": "Request upgrade",
+      "onThisPlan": "You're on this plan",
+      "includedBelow": "Included in your current package",
+      "catalogOnly": "Ask the company manager to change the package",
+      "needSupport": "Ask a manager to send the upgrade request.",
+      "unlimited": "Unlimited",
+      "plans": {
+        "standard": {
+          "tagline": "Starter desk",
+          "body": "For a small counter of two or three people. Sales, visa and every inbox channel are there. Money, reports and extra seats stay on higher packages."
+        },
+        "premium": {
+          "tagline": "Growing agency",
+          "body": "More seats and branches, plus the dashboard, payments, reports, suppliers and hotel selling prices."
+        },
+        "ultimate": {
+          "tagline": "Full WCC",
+          "body": "No caps. AI setup, live FX, the full finance suite and override tools sit on top of everything Premium already has."
+        }
+      },
+      "caps": {
+        "users": "{n} people",
+        "branches": "{n} branches",
+        "packages": "{n} packages",
+        "hotels": "{n} hotels",
+        "buses": "{n} buses",
+        "inbox": "{n} channels",
+        "ai": "{n} answers / day"
+      },
+      "features": {
+        "users": {
+          "title": "Team seats",
+          "body": "People who can sign in and work the desk — agents, finance and the manager."
+        },
+        "branches": {
+          "title": "Branches",
+          "body": "Offices that share the same company books. One on Standard, three on Premium, no limit on Ultimate."
+        },
+        "packages": {
+          "title": "Tour packages",
+          "body": "Umrah, Hajj, visa and other programmes you publish for the sales desk."
+        },
+        "hotels": {
+          "title": "Hotel catalogue",
+          "body": "Properties, room types and selling rates the booking wizard can pick from."
+        },
+        "buses": {
+          "title": "Bus fleet",
+          "body": "Ground transfer vehicles attached to a package or a booking."
+        },
+        "inbox": {
+          "title": "Inbox channels",
+          "body": "WhatsApp, Instagram, Facebook and Gmail. Every package can connect them all."
+        },
+        "ai": {
+          "title": "WODI AI",
+          "body": "Model answers per person per day. The protocol and the rules stay the same on every package."
+        },
+        "salesDesk": {
+          "title": "Sales desk",
+          "body": "Customers, pipeline, bookings and the everyday counter work every package starts with."
+        },
+        "documents": {
+          "title": "Documents",
+          "body": "Passports, visas and the missing-docs list that follows each booking."
+        },
+        "flights": {
+          "title": "Flight search",
+          "body": "Look up fares and attach a flight to a booking without leaving the desk."
+        },
+        "tasks": {
+          "title": "Tasks",
+          "body": "Follow-ups, SLA work and the notes the team leaves on a file."
+        },
+        "dashboard": {
+          "title": "Manager dashboard",
+          "body": "Today's attention list: unpaid bookings, overdue tasks and the pace of the branch."
+        },
+        "payments": {
+          "title": "Payments",
+          "body": "Collect, approve and schedule money against a booking."
+        },
+        "reports": {
+          "title": "Reports",
+          "body": "Operational and sales reports you can read on screen or export."
+        },
+        "visa": {
+          "title": "Visa desk",
+          "body": "Visa packages, applications and the statuses the embassy file moves through."
+        },
+        "suppliers": {
+          "title": "Suppliers",
+          "body": "Hotel, bus and ground partners, with their contacts and health."
+        },
+        "pricing": {
+          "title": "Net hotel prices",
+          "body": "Cost and margin on a room — visible to the roles that are allowed to price."
+        },
+        "imports": {
+          "title": "Import & export",
+          "body": "Bring customers, leads and bookings in from a sheet, and take a file back out."
+        },
+        "audit": {
+          "title": "Audit log",
+          "body": "Who changed what, and when — kept for every company action."
+        },
+        "aiSetup": {
+          "title": "AI setup",
+          "body": "Choose the model, the voice and the limits WODI AI uses for this company."
+        },
+        "fx": {
+          "title": "Live FX",
+          "body": "Keep selling and cost currencies in step with the day's rates."
+        },
+        "finance": {
+          "title": "Finance suite",
+          "body": "Treasury, receivables, payables and the profit view on a departure."
+        },
+        "overrides": {
+          "title": "Overrides",
+          "body": "Manager tools that reopen a booking or step past a guard when the file needs it."
+        }
       }
     },
     "session": {
@@ -7782,8 +8028,8 @@
             "a": "Roles are defined by the platform and apply to every company, so the list is read-only. The server checks every permission again on each request."
           },
           "audit": {
-            "q": "What is recorded in the audit log?",
-            "a": "Every sign-in and change: who did what, when, from which device and what changed. Filter by area, action or person, grouped by day."
+            "q": "What is recorded in the activity list?",
+            "a": "Who did what, and when — in everyday words. Sign-ins, bookings, payments and team changes. Open a row only when a value actually changed."
           },
           "export": {
             "q": "Can I export the audit log?",

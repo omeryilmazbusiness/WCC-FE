@@ -10,6 +10,7 @@ export const SETTINGS_GROUPS: readonly SettingsGroupId[] = ["account", "access",
 
 export type SettingsSectionId =
   | "profile"
+  | "membership"
   | "team"
   | "roles"
   | "audit"
@@ -34,6 +35,7 @@ export type SettingsSection = {
 /** Display order inside each group follows this list. */
 export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   { id: "profile", group: "account" },
+  { id: "membership", group: "account" },
   { id: "team", group: "access", permission: "users.read", href: routes.team },
   { id: "roles", group: "access", permission: "roles.read" },
   { id: "audit", group: "access", permission: "audit.read" },

@@ -41,6 +41,8 @@ const STANDARD_ALLOWS = [
   "hotels.write",
   "buses.read",
   "buses.write",
+  "visa.read",
+  "visa.write",
   "tasks.read",
   "tasks.write",
   "inbox.read",
@@ -67,8 +69,6 @@ const PREMIUM_EXTRA = [
   "payments.write",
   "payments.approve",
   "documents.review",
-  "visa.read",
-  "visa.write",
   "suppliers.read",
   "suppliers.write",
   "hotels.pricing",
@@ -85,12 +85,12 @@ const PREMIUM_EXTRA = [
 export const PLAN_CATALOG: Record<CompanyPlan, PlanSpec> = {
   standard: {
     plan: "standard",
-    limits: { users: 3, branches: 1, packages: 8, hotels: 8, buses: 3, inbox: 1, aiPerDay: 50 },
+    limits: { users: 3, branches: 1, packages: 8, hotels: 8, buses: 3, inbox: 0, aiPerDay: 50 },
     allows: STANDARD_ALLOWS,
   },
   premium: {
     plan: "premium",
-    limits: { users: 12, branches: 3, packages: 40, hotels: 40, buses: 15, inbox: 3, aiPerDay: 300 },
+    limits: { users: 12, branches: 3, packages: 40, hotels: 40, buses: 15, inbox: 0, aiPerDay: 300 },
     allows: [...STANDARD_ALLOWS, ...PREMIUM_EXTRA],
   },
   ultimate: {
@@ -131,4 +131,10 @@ export function canUpgradeTo(from: string | undefined | null, to: CompanyPlan): 
   const a = COMPANY_PLANS.indexOf(ofCompanyPlan(from).plan);
   const b = COMPANY_PLANS.indexOf(to);
   return b > a;
+}
+
+/** Next paid tier. Ultimate has nowhere to go. */
+export function nextCompanyPlan(from: string | undefined | null): CompanyPlan | null {
+  const i = COMPANY_PLANS.indexOf(ofCompanyPlan(from).plan);
+  return COMPANY_PLANS[i + 1] ?? null;
 }

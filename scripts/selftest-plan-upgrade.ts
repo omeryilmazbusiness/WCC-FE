@@ -5,7 +5,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { cheapestPlanFor, canUpgradeTo } from "../src/entities/company/plan.ts";
-import { upgradeTarget } from "../src/features/request-plan-upgrade/model/target.ts";
+import { upgradeAskForPlan, upgradeTarget } from "../src/features/request-plan-upgrade/model/target.ts";
 import { DEMO_ROLE_PERMISSIONS } from "../src/shared/config/permissions.ts";
 import { routes } from "../src/shared/config/routes.ts";
 import { navGroupsFor } from "../src/widgets/app-shell/model/nav.ts";
@@ -13,6 +13,7 @@ import { navGroupsFor } from "../src/widgets/app-shell/model/nav.ts";
 const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
 
 function catalog() {
+  assert.equal(cheapestPlanFor("visa.read"), "standard");
   assert.equal(cheapestPlanFor("dashboard.read"), "premium");
   assert.equal(cheapestPlanFor("ai.setup"), "ultimate");
   assert.equal(cheapestPlanFor("companies.manage"), null);
@@ -40,6 +41,8 @@ function target() {
   assert.equal(t?.next, "premium");
   assert.equal(upgradeTarget(routes.aiSetup, "aiSetup", "premium", [])?.next, "ultimate");
   assert.equal(upgradeTarget(routes.manager, "manager", "ultimate", ["dashboard.read"]), null);
+  assert.equal(upgradeAskForPlan("standard", "ultimate", "Membership")?.next, "ultimate");
+  assert.equal(upgradeAskForPlan("ultimate", "premium", "Membership"), null);
 }
 
 function wiring() {

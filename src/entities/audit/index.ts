@@ -14,4 +14,17 @@ export {
 } from "./model";
 export type { AuditRepository } from "./api";
 export { ApiAuditRepository, MemoryAuditRepository, createAuditRepository } from "./api";
-export { AuditActorTypeBadge, AuditEventDetails } from "./ui/audit-event-details";
+export { AuditEventDetails } from "./ui/audit-event-details";
+export {
+  AUDIT_AREAS,
+  KNOWN_ACTIONS,
+  auditArea,
+  entityTypeForArea,
+  fallbackActionTitle,
+  hasReadableDetails,
+  isKnownAction,
+  readableChanges,
+  readableFacts,
+  type AuditArea,
+  type KnownAction,
+} from "./story";
