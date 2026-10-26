@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { NextIntlClientProvider } from "next-intl";
 import type { AbstractIntlMessages } from "next-intl";
+import { ToastProvider } from "@/shared/ui";
 import { isRtl } from "./routing";
 
 type Props = {
@@ -37,7 +38,7 @@ export function IntlClientProvider({ locale, messages, children }: Props) {
         [namespace, key].filter(Boolean).join(".")
       }
     >
-      {children}
+      <ToastProvider>{children}</ToastProvider>
     </NextIntlClientProvider>
   );
 }
