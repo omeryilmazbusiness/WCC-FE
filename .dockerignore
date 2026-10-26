@@ -1,0 +1,13 @@
+.git
+.next
+node_modules
+test-results
+playwright-report
+docs
+e2e
+scripts
+*.md
+.env
+.env.*
+.DS_Store
+.venv-docs
