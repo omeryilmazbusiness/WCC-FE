@@ -46,6 +46,12 @@ function src(rel: string): string {
   assert.match(drawer, /company-plan-term/);
   assert.match(drawer, /updateCompanyPlan/);
   assert.match(drawer, /saveCompany/);
+  assert.match(drawer, /deleteCompany/);
+  assert.match(drawer, /company-delete/);
+  assert.match(drawer, /challenge=\{row\?\.slug\}/);
+  const api = src("src/entities/company/api.ts");
+  assert.match(api, /method: "DELETE"/);
+  assert.match(api, /JSON.stringify\(\{ slug \}\)/);
 }
 
 console.log("selftest-company-edit: ok");

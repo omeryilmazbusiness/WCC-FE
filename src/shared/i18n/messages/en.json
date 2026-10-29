@@ -4915,7 +4915,16 @@
       "saved": "Company updated",
       "renew": "Renew year",
       "renewed": "A new 1-year term started",
-      "error": "Could not save the company"
+      "error": "Could not save the company",
+      "delete": "Delete company",
+      "deleteTitle": "Delete {name}?",
+      "deleteDescription": "Everyone is signed out, the web address is freed, and the company leaves the console. History stays. Type {slug} to confirm.",
+      "deleteChallenge": "Web address",
+      "deleteConfirm": "Delete permanently",
+      "deleteCancel": "Keep company",
+      "deleting": "Deleting…",
+      "deleted": "Company deleted",
+      "deleteError": "Could not delete the company"
     },
     "form": {
       "title": "Register company",

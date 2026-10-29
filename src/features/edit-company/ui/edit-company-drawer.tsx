@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Building2, CalendarRange } from "lucide-react";
 import {
+  deleteCompany,
   getCompany,
   saveCompany,
   updateCompanyPlan,
@@ -15,6 +16,7 @@ import { formatDate } from "@/shared/lib/format";
 import {
   Badge,
   Button,
+  ConfirmDialog,
   Drawer,
   DrawerBody,
   DrawerContent,
@@ -64,6 +66,7 @@ export function EditCompanyDrawer({ company, open, onOpenChange, onSaved }: Prop
   const [row, setRow] = useState<PlatformCompany | null>(company);
   const [form, setForm] = useState<Draft | null>(company ? draftOf(company) : null);
   const [busy, setBusy] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   useEffect(() => {
     if (!open || !company) {
@@ -122,6 +125,22 @@ export function EditCompanyDrawer({ company, open, onOpenChange, onSaved }: Prop
     }
   }
 
+  async function remove() {
+    if (!row) return;
+    setBusy(true);
+    try {
+      await deleteCompany(row.id, row.slug);
+      feedback.success(t("deleted"));
+      setDeleteOpen(false);
+      onOpenChange(false);
+      onSaved();
+    } catch (err) {
+      feedback.error(err, t("deleteError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function renew() {
     if (!row) return;
     setBusy(true);
@@ -139,7 +158,8 @@ export function EditCompanyDrawer({ company, open, onOpenChange, onSaved }: Prop
   }
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
+    <>
+    <Drawer open={open} onOpenChange={(next) => { if (!deleteOpen) onOpenChange(next); }}>
       <DrawerContent className="max-w-2xl" data-testid="company-edit-drawer">
         <DrawerHeader>
           <DrawerTitle>{row?.name_en ?? t("title")}</DrawerTitle>
@@ -256,6 +276,16 @@ export function EditCompanyDrawer({ company, open, onOpenChange, onSaved }: Prop
           )}
         </DrawerBody>
         <DrawerFooter>
+          <Button
+            type="button"
+            variant="ghost"
+            className="mr-auto text-rose-700 hover:bg-rose-50 hover:text-rose-800"
+            disabled={busy || !row}
+            onClick={() => setDeleteOpen(true)}
+            data-testid="company-delete"
+          >
+            {t("delete")}
+          </Button>
           <Button variant="outline" onClick={() => void renew()} disabled={busy || !row} data-testid="company-renew-plan">
             {t("renew")}
           </Button>
@@ -265,6 +295,20 @@ export function EditCompanyDrawer({ company, open, onOpenChange, onSaved }: Prop
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
+    <ConfirmDialog
+      open={deleteOpen}
+      onOpenChange={setDeleteOpen}
+      title={t("deleteTitle", { name: row?.name_en ?? "" })}
+      description={t("deleteDescription", { slug: row?.slug ?? "" })}
+      confirmLabel={busy ? t("deleting") : t("deleteConfirm")}
+      cancelLabel={t("deleteCancel")}
+      challenge={row?.slug}
+      challengeLabel={t("deleteChallenge")}
+      onConfirm={() => void remove()}
+      pending={busy}
+      destructive
+    />
+    </>
   );
 }
 

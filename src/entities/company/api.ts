@@ -87,6 +87,14 @@ export async function updateCompanyPlan(id: string, plan: CompanyPlan): Promise<
   );
 }
 
+/** Soft-deletes the tenant. `slug` must match the live web address. */
+export async function deleteCompany(id: string, slug: string): Promise<void> {
+  await http.request(`/platform/companies/${id}`, {
+    method: "DELETE",
+    body: JSON.stringify({ slug }),
+  });
+}
+
 /** Creates the company, its main center and the GM account in one transaction. */
 export async function registerCompany(body: RegisterCompanyInput): Promise<RegisteredCompany> {
   return http.request<RegisteredCompany>("/platform/companies", {

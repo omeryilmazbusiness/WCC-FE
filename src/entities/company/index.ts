@@ -1,5 +1,6 @@
 export {
   COMPANY_LIST_LIMIT,
+  deleteCompany,
   getCompany,
   listCompanies,
   registerCompany,
