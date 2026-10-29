@@ -26,6 +26,7 @@
     "test:plan-upgrade": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs scripts/selftest-plan-upgrade.ts",
     "test:company-edit": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs scripts/selftest-company-edit.ts",
     "test:company-delete": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs scripts/selftest-company-delete.ts",
+    "test:mfa-policy": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs scripts/selftest-mfa-policy.ts",
     "test:plan-brand": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs scripts/selftest-plan-brand.ts",
     "test:wodi-mark": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs scripts/selftest-wodi-mark.ts",
     "test:profile": "node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs scripts/selftest-profile.ts",
